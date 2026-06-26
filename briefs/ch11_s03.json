@@ -1,0 +1,39 @@
+{
+  "id": "ch11_s03",
+  "topic": "The shift to learned: word embeddings",
+  "scope": "The shift to learned representations for text (describe plainly; spine label not required).",
+  "key_concepts": [
+    "The limitations of sparse representations (high dimensionality, orthogonal vectors for synonyms).",
+    "Dense vector representations (embeddings) map meaning to continuous space.",
+    "Similar meanings result in nearby vectors in the embedding space.",
+    "Embeddings are learned from large corpora based on word co-occurrence."
+  ],
+  "definitions": [
+    {
+      "term": "Word embedding",
+      "definition": "Representasi vektor padat untuk sebuah kata, di mana kata dengan makna serupa memiliki nilai vektor yang berdekatan."
+    },
+    {
+      "term": "Dense vector",
+      "definition": "Vektor berdimensi rendah yang sebagian besar atau seluruh elemennya memiliki nilai bukan nol."
+    }
+  ],
+  "examples": [
+    "Showing that 'mobil' and 'kucing' are perfectly orthogonal in BoW, but 'mobil' and 'kendaraan' will be close in embedding space."
+  ],
+  "relations": {
+    "prerequisites": "Understanding of sparse vectors from Ch 1 and s01.",
+    "builds_toward": "Contextual embeddings in s04."
+  },
+  "figures": [],
+  "exclusions": [
+    "Math behind Word2Vec/GloVe training (Skip-gram, CBOW architectures)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "word embedding": "word embedding",
+    "dense": "padat (dense)",
+    "sparse": "jarang (sparse)",
+    "orthogonal": "ortogonal"
+  }
+}

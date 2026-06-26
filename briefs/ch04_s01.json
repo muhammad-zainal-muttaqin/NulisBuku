@@ -1,0 +1,31 @@
+{
+  "id": "ch04_s01",
+  "topic": "Types of categorical variables",
+  "scope": "Nominal, ordinal, high-cardinality.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "Machine learning models cannot handle raw text labels.",
+    "Nominal categories have no inherent order.",
+    "Ordinal categories have a meaningful ranking.",
+    "High-cardinality features contain too many unique levels, requiring specialized processing."
+  ],
+  "definitions": [
+    { "term": "nominal", "indonesian": "nominal", "definition": "Kategori tanpa tingkatan atau urutan." },
+    { "term": "ordinal", "indonesian": "ordinal", "definition": "Kategori yang memiliki makna hierarki urutan secara logis." },
+    { "term": "high-cardinality", "indonesian": "kardinalitas tinggi", "definition": "Fitur yang menampung variasi kategori level unik dalam jumlah sangat besar." }
+  ],
+  "examples": [
+    "Nominal: city names like Jakarta, Bandung, Surabaya.",
+    "Ordinal: clothing sizes like Small, Medium, Large.",
+    "High-cardinality: Zip codes, user IDs, or IPs."
+  ],
+  "relations": {
+    "builds_toward": "ch04_s02 to ch04_s05 (encoding specific types)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "high-cardinality": "kardinalitas tinggi",
+    "encoding": "encoding"
+  },
+  "figures": []
+}

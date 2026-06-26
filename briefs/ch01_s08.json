@@ -1,0 +1,37 @@
+{
+  "id": "ch01_s08",
+  "topic": "Case study: transaction data -> feature matrix",
+  "scope": "Concrete walk from raw rows to a usable matrix applying defined principles.",
+  "target_word_count_indonesian": 400,
+  "key_concepts": [
+    "Show how raw transaction logs (User X bought Item Y on Date Z) are not yet ready for a machine learning model.",
+    "Demonstrate defining the unit (User) and the target (Will churn next month).",
+    "Construct the features by aggregating the transaction history up to the index time (e.g., total spent last 30 days, count of unique categories bought).",
+    "The output is a flat, engineered tabular feature matrix ready for training."
+  ],
+  "definitions": [],
+  "examples": [
+    "Input: Transaction table with columns (Transaction ID, User ID, Timestamp, Amount, Category).",
+    "Output: Feature matrix with columns (User ID, Target Churn, Count_Transactions_30d, Sum_Amount_30d, Ratio_Electronics_30d)."
+  ],
+  "relations": {
+    "builds_upon": "ch01_s05 (unit, target, and index time)"
+  },
+  "exclusions": [
+    "Do not provide code snippets. Explain the process in narrative form."
+  ],
+  "terminology_preferences": {
+    "unit": "unit",
+    "target": "target",
+    "matrix": "matriks",
+    "index time": "waktu prediksi"
+  },
+  "figures": [
+    {
+      "caption": "Transformasi dari log transaksi (data mentah) ke matriks fitur",
+      "type": "diagram konseptual",
+      "description": "Diagram showing raw event rows fanning inward and aggregating into a single summarized row per user ID.",
+      "data_source": "Konseptual"
+    }
+  ]
+}

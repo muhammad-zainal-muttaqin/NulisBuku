@@ -1,0 +1,42 @@
+{
+  "id": "ch14_s06",
+  "topic": "Multimodal pretrained models",
+  "scope": "The use of foundation models like CLIP as feature extractors for multimodal data.",
+  "key_concepts": [
+    "Models like CLIP (Contrastive Language-Image Pre-training) represent the pinnacle of representations learned by machine (*representasi yang dipelajari mesin*) for multimodal tasks.",
+    "CLIP was pretrained on hundreds of millions of image-text pairs to align visual and textual concepts in a shared space.",
+    "Instead of engineering features or training joint embeddings from scratch, practitioners can use frozen pretrained multimodal models as off-the-shelf feature extractors.",
+    "These models enable zero-shot classification: classifying an image by comparing its embedding to the embeddings of text prompts like 'a photo of a cat', without needing task-specific training data."
+  ],
+  "definitions": [
+    {
+      "term": "Pretrained multimodal model",
+      "english_source": "Pretrained multimodal model",
+      "indonesian_target": "model multimodal *pretrained*",
+      "definition": "Model *deep learning* berskala besar yang telah dilatih pada himpunan data multimodal raksasa untuk menangkap hubungan semantik universal antar modalitas."
+    },
+    {
+      "term": "Zero-shot classification",
+      "english_source": "Zero-shot classification",
+      "indonesian_target": "klasifikasi *zero-shot*",
+      "definition": "Kemampuan model untuk mengklasifikasikan data ke dalam kategori baru tanpa pernah melihat contoh kategori tersebut secara eksplisit selama pelatihan."
+    }
+  ],
+  "examples": [
+    "Passing a new dataset of product images into a frozen CLIP image encoder to extract 512-dimensional vectors, which are then used as features in a simple logistic regression model for a completely new task."
+  ],
+  "relations": {
+    "precedes": ["ch14_s07"],
+    "follows": ["ch14_s05", "ch11_s05"]
+  },
+  "figures": [],
+  "exclusions": [
+    "Architecture details of the Transformer blocks inside CLIP."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "pretrained model": "model *pretrained*",
+    "feature extractor": "*feature extractor*",
+    "zero-shot classification": "klasifikasi *zero-shot*"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ch08_s06",
+  "title": "Using reduced representations well: visualization vs. preprocessing, misuse, and the boundary with Ch 15",
+  "word_budget": 400,
+  "key_concepts": [
+    "Misuse 1: Using non-linear visualization tools (t-SNE/UMAP) as direct features for predictive models without understanding that distances in the new space do not represent true metric distances.",
+    "Misuse 2: Leakage. Fitting a dimensionality reduction model (like PCA) on the entire dataset before splitting train/test.",
+    "The Boundary with Chapter 15: Chapter 8 focuses on unsupervised compression of *your own data matrix*. Chapter 15 focuses on *transferring semantic representations* (pretrained embeddings) learned from massive external datasets."
+  ],
+  "callouts": [
+    "Pipeline discipline (praktik pipeline yang benar): Explicitly state that reduction models must only be fitted on the training split, and then used to transform the inference/test split to prevent data leakage."
+  ],
+  "relations": "Two-way cross-reference: Distinguish clearly from Chapter 15 to prevent confusion over neural techniques (autoencoder vs pretrained models). Connect to Chapter 2 (Leakage).",
+  "terminology": {
+    "keep_english": ["pretrained embedding", "t-SNE", "UMAP", "PCA", "leakage", "training", "inference", "split"],
+    "indonesian": ["praktik pipeline yang benar", "kebocoran data"]
+  }
+}

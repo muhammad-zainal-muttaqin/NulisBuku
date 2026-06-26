@@ -1,0 +1,43 @@
+{
+  "id": "ch17_s05",
+  "topic": "Principles I: start from the problem; features must be available at inference; transformations follow the split",
+  "scope": "Merged (old s05+s06+s07). Plus a brief privacy/proxy callout (recap of Ch 9 s07).",
+  "key_concepts": [
+    "Feature engineering should always be problem-driven, not technique-driven.",
+    "A fundamental law is that any engineered feature must be computationally and factually available at the moment of inference.",
+    "To guarantee valid evaluation, all data transformation must strictly follow the data split, never preceding it.",
+    "Just because a feature improves accuracy doesn't mean it is safe or ethical to use. Models must be guarded against using sensitive information or proxy variables."
+  ],
+  "definitions": [
+    {
+      "term": "Inference availability",
+      "indonesian": "Ketersediaan saat inference",
+      "meaning": "The state where a feature's required raw data is actually accessible in production at the exact time a prediction must be made."
+    },
+    {
+      "term": "Proxy feature",
+      "indonesian": "Fitur proxy",
+      "meaning": "A feature that is not inherently sensitive but highly correlates with protected attributes like race, gender, or income."
+    }
+  ],
+  "examples": [
+    "A churn prediction model uses 'last login date' as a feature. If the production database only syncs login dates every 24 hours, the feature is not immediately available at inference for real-time predictions."
+  ],
+  "relations": {
+    "ch01_s05": "Connects to the feature-availability cutoff.",
+    "ch02": "Recaps the rule that transformation follows the split.",
+    "ch09_s07": "Recaps the privacy and fairness considerations."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not dive into technical leakage examples; keep it at the principle level.",
+    "Do not expand into a full ethics discussion."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "feature": "fitur",
+    "inference": "inference",
+    "split": "split",
+    "proxy": "proxy"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "ch07_s01",
+  "title": "Relevance vs. redundancy; the curse of dimensionality",
+  "scope": "Why select at all.",
+  "key_concepts": [
+    "Feature selection is not just about shrinking data size; it improves model interpretability, reduces training time, and mitigates the curse of dimensionality.",
+    "A feature can be relevant to the target but redundant if another feature provides the exact same information.",
+    "The 'curse of dimensionality': as feature count grows, the volume of the feature space increases exponentially. Data becomes sparse, and distance metrics become less meaningful, which severely degrades distance-based models."
+  ],
+  "definitions": {
+    "Relevance": "The degree to which a feature contains useful information about the target variable.",
+    "Redundancy": "The degree to which a feature duplicates information already captured by other features."
+  },
+  "examples": [
+    "Describe a scenario with a relevant but redundant feature: predicting house prices using both 'square meters' and 'square feet'. Both are highly relevant to the price, but keeping both is redundant."
+  ],
+  "relations": [
+    "Sets up the fundamental motivation for the algorithmic methods in s02-s04.",
+    "Builds on Ch 3 model sensitivity: distance-based models are particularly vulnerable to the curse of dimensionality."
+  ],
+  "terminology_preferences": {
+    "feature selection": "seleksi fitur",
+    "curse of dimensionality": "curse of dimensionality (italicized)",
+    "relevant": "relevan",
+    "redundant": "redundan",
+    "feature space": "ruang fitur"
+  },
+  "figures": [
+    {
+      "id": "7.1",
+      "type": "diagram konseptual",
+      "caption": "Ilustrasi kutukan dimensi (curse of dimensionality) pada ruang satu, dua, dan tiga dimensi.",
+      "description": "Show how data points become increasingly sparse as the number of dimensions increases from a line, to a square, to a cube."
+    }
+  ],
+  "exclude": [
+    "Deep mathematical proofs of distance metric degradation in high dimensions."
+  ]
+}

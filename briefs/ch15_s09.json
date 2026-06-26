@@ -1,0 +1,39 @@
+{
+  "id": "ch15_s09",
+  "topic": "Case study: pretrained extractor + hybrid model (learned + engineered)",
+  "scope": "The synthesis case study demonstrating a full hybrid pipeline: extracting embeddings and combining them with engineered tabular features.",
+  "key_concepts": [
+    "This case study synthesizes the chapter by walking through a predictive task that requires both text and structured data, such as predicting ecommerce product returns.",
+    "First, unstructured data (like product reviews or descriptions) is passed through a frozen pretrained model to extract dense embeddings.",
+    "Simultaneously, tabular data is processed. Human-engineered features like historical return ratios and price-to-category-average are computed, imputed, and scaled.",
+    "The two representations are concatenated. It is crucial to ensure that both the extraction and the engineering steps are strictly applied after the train-test split to avoid data leakage.",
+    "Finally, the combined master vector is fed into a final classifier, demonstrating that the output of deep learning can be the input to traditional ML."
+  ],
+  "definitions": [],
+  "examples": [
+    "An ecommerce model where `product_description` becomes a 768-D vector via BERT, `user_history` becomes a 10-D engineered vector, resulting in a 778-D input for XGBoost."
+  ],
+  "relations": {
+    "precedes": "Chapter 16 (where the generation of the tabular features might be automated).",
+    "follows": "ch15_s08 (the theoretical justification for this exact architecture)."
+  },
+  "figures": [
+    {
+      "callout": "[GAMBAR 15.2]",
+      "caption": "Arsitektur pipeline hybrid: penyatuan embedding teks dengan fitur tabular rekayasa",
+      "type": "skema",
+      "description": "Skema menunjukkan teks mentah diproses oleh frozen BERT extractor menjadi vektor. Di jalur bawah, data tabular mentah diproses oleh pipeline rekayasa/skala menjadi vektor. Kedua vektor digabungkan (concatenate) lalu dimasukkan ke dalam classifier."
+    }
+  ],
+  "exclusions": [
+    "Do not write the full pandas/sklearn code. Focus on the conceptual assembly and use a signature snippet placeholder."
+  ],
+  "target_word_count_indonesian": 400,
+  "terminology_preferences": {
+    "pipeline": "pipeline",
+    "hybrid": "hybrid",
+    "embedding": "embedding",
+    "frozen extractor": "frozen extractor",
+    "data leakage": "data leakage"
+  }
+}

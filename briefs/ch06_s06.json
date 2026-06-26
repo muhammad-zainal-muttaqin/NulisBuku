@@ -1,0 +1,47 @@
+{
+  "id": "ch06_s06",
+  "topic": "Date/time and cyclical features",
+  "scope": "Techniques for extracting predictive signals from timestamps, including basic calendar derivations (day of week, hour) and mathematical encodings (sine/cosine) to represent the cyclic nature of time.",
+  "key_concepts": [
+    "Raw timestamps (e.g., UNIX epochs or datetime strings) are rarely useful to models directly and must be parsed into component parts.",
+    "Calendar features isolate specific temporal components like 'day of the week', 'is weekend', or 'hour of the day' to capture human behavioral patterns.",
+    "Time is inherently cyclic: December (month 12) is temporally adjacent to January (month 1), and 23:00 is close to 01:00.",
+    "Linear numeric representations of time fail to capture this adjacency. Sine and cosine transformations map cyclic features onto a circle, preserving the true distance between time periods."
+  ],
+  "definitions": [
+    {
+      "term": "cyclical encoding",
+      "target_indonesian": "encoding siklik",
+      "definition": "A technique that uses sine and cosine functions to transform periodic features (like time) into a two-dimensional coordinate system, preserving their circular nature."
+    }
+  ],
+  "examples": [
+    {
+      "description": "Extracting an 'is_holiday' boolean feature from a transaction timestamp."
+    },
+    {
+      "description": "Encoding 'hour of day' (0-23) into two features: sin(2π * hour / 24) and cos(2π * hour / 24)."
+    }
+  ],
+  "relations": {
+    "builds_toward": "Temporal data modeling and time-series representations in Chapter 10.",
+    "prerequisites": "Numeric transformations from Chapter 3."
+  },
+  "figures": [
+    {
+      "id": "GAMBAR 6.3",
+      "caption": "Transformasi Siklik dengan Sinus dan Kosinus",
+      "type": "diagram konseptual",
+      "description": "Diagram berbentuk jam yang menunjukkan bagaimana nilai jam (0-23) dipetakan ke dalam koordinat lingkaran dua dimensi (sinus dan kosinus) sehingga jam 23 dan jam 0 berada berdekatan.",
+      "source": "pembuat gambar"
+    }
+  ],
+  "exclusions": [
+    "Time-series lag features or rolling windows (saved strictly for Chapter 10)."
+  ],
+  "target_word_count_indonesian": 390,
+  "terminology_preferences": {
+    "English": ["machine learning", "encoding"],
+    "Indonesian": ["fitur waktu", "siklik", "model"]
+  }
+}

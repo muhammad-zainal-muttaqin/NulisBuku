@@ -1,0 +1,79 @@
+# Rekayasa Fitur Otomatis & Kolaborasi Manusia–AI
+
+## Pembentukan Fitur Otomatis: *Deep Feature Synthesis* dan Ruang Pencarian
+
+Pada Bab 6, fitur tingkat entitas dibentuk dari riwayat *event* melalui agregasi dan proses *join* lintas tabel. Dalam *dataset* relasional, entitas saling terhubung: pelanggan memiliki banyak pesanan, dan setiap pesanan berisi banyak transaksi. Mengekstrak pola dari arsitektur multitabel secara manual sangat memakan waktu. Prosesnya repetitif dan rentan terhadap galat. Tantangan ini melahirkan pendekatan rekayasa fitur otomatis, dengan *Deep Feature Synthesis* (DFS) sebagai algoritma utamanya.
+
+*Deep Feature Synthesis* adalah algoritma yang secara sistematis menelusuri hubungan antartabel untuk menghasilkan fitur baru. DFS menumpuk operasi matematika dasar di sepanjang jalur relasi secara otomatis. Operasi dasar ini dikenal sebagai *primitive*. Terdapat dua kelompok utama. Pertama, *transformation primitive* yang beroperasi pada satu tabel tunggal, seperti mengekstrak komponen hari dari tanggal atau menghitung nilai absolut. Kedua, *aggregation primitive* yang merangkum banyak baris dari tabel anak ke dalam satu baris di tabel induk, seperti menghitung rata-rata, jumlah total, nilai maksimum, atau modus.
+
+Kekuatan DFS terletak pada konsep kedalaman (*depth*). Algoritma menumpuk *primitive* secara rekursif. Sebagai contoh, perhatikan fitur dasar berupa nilai nominal dari setiap transaksi. Pada kedalaman satu (*depth-1*), DFS menerapkan *aggregation primitive* ke tabel pelanggan, menghasilkan fitur total nominal transaksi per pelanggan (`SUM(transaksi.nominal)`). Pada kedalaman dua (*depth-2*), DFS mengambil fitur *depth-1* tersebut dan memprosesnya melintasi relasi berikutnya. Mesin dapat mengagregasi total transaksi pelanggan tadi berdasarkan wilayah domisilinya, sehingga menghasilkan rata-rata dari total transaksi pelanggan per wilayah (`MEAN(SUM(transaksi.nominal))`).
+
+[GAMBAR 16.1]
+Judul: Ilustrasi pembentukan fitur menggunakan *Deep Feature Synthesis* (DFS) melintasi entitas relasional.
+Tipe: diagram konseptual
+Tampilkan: Skema multitabel (misalnya Pelanggan, Pesanan, Transaksi) yang menunjukkan bagaimana operasi *primitive* pada Transaksi (misalnya SUM) ditarik ke tabel Pesanan, lalu *primitive* lain (misalnya MEAN) ditarik ke Pelanggan untuk membentuk fitur dengan kedalaman dua.
+Sumber data: -
+
+Penumpukan rekursif memungkinkan eksplorasi representasi data dengan sangat cepat. Namun, otomatisasi ini memunculkan kendala berupa ledakan ruang fitur (*feature space explosion*). Ketika algoritma menelusuri setiap relasi dan menerapkan seluruh kombinasi *primitive* yang ada, jumlah fitur tumbuh secara eksponensial. Algoritma bekerja tanpa pemahaman konteks bisnis. Mesin akan menghitung rata-rata dari kode pos atau nilai maksimum dari nomor telepon sekadar karena tipe datanya numerik.
+
+Akibatnya, *dataset* membesar dengan ribuan fitur baru. Sebagian besar saling berkorelasi erat, tidak memiliki daya prediktif riil, atau hanya menangkap *noise* dari data pelatihan. Ledakan dimensi ini membebani memori, memperlambat pelatihan model, dan meningkatkan risiko *overfitting*. Meskipun DFS menghilangkan pekerjaan manual yang melelahkan, kapasitas mesin untuk mencetak fitur secara massal menuntut mekanisme seleksi yang ketat dan validasi pakar agar ruang fitur tetap terkendali.
+
+
+## *AutoML* dan *Pipeline* Fitur Otomatis
+
+Otomasi dalam rekayasa fitur jarang berdiri sendiri sebagai modul tunggal. Praktik ini umumnya terintegrasi ke dalam sistem *AutoML* (*Automated Machine Learning*). Jika *Deep Feature Synthesis* berfokus pada pembentukan fitur baru dari kumpulan tabel relasional, *AutoML* mengambil peran lebih luas dengan mengotomatiskan seluruh alur kerja pembelajaran secara utuh. Sistem ini mengeksekusi tahap pra-pemrosesan, pembentukan representasi, seleksi algoritma, hingga proses *hyperparameter tuning*.
+
+Sistem *AutoML* menjelajahi ruang pencarian *pipeline* (*pipeline search space*). Ruang ini bersifat kombinatorial dan sangat luas. Selain memilih algoritma prediksi, mesin juga menyusun dan mengevaluasi ribuan urutan transformasi data. Ruang pencarian dengan empat metode imputasi, tiga teknik penskalaan, dan lima algoritma seleksi fitur akan menghasilkan ratusan kombinasi tingkat pra-pemrosesan. Jumlah ini berlipat ganda ketika dipasangkan dengan berbagai algoritma akhir.
+
+Sebagai contoh, *AutoML* dapat merancang satu *pipeline* yang memakai imputasi median, *target encoding*, dan reduksi dimensi sebelum masuk ke model *gradient boosting*. Pada saat bersamaan, mesin menguji *pipeline* lain yang menggunakan imputasi k-NN, *one-hot encoding*, dan algoritma SVM. Sistem merakit setiap tahapan, melatih model, memangkas fitur redundan, lalu membandingkan performanya tanpa campur tangan pengguna.
+
+Nilai terbesar *AutoML* adalah kemampuannya membangun *baseline* prediktif secara cepat. Pra-pemrosesan standar yang biasanya memakan waktu berjam-jam lewat uji coba manual dapat diselesaikan mesin dalam hitungan menit. Praktisi bisa langsung melihat potensi awal data mentah sebelum menghabiskan waktu merancang fitur spesifik domain. Kerangka kerja *AutoML* modern juga mengamankan praktik *pipeline* yang benar secara otomatis. Sistem memastikan transformer di-*fit* hanya pada set data latih, sehingga risiko *leakage* terhindari saat menyeleksi kandidat *pipeline*.
+
+Eksplorasi otomatis ini tetap memiliki batasan. Mengandalkan *AutoML* murni untuk menelusuri ruang fitur yang masif sering berujung pada pembakaran daya komputasi (*burning compute*). Saat mesin menguji jutaan kombinasi transformasi tanpa panduan konteks, sistem lebih rentan menemukan korelasi kebetulan. *Pipeline* yang dihasilkan mungkin terlihat unggul pada data latih, tetapi gagal menjaga generalisasi pada data pengujian.
+
+Mesin mampu menelusuri ruang pencarian matematis secara cepat, tetapi tidak memahami semantik informasi. *AutoML* tidak mampu mengenali spesifikasi target yang cacat, tidak memperbaiki bias sampel, dan tidak menangkap dinamika industri. Sebagai contoh, mesin tidak tahu bahwa nilai kosong pada sensor tertentu bermakna mesin produksi sedang dimatikan, bukan data yang hilang. Saat performa prediktif stagnan, menambah alokasi waktu pencarian *AutoML* jarang memecahkan masalah. Titik kebuntuan ini menuntut intervensi manusia untuk menata ulang representasi atau membenahi kualitas data pengukuran.
+
+
+## GenAI untuk Usulan Fitur dan Risiko Fitur Semu
+
+Teknik rekayasa fitur otomatis tradisional mencari kombinasi matematis tanpa mempertimbangkan makna atribut. Perkembangan *Large Language Models* (LLM) mengisi celah ini dengan mengimplementasikan pendekatan berbasis konteks semantik. GenAI dirancang untuk membaca metadata seperti nama kolom, tipe data, dan deskripsi spesifik dari sebuah *dataset*. Pendekatan ini memungkinkan eksekusi rekayasa fitur yang secara langsung menyuntikkan pemahaman domain ke dalam proses pengolahan data.
+
+Kerangka kerja akademik yang memelopori metodologi ini adalah *Context-Aware Automated Feature Engineering* (CAAFE). Dalam alur kerjanya, LLM tidak mengevaluasi nilai numerik pada baris data. Model bahasa ini hanya menginterpretasikan skema *dataset* dan kemudian menulis kode transformasi untuk menghasilkan fitur. Jika LLM mendeteksi keberadaan kolom tinggi dan berat badan pada data rekam medis, sistem ini akan merangkai algoritma perhitungan Indeks Massa Tubuh secara otomatis. Pada tahap ini, GenAI difungsikan murni sebagai pengusul hipotesis.
+
+Namun, kemampuan generatif ini membawa risiko bawaan. GenAI merangkai konsep berdasarkan probabilitas kemunculan teks, bukan sinyal korelasi pada data aktual. Perilaku ini rentan menghasilkan usulan fitur yang bersifat *spurious* (semu). Fitur *spurious* adalah atribut yang terdengar rasional secara logika manusia, tetapi sama sekali tidak memiliki kekuatan prediktif pada ruang angka.
+
+Sebagai contoh pada *dataset* properti yang memprediksi tingkat keuntungan sewa jangka pendek, GenAI mungkin mengusulkan fitur "Jarak ke Pusat Kota dibagi Usia Bangunan". Bagi pengamat manusia, usulan ini terdengar cerdas dan relevan. Akan tetapi, secara empiris, nilai pembagian dari kedua metrik tersebut bisa saja tidak berkorelasi dengan target fluktuasi sewa harian. Jika dipaksakan masuk ke dalam iterasi pelatihan, keberadaan fitur ini hanya akan memperbesar dimensi ruang data dan menambah *noise* yang mengacaukan kemampuan prediksi.
+
+Kelemahan tersebut menegaskan bahwa GenAI tidak dapat difungsikan sebagai sistem rekayasa fitur yang berdiri sendiri. Mesin penghasil ide semantik wajib dipasangkan dengan evaluator kuantitatif. Seluruh hipotesis baru yang diajukan oleh GenAI harus melalui pengukuran objektif pada data nyata.
+
+Validasi tersebut diwujudkan dalam tahap evaluasi empiris otomatis. Sistem menjalankan uji *cross-validation* untuk mengukur kontribusi fitur baru terhadap performa model *baseline*. Setiap fitur usulan LLM ditambahkan ke dalam ruang data, kemudian model dilatih ulang. Jika metrik evaluasi model tersebut tidak secara konsisten melampaui kemampuan *baseline*, fitur ditolak dan dihapus. Mekanisme penyaringan ini memastikan bahwa model akhir hanya mengadopsi usulan GenAI yang terbukti secara empiris.
+
+
+## *Human-in-the-Loop*: Validasi dan Kurasi Fitur Usulan Mesin
+
+Kehadiran teknik seperti *Deep Feature Synthesis* (DFS) atau generator fitur berbasis *generative AI* sering memunculkan asumsi bahwa rekayasa fitur dapat beroperasi sepenuhnya secara otonom. Dalam sistem operasional yang sebenarnya, algoritma ini lebih tepat diposisikan sebagai mesin pengaju kandidat, bukan pengambil keputusan akhir. Sistem rekayasa fitur otomatis membutuhkan arsitektur *human-in-the-loop* (HITL). Pendekatan ini merupakan arsitektur sistem di mana proses otomasi dirancang secara eksplisit untuk berhenti pada titik tertentu guna meminta validasi, penilaian, atau arahan dari praktisi manusia.
+
+Dalam alur kerja HITL, pembagian tugas antara manusia dan mesin diatur secara spesifik. Praktisi manusia mendefinisikan target prediksi, menetapkan batasan logika ekstraksi, dan menentukan metrik validasi. Mesin mengambil alih beban komputasi untuk mengeksplorasi ruang pencarian dan menghasilkan ratusan kandidat fitur baru. Setelah kandidat tersebut tersedia, alur kembali kepada praktisi untuk melakukan kurasi dan interpretasi seleksi akhir.
+
+Sebagai contoh, sebuah *pipeline* otomatis yang menjalankan DFS pada data transaksional mungkin mengekstraksi 500 fitur baru. Praktisi tidak serta-merta meloloskan seluruh fitur tersebut ke dalam model produksi. Mereka meninjau kelompok fitur dengan nilai *importance* tertinggi, misalnya sepuluh fitur teratas yang diperingkat oleh model awal. Tinjauan ini diperlukan untuk memastikan tidak ada *data leakage* temporal yang menyusup ke dalam logika fitur, serta menjamin fitur tersebut tidak bergantung pada variabel proksi yang bias. Algoritma seleksi tidak memiliki konteks dunia nyata, sehingga sering kali mempertahankan fitur yang sangat prediktif pada data latih padahal data pembentuk fitur tersebut belum tersedia pada saat *inference*.
+
+Pergeseran alur kerja ini mengubah peran praktisi secara fundamental. Sebelumnya, sebagian besar waktu praktisi dihabiskan untuk menulis skrip ekstraksi data baris demi baris. Kini, peran tersebut berevolusi menjadi fungsi audit, kurasi, dan validasi terhadap representasi yang diusulkan oleh mesin. Fokus pekerjaan bergeser dari implementasi tingkat rendah menuju pemahaman domain masalah dan mitigasi risiko operasional. Otomasi mempercepat fase penemuan sinyal, tetapi kontrol keamanan *pipeline* tetap berada di tangan praktisi.
+
+Kolaborasi ini menempatkan rekayasa fitur otomatis pada posisi yang jelas di dalam spektrum representasi buku ini. Walaupun proses pencariannya dikomputasi oleh algoritma, fitur-fitur yang dihasilkan tetap masuk dalam kategori representasi yang *dirancang manusia*. Logika pembentukannya bersifat eksplisit dan dapat dievaluasi secara matematis. Ruang eksplorasi algoritma dibatasi oleh parameter awal yang ditetapkan manusia. Karakteristik ini membedakannya dari representasi yang *dipelajari mesin*, seperti matriks bobot di dalam jaringan saraf yang mengoptimalkan pola abstraksinya sendiri tanpa mengekspos struktur logika operasional.
+
+
+## Studi Kasus: Kurasi Manusia atas Fitur Otomatis pada Data Relasional
+
+Penerapan rekayasa fitur otomatis dan kurasi manusia dievaluasi menggunakan *dataset* ritel relasional untuk memprediksi probabilitas pelanggan berhenti berlangganan (*churn*). Data terstruktur ini tersebar di tabel Pelanggan, Pesanan, dan Detail Transaksi. Evaluasi dimulai dengan menetapkan model *baseline* menggunakan representasi dasar rancangan manusia, seperti usia pelanggan dan rata-rata pembelanjaan. Model *baseline* ini menjadi tolok ukur awal untuk memvalidasi kenaikan performa.
+
+Untuk mengeksplorasi *ruang fitur* yang lebih luas, algoritma *Deep Feature Synthesis* (DFS) diterapkan pada skema relasional. Algoritma ini menelusuri hierarki antartabel dan merangkai berbagai primitif matematika, seperti penjumlahan transaksi bulanan atau rata-rata jeda pesanan.
+
+```
+[KODE: inisiasi DFS dengan pengaturan depth=2 pada skema pelanggan; sumber: notebook bab]
+```
+
+Pencarian otomatis ini menghasilkan 800 kandidat turunan baru. Memasukkan seluruh turunan ini ke dalam model akan memperlambat pelatihan dan memicu *overfitting*. Oleh karena itu, saringan statistik otomatis dijalankan untuk menyortir kandidat. Saringan membuang fitur dengan varians nol, memangkas fitur yang memiliki korelasi silang di atas 0,95, dan menghapus kandidat tanpa kontribusi prediksi pada uji awal. Penyusutan berbasis angka ini mengeliminasi 750 kandidat dan menyisakan 50 fitur paling relevan secara statistik.
+
+Mesin sukses merampingkan data secara matematis, namun buta terhadap konteks operasional bisnis. Pakar domain kemudian menginspeksi daftar 50 fitur tersebut. Pemeriksaan mengungkap satu fitur dengan skor prediksi yang sangat tinggi: atribut "waktu sejak login terakhir". Penelusuran pada arsitektur sistem menunjukkan bahwa basis data baru membarui kolom tersebut sesaat setelah sistem menetapkan pelanggan masuk ke kategori *churn*. Fitur ini memuat rekaman kejadian dari masa depan yang belum terbentuk pada titik prediksi. Kondisi ini merupakan bentuk *data leakage* temporal. Mesin mengidentifikasinya sebagai prediktor kuat, padahal secara operasional fitur tersebut cacat.
+
+Pakar membuang fitur yang bocor ini beserta fitur lain yang ekuivalen secara logika. Sisa akhir dari proses kurasi ini menyisakan 20 fitur otomatis yang solid dan dapat direproduksi pada saat inferensi. Evaluasi tahap akhir menunjukkan model dengan 20 turunan valid ini mengungguli akurasi model *baseline* sebesar 8%. Otomasi berhasil memperluas batasan pencarian representasi, namun pemahaman domain pakar tetap menjadi penyaring mutlak untuk mencegah fatalitas logika data.

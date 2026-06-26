@@ -1,0 +1,35 @@
+{
+  "id": "ch02_s08",
+  "topic": "Case study: a valid pipeline vs. a leaking one",
+  "scope": "Side-by-side; the leak made visible.",
+  "target_word_count_indonesian": 400,
+  "key_concepts": [
+    "Show a concrete comparison of building the exact same feature mapping with two architectural approaches.",
+    "The Leaking Approach: Using a global mean parameter for addressing missing variables. The reported accuracy metrics are artificially flawless.",
+    "The Valid Approach: Implementing the correct operation of isolating data splits prior to calculation. The validation correctly limits the scope to training data and tests performance honestly on unseen data.",
+    "This case effectively reinforces why holding onto proper pipeline execution methodologies is critical in feature engineering."
+  ],
+  "definitions": [],
+  "examples": [
+    "A narrative outlining a scenario of predicting missing price values in real estate parameters, juxtaposing the falsely high metrics output by the leaking schema to actual metrics measured by a controlled pipeline."
+  ],
+  "relations": {
+    "builds_upon": "All concepts from chapter 02."
+  },
+  "exclusions": [
+    "Do not include lengthy block code snippets. Narrate the structure logic directly."
+  ],
+  "terminology_preferences": {
+    "data leakage": "data leakage",
+    "pipeline": "pipeline",
+    "praktik pipeline yang benar": "praktik pipeline yang benar"
+  },
+  "figures": [
+    {
+      "caption": "Arsitektur perbandingan antara manipulasi dataset global versus pipeline tertutup",
+      "type": "diagram konseptual",
+      "description": "Block diagram contrasting preprocessing before a split (a shared leaky bucket parameter) vs. a contained transformer pipeline working purely after isolating a train split.",
+      "data_source": "Konseptual"
+    }
+  ]
+}

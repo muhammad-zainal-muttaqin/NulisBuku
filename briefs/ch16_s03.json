@@ -1,0 +1,41 @@
+{
+  "id": "ch16_s03",
+  "topic": "GenAI for feature proposals; the meaningless-feature risk",
+  "scope": "LLM-proposed features (academic primary: CAAFE); plausible-but-spurious features; why automation needs a validator.",
+  "key_concepts": [
+    "The use of Large Language Models (LLMs) to inject domain knowledge into automated feature engineering by reading column names and dataset descriptions.",
+    "Introduction to Context-Aware Automated Feature Engineering (CAAFE) as a method where generative AI writes feature transformation code based on semantic context.",
+    "The inherent risk of LLMs in this domain: proposing plausible-but-spurious features. LLMs generate features that sound logical but may hold no statistical signal in the actual data.",
+    "The absolute necessity of an automated validation step (e.g., cross-validation against a baseline) to filter out meaningless features proposed by GenAI."
+  ],
+  "definitions": [
+    {
+      "term": "CAAFE",
+      "meaning": "Context-Aware Automated Feature Engineering; an approach that uses language models to semantically interpret a dataset and generate code for new domain-specific features."
+    },
+    {
+      "term": "Plausible-but-spurious feature",
+      "meaning": "A generated feature that makes perfect semantic sense in human language but provides no actual predictive value or introduces noise into the model."
+    }
+  ],
+  "examples": [
+    "An LLM reading a real estate dataset might propose 'Distance to City Center divided by Property Age'. This sounds analytically clever, but if the dataset's target is predicting short-term rental yields, the feature might be entirely uncorrelated and merely bloat the feature space."
+  ],
+  "relations": {
+    "prerequisites": "Ch 9 (evaluating feature quality).",
+    "builds_toward": "Ch 16 s04 (human-in-the-loop validation)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not discuss transformer architectures, tokenization, or how LLMs are trained. Focus exclusively on their role as feature proposers.",
+    "Do not present GenAI as a standalone solution without the validation step."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "GenAI": "GenAI",
+    "Large Language Models (LLM)": "Large Language Models (LLM)",
+    "CAAFE": "CAAFE",
+    "spurious": "spurious",
+    "baseline": "baseline"
+  }
+}

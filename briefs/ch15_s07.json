@@ -1,0 +1,37 @@
+{
+  "id": "ch15_s07",
+  "topic": "Deep learning on tabular data: learned tabular embeddings",
+  "scope": "Applying DL to tabular data: FT-Transformer, TabNet, their role as feature extractors, comparison to gradient boosting, and link to entity embeddings.",
+  "key_concepts": [
+    "Gradient boosting has long dominated tabular data, but deep learning is emerging as a powerful alternative by learning dense tabular embeddings.",
+    "Models like TabNet and FT-Transformer treat individual features (both numeric and categorical) within a row as tokens, similar to how NLP models process words.",
+    "These deep tabular networks can function as feature extractors, converting raw structured rows into rich, dense vector representations.",
+    "Gradient boosting typically still outperforms deep learning on small-to-medium datasets because it handles unscaled data, non-linear boundaries, and outliers naturally.",
+    "Deep tabular models become advantageous when the dataset is exceptionally large, when tabular data needs to be fused with text or images, or when building a continuous representation learning system."
+  ],
+  "definitions": [
+    {
+      "term": "tabular transformer",
+      "definition": "A neural network architecture that adapts the transformer attention mechanism to process the columns of a tabular dataset."
+    }
+  ],
+  "examples": [
+    "Passing a row of patient health metrics through FT-Transformer to extract a single dense patient embedding, which is then used by a simpler downstream prediction model."
+  ],
+  "relations": {
+    "precedes": "ch15_s08 (combining these learned features with engineered ones).",
+    "follows": "Chapter 4 (which introduced entity embeddings specifically for categorical variables)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not explain the complex internal gating mechanisms of TabNet or the self-attention matrices of FT-Transformer."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "deep learning": "deep learning",
+    "tabular": "tabular",
+    "embedding": "embedding",
+    "gradient boosting": "gradient boosting",
+    "entity embedding": "entity embedding"
+  }
+}

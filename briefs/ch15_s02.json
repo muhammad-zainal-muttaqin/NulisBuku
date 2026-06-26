@@ -1,0 +1,46 @@
+{
+  "id": "ch15_s02",
+  "topic": "Embedding/feature banks and similarity metrics",
+  "scope": "Storing and comparing embeddings.",
+  "key_concepts": [
+    "Embeddings require efficient storage and comparison mechanisms to be useful in production.",
+    "Feature banks (or vector databases) are used to index and retrieve high-dimensional vectors quickly.",
+    "Similarity metrics define how the distance or relationship between two embedding vectors is calculated.",
+    "Cosine similarity is the most common metric for embeddings as it measures the angle between vectors, ignoring their magnitude.",
+    "Dot product is a computationally cheaper alternative that is identical to cosine similarity if the vectors are L2-normalized.",
+    "Euclidean distance measures the straight-line distance between points, making it sensitive to vector magnitude."
+  ],
+  "definitions": [
+    {
+      "term": "feature bank",
+      "definition": "A specialized storage system optimized for indexing, storing, and querying high-dimensional vectors."
+    },
+    {
+      "term": "cosine similarity",
+      "definition": "A metric that measures the cosine of the angle between two vectors, indicating their directional alignment."
+    }
+  ],
+  "examples": [
+    "Querying a feature bank of product embeddings to find the most similar items to a user's recent purchase using cosine similarity."
+  ],
+  "relations": {
+    "precedes": "ch15_s03 (evaluating if these embeddings and similarities actually make sense).",
+    "follows": "ch15_s01 (generating embeddings via extraction or fine-tuning)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not delve into the algorithmic details of approximate nearest neighbor (ANN) search like HNSW or KD-trees."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "embedding": "embedding",
+    "feature bank": "feature bank",
+    "cosine similarity": "cosine similarity",
+    "jarak Euclidean": "jarak Euclidean",
+    "dot product": "dot product"
+  },
+  "equations": [
+    "\\text{Cosine Similarity}(\\mathbf{u}, \\mathbf{v}) = \\frac{\\mathbf{u} \\cdot \\mathbf{v}}{\\|\\mathbf{u}\\| \\|\\mathbf{v}\\|}",
+    "\\text{Euclidean Distance}(\\mathbf{u}, \\mathbf{v}) = \\sqrt{\\sum_{i=1}^{d} (u_i - v_i)^2}"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "ch13_s07",
+  "title": "Graph Neural Networks (GNN) sebagai Ekstraktor Fitur",
+  "scope": "The learned end for graphs. GNNs as representation learners.",
+  "latex_notation": true,
+  "key_concepts": [
+    "Node2Vec learns structural embeddings but ignores node attributes (like a user's age or a paper's text). Graph Neural Networks (GNNs) combine both graph structure and node attributes.",
+    "GNNs operate via 'message passing'. A node updates its own feature vector by aggregating the feature vectors of its neighbors.",
+    "Through multiple layers, a node gathers information from neighbors, then neighbors of neighbors, creating a highly contextualized learned representation.",
+    "The output of the final GNN layer can be extracted as a feature vector (an embedding) to be used in standard pipelines, or trained end-to-end."
+  ],
+  "definitions": [
+    {
+      "term": "Message passing",
+      "meaning": "Mekanisme komputasi dalam GNN di mana setiap simpul mengumpulkan dan menggabungkan vektor fitur dari simpul-simpul tetangganya."
+    }
+  ],
+  "examples": [
+    "Predicting molecule toxicity: atoms are nodes, bonds are edges. A GNN aggregates features (atom type, charge) across bonds, outputting a graph-level embedding that captures the molecule's overall chemical properties."
+  ],
+  "latex_equations": [
+    "Persamaan *message passing* pada lapisan GNN ke-$k$ untuk memperbarui representasi simpul $v$: $\\mathbf{h}_v^{(k)} = \\sigma \\left( \\mathbf{W}^{(k)} \\sum_{u \\in \\mathcal{N}(v)} \\frac{\\mathbf{h}_u^{(k-1)}}{|\\mathcal{N}(v)|} + \\mathbf{B}^{(k)} \\mathbf{h}_v^{(k-1)} \\right)$"
+  ],
+  "figures": [
+    {
+      "callout": "[GAMBAR 13.4]",
+      "caption": "Mekanisme message passing pada Graph Neural Network.",
+      "type": "diagram konseptual",
+      "description": "Ilustrasi simpul merah yang menerima pesan (vektor) dari tiga simpul tetangga biru, kemudian memproses pesan tersebut menggunakan jaringan saraf untuk memperbarui representasinya sendiri."
+    }
+  ],
+  "exclude": "Spectral graph convolutions (GCN math in the Fourier domain), GraphSAGE vs GAT intricacies.",
+  "relations": "The fully learned counterpart to s05's manual neighborhood aggregation.",
+  "terminology": {
+    "keep_english": ["Graph Neural Network", "GNN", "message passing", "embedding", "baseline"],
+    "indonesian_terms": ["simpul", "fitur", "representasi yang dipelajari mesin", "agregasi"]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "id": "ch01_s03",
+  "topic": "Designed vs. learned representations",
+  "scope": "Introduces the book's central spectrum (dirancang manusia → dipelajari mesin).",
+  "target_word_count_indonesian": 380,
+  "key_concepts": [
+    "The continuum of feature engineering: from fully human-crafted to fully machine-learned.",
+    "Representasi yang dirancang manusia (designed by human): explicit logic, formulas, domain knowledge injected by humans.",
+    "Representasi yang dipelajari mesin (learned by machine): models automatically extracting useful representations from raw data (e.g., embeddings in deep learning).",
+    "This spectrum is the organizing principle of the whole book."
+  ],
+  "definitions": [
+    { "term": "representasi yang dirancang manusia", "indonesian": "representasi yang dirancang manusia", "definition": "Features created through explicit human logic and domain expertise." },
+    { "term": "representasi yang dipelajari mesin", "indonesian": "representasi yang dipelajari mesin", "definition": "Features implicitly extracted by an algorithm during the learning process without explicit human instruction." }
+  ],
+  "examples": [
+    "Designed: A human creates a 'Body Mass Index (BMI)' feature from height and weight.",
+    "Learned: A Convolutional Neural Network (CNN) learns internally to detect edges and textures from raw pixels."
+  ],
+  "relations": {
+    "builds_toward": "The global structure of the book (Parts II-III are designed, Parts IV-V transition to learned)."
+  },
+  "exclusions": [
+    "Do not use 'manual' vs 'terlatih'.",
+    "Do not drop the words 'manusia' or 'mesin' from the key terms."
+  ],
+  "terminology_preferences": {
+    "designed by human": "representasi yang dirancang manusia",
+    "learned by machine": "representasi yang dipelajari mesin",
+    "feature engineering": "rekayasa fitur"
+  },
+  "figures": []
+}

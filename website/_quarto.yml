@@ -1,0 +1,37 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "Rekayasa Fitur Modern"
+  subtitle: "Representasi Data untuk Machine Learning dan Deep Learning"
+  author: "Fatma Indriani"
+  language: id
+  chapters:
+    - index.qmd
+    - chapters/ch01.qmd
+    - chapters/ch02.qmd
+    - chapters/ch03.qmd
+    - chapters/ch04.qmd
+    - chapters/ch05.qmd
+    - chapters/ch06.qmd
+    - chapters/ch07.qmd
+    - chapters/ch08.qmd
+    - chapters/ch09.qmd
+    - chapters/ch10.qmd
+    - chapters/ch11.qmd
+    - chapters/ch12.qmd
+    - chapters/ch13.qmd
+    - chapters/ch14.qmd
+    - chapters/ch15.qmd
+    - chapters/ch16.qmd
+    - chapters/ch17.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    number-sections: true
+  docx:
+    toc: true
+    number-sections: true

@@ -1,0 +1,38 @@
+{
+  "id": "ch15_s08",
+  "topic": "Hybrid models: engineered features as extra input",
+  "scope": "Combining human-designed and machine-learned representations in a single model pipeline.",
+  "key_concepts": [
+    "The most powerful production pipelines do not force a choice between handcrafted features and learned embeddings; they combine them.",
+    "A hybrid model integrates dense pretrained embeddings (from text, images, or sequences) alongside explicitly engineered tabular features (like ratios, historical aggregations, or domain-specific rules).",
+    "This architecture fuses the deep semantic pattern recognition of machine-learned representations with the strict logical boundaries and context provided by human design.",
+    "Structurally, this is usually achieved by concatenating the engineered feature vector with the embedding vector before passing them into the final decision layers of a network or a tree-based model.",
+    "Hybrid approaches dominate complex applications like fraud detection and recommendation systems, where semantic context and hard business rules are equally critical."
+  ],
+  "definitions": [
+    {
+      "term": "model hybrid",
+      "definition": "A predictive architecture designed to simultaneously consume both manually engineered tabular features and machine-learned dense embeddings."
+    }
+  ],
+  "examples": [
+    "A real estate pricing model that combines an embedding of the property photos with human-engineered features like the ratio of land size to building size and proximity to the nearest train station."
+  ],
+  "relations": {
+    "precedes": "ch15_s09 (a full case study demonstrating a hybrid pipeline).",
+    "follows": "ch15_s07 (learning and extracting embeddings)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not provide the actual code for vector concatenation here (save it for the notebook)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "model hybrid": "model hybrid",
+    "embedding": "embedding",
+    "pipeline": "pipeline",
+    "pretrained": "pretrained",
+    "representasi yang dirancang manusia": "representasi yang dirancang manusia",
+    "representasi yang dipelajari mesin": "representasi yang dipelajari mesin"
+  }
+}

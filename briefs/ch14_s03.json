@@ -1,0 +1,42 @@
+{
+  "id": "ch14_s03",
+  "topic": "Feature concatenation and dimensionality balancing",
+  "scope": "Making modalities combinable, particularly focusing on the dimensionality mismatch problem.",
+  "key_concepts": [
+    "When applying early fusion, practitioners often concatenate feature vectors from different modalities. For instance, concatenating an image vector $\\mathbf{x}_{img} \\in \\mathbb{R}^{2048}$ with a tabular vector $\\mathbf{x}_{tab} \\in \\mathbb{R}^{10}$.",
+    "This creates a dimensionality imbalance: the high-dimensional modality (e.g., image or text) will mathematically dominate distance-based or gradient-based models, drowning out the low-dimensional tabular signal.",
+    "To balance representations, one must apply dimensionality reduction (e.g., PCA or bottleneck layers) to the high-dimensional modality, or project the low-dimensional modality into a higher space using learned embeddings.",
+    "Scaling is also critical: features from different modalities often have vastly different ranges and variances, requiring robust normalization before concatenation."
+  ],
+  "definitions": [
+    {
+      "term": "Dimensionality balancing",
+      "english_source": "Dimensionality balancing",
+      "indonesian_target": "penyeimbangan dimensi",
+      "definition": "Praktik menyelaraskan jumlah fitur antar modalitas agar tidak ada satu modalitas dominan yang mengalahkan sinyal dari modalitas lain saat penggabungan."
+    },
+    {
+      "term": "Feature concatenation",
+      "english_source": "Feature concatenation",
+      "indonesian_target": "konkatenasi fitur",
+      "definition": "Proses menggabungkan dua atau lebih vektor fitur menjadi satu vektor agregat yang lebih panjang."
+    }
+  ],
+  "examples": [
+    "Combining a 768-dimensional text embedding with a 5-dimensional tabular profile. Without dimensionality reduction on the text (e.g., via Truncated SVD to 20 dimensions), the 5 tabular features might be ignored by the algorithm."
+  ],
+  "relations": {
+    "precedes": ["ch14_s05"],
+    "follows": ["ch14_s02", "ch08_s02"]
+  },
+  "figures": [],
+  "exclusions": [
+    "Complex manifold alignment techniques."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "concatenation": "konkatenasi",
+    "dimensionality imbalance": "ketimpangan dimensi",
+    "dimensionality reduction": "reduksi dimensi"
+  }
+}

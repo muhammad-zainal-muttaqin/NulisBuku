@@ -1,0 +1,27 @@
+{
+  "id": "ch07_s06",
+  "title": "Case study: comparing selection methods on one dataset",
+  "scope": "Trade-offs made concrete.",
+  "key_concepts": [
+    "Applies filter, wrapper, and embedded methods to a single high-dimensional dataset containing relevant features, redundant features, and pure noise.",
+    "Comparing the outcomes: Which method successfully filtered out the noise? Which method efficiently handled redundancy? Which was fastest to execute?",
+    "Highlighting the trade-off between computational cost (filter is fastest, wrapper is slowest) and subset optimality.",
+    "The ultimate goal of feature selection is balancing model accuracy with simplicity and interpretability."
+  ],
+  "definitions": {},
+  "examples": [
+    "Discuss the results conceptually: perhaps mutual information kept redundant features, while LASSO elegantly selected just one feature from a highly correlated redundant group."
+  ],
+  "relations": [
+    "Synthesizes s02, s03, and s04."
+  ],
+  "terminology_preferences": {
+    "trade-off": "trade-off (italicized)",
+    "noise": "noise (italicized)",
+    "interpretability": "interpretabilitas"
+  },
+  "code_snippets": [
+    "[KODE: pipeline membandingkan filter, wrapper, dan embedded; sumber: notebook bab]"
+  ],
+  "exclude": []
+}

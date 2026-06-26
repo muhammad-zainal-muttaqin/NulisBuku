@@ -1,0 +1,60 @@
+{
+  "id": "ch10_s01",
+  "topic": "Temporal sample construction: lookback, stride, horizon, and alignment",
+  "scope": "Windowing constructs the learning sample: input-window (lookback) length, stride, prediction horizon, target-window length, input↔target alignment, causal vs. centered windows, overlapping-window dependence, irregular sampling/resampling.",
+  "key_concepts": [
+    "Temporal data cannot be modeled as independent rows; we must construct samples using windowing.",
+    "Lookback (input window) determines how much history the model sees per prediction.",
+    "Stride determines the step size between consecutive windows, affecting sample overlap and training size.",
+    "Prediction horizon and target window define what we are predicting and how far into the future.",
+    "Alignment involves matching the input window correctly with the target window to prevent leakage.",
+    "Causal windows (past data only) are strictly required for forecasting, whereas centered windows (past and future) can be used for smoothing or imputation but cause leakage if used for prediction.",
+    "Irregular sampling requires resampling (downsampling or upsampling) to create fixed intervals before windowing."
+  ],
+  "definitions": [
+    {
+      "term": "Windowing",
+      "meaning": "The process of sliding a fixed-size frame over a time series to extract discrete samples for machine learning."
+    },
+    {
+      "term": "Lookback",
+      "meaning": "The length of the historical data window used as input for a single prediction."
+    },
+    {
+      "term": "Stride",
+      "meaning": "The number of time steps the window shifts forward to create the next sample."
+    },
+    {
+      "term": "Horizon",
+      "meaning": "The distance in the future from the end of the lookback window to the target being predicted."
+    }
+  ],
+  "examples": [
+    "Predicting daily sales (horizon = 1 day) using the past 7 days of sales (lookback = 7) shifting by 1 day at a time (stride = 1)."
+  ],
+  "relations": {
+    "to_chapter_1": "Applies the concept of defining the unit of observation (Ch 1 s05) specifically to temporal data."
+  },
+  "figures": [
+    {
+      "caption": "Konstruksi sampel temporal: Lookback, Horizon, dan Stride",
+      "type": "diagram konseptual",
+      "description": "Visualisasi bagaimana deret waktu kontinu dipecah menjadi beberapa sampel bersarang dengan jendela input (lookback) dan target (horizon), bergeser sesuai stride."
+    }
+  ],
+  "exclusions": [
+    "Detailed mathematics of overlapping sample correlation."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "lookback": "lookback",
+    "stride": "stride",
+    "horizon": "horizon",
+    "windowing": "windowing",
+    "causal window": "window kausal",
+    "centered window": "window terpusat",
+    "resampling": "resampling",
+    "downsampling": "downsampling",
+    "upsampling": "upsampling"
+  }
+}

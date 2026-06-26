@@ -1,0 +1,30 @@
+{
+  "id": "ch13_s05",
+  "title": "Agregasi Ketetanggaan dan Fitur Berbasis Jalur",
+  "scope": "Structure-derived features: neighborhood aggregation and path-based features.",
+  "key_concepts": [
+    "Beyond single-node metrics, we can derive features by aggregating information from a node's immediate neighbors (similar to spatial lags, but on graphs).",
+    "Aggregation functions (mean, sum, max) summarize the attributes of a node's neighbors. For example, the average age of a user's friends.",
+    "Path-based features look at sequences of nodes. Shortest path length between two nodes or the number of common neighbors are powerful relational features.",
+    "This converts local graph topology into a flat, tabular format suitable for standard machine learning models."
+  ],
+  "definitions": [
+    {
+      "term": "Agregasi ketetanggaan",
+      "meaning": "Proses merangkum atribut-atribut dari simpul-simpul yang terhubung langsung dengan sebuah simpul target (misalnya, rata-rata atau nilai maksimum)."
+    },
+    {
+      "term": "Fitur berbasis jalur",
+      "meaning": "Fitur yang dihitung berdasarkan rute atau lompatan antar simpul, seperti jarak terpendek."
+    }
+  ],
+  "examples": [
+    "Recommender systems: if predicting whether user A will buy product B, a feature could be the number of shortest paths of length 3 connecting A to B."
+  ],
+  "exclude": "Complex random walk math (save for Node2Vec).",
+  "relations": "Bridges the gap between basic degree features (s04) and the message-passing mechanism of GNNs (s07).",
+  "terminology": {
+    "keep_english": ["machine learning"],
+    "indonesian_terms": ["agregasi ketetanggaan", "simpul", "jalur", "fitur", "atribut"]
+  }
+}

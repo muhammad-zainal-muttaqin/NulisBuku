@@ -1,0 +1,50 @@
+{
+  "id": "ch14_s05",
+  "topic": "Cross-modal and joint embeddings",
+  "scope": "Shared representation spaces for mapping different modalities to a common vector space.",
+  "key_concepts": [
+    "Instead of concatenating disparate features, we can learn a joint embedding space where semantically similar concepts are close together, regardless of their original modality.",
+    "Given an image $\\mathbf{x}_{img}$ and text $\\mathbf{x}_{text}$, two encoder networks $f_{\\theta}$ and $g_{\\phi}$ map them to a shared space: $\\mathbf{z}_{img} = f_{\\theta}(\\mathbf{x}_{img})$ and $\\mathbf{z}_{text} = g_{\\phi}(\\mathbf{x}_{text})$ where $\\mathbf{z}_{img}, \\mathbf{z}_{text} \\in \\mathbb{R}^d$.",
+    "The training objective (such as contrastive loss) forces the cosine similarity $\\text{sim}(\\mathbf{z}_{img}, \\mathbf{z}_{text})$ to be high for paired examples and low for mismatched examples.",
+    "Joint embeddings allow for powerful cross-modal retrieval, bridging the gap between representations designed by humans and those learned by machines."
+  ],
+  "definitions": [
+    {
+      "term": "Joint embedding space",
+      "english_source": "Joint embedding space",
+      "indonesian_target": "ruang *embedding* bersama",
+      "definition": "Sebuah ruang vektor laten di mana representasi dari modalitas yang berbeda diproyeksikan sehingga memiliki makna semantik yang sejajar."
+    },
+    {
+      "term": "Contrastive loss",
+      "english_source": "Contrastive loss",
+      "indonesian_target": "*contrastive loss*",
+      "definition": "Fungsi kerugian yang melatih jaringan neural dengan mendekatkan representasi berpasangan (mirip) dan menjauhkan representasi yang tidak terkait."
+    }
+  ],
+  "examples": [
+    "Mapping an image of a dog and the text 'a fluffy dog' to the same dense vector space, allowing distance calculations (like cosine similarity) directly between text and image."
+  ],
+  "relations": {
+    "precedes": ["ch14_s06"],
+    "follows": ["ch14_s03", "ch08_s05"]
+  },
+  "figures": [
+    {
+      "id": 3,
+      "type": "diagram konseptual",
+      "caption_indonesian": "Ruang Embedding Bersama untuk Citra dan Teks",
+      "description": "Menunjukkan dua encoder berbeda (CNN untuk citra, Transformer untuk teks) yang memproyeksikan inputnya ke dalam satu ruang vektor 3D yang sama, dengan gambar anjing dan teks 'anjing' berada di koordinat yang berdekatan."
+    }
+  ],
+  "exclusions": [
+    "Mathematical derivation of InfoNCE loss."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "joint embedding": "*joint embedding*",
+    "cross-modal": "lintas-modal (*cross-modal*)",
+    "contrastive loss": "*contrastive loss*",
+    "cosine similarity": "*cosine similarity*"
+  }
+}

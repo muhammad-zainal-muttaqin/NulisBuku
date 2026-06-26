@@ -1,0 +1,28 @@
+{
+  "id": "ch03_s03",
+  "topic": "Robust scaling",
+  "scope": "Scaling when outliers are present.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "Extreme values (outliers) skew the mean and standard deviation, ruining standard scaling.",
+    "Robust scaling substitutes the mean and standard deviation with the median and interquartile range (IQR).",
+    "By bypassing the extremes during computation, the bulk of the data remains centered properly even heavily skewed sets."
+  ],
+  "definitions": [
+    { "term": "outlier", "indonesian": "outlier", "definition": "Nilai ekstrem yang posisinya berjarak sangat jauh dari kelompok utama persebaran data." },
+    { "term": "median", "indonesian": "median", "definition": "Nilai tengah data saat telah diurutkan." },
+    { "term": "interquartile range (IQR)", "indonesian": "rentang antarkuartil (IQR)", "definition": "Jangkauan nilai penyebaran pada batas perempat rasio dua puluh lima persen hingga tujuh puluh lima persentase observasinya." }
+  ],
+  "examples": [
+    "Scaling corporate income where one CEO earns 1,000x the average employee."
+  ],
+  "relations": {
+    "builds_upon": "ch03_s02 (standardization limit)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "outlier": "outlier",
+    "interquartile range": "rentang antarkuartil"
+  },
+  "figures": []
+}

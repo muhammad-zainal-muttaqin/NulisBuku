@@ -1,0 +1,36 @@
+{
+  "id": "ch14_s04",
+  "topic": "Handling missing modalities",
+  "scope": "Dealing with the absence of an entire modality during training or inference.",
+  "key_concepts": [
+    "Unlike a single missing numerical value, multimodal data often suffers from missing modalities—an entire data source is unavailable (e.g., a patient has clinical notes but no X-ray).",
+    "Early fusion pipelines are highly fragile to missing modalities because the input vector structure breaks. Standard imputation (like mean substitution) is meaningless for an absent 768-dimensional text embedding.",
+    "Late fusion is inherently robust: if an image is missing, the image model's prediction is omitted, and the final decision relies solely on the remaining active models.",
+    "Advanced handling includes using indicator variables to flag the missing modality, or projecting inputs into a shared subspace where a missing representation can be safely bypassed or approximated."
+  ],
+  "definitions": [
+    {
+      "term": "Missing modality",
+      "english_source": "Missing modality",
+      "indonesian_target": "modalitas yang hilang",
+      "definition": "Kondisi di mana seluruh sumber data untuk satu observasi tidak tersedia secara utuh."
+    }
+  ],
+  "examples": [
+    "A product recommendation system uses image, text description, and tabular price. If a product has no image, an early fusion model expects an image vector. Adding a binary 'has_image' feature helps the model interpret a zero-filled vector as a structural zero rather than an actual visual pattern."
+  ],
+  "relations": {
+    "precedes": [],
+    "follows": ["ch14_s02", "ch05_s04"]
+  },
+  "figures": [],
+  "exclusions": [
+    "Deep generative imputation math (e.g., cross-modal VAEs)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "missing modality": "modalitas yang hilang",
+    "imputation": "imputasi",
+    "indicator variable": "variabel indikator"
+  }
+}

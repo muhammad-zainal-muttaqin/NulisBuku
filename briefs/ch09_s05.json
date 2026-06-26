@@ -1,0 +1,39 @@
+{
+  "id": "ch09_s05",
+  "title": "SHAP for feature diagnosis",
+  "scope": "Modern attribution; recency hook. Explains SHAP as the contemporary standard for understanding both global and local feature contributions, including directional impact.",
+  "key_concepts": [
+    "SHAP (SHapley Additive exPlanations) is based on cooperative game theory and explains individual predictions.",
+    "Unlike global permutation importance, SHAP shows the exact direction (positive/negative) and magnitude of a feature's effect on a single specific prediction.",
+    "Aggregating local SHAP values provides a comprehensive global view of feature behavior across the dataset."
+  ],
+  "definitions": [
+    "SHAP: A method to explain individual predictions by computing the contribution of each feature to the prediction, compared to the average model output."
+  ],
+  "examples": [
+    "While permutation importance shows 'age' is important, SHAP reveals that an age over 50 increases the predicted risk by 12% for patient A, but decreases it by 2% for patient B due to interactions with other features."
+  ],
+  "relations_to_other_chapters": [
+    "Builds on previous global metrics (s04) by offering local interpretability."
+  ],
+  "terminology_preferences": [
+    "SHAP",
+    "model",
+    "baseline",
+    "feature",
+    "predictive utility"
+  ],
+  "what_to_exclude": [
+    "The exact mathematical Shapley value formula and combinatorial calculation.",
+    "TreeSHAP vs KernelSHAP optimization details."
+  ],
+  "provenance": [
+    {
+      "source": "https://christophm.github.io/interpretable-ml-book/shap.html",
+      "excerpt_or_location": "SHAP (SHapley Additive exPlanations)",
+      "type": "book",
+      "date": "2023",
+      "confidence": "verified"
+    }
+  ]
+}

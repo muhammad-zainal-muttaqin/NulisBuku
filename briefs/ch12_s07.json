@@ -1,0 +1,34 @@
+{
+  "id": "ch12_s07",
+  "topic": "Audio embeddings and aggregation over time",
+  "scope": "Pooling across frames.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "A fundamental difference between images and audio: audio is inherently sequential and unfolds over time. Processing a short audio clip produces a long sequence of frame-level representations.",
+    "The challenge of dimensionality: if a downstream classifier needs to predict one label per clip (e.g., classifying a genre or detecting a siren), the sequence of frames must be condensed into a single fixed-size vector.",
+    "Aggregation strategies: using pooling mechanisms along the time axis. Average pooling smooths out the background signal, while max pooling captures sudden acoustic events (like a glass breaking).",
+    "More advanced aggregation uses attention mechanisms, allowing the model to dynamically weight which time frames contain the most relevant semantic information before summing them into the final audio embedding."
+  ],
+  "definitions": [
+    { "term": "audio embedding", "indonesian": "audio embedding", "definition": "A dense vector representation that summarizes the acoustic and semantic content of an entire audio clip." },
+    { "term": "pooling", "indonesian": "pooling", "definition": "An aggregation operation that down-samples a representation, reducing its dimensionality while retaining its most important information." },
+    { "term": "frame", "indonesian": "frame (bingkai)", "definition": "A short, distinct segment of time within an audio signal." }
+  ],
+  "examples": [
+    "Imagine a 10-second recording of a quiet room suddenly interrupted by a dog barking at second 5. Average pooling might dilute the bark, but max pooling or attention will capture the bark's signature and use it to classify the clip correctly."
+  ],
+  "relations": {
+    "builds_toward": "ch14 (how aggregated audio vectors are concatenated with text/image vectors in multimodal setups)"
+  },
+  "exclusions": [
+    "Do not dive into RNN/LSTM architectures; focus strictly on the pooling/aggregation of existing feature frames."
+  ],
+  "terminology_preferences": {
+    "audio embedding": "audio embedding (keep English)",
+    "pooling": "pooling (keep English)",
+    "frame": "frame",
+    "attention": "attention (keep English)",
+    "classifier": "classifier (keep English)"
+  },
+  "figures": []
+}

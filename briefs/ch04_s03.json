@@ -1,0 +1,27 @@
+{
+  "id": "ch04_s03",
+  "topic": "Frequency and count encoding",
+  "scope": "Cheap encodings for cardinality.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "A simple way to reduce dimensions for high-cardinality features.",
+    "Replaces the category label with the frequency (or raw count) of its occurrence in the dataset.",
+    "If the frequency is correlated with the specific target task, this provides strong signal.",
+    "Risk: Two totally different categories sharing the same count will collide and look identical to the model."
+  ],
+  "definitions": [
+    { "term": "frequency encoding", "indonesian": "frequency encoding", "definition": "Mengganti nama kelas kategori tekstual dengan nilai persentase proporsi kemunculannya di himpunan rujukan awal." }
+  ],
+  "examples": [
+    "Replacing city names with the strict number of orders placed in those respective cities."
+  ],
+  "relations": {
+    "builds_upon": "ch04_s01 (high cardinality intro)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "frequency encoding": "frequency encoding",
+    "count encoding": "count encoding"
+  },
+  "figures": []
+}

@@ -1,0 +1,48 @@
+{
+  "id": "ch17_s01",
+  "topic": "The design framework: from prediction goal to final pipeline",
+  "scope": "Goal → unit → target → split (the backbone, set up in Ch 1 s05) → sources → transform → select → baseline → evaluate.",
+  "key_concepts": [
+    "Feature engineering is not an isolated step but a continuous process tied to the prediction goal.",
+    "The core backbone must be established first: define the prediction goal, the unit of observation, the target, and the data splitting strategy.",
+    "Once the backbone is solid, the pipeline proceeds: gathering data sources, applying transformations, selecting features, establishing a baseline model, and evaluating feature quality.",
+    "Errors early in the design framework (like wrong unit or leaking target) invalidate all subsequent feature engineering efforts."
+  ],
+  "definitions": [
+    {
+      "term": "Design framework",
+      "indonesian": "Kerangka perancangan",
+      "meaning": "A structured sequence of steps to build a robust feature engineering pipeline, starting from the problem definition down to final evaluation."
+    },
+    {
+      "term": "Unit of observation",
+      "indonesian": "Unit observasi",
+      "meaning": "What one row in the dataset represents (e.g., a user, a transaction, a sensor reading per minute)."
+    }
+  ],
+  "examples": [
+    "A credit scoring model: the goal is predicting default, the unit is an individual loan application, the target is default within 12 months, the split is temporal based on application date. Then features are engineered from past financial behavior, evaluated against a simple logistic regression baseline."
+  ],
+  "relations": {
+    "ch01_s05": "Revisits the unit, target, and split backbone introduced early in the book.",
+    "ch09": "Connects back to feature quality evaluation and baselines."
+  },
+  "figures": [
+    {
+      "id": 1,
+      "caption": "Kerangka perancangan pipeline rekayasa fitur.",
+      "type": "skema",
+      "description": "A flowchart showing the sequential steps: Goal -> Unit -> Target -> Split -> Sources -> Transform -> Select -> Baseline -> Evaluate."
+    }
+  ],
+  "exclusions": [
+    "Do not delve into MLOps topics like continuous integration or deployment here."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "feature engineering": "rekayasa fitur",
+    "baseline": "baseline",
+    "pipeline": "pipeline",
+    "split": "split"
+  }
+}

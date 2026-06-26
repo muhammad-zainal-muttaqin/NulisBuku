@@ -1,0 +1,30 @@
+{
+  "id": "ch13_s02",
+  "title": "Fitur Ketetanggaan dan Autokorelasi Spasial",
+  "scope": "Spatial structure as signal. Neighborhood features and spatial autocorrelation.",
+  "key_concepts": [
+    "Locations are rarely independent. Tobler's First Law of Geography states that near things are more related than distant things.",
+    "Spatial autocorrelation measures how much a variable's value at one location depends on values at neighboring locations.",
+    "Neighborhood features explicitly encode this structure. For example, averaging the target variable or specific feature values of the K nearest neighbors.",
+    "These features allow non-spatial models (like random forests) to approximate spatial context without specialized spatial architectures."
+  ],
+  "definitions": [
+    {
+      "term": "Autokorelasi Spasial",
+      "meaning": "Tingkat kemiripan suatu nilai dengan nilai di lokasi sekitarnya. Autokorelasi positif berarti area yang berdekatan memiliki nilai yang serupa."
+    },
+    {
+      "term": "Spatial lag",
+      "meaning": "Nilai rata-rata berbobot dari suatu variabel di lokasi-lokasi tetangga."
+    }
+  ],
+  "examples": [
+    "Predicting retail store sales: a feature could be the average sales of all stores in the same postal code or within a 5 km radius (a spatial lag feature)."
+  ],
+  "exclude": "Moran's I math, Geary's C deep dive. Keep it focused on feature engineering rather than pure spatial statistics.",
+  "relations": "Builds on s01 by moving from static location to relationships between locations. Sets up the risk of spatial leakage in s03.",
+  "terminology": {
+    "keep_english": ["random forest"],
+    "indonesian_terms": ["fitur", "autokorelasi spasial", "ketetanggaan", "spasial", "model"]
+  }
+}

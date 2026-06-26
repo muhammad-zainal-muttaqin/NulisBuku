@@ -1,0 +1,29 @@
+{
+  "id": "ch05_s07",
+  "topic": "The boundary between data cleaning and feature engineering",
+  "scope": "Where this book stops.",
+  "key_concepts": [
+    "Data cleaning is about correcting facts and making the dataset faithfully represent reality (e.g., fixing typos, standardizing date formats, deduplication).",
+    "Feature engineering is about representation: changing the shape of the data so a machine learning model can extract signal from it efficiently.",
+    "Fixing an impossible value (age=150) is data cleaning. Deciding to encode a missing value as a new signal feature or imputing it within a cross-validation loop is feature engineering.",
+    "This book focuses on the latter: decisions that alter representation and interact directly with the learning pipeline."
+  ],
+  "definitions": [],
+  "examples": [
+    "Data cleaning: parsing string text '1,200.50' into a numeric float.",
+    "Feature engineering: applying a robust scaler to that float inside a modeling pipeline to help an SVM converge."
+  ],
+  "relations": {
+    "builds_toward": "ch17 (General design principles)"
+  },
+  "figures": [],
+  "exclusions": [
+    "Detailed tutorials on string parsing, regex for data wrangling, or database deduplication."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "data cleaning": "data cleaning",
+    "feature engineering": "rekayasa fitur",
+    "pipeline": "pipeline"
+  }
+}

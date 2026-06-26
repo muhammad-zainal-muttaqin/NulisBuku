@@ -1,0 +1,30 @@
+{
+  "id": "ch16_s05",
+  "topic": "Case study: automated + human-curated features on a relational dataset",
+  "scope": "DFS/AutoFE proposals filtered by human validation, measured against a baseline.",
+  "key_concepts": [
+    "Establishing a baseline model using only explicitly provided raw features on a relational dataset.",
+    "Executing an automated feature engineering pass (like Deep Feature Synthesis) to generate a vast candidate feature space.",
+    "Applying statistical selection to prune the space (removing zero-variance, highly correlated, or zero-importance features).",
+    "The critical human curation step: inspecting the top-ranked generated features to catch domain logic errors or leakage that statistical metrics missed.",
+    "Comparing the performance of the final human-curated automated pipeline against the raw baseline."
+  ],
+  "definitions": [],
+  "examples": [
+    "A retail dataset predicting customer churn. The baseline uses basic age and total spent. DFS generates 800 features. Statistical filters drop 750. A human reviews the remaining 50 and discovers that 'time since last login' leaks future data because of how the database records logins after churn. The human drops it. The final model uses 20 valid, automated features and beats the baseline by 8%."
+  ],
+  "relations": {
+    "prerequisites": "Ch 16 concepts, Ch 7 (selection), Ch 9 (evaluation)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not include the full implementation code of the DFS algorithm or dataset loading. Keep the code placeholder minimal."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "baseline": "baseline",
+    "Deep Feature Synthesis": "Deep Feature Synthesis",
+    "feature space": "ruang fitur",
+    "data leakage": "data leakage"
+  }
+}

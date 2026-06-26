@@ -1,0 +1,37 @@
+{
+  "id": "ch14_s07",
+  "topic": "Case study: combining tabular + image/text/sensor in one pipeline",
+  "scope": "End-to-end case study on multimodal fusion, highlighting modality-specific leakage.",
+  "key_concepts": [
+    "Building a single predictive pipeline combining categorical tabular data, text descriptions, and product images.",
+    "The pipeline extracts representations using distinct approaches: one-hot encoding for tabular data, TF-IDF or text embeddings for descriptions, and a pretrained CNN (or CLIP) for images.",
+    "Crucial Modality-Specific Leakage Callout: When splitting data into train/test sets, the split must happen at the entity level, not the modality level. If an entity's image is in the training set but its text description is in the test set, information leaks across the split.",
+    "Proper pipeline discipline (*praktik pipeline yang benar*) dictates that early fusion concatenation and scaling must only be fitted on the training split to avoid data leakage."
+  ],
+  "definitions": [
+    {
+      "term": "Entity-level splitting",
+      "english_source": "Entity-level splitting",
+      "indonesian_target": "*splitting* tingkat entitas",
+      "definition": "Praktik memastikan bahwa seluruh modalitas yang berasal dari observasi yang sama ditempatkan secara utuh di dalam set pelatihan atau set pengujian tanpa dipecah."
+    }
+  ],
+  "examples": [
+    "Predicting house prices. A pipeline extracts 10 features from tabular data (bedrooms, area), 50 components from the text listing via TF-IDF + PCA, and 512 features from the photos via ResNet. These 572 features are concatenated, scaled using a StandardScaler fitted only on the training set, and fed to a Random Forest."
+  ],
+  "relations": {
+    "precedes": [],
+    "follows": ["ch14_s02", "ch02_s04"]
+  },
+  "figures": [],
+  "exclusions": [
+    "Hyperparameter tuning details."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "pipeline discipline": "praktik pipeline yang benar",
+    "leakage": "*leakage*",
+    "early fusion": "*early fusion*",
+    "scaling": "penskalaan (*scaling*)"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "ch09_s02",
+  "title": "Establishing a baseline",
+  "scope": "You can't judge features without one. Defines how to set a minimal, simple model and feature set as a reference point to measure the actual contribution of newly engineered features.",
+  "key_concepts": [
+    "A baseline model provides a reference point for evaluating all subsequent feature engineering efforts.",
+    "It uses simple, readily available features without complex transformations.",
+    "Every new feature or complex representation must justify its added cost by outperforming the baseline."
+  ],
+  "definitions": [
+    "Baseline: A reference performance metric achieved by a simple, interpretable model using basic features."
+  ],
+  "examples": [
+    "Using raw numerical variables and simple one-hot encoding for categorical variables as a starting point before trying target encoding or deep embeddings."
+  ],
+  "relations_to_other_chapters": [
+    "Acts as the prerequisite step before conducting ablation studies (s03) or checking SHAP values (s05)."
+  ],
+  "terminology_preferences": [
+    "baseline",
+    "model",
+    "encoding",
+    "embedding",
+    "pipeline"
+  ],
+  "what_to_exclude": [
+    "Complex model hyperparameter tuning details."
+  ],
+  "provenance": [
+    {
+      "source": "scikit-learn docs",
+      "excerpt_or_location": "Dummy estimators",
+      "type": "docs",
+      "date": "2024",
+      "confidence": "verified"
+    }
+  ]
+}

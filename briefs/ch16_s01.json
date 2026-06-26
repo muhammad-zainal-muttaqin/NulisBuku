@@ -1,0 +1,51 @@
+{
+  "id": "ch16_s01",
+  "topic": "Automated feature generation: Deep Feature Synthesis and the search space",
+  "scope": "DFS over relational/event data (ties to Ch 6 s04); what the search space is and why it explodes (academic primary: DFS).",
+  "key_concepts": [
+    "Recap of relational datasets where entities are linked across tables, forming a natural basis for automated aggregation.",
+    "Introduction to Deep Feature Synthesis (DFS) as an algorithm that systematically stacks mathematical primitives (transformations and aggregations) across relational links.",
+    "The concept of 'depth' in DFS, which determines how many layers of relationships the algorithm traverses to build a single feature.",
+    "The inherent challenge of feature space explosion: stacking primitives recursively creates an exponentially large number of features, leading to redundancy, noise, and computational overhead."
+  ],
+  "definitions": [
+    {
+      "term": "Deep Feature Synthesis (DFS)",
+      "meaning": "An algorithm that automatically generates features from relational datasets by recursively applying mathematical operations along table relationships."
+    },
+    {
+      "term": "Feature primitives",
+      "meaning": "Basic building-block operations, such as sum, mean, or time extractions, used to construct complex features."
+    },
+    {
+      "term": "Feature space explosion",
+      "meaning": "The combinatorial explosion of generated features when automation algorithms stack operations deeply, creating massive dimensionality."
+    }
+  ],
+  "examples": [
+    "A baseline feature is a customer's transaction amount. A depth-1 DFS feature might be the sum of a customer's transactions. A depth-2 DFS feature could be the average of the sums of transactions for all customers in a specific region."
+  ],
+  "relations": {
+    "prerequisites": "Ch 6 s04 (relational & event-log features).",
+    "builds_toward": "Ch 16 s04 (filtering the explosion with human validation)."
+  },
+  "figures": [
+    {
+      "number": "16.1",
+      "caption": "Ilustrasi pembentukan fitur menggunakan Deep Feature Synthesis (DFS) melintasi entitas relasional.",
+      "type": "diagram konseptual",
+      "depicts": "A multi-table schema (e.g., Customer, Order, Transaction) showing how a primitive operation on Transaction (e.g., SUM) bubbles up to Order, and then another primitive (e.g., MEAN) bubbles up to Customer to form a 'depth-2' feature."
+    }
+  ],
+  "exclusions": [
+    "Avoid detailed API tutorials of Featuretools. Keep the focus on the algorithm's mechanics and the structural problem of feature explosion.",
+    "Do not dive into advanced graph theory algorithms here; focus strictly on tabular/relational DFS."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "Deep Feature Synthesis": "Deep Feature Synthesis",
+    "primitive": "primitive",
+    "relational dataset": "dataset relasional",
+    "feature space explosion": "ledakan ruang fitur"
+  }
+}

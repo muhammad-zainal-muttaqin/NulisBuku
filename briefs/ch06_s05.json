@@ -1,0 +1,39 @@
+{
+  "id": "ch06_s05",
+  "topic": "Domain-driven features",
+  "scope": "Encoding subject-matter expertise into derived features. Explains how business logic, medical indices, and financial formulas are translated into mathematical features.",
+  "key_concepts": [
+    "Domain-driven features are explicit mathematical formulations of human expertise and industry-specific logic.",
+    "They bypass the need for a model to 'learn' known scientific or business facts from scratch, saving training time and improving accuracy.",
+    "These features often take the form of standard indices (e.g., BMI, credit scores) or specialized business rules.",
+    "They represent the purest form of human-designed representations, injecting prior knowledge directly into the dataset."
+  ],
+  "definitions": [
+    {
+      "term": "domain-driven feature",
+      "target_indonesian": "fitur berbasis domain",
+      "definition": "A feature constructed using specific subject-matter expertise or established industry formulas rather than generic mathematical operations."
+    }
+  ],
+  "examples": [
+    {
+      "description": "Calculating Body Mass Index (BMI) from height and weight in a medical dataset."
+    },
+    {
+      "description": "Computing the 'loan-to-value' ratio in a mortgage dataset using established financial regulations."
+    }
+  ],
+  "relations": {
+    "builds_toward": "The synthesis in Chapter 17 on when to use designed vs learned representations.",
+    "prerequisites": "None."
+  },
+  "figures": [],
+  "exclusions": [
+    "Deep dive into the specific medical or financial theory behind the formulas."
+  ],
+  "target_word_count_indonesian": 360,
+  "terminology_preferences": {
+    "English": ["machine learning"],
+    "Indonesian": ["fitur berbasis domain", "dirancang manusia", "model", "domain"]
+  }
+}

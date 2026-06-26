@@ -1,0 +1,32 @@
+{
+  "id": "ch07_s03",
+  "title": "Wrapper methods",
+  "scope": "RFE, sequential selection.",
+  "key_concepts": [
+    "Wrapper methods evaluate subsets of features by training and testing a specific machine learning model.",
+    "They treat feature selection as a search problem, aiming to find the subset that maximizes model performance.",
+    "Recursive Feature Elimination (RFE) works backward: it trains the model, drops the least important feature(s), and repeats until reaching the desired number.",
+    "Sequential Feature Selection includes forward selection (starting with zero features and adding the best one iteratively) and backward elimination.",
+    "Trade-off: Wrapper methods are highly accurate for the chosen model but computationally expensive and prone to overfitting on small datasets."
+  ],
+  "definitions": {
+    "Wrapper methods": "Metode seleksi fitur yang membungkus algoritma pencarian di sekitar model prediktif tertentu untuk mengevaluasi kualitas subset fitur."
+  },
+  "examples": [
+    "Describe the step-by-step process of RFE using a linear model, showing how the coefficient weights dictate which feature is dropped in each iteration."
+  ],
+  "relations": [
+    "Compare the computational cost against filter methods (s02) and embedded methods (s04)."
+  ],
+  "terminology_preferences": {
+    "wrapper methods": "metode wrapper",
+    "Recursive Feature Elimination (RFE)": "Recursive Feature Elimination (RFE) (italicized English)",
+    "sequential selection": "seleksi sekuensial",
+    "forward selection": "forward selection (italicized)",
+    "backward elimination": "backward elimination (italicized)",
+    "subset": "subset"
+  },
+  "exclude": [
+    "Exhaustive search (testing all 2^N combinations) as a practical option, since it is computationally impossible for large N."
+  ]
+}

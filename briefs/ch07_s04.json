@@ -1,0 +1,33 @@
+{
+  "id": "ch07_s04",
+  "title": "Embedded methods",
+  "scope": "LASSO, tree-based importance, Boruta.",
+  "key_concepts": [
+    "Embedded methods perform feature selection naturally during the model training process itself.",
+    "They combine the speed of filter methods with the model-specific accuracy of wrapper methods.",
+    "LASSO (L1 regularization) adds a penalty equal to the absolute magnitude of coefficients. This unique geometric property shrinks less important feature coefficients to exactly zero, effectively selecting features.",
+    "Tree-based models (like Random Forest) provide built-in feature importance by tracking how much each feature decreases node impurity across all trees.",
+    "Boruta is a robust extension of tree-based importance. It creates 'shadow features' (random permutations of original features) to set a statistical baseline, selecting only features that perform significantly better than random noise."
+  ],
+  "definitions": {
+    "Embedded methods": "Metode seleksi fitur yang terintegrasi langsung di dalam proses pelatihan model."
+  },
+  "examples": [
+    "Contrast L1 (LASSO) with L2 (Ridge) conceptually: explain why L1 zeros out coefficients while L2 only shrinks them close to zero."
+  ],
+  "relations": [
+    "Bridges the gap between feature selection and model training.",
+    "Ties into Chapter 9's discussion of feature importance (model-based importance)."
+  ],
+  "terminology_preferences": {
+    "embedded methods": "metode embedded",
+    "LASSO": "LASSO",
+    "regularization": "regularisasi",
+    "tree-based importance": "importance berbasis pohon",
+    "Boruta": "Boruta",
+    "shadow features": "fitur bayangan (shadow features)"
+  },
+  "exclude": [
+    "Mathematical derivation of L1 vs L2 geometry (keep it intuitive)."
+  ]
+}

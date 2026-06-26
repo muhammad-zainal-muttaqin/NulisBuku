@@ -1,0 +1,24 @@
+{
+  "id": "ch08_s02",
+  "title": "PCA and SVD / truncated SVD",
+  "word_budget": 350,
+  "key_concepts": [
+    "Principal Component Analysis (PCA) and Singular Value Decomposition (SVD) are the workhorses of linear dimensionality reduction.",
+    "PCA finds orthogonal directions (principal components) that maximize the variance of the data.",
+    "SVD factors the original data matrix into three components.",
+    "Truncated SVD is specifically used for sparse matrices where mean-centering (required by standard PCA) would destroy sparsity."
+  ],
+  "equations": [
+    "Data matrix: $X \\in \\mathbb{R}^{n \\times d}$",
+    "SVD factorization: $X = U \\Sigma V^T$, where $U$ and $V$ are orthogonal matrices and $\\Sigma$ is a diagonal matrix of singular values.",
+    "PCA projection: $X_{reduced} = X W_k$, projecting data onto the top $k$ principal components."
+  ],
+  "examples": [
+    "Mention applying Truncated SVD to sparse TF-IDF text matrices (connecting to Ch 11)."
+  ],
+  "relations": "Truncated SVD connects to Ch 11 text processing.",
+  "terminology": {
+    "keep_english": ["Principal Component Analysis (PCA)", "Singular Value Decomposition (SVD)", "Truncated SVD", "variance", "sparse"],
+    "indonesian": ["vektor", "matriks", "komponen utama", "ortogonal"]
+  }
+}

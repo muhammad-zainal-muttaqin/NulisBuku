@@ -1,0 +1,35 @@
+{
+  "id": "ch01_s05",
+  "topic": "From prediction question to the learning table: unit, target, and feature-availability cutoff",
+  "scope": "The foundation: defining one sample, the target, and index time before making any features.",
+  "target_word_count_indonesian": 400,
+  "key_concepts": [
+    "Before extracting features, we must translate the business/prediction question into a strict learning table structure.",
+    "Unit of observation: What exactly is one row? An entity (User), an event (Transaction), or a timestamp (User-Day)?",
+    "Target and horizon: What are we predicting, and over what future window?",
+    "Index time / Prediction time: The exact point in time when the prediction is made. Any data from after this time is illegal for feature engineering (data leakage)."
+  ],
+  "definitions": [
+    { "term": "unit of observation", "indonesian": "unit observasi", "definition": "The exact entity or event represented by one row in the dataset." },
+    { "term": "prediction horizon", "indonesian": "horizon prediksi", "definition": "The specific future time window for which the target is being predicted." },
+    { "term": "index time", "indonesian": "waktu prediksi", "definition": "The exact moment the model must make its prediction; the cutoff for available features." },
+    { "term": "data leakage", "indonesian": "data leakage", "definition": "Accidentally including information from the future (or the target itself) into the features." }
+  ],
+  "examples": [
+    "Predicting credit card churn. Unit: Customer-Month. Target: Canceled in the next 30 days. Index time: The last day of the current month. Features can only use data strictly before the index time."
+  ],
+  "relations": {
+    "builds_toward": "ch02 (where data leakage is the main topic)",
+    "builds_toward": "ch17 (synthesis / design framework)"
+  },
+  "exclusions": [
+    "Do not explain cross-validation or detailed leakage types (e.g. target encoding leakage) here. Just establish the timeline cutoff."
+  ],
+  "terminology_preferences": {
+    "unit of observation": "unit observasi",
+    "target": "target",
+    "horizon": "horizon",
+    "data leakage": "data leakage"
+  },
+  "figures": []
+}

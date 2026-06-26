@@ -1,0 +1,41 @@
+{
+  "id": "ch06_s07",
+  "topic": "The risk of feature explosion",
+  "scope": "The negative consequences of deriving too many features. Explores why an excess of features leads to collinearity, increased compute costs, and severe overfitting.",
+  "key_concepts": [
+    "Feature engineering is not about maximizing the number of columns; more features do not automatically equal better model performance.",
+    "Feature explosion occurs when combinatorial derivations (polynomials, interactions) or excessive aggregations bloat the dataset dimensionality.",
+    "High dimensionality directly causes the 'curse of dimensionality', making the data space sparse and making it easier for models to overfit on noise.",
+    "Excessive features often introduce severe multicollinearity, where many features carry identical or highly overlapping signals, destabilizing models like linear regression."
+  ],
+  "definitions": [
+    {
+      "term": "multicollinearity",
+      "target_indonesian": "multikolinearitas",
+      "definition": "A statistical phenomenon in which two or more predictor variables in a model are highly correlated, providing redundant information."
+    },
+    {
+      "term": "curse of dimensionality",
+      "target_indonesian": "kutukan dimensi",
+      "definition": "The problem where the volume of the feature space grows exponentially as dimensions are added, making available data sparse and hindering model learning."
+    }
+  ],
+  "examples": [
+    {
+      "description": "Generating every possible ratio and difference from 100 base features results in nearly 10,000 new features, most of which are pure noise."
+    }
+  ],
+  "relations": {
+    "builds_toward": "Feature selection methodologies in Chapter 7 and evaluation techniques in Chapter 9.",
+    "prerequisites": "Polynomial feature explosion risk (ch06_s02)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Detailed mathematics of the curse of dimensionality (distance metrics in high-D space) — keep it conceptual."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "English": ["machine learning", "overfitting", "noise"],
+    "Indonesian": ["ledakan fitur", "multikolinearitas", "kutukan dimensi", "model"]
+  }
+}

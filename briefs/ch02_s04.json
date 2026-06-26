@@ -1,0 +1,30 @@
+{
+  "id": "ch02_s04",
+  "topic": "Why leakage is born at the feature engineering stage",
+  "scope": "The book's reason for making leakage a recurring callout.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Data leakage is practically non-existent in model selection or hyperparameter tuning; it almost exclusively happens during data pre-processing and feature engineering.",
+    "The act of deriving aggregate features (mean, counts, ratios) is the primary gateway for contamination.",
+    "Applying feature transformations on the full tabular dataset before partitioning it guarantees train-test contamination.",
+    "Because it happens during feature extraction, enforcing 'praktik pipeline yang benar' (proper pipeline discipline) is essential."
+  ],
+  "definitions": [
+    { "term": "praktik pipeline yang benar", "indonesian": "praktik pipeline yang benar", "definition": "Disiplin merancang urutan transformasi di dalam struktur isolasi yang ketat agar tidak terjadi kebocoran informasi antar partisi pengujian." }
+  ],
+  "examples": [
+    "A target encoding step requires looking at the target column. If done globally before a formal split, every feature value holds a cheat sheet to the answers."
+  ],
+  "relations": {
+    "builds_upon": "ch02_s03 (the taxonomy)",
+    "builds_toward": "ch02_s05 (how to prevent it through splits)"
+  },
+  "exclusions": [
+    "Do not re-explain the definitions of train-test contamination."
+  ],
+  "terminology_preferences": {
+    "praktik pipeline yang benar": "praktik pipeline yang benar",
+    "feature engineering": "rekayasa fitur"
+  },
+  "figures": []
+}

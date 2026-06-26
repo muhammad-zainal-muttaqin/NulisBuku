@@ -1,0 +1,48 @@
+{
+  "id": "ch10_s05",
+  "topic": "Temporal validation: avoiding look-ahead leakage",
+  "scope": "The dominant leakage risk in time series (modality-specific leakage callout: overlapping windows crossing split boundaries) and how to validate correctly with purge gaps.",
+  "key_concepts": [
+    "Applying standard random cross-validation to time series data is a fundamental error. It breaks temporal order, allowing the model to train on future data to predict the past.",
+    "Look-ahead leakage occurs when any information from the prediction horizon leaks back into the training features.",
+    "The correct approach is temporal splitting, where the training split always strictly precedes the validation split in time.",
+    "Modality-specific leakage risk: Because windowing creates overlapping samples, the end of the training set and the start of the validation set often share the same underlying raw data in their lookback windows.",
+    "To maintain praktik pipeline yang benar, a 'purge gap' must be inserted between splits. This gap drops a number of samples equal to the lookback window plus the horizon, ensuring no raw data is shared."
+  ],
+  "definitions": [
+    {
+      "term": "Look-ahead leakage",
+      "meaning": "A form of data leakage where future information inadvertently informs predictions about the past or present."
+    },
+    {
+      "term": "Purge gap",
+      "meaning": "A deliberate exclusion of overlapping samples between temporal splits to guarantee the validation set shares no historical data with the training set."
+    }
+  ],
+  "examples": [
+    "Using random K-Fold on daily stock data might allow the model to learn from Friday's crash while trying to predict Thursday's closing price.",
+    "Dropping 7 days of samples between the end of the training split and the start of the test split because the lookback window is 7 days."
+  ],
+  "relations": {
+    "to_chapter_2": "Applies the core concepts of 'praktik pipeline yang benar' and leakage from Chapter 2 specifically to the temporal domain."
+  },
+  "figures": [
+    {
+      "caption": "Temporal Splitting dan Purge Gap",
+      "type": "diagram konseptual",
+      "description": "Visualisasi pemisahan data temporal (train lalu test) yang menyoroti perlunya purge gap (celah sampel yang dibuang) di antara keduanya agar jendela lookback dari set validasi tidak tumpang-tindih dengan set pelatihan."
+    }
+  ],
+  "exclusions": [
+    "Combinatorial purged cross-validation (keep it to simple temporal splits and gaps)."
+  ],
+  "target_word_count_indonesian": 400,
+  "terminology_preferences": {
+    "look-ahead leakage": "look-ahead leakage",
+    "cross-validation": "cross-validation",
+    "temporal split": "split temporal",
+    "purge gap": "purge gap",
+    "lookback": "lookback",
+    "praktik pipeline yang benar": "praktik pipeline yang benar"
+  }
+}

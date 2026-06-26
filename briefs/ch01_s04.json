@@ -1,0 +1,28 @@
+{
+  "id": "ch01_s04",
+  "topic": "The myth 'feature engineering is dead in deep learning'",
+  "scope": "Reframe: FE shifts form, doesn't disappear in deep learning.",
+  "target_word_count_indonesian": 330,
+  "key_concepts": [
+    "Deep learning can extract powerful representations internally, leading to the myth that human feature engineering is obsolete.",
+    "However, feature engineering did not die; it shifted location and form.",
+    "Even with DL, humans must still design the learning task, frame the target, tokenize the inputs, and apply domain constraints (like augmentation)."
+  ],
+  "definitions": [],
+  "examples": [
+    "An image classifier learns internal textures (learned by machine), but the human must still design the image cropping, resizing, and color normalization (designed by human).",
+    "In NLP, a model extracts semantic embeddings, but humans define how text is chunked into tokens."
+  ],
+  "relations": {
+    "builds_upon": "ch01_s03 (the spectrum of designed vs learned)"
+  },
+  "exclusions": [
+    "Do not go deep into NLP or Computer Vision specifics (that is for Ch 11 and 12). Keep it general."
+  ],
+  "terminology_preferences": {
+    "deep learning": "deep learning",
+    "feature engineering": "rekayasa fitur",
+    "myth": "mitos"
+  },
+  "figures": []
+}

@@ -1,0 +1,40 @@
+{
+  "id": "ch12_s01",
+  "topic": "Images: normalization and augmentation",
+  "scope": "Preparing pixels.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Images as raw numerical grids (pixels, color channels) and the need for scaling.",
+    "Normalization: standardizing pixel intensities (e.g., scaling to [0, 1] or using dataset mean/std) to ensure stable and fast convergence during training.",
+    "Augmentation: applying random transformations (like rotation, cropping, or color jitter) during training to build invariance and prevent overfitting.",
+    "Pipeline discipline: augmentation belongs strictly to the training split, while normalization must be applied consistently across training and inference."
+  ],
+  "definitions": [
+    { "term": "normalization", "indonesian": "normalisasi", "definition": "Scaling raw pixel values into a standard range or distribution." },
+    { "term": "augmentation", "indonesian": "augmentasi", "definition": "Applying random, label-preserving transformations to training images to artificially expand the dataset." },
+    { "term": "pixel", "indonesian": "piksel", "definition": "The smallest unit of a digital image, containing intensity values for color channels." }
+  ],
+  "examples": [
+    "Explain how a model could struggle if one image has pixel values in [0, 255] and another is scaled to [0, 1], highlighting the need for normalization.",
+    "Describe flipping a picture of a cat: it is still a cat, which teaches the model rotational invariance through augmentation."
+  ],
+  "relations": {
+    "builds_toward": "ch12_s02 (how prepared pixels are processed into handcrafted features)"
+  },
+  "exclusions": [
+    "Do not discuss CNN architectures or embeddings here.",
+    "Do not explain specific tensor operations or detailed matrix math for augmentation."
+  ],
+  "terminology_preferences": {
+    "image": "citra",
+    "normalization": "normalisasi",
+    "augmentation": "augmentasi",
+    "pixel": "piksel",
+    "channel": "kanal",
+    "training": "pelatihan",
+    "inference": "inference (keep English)",
+    "pipeline": "pipeline (keep English)",
+    "overfitting": "overfitting (keep English)"
+  },
+  "figures": []
+}

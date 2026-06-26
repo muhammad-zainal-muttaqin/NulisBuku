@@ -1,0 +1,47 @@
+{
+  "subsection_id": "ch06_s08",
+  "title": "Validating whether a new feature actually helps",
+  "scope": "Tie-in to Ch 9. Explain that newly derived features must be tested against a baseline to ensure they provide actual predictive value, rather than just adding noise or causing overfitting.",
+  "key_concepts": [
+    "Feature derivation is a hypothesis; validation is the proof. A new feature might logically make sense but fail to improve the model.",
+    "The baseline comparison: always evaluate the model's performance with and without the newly constructed feature.",
+    "Risk of overfitting: adding too many derived features can cause the model to memorize the training data. Cross-validation is essential.",
+    "Forward-pointer to Chapter 9: Detailed techniques like ablation studies and SHAP will be covered in depth in Chapter 9."
+  ],
+  "definitions": [
+    {
+      "term": "baseline",
+      "indonesian": "baseline",
+      "definition": "A simple reference model used to measure if a new feature adds predictive value."
+    },
+    {
+      "term": "cross-validation",
+      "indonesian": "cross-validation",
+      "definition": "A validation technique to ensure the new feature's performance generalizes to unseen data."
+    }
+  ],
+  "examples_described": [
+    "Compare a model using only raw age and income vs. a model using age, income, and a derived wealth-to-age ratio. If the validation metric doesn't improve, the derived feature should be discarded."
+  ],
+  "relations_to_other_chapters": [
+    "Points forward to Chapter 9 (Feature Quality Evaluation) where ablation and feature importance are discussed in detail."
+  ],
+  "terminology_preferences": [
+    {
+      "english": "baseline",
+      "indonesian_target": "baseline (keep English, italicized)"
+    },
+    {
+      "english": "overfitting",
+      "indonesian_target": "overfitting (keep English, italicized)"
+    },
+    {
+      "english": "cross-validation",
+      "indonesian_target": "cross-validation (keep English, italicized)"
+    }
+  ],
+  "exclude": [
+    "Do not explain SHAP or ablation studies in detail here; save it for Chapter 9.",
+    "Do not provide code for cross-validation."
+  ]
+}

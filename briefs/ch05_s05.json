@@ -1,0 +1,35 @@
+{
+  "id": "ch05_s05",
+  "topic": "Outliers: detection vs. handling",
+  "scope": "Two separate decisions; diagnostics first.",
+  "key_concepts": [
+    "Outlier management is a two-step process: first detect them, then decide how to handle them.",
+    "Detection relies on defining what 'abnormal' means for the specific feature (e.g., standard deviations from the mean, interquartile ranges, or isolation forests).",
+    "Handling relies on understanding the nature of the outlier: is it a data entry error, or is it a rare but perfectly valid extreme event?",
+    "Automated handling without diagnostics is dangerous because valid extreme events hold critical predictive information for certain problems (e.g., fraud detection)."
+  ],
+  "definitions": [
+    {
+      "term": "Outlier",
+      "definition": "An observation that lies an abnormal distance from other values in a random sample from a population.",
+      "indonesian_translation": "outlier"
+    }
+  ],
+  "examples": [
+    "A human age recorded as 150 is likely an error and should be handled (e.g., imputed or capped). A daily transaction of $50,000 might be rare but valid, representing a whale customer or potential fraud, and should perhaps be preserved."
+  ],
+  "relations": {
+    "builds_toward": "ch05_s06 (Robust transformations)"
+  },
+  "figures": [],
+  "exclusions": [
+    "Deep dive into complex multivariate anomaly detection models like Local Outlier Factor (keep it focused on the conceptual split of detect vs. handle)."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "outlier": "outlier",
+    "detection": "deteksi",
+    "handling": "penanganan",
+    "feature": "fitur"
+  }
+}

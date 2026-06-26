@@ -1,0 +1,30 @@
+{
+  "id": "ch03_s04",
+  "topic": "Power and quantile transforms",
+  "scope": "Reshaping skewed distributions.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "Some linear models expect data to follow a normal (Gaussian) distribution natively.",
+    "Power transforms (like Log, Box-Cox, or Yeo-Johnson) mathematically shrink the long tail of a skewed distribution, making it look more like a bell curve.",
+    "Quantile transforms forcefully map any distribution to a uniform or normal shape by manipulating the absolute ranks of the data points, which completely distorts original distances but stabilizes extreme outliers."
+  ],
+  "definitions": [
+    { "term": "power transform", "indonesian": "power transform", "definition": "Transformasi matematis (seperti logaritma) untuk menstabilkan varians dan mendekatkan distribusi ke bentuk normal." },
+    { "term": "quantile transform", "indonesian": "quantile transform", "definition": "Metode pemetaan pemusatan observasi berbasis distribusi peringkat kumulatif probabilitas dari datanya." }
+  ],
+  "examples": [
+    "Applying a log transform to heavily skewed price data to stabilize the variance."
+  ],
+  "relations": {
+    "builds_upon": "ch03_s01 (skewed distributions)"
+  },
+  "exclusions": [
+    "Avoid the dense mathematical formula of Box-Cox/Yeo-Johnson."
+  ],
+  "terminology_preferences": {
+    "skewed": "menceng",
+    "power transform": "power transform",
+    "quantile transform": "quantile transform"
+  },
+  "figures": []
+}

@@ -1,0 +1,33 @@
+{
+  "id": "ch02_s01",
+  "topic": "Fit/transform: the pipeline as a training-inference contract",
+  "scope": "The mental model everything else hangs on.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Data transformation requires consistency between training and inference data.",
+    "The fit method calculates the parameters of the transformation (e.g., mean and standard deviation) from the training set.",
+    "The transform method applies these calculated parameters to both the training set and the future inference set.",
+    "Calling fit_transform on validation or inference data causes training-serving skew and invalidates predictions.",
+    "A pipeline formally encapsulates this fit/transform contract."
+  ],
+  "definitions": [
+    { "term": "pipeline", "indonesian": "pipeline", "definition": "Rangkaian operasi pemrosesan data dan algoritma yang disatukan menjadi satu objek." },
+    { "term": "fit", "indonesian": "fit", "definition": "Tahap pengamatan dan perhitungan parameter dari sebuah dataset pelataihan." },
+    { "term": "transform", "indonesian": "transform", "definition": "Tahap pengaplikasian parameter fit pada data observasi." }
+  ],
+  "examples": [
+    "Standard scaling on training data calculates mean=5.0 and std=2.0. When standardizing inference data, we must subtract 5.0 and divide by 2.0, even if the inference batch's actual mean is 7.0."
+  ],
+  "relations": {
+    "builds_toward": "ch02_s02 (how pipelines use reusable transformers)"
+  },
+  "exclusions": [
+    "Do not explain cross-validation or data split terminology here, save it for ch02_s05 and ch02_s06."
+  ],
+  "terminology_preferences": {
+    "pipeline": "pipeline",
+    "machine learning": "machine learning",
+    "fit/transform": "fit/transform"
+  },
+  "figures": []
+}

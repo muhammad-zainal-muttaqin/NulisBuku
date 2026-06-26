@@ -1,0 +1,38 @@
+{
+  "id": "ch05_s08",
+  "topic": "Case study: a reproducible imputation & robust-handling pipeline",
+  "scope": "Inspected, leakage-safe, fitted on train only — not 'hands-off.'",
+  "key_concepts": [
+    "A concrete illustration of tying imputation and outlier management together safely.",
+    "Shows how missing indicator generation, model-based imputation, and robust scaling are chained together in a pipeline object.",
+    "Emphasizes that this pipeline is fitted solely on the training data, then used to transform the test data, completely avoiding target leakage.",
+    "Reiterates that automation in the pipeline requires prior human inspection of the mechanisms (MCAR/MAR) and outlier distributions."
+  ],
+  "definitions": [],
+  "examples": [
+    "A housing or medical dataset where one feature gets an indicator and mean imputation, while a highly skewed numerical feature gets capped at the 95th percentile, all executed as a single pipeline object."
+  ],
+  "relations": {
+    "builds_on": "ch05_s02 (Pipeline component theory put into practice)"
+  },
+  "figures": [
+    {
+      "id": 1,
+      "caption": "Skema pipeline penanganan missing values dan outlier yang reproducible",
+      "type": "skema",
+      "description": "A block diagram showing raw split training data going into a pipeline containing an indicator generator, an imputer, and a robust scaler, with the fitted parameters stored and applied identically to the test split."
+    }
+  ],
+  "exclusions": [
+    "Large blocks of full code. Use the signature placeholder [KODE] instead."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "missing values": "missing values",
+    "outlier": "outlier",
+    "pipeline": "pipeline",
+    "training split": "split training",
+    "test split": "split test",
+    "fit/transform": "fit/transform"
+  }
+}

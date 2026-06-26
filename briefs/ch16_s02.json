@@ -1,0 +1,39 @@
+{
+  "id": "ch16_s02",
+  "topic": "AutoML and automated feature pipelines",
+  "scope": "Automated search/selection within a pipeline; where it helps and where it just burns compute.",
+  "key_concepts": [
+    "The integration of automated feature engineering into end-to-end AutoML systems.",
+    "The concept of the pipeline search space, which includes not just model hyperparameters, but permutations of imputation, scaling, encoding, and feature selection strategies.",
+    "The primary value of AutoML: rapidly establishing a solid predictive baseline and handling standard preprocessing without manual trial and error.",
+    "The limits of AutoML: why blindly searching massive feature spaces often burns compute without improving generalizability, especially when the underlying problem requires domain expertise or better data quality."
+  ],
+  "definitions": [
+    {
+      "term": "AutoML",
+      "meaning": "Automated Machine Learning; systems designed to automate the iterative tasks of ML development, including preprocessing, feature engineering, model selection, and hyperparameter tuning."
+    },
+    {
+      "term": "Pipeline search space",
+      "meaning": "The combinatorial set of all possible sequences of data transformations, feature generation steps, and model algorithms evaluated by an AutoML system."
+    }
+  ],
+  "examples": [
+    "An AutoML framework automatically generating hundreds of pipelines, testing whether target encoding paired with gradient boosting outperforms one-hot encoding paired with an SVM, while simultaneously pruning generated features."
+  ],
+  "relations": {
+    "prerequisites": "Ch 2 (pipelines) and Ch 16 s01 (feature space explosion)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Avoid explaining hyperparameter search algorithms like Bayesian optimization, TPE, or genetic algorithms. Focus on how AutoML handles feature pipelines.",
+    "Do not include heavy code snippets for specific AutoML frameworks (like auto-sklearn or FLAML)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "AutoML": "AutoML",
+    "pipeline search space": "ruang pencarian pipeline",
+    "baseline": "baseline",
+    "hyperparameter tuning": "hyperparameter tuning"
+  }
+}

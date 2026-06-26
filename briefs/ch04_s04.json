@@ -1,0 +1,26 @@
+{
+  "id": "ch04_s04",
+  "topic": "Target encoding and its leakage risk",
+  "scope": "Powerful but dangerous; the leakage callout lives here.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Target encoding replaces the category label with the mean corresponding value of the intended target variable across that group.",
+    "Very powerful for capturing distinct linear relationships while compressing high cardinality spaces.",
+    "Direct calculation on the complete dataset creates massive train-test contamination (target leakage)."
+  ],
+  "definitions": [
+    { "term": "target encoding", "indonesian": "target encoding", "definition": "Implementasi pengubahan rasio fitur berbasis rekap agregat ukuran target keluaran modelnya." }
+  ],
+  "examples": [
+    "Instead of one-hotting 1,000 ZIP codes, replace each ZIP code with the historical mean home price of that specific code."
+  ],
+  "relations": {
+    "builds_upon": "ch02_s03 (target leakage)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "target encoding": "target encoding",
+    "data leakage": "data leakage"
+  },
+  "figures": []
+}

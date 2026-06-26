@@ -1,0 +1,41 @@
+{
+  "id": "ch09_s04",
+  "title": "Permutation and model-based importance",
+  "scope": "Two importance families. Details the difference between built-in model importance (e.g., Gini impurity for trees) and model-agnostic permutation importance.",
+  "key_concepts": [
+    "Model-based importance calculates feature contributions intrinsically during training (e.g., node purity improvements in trees).",
+    "Model-based methods are fast but can be biased toward high-cardinality features and only reflect training data.",
+    "Permutation importance is calculated post-training by randomly shuffling a feature's values and measuring the drop in a specific performance metric.",
+    "Permutation importance is model-agnostic and, when run on validation data, avoids overfitting biases."
+  ],
+  "definitions": [
+    "Model-based importance: Importance scores generated organically by the algorithm during the fitting process.",
+    "Permutation importance: An evaluation method that measures a feature's utility by computing how much the model's error increases when that feature's data is randomly shuffled."
+  ],
+  "examples": [
+    "A Random Forest might assign high importance to a high-cardinality ID column. Running permutation importance on a hold-out validation set reveals shuffling the ID doesn't hurt performance, proving it was overfitted."
+  ],
+  "relations_to_other_chapters": [
+    "Connects to Ch 7 (Feature Selection) where these metrics are often used to filter features."
+  ],
+  "terminology_preferences": [
+    "model-based importance",
+    "permutation importance",
+    "model",
+    "baseline",
+    "overfitting",
+    "validation"
+  ],
+  "what_to_exclude": [
+    "Mathematical derivations of Gini impurity or entropy."
+  ],
+  "provenance": [
+    {
+      "source": "scikit-learn docs",
+      "excerpt_or_location": "Permutation Feature Importance",
+      "type": "docs",
+      "date": "2024",
+      "confidence": "verified"
+    }
+  ]
+}

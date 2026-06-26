@@ -1,0 +1,36 @@
+{
+  "id": "ch12_s03",
+  "topic": "CNN feature extractors and pretrained vision models",
+  "scope": "The learned end.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "The fundamental shift from designed features to 'representasi yang dipelajari mesin' in computer vision, driven by Convolutional Neural Networks (CNNs).",
+    "Hierarchical feature learning: CNNs automatically learn to extract features in layers. Early layers detect simple edges and colors, middle layers detect textures and object parts (like wheels or eyes), and deep layers recognize complex semantic objects (like cars or faces).",
+    "Pretrained vision models as universal feature extractors. A CNN trained on a massive dataset (like ImageNet) learns general visual representations that are highly transferable.",
+    "Transfer learning in feature engineering: removing the final classification layer of a pretrained model and using the network strictly to output a dense feature vector for a new, specific downstream task."
+  ],
+  "definitions": [
+    { "term": "Convolutional Neural Network (CNN)", "indonesian": "Convolutional Neural Network (CNN)", "definition": "A class of deep learning networks, highly effective in analyzing visual imagery by sliding filters across the image." },
+    { "term": "pretrained model", "indonesian": "pretrained model", "definition": "A model previously trained on a large-scale dataset that can be repurposed to extract features for a different task." },
+    { "term": "transfer learning", "indonesian": "transfer learning", "definition": "Reusing a model developed for one task as the starting point for a model on a second task." }
+  ],
+  "examples": [
+    "Using a ResNet model originally trained to classify 1,000 object categories on ImageNet, stripping its final layer, and using its output vector to train a simple classifier for medical x-rays or manufacturing defect detection."
+  ],
+  "relations": {
+    "builds_toward": "ch12_s04 (more modern representations like embeddings and patches from Vision Transformers)"
+  },
+  "exclusions": [
+    "Do not explain the mathematics of the convolution operation, strides, or padding.",
+    "Do not discuss Vision Transformers (ViT) here; save that for ch12_s04."
+  ],
+  "terminology_preferences": {
+    "learned by machine representation": "representasi yang dipelajari mesin",
+    "pretrained model": "pretrained model (keep English)",
+    "transfer learning": "transfer learning (keep English)",
+    "layer": "lapisan",
+    "feature extractor": "feature extractor (keep English)",
+    "deep learning": "deep learning (keep English)"
+  },
+  "figures": []
+}

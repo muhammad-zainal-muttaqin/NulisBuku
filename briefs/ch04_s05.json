@@ -1,0 +1,25 @@
+{
+  "id": "ch04_s05",
+  "topic": "Hashing for high-cardinality features",
+  "scope": "Trading collisions for memory.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "A deterministic method for handling infinite or uncontrolled numbers of categories without memorizing all names.",
+    "Matches string categories through a hashing function straight into a strict predefined width.",
+    "Limits matrix blowout, but risks collisions where two differing categories fold into the same column hash."
+  ],
+  "definitions": [
+    { "term": "hashing", "indonesian": "hashing", "definition": "Operasi memetakan deretan ukuran tak terbatas parameter tekstual jatuh pada panjang ukuran nilai memori baku terhingga." }
+  ],
+  "examples": [
+    "Hashing thousands of unique IP Addresses strictly into an operational limit of just 128 integer columns."
+  ],
+  "relations": {
+    "builds_upon": "ch04_s01"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "hashing": "hashing"
+  },
+  "figures": []
+}

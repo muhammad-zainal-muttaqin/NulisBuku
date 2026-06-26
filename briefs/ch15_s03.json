@@ -1,0 +1,42 @@
+{
+  "id": "ch15_s03",
+  "topic": "Evaluating embedding quality; domain-shift risk",
+  "scope": "How to evaluate embeddings and the risk of domain shift when transfer fails.",
+  "key_concepts": [
+    "There is no universally perfect embedding; quality is strictly defined by how well the representation separates classes or captures similarities for a specific downstream task.",
+    "A common evaluation method is linear probing: training a simple linear classifier on frozen embeddings. High accuracy indicates the embeddings successfully map the desired patterns.",
+    "Domain shift is the primary reason transferred representations fail. It happens when the target application's data distribution is fundamentally different from the pretraining data.",
+    "Under severe domain shift, frozen extractors generate overlapping, uninformative vectors that lack predictive utility.",
+    "When frozen transfer fails, the pipeline must shift along the adaptation spectrum towards fine-tuning or domain-specific pretraining."
+  ],
+  "definitions": [
+    {
+      "term": "domain shift",
+      "definition": "The divergence between the data distribution a model was pretrained on and the data it encounters in the target task."
+    },
+    {
+      "term": "linear probing",
+      "definition": "Evaluating embedding quality by training a simple linear model on top of frozen feature vectors."
+    }
+  ],
+  "examples": [
+    "A vision model pretrained on everyday objects (like ImageNet) extracting poor embeddings for X-ray scans, as the medical anomalies look nothing like natural images."
+  ],
+  "relations": {
+    "precedes": "ch15_s04 (the boundary between transferring external representations and compressing internal data).",
+    "follows": "ch15_s02 (how vectors are compared)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not detail complex domain adaptation algorithms or adversarial domain training."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "embedding": "embedding",
+    "domain shift": "domain shift",
+    "linear probing": "linear probing",
+    "pretrained": "pretrained",
+    "frozen extractor": "frozen extractor",
+    "fine-tuning": "fine-tuning"
+  }
+}

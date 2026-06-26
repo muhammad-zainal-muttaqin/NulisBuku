@@ -1,0 +1,52 @@
+{
+  "id": "ch14_s01",
+  "topic": "What is multimodal data? Alignment and time synchronization",
+  "scope": "The setup problem for multimodal data.",
+  "key_concepts": [
+    "Multimodal data involves representing a single entity or event using multiple distinct types of data (modalities) such as text, images, audio, and tabular data.",
+    "The fundamental challenge before any feature engineering can occur is data alignment: ensuring that representations from different modalities correspond to the exact same observation.",
+    "Time synchronization is critical for sequential or streaming multimodal data (e.g., video and audio, or sensor logs and text events). Differing sampling rates (e.g., 30 fps video vs. 44.1 kHz audio) require explicit resampling or windowing to align.",
+    "Without proper alignment, the model learns from mismatched features, destroying predictive utility."
+  ],
+  "definitions": [
+    {
+      "term": "Multimodal data",
+      "english_source": "Multimodal data",
+      "indonesian_target": "data multimodal",
+      "definition": "Data yang mengombinasikan dua atau lebih tipe data yang berbeda (modalitas) untuk mendeskripsikan satu entitas atau kejadian yang sama."
+    },
+    {
+      "term": "Alignment",
+      "english_source": "Alignment",
+      "indonesian_target": "penyelarasan (*alignment*)",
+      "definition": "Proses mencocokkan data dari berbagai modalitas sehingga merujuk pada unit observasi atau rentang waktu yang sama."
+    }
+  ],
+  "examples": [
+    "A medical diagnosis system that uses a patient's tabular health records, an X-ray image (vision), and clinical notes (text).",
+    "A self-driving car where LIDAR point clouds must be time-synchronized with camera frames captured at a different frequency."
+  ],
+  "relations": {
+    "precedes": ["ch14_s02", "ch14_s04"],
+    "follows": ["ch01_s05"]
+  },
+  "figures": [
+    {
+      "id": 1,
+      "type": "diagram konseptual",
+      "caption_indonesian": "Penyelarasan Waktu pada Data Multimodal",
+      "description": "Menunjukkan dua aliran data (misalnya, video pada 30 frame per detik dan audio pada 44.1 kHz) yang diselaraskan ke dalam jendela waktu (time windows) yang sama agar menjadi satu unit observasi."
+    }
+  ],
+  "exclusions": [
+    "Detailed signal processing mathematics for audio resampling."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "multimodal": "multimodal",
+    "modality": "modalitas",
+    "alignment": "penyelarasan (*alignment*)",
+    "time synchronization": "sinkronisasi waktu",
+    "sampling rate": "tingkat sampling (*sampling rate*)"
+  }
+}

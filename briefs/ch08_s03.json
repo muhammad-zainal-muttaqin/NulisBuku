@@ -1,0 +1,22 @@
+{
+  "id": "ch08_s03",
+  "title": "NMF",
+  "word_budget": 350,
+  "key_concepts": [
+    "Non-negative Matrix Factorization (NMF) enforces that both the data and the resulting factor matrices contain only non-negative values.",
+    "This creates an additive, parts-based representation (no subtraction of features), making the latent dimensions highly interpretable compared to PCA.",
+    "Each original feature is a positive sum of the latent components."
+  ],
+  "equations": [
+    "Approximation: $X \\approx W H$, where $X \\in \\mathbb{R}_{+}^{n \\times d}$, and the factor matrices $W$ and $H$ must satisfy $W \\ge 0, H \\ge 0$."
+  ],
+  "examples": [
+    "Topic modeling: A document is represented as an additive mix of topics (no 'negative' topics).",
+    "Audio spectrograms: Sound is an additive mix of frequencies."
+  ],
+  "relations": "Useful when interpretability is key, contrasting with the dense, mixed positive/negative components of PCA.",
+  "terminology": {
+    "keep_english": ["Non-negative Matrix Factorization (NMF)", "parts-based representation", "spectrogram"],
+    "indonesian": ["matriks tak-negatif", "aditif", "interpretabilitas"]
+  }
+}

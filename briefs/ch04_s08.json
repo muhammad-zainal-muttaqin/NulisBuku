@@ -1,0 +1,27 @@
+{
+  "id": "ch04_s08",
+  "topic": "Case study: encoding comparison on high-cardinality data",
+  "scope": "Which encoding wins, and why.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Summarizing encoding application with a predictive study of retail pricing across zip codes.",
+    "One-hot processing fails rapidly blowing the model vector space into thousands of useless columns.",
+    "Hashing controls limits but impacts accuracy owing to internal string collisions.",
+    "Target encoding and entity embedding demonstrate the strongest performance, showing dense values yield superior validation without expanding feature boundaries."
+  ],
+  "definitions": [],
+  "examples": [],
+  "relations": {
+    "builds_upon": "ch04_s01 to s07 concepts."
+  },
+  "exclusions": [],
+  "terminology_preferences": {},
+  "figures": [
+    {
+      "caption": "Akurasi perbandingan ragam teknik encoding pada dataset dengan kardinalitas tinggi",
+      "type": "plot data",
+      "description": "Chart comparing accuracy across One-Hot, Hashing, and Target Encoding handling thousands of distinct labels.",
+      "data_source": "Notebook Bab 4"
+    }
+  ]
+}

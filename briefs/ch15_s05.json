@@ -1,0 +1,31 @@
+{
+  "id": "ch15_s05",
+  "topic": "Does deep learning remove the need for feature engineering? Learned vs. handcrafted",
+  "scope": "Addressing the chapter's thesis question: deep learning shifts feature engineering rather than eliminating it.",
+  "key_concepts": [
+    "A common myth is that deep learning completely replaces feature engineering by automatically extracting all necessary patterns from raw data.",
+    "In reality, deep learning merely shifts the focus. It excels at learning representations from unstructured data (text, images), but human decisions still dictate sample construction and input formulation.",
+    "Feature engineering has evolved from manually calculating explicit mathematical transformations (handcrafted) to architecting how the data is fed into the network.",
+    "Handcrafted features provide strong inductive biases and explicitly encode domain knowledge. Deep learning models often struggle to learn these specific logical rules, especially when data is limited.",
+    "Designed representations and learned representations are fundamentally complementary. Humans frame the prediction problem, and the machine extracts the dense patterns."
+  ],
+  "definitions": [],
+  "examples": [],
+  "relations": {
+    "precedes": "ch15_s06 (which details specific input representations and augmentations inside DL pipelines).",
+    "follows": "ch15_s04 (the boundary of transferred representations)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not provide a laundry list of past feature engineering methods."
+  ],
+  "target_word_count_indonesian": 360,
+  "terminology_preferences": {
+    "deep learning": "deep learning",
+    "feature engineering": "rekayasa fitur",
+    "bias induktif": "bias induktif",
+    "pipeline": "pipeline",
+    "representasi yang dirancang manusia": "representasi yang dirancang manusia",
+    "representasi yang dipelajari mesin": "representasi yang dipelajari mesin"
+  }
+}

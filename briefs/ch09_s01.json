@@ -1,0 +1,43 @@
+{
+  "id": "ch09_s01",
+  "title": "What makes a feature good? Predictive utility, stability, availability, and cost",
+  "scope": "Quality is broader than importance: availability at inference, stability over time/populations, sensitivity to measurement error, compute/storage/latency, interpretability, maintainability, robustness under shift. Ablation/SHAP become tools within this frame, not its definition.",
+  "key_concepts": [
+    "Predictive utility (accuracy lift) is only one dimension of feature quality.",
+    "Availability at inference time determines if a feature can actually be used in production.",
+    "Stability ensures the feature distribution does not drift wildly over time.",
+    "Cost covers computation latency, storage requirements, and engineering maintenance."
+  ],
+  "definitions": [
+    "Inference availability: The condition where the raw data needed to compute a feature is accessible at the exact moment a prediction is required.",
+    "Feature drift: The phenomenon where a feature's statistical properties change over time, degrading model performance."
+  ],
+  "examples": [
+    "A feature requiring a 10-table join is highly predictive in training but has a 2-second latency, making it useless for real-time fraud detection."
+  ],
+  "relations_to_other_chapters": [
+    "Sets the framing for Ch 9, moving beyond just ablation (Ch 9 s03) and SHAP (Ch 9 s05).",
+    "Points forward to Ch 17 regarding serving constraints."
+  ],
+  "terminology_preferences": [
+    "baseline",
+    "machine learning",
+    "feature",
+    "inference",
+    "drift",
+    "model"
+  ],
+  "what_to_exclude": [
+    "Detailed code for monitoring drift.",
+    "Extensive ML Ops pipeline architectures."
+  ],
+  "provenance": [
+    {
+      "source": "https://trainindata.medium.com/feature-engineering-for-machine-learning-a-comprehensive-overview-a7ad04c896f8",
+      "excerpt_or_location": "Feature quality assessment",
+      "type": "blog",
+      "date": "2023",
+      "confidence": "verified"
+    }
+  ]
+}

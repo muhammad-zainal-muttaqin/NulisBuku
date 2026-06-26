@@ -1,0 +1,37 @@
+{
+  "subsection_id": "ch06_s09",
+  "title": "Case study: derived features from transaction/health/education data",
+  "scope": "Domain features in practice. Provide concrete examples of derived features across three different domains: transaction, health, and education.",
+  "key_concepts": [
+    "Domain knowledge is the strongest driver for feature derivation.",
+    "Transaction data: Focusing on temporal aggregation and financial ratios.",
+    "Health data: Focusing on standard medical indices and relative changes over time.",
+    "Education data: Focusing on engagement metrics and success ratios."
+  ],
+  "definitions": [],
+  "examples_described": [
+    "Transaction domain: Instead of raw purchase amounts, derive 'rolling 30-day average spend' or 'ratio of transaction amount to monthly income'.",
+    "Health domain: Instead of raw height and weight, derive 'Body Mass Index (BMI)' which is standard in medicine. Alternatively, 'change in blood pressure since last visit'.",
+    "Education domain: Instead of raw login counts, derive 'login streak (days in a row)' or 'ratio of passed to failed assignments'."
+  ],
+  "relations_to_other_chapters": [
+    "Applies the concepts from Ch06_s01 to Ch06_s06 in concrete scenarios."
+  ],
+  "terminology_preferences": [
+    {
+      "english": "domain knowledge",
+      "indonesian_target": "pengetahuan domain"
+    }
+  ],
+  "figures": [
+    {
+      "callout": "[GAMBAR 6.X]",
+      "title": "Contoh Pembentukan Fitur Turunan di Berbagai Domain",
+      "type": "diagram konseptual",
+      "description": "A table or diagram showing raw data inputs transforming into derived features across the three domains (Transaction, Health, Education)."
+    }
+  ],
+  "exclude": [
+    "Do not write complex SQL or pandas code for these derivations. Describe the logic conceptually."
+  ]
+}

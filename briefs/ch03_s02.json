@@ -1,0 +1,30 @@
+{
+  "id": "ch03_s02",
+  "topic": "Standardization and min-max scaling",
+  "scope": "The two workhorses; when each fits.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Standardization centers the data around zero with a standard deviation of one.",
+    "Min-max scaling compresses the data into a fixed boundary, typically between zero and one.",
+    "Standardization preserves relative outlier distances, while min-max restricts the space strictly.",
+    "Choice between them depends on the bounds assumed by the algorithm or the presence of activation functions (like neural networks)."
+  ],
+  "definitions": [
+    { "term": "standardization", "indonesian": "standardisasi", "definition": "Transformasi nilai menjadi rata-rata nol dan deviasi baku satu." },
+    { "term": "min-max scaling", "indonesian": "skala min-max", "definition": "Metode penyusutan sebaran nilai rentang fitur untuk merapat pada ukuran tetap, umumnya di antara angka nol hingga satu." }
+  ],
+  "examples": [
+    "Applying standardization to age data to make normally distributed traits comparable."
+  ],
+  "relations": {
+    "builds_upon": "ch03_s01",
+    "builds_toward": "ch03_s06 (model sensitiveness)"
+  },
+  "exclusions": [
+    "Do not dive into robust scaling logic here (save for s03)."
+  ],
+  "terminology_preferences": {
+    "standard deviation": "deviasi baku"
+  },
+  "figures": []
+}

@@ -1,0 +1,39 @@
+{
+  "id": "ch06_s03",
+  "topic": "Aggregations and group-based features",
+  "scope": "Features computed by aggregating data over specific groups or categories. This approach captures context beyond a single row, such as the behavior of an entity relative to its peers.",
+  "key_concepts": [
+    "Aggregations group data by a categorical feature and calculate statistical summaries (mean, median, max, min, count, standard deviation) for numerical features.",
+    "Group-based features provide contextual information, allowing a model to understand a single observation in relation to its broader group.",
+    "These features are particularly powerful when the target behavior is driven by relative deviations rather than absolute values.",
+    "Aggregations can be merged back into the original dataset to enrich the row-level observations."
+  ],
+  "definitions": [
+    {
+      "term": "group-based feature",
+      "target_indonesian": "fitur berbasis kelompok",
+      "definition": "A feature created by calculating an aggregate statistic for a specific category and assigning that value to all members of the category."
+    }
+  ],
+  "examples": [
+    {
+      "description": "Calculating the \"average transaction amount per user\" and joining it back to the individual transaction rows."
+    },
+    {
+      "description": "Creating a \"relative price\" feature by subtracting the \"average house price in the neighborhood\" from the individual \"house price\"."
+    }
+  ],
+  "relations": {
+    "builds_toward": "Relational and event-log features in ch06_s04, which extends this to temporal and multi-table aggregations.",
+    "prerequisites": "Basic understanding of data frames and groupings."
+  },
+  "figures": [],
+  "exclusions": [
+    "Temporal lookback windows (saved for Chapter 10)."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "English": ["machine learning"],
+    "Indonesian": ["fitur berbasis kelompok", "agregasi", "target", "kategori", "observasi"]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ch08_s04",
+  "title": "Manifold learning: t-SNE and UMAP",
+  "word_budget": 350,
+  "key_concepts": [
+    "Linear methods fail on complex, non-linear manifolds (e.g., Swiss roll dataset).",
+    "t-SNE focuses on preserving local neighborhood structure (points that are close remain close) but often distorts global distances and is computationally slow.",
+    "UMAP (Uniform Manifold Approximation and Projection) is the modern academic primary. It balances local and global structure better, is significantly faster, and rests on Riemannian geometry.",
+    "Both are primarily for visualization, not generally recommended as preprocessing for downstream models."
+  ],
+  "equations": [
+    "Both methods minimize divergence between high-dimensional similarities $p_{i|j}$ and low-dimensional similarities $q_{i|j}$ (e.g., Kullback-Leibler divergence for t-SNE: $KL(P || Q)$)."
+  ],
+  "examples": [
+    "Visualizing thousands of high-dimensional single-cell RNA sequences or image embeddings in 2D."
+  ],
+  "relations": "Contrast with PCA (linear vs non-linear). Emphasize UMAP as the preferred modern tool over t-SNE.",
+  "terminology": {
+    "keep_english": ["manifold learning", "t-SNE", "UMAP", "Swiss roll", "Kullback-Leibler divergence", "embedding"],
+    "indonesian": ["struktur lokal", "struktur global", "jarak"]
+  }
+}

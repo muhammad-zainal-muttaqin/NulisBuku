@@ -1,0 +1,42 @@
+{
+  "id": "ch15_s06",
+  "topic": "Input representation, tokenization, augmentation",
+  "scope": "Feature engineering techniques that survive and are essential inside deep learning pipelines.",
+  "key_concepts": [
+    "Deep learning models cannot consume raw, real-world objects directly; they require structured numerical inputs, which demands explicit feature engineering.",
+    "Tokenization, specifically subword tokenization like BPE, is a critical feature engineering choice that dictates how text is fragmented before the network processes it.",
+    "Data augmentation engineers deliberate variations into the input data, forcing the neural network to learn robust, invariant representations.",
+    "Classic numeric preprocessing, such as scaling and normalization, remains absolutely essential for the stable convergence of deep neural networks.",
+    "These techniques demonstrate that human-designed transformations have not disappeared; they now live at the very front of the deep learning pipeline."
+  ],
+  "definitions": [
+    {
+      "term": "tokenisasi",
+      "definition": "Proses memecah teks mentah menjadi unit-unit diskret (seperti kata atau subword) agar dapat diproses oleh model."
+    },
+    {
+      "term": "augmentasi data",
+      "definition": "Teknik memperluas dataset secara artifisial dengan menerapkan modifikasi yang tidak mengubah label target asli."
+    }
+  ],
+  "examples": [
+    "Using Byte-Pair Encoding to split an unknown complex word into recognizable subwords.",
+    "Applying random horizontal flips and color jittering to training images to prevent a vision model from memorizing specific orientations."
+  ],
+  "relations": {
+    "precedes": "ch15_s07 (how tabular data specifically is adapted for deep learning).",
+    "follows": "ch15_s05 (which established that FE merely shifted form in the DL era)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not detail the step-by-step algorithms of specific tokenizers like WordPiece or BPE."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "deep learning": "deep learning",
+    "tokenisasi": "tokenisasi",
+    "subword": "subword",
+    "augmentasi data": "augmentasi data",
+    "pipeline": "pipeline"
+  }
+}

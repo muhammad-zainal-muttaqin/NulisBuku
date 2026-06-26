@@ -1,0 +1,45 @@
+{
+  "id": "ch11_s01",
+  "topic": "Classic text representations",
+  "scope": "Tokenization, bag-of-words, n-grams.",
+  "key_concepts": [
+    "Tokenization as the foundational step of breaking text into discrete units.",
+    "Bag-of-Words (BoW) as a sparse, order-agnostic vector representation.",
+    "N-grams as a way to capture local word sequence and phrase context."
+  ],
+  "definitions": [
+    {
+      "term": "Tokenization",
+      "definition": "Proses memecah teks utuh menjadi unit-unit kecil pembentuknya, seperti kata atau subkata."
+    },
+    {
+      "term": "Bag-of-Words",
+      "definition": "Representasi teks yang menghitung kemunculan token tanpa memperhatikan urutannya."
+    },
+    {
+      "term": "N-gram",
+      "definition": "Kombinasi n token berurutan dari sebuah teks untuk menangkap konteks lokal."
+    }
+  ],
+  "examples": [
+    "Showing how a sentence is tokenized into words.",
+    "Comparing BoW representations of two sentences with similar words but different meanings.",
+    "Contrasting unigrams, bigrams, and trigrams for a short phrase to show how local context is preserved."
+  ],
+  "relations": {
+    "prerequisites": "Basic understanding of feature matrices (Ch 1).",
+    "builds_toward": "TF-IDF in s02 and the shift to dense embeddings in s03."
+  },
+  "figures": [],
+  "exclusions": [
+    "TF-IDF weighting (reserved for s02).",
+    "Subword tokenization mechanisms like BPE (too deep for this section, better introduced with LMs)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "tokenization": "Tokenization",
+    "bag-of-words": "Bag-of-Words",
+    "n-gram": "n-gram",
+    "feature": "fitur"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "ch17_s03",
+  "topic": "Schema validation, transformation versioning, and drift (briefly)",
+  "scope": "Kept ringkas — this is FE, not MLOps.",
+  "key_concepts": [
+    "Before features enter the transformation pipeline in production, their incoming data format must be validated against an expected schema.",
+    "Transformations themselves are code and artifacts; they must be versioned alongside the models they serve to ensure reproducibility.",
+    "Data drift occurs over time when the underlying real-world distributions change, requiring pipeline retraining or feature redesign.",
+    "While MLOps systems handle the automation of these tasks, a feature engineer must design the features so they are capable of being validated, versioned, and monitored."
+  ],
+  "definitions": [
+    {
+      "term": "Schema validation",
+      "indonesian": "Validasi skema",
+      "meaning": "Checking that new data adheres to expected data types, column names, and value ranges before processing."
+    },
+    {
+      "term": "Data drift",
+      "indonesian": "Data drift",
+      "meaning": "The phenomenon where the statistical properties of the input data change over time, degrading model accuracy."
+    }
+  ],
+  "examples": [
+    "A schema validation step catches when an upstream database change suddenly outputs a numeric age column as text. Versioning ensures that if we roll back a model to v1.2, we also roll back the feature pipeline to v1.2."
+  ],
+  "relations": {
+    "ch17_s02": "A natural continuation of preventing skew, focusing on temporal changes rather than structural bugs."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not detail specific schema tools like Great Expectations or Pydantic.",
+    "Do not detail drift detection algorithms (e.g., Kolmogorov-Smirnov tests)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "schema": "skema",
+    "versioning": "versioning",
+    "drift": "drift",
+    "feature": "fitur",
+    "pipeline": "pipeline",
+    "MLOps": "MLOps"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "ch17_s02",
+  "topic": "Training–inference consistency and training-serving skew",
+  "scope": "The production contract.",
+  "key_concepts": [
+    "A machine learning pipeline represents a strict contract between training and inference phases.",
+    "Training-serving skew occurs when data distributions, feature definitions, or transformation logic differ between the training environment and production environment.",
+    "Maintaining consistency requires that the exact same transformation steps fitted on training data are applied identically to new inference data.",
+    "Practicing valid pipeline discipline mitigates the risk of failing silently in production due to mismatched representations."
+  ],
+  "definitions": [
+    {
+      "term": "Training-serving skew",
+      "indonesian": "Training-serving skew",
+      "meaning": "A degradation in model performance caused by discrepancies between how features are computed during training versus how they are computed in production."
+    },
+    {
+      "term": "Production contract",
+      "indonesian": "Kontrak produksi",
+      "meaning": "The implicit or explicit guarantee that a model in inference receives inputs transformed in the exact same manner as its training data."
+    }
+  ],
+  "examples": [
+    "A median imputation transformer is fitted on training data. If production code calculates a new median dynamically from an incoming batch of requests instead of using the stored training median, the contract is broken, causing training-serving skew."
+  ],
+  "relations": {
+    "ch02": "Revisits the pipeline discipline and the fit/transform contract introduced in Chapter 2."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not dive into MLOps infrastructure like feature stores or deployment orchestration tools."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "inference": "inference",
+    "training": "pelatihan",
+    "skew": "skew",
+    "pipeline": "pipeline",
+    "feature": "fitur",
+    "praktik pipeline yang benar": "praktik pipeline yang benar"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "ch06_s04",
+  "topic": "Relational & event-log features: joins, aggregations, and point-in-time correctness",
+  "scope": "Extracting features from relational tables and event logs. Covers one-to-many joins, aggregating event histories into entity-level features, the risk of fan-out duplication, and the critical importance of point-in-time correctness (as-of joins) to prevent data leakage.",
+  "key_concepts": [
+    "Most real-world data resides in relational databases, requiring joins across multiple tables (one-to-many or many-to-many) to construct a flat feature matrix.",
+    "Careless joins can cause fan-out duplication, where the target entity is replicated multiple times, distorting the dataset.",
+    "Event-log features summarize historical actions (e.g., clicks, purchases) into static entity-level metrics (e.g., total purchases in the last 7 days).",
+    "Point-in-time correctness is mandatory: when aggregating past events, we must only include events that occurred strictly before the prediction timestamp.",
+    "Failing to enforce point-in-time constraints leads to severe data leakage, where future information contaminates the historical feature."
+  ],
+  "definitions": [
+    {
+      "term": "fan-out",
+      "target_indonesian": "efek fan-out",
+      "definition": "The unintentional duplication of rows in a primary table caused by joining it with a secondary table that has multiple matching records."
+    },
+    {
+      "term": "point-in-time correctness",
+      "target_indonesian": "kebenaran point-in-time",
+      "definition": "The guarantee that features computed for a specific moment in time rely only on information available prior to that moment."
+    },
+    {
+      "term": "as-of join",
+      "target_indonesian": "as-of join",
+      "definition": "A relational join that matches a record to the most recent preceding record in another table based on a timestamp."
+    }
+  ],
+  "examples": [
+    {
+      "description": "Aggregating a user's purchase history into a single feature \"purchases_last_30_days\", ensuring that if the prediction is for June 1st, purchases on June 2nd are not counted."
+    }
+  ],
+  "relations": {
+    "builds_toward": "Automated Feature Engineering (Deep Feature Synthesis) in Chapter 16.",
+    "prerequisites": "Group-based aggregations from ch06_s03. The concept of target availability cutoff from Ch 1."
+  },
+  "figures": [
+    {
+      "id": "GAMBAR 6.2",
+      "caption": "Mekanisme As-Of Join untuk Menghindari Kebocoran Data",
+      "type": "skema",
+      "description": "Diagram yang membandingkan join standar (yang tidak sengaja memasukkan kejadian dari masa depan) dengan as-of join yang secara ketat memutus agregasi tepat sebelum waktu prediksi.",
+      "source": "pembuat gambar"
+    }
+  ],
+  "exclusions": [
+    "Detailed SQL syntax or pandas syntax for as-of joins (focus on the concept)."
+  ],
+  "target_word_count_indonesian": 420,
+  "terminology_preferences": {
+    "English": ["machine learning", "data leakage", "fan-out", "as-of join", "point-in-time"],
+    "Indonesian": ["tabel", "fitur", "prediksi", "log kejadian", "waktu"]
+  }
+}

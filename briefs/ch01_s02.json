@@ -1,0 +1,29 @@
+{
+  "id": "ch01_s02",
+  "topic": "The role of features in ML",
+  "scope": "Why representation sets the ceiling on what a model can learn.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Features determine the theoretical upper limit of a model's performance.",
+    "A complex algorithm cannot overcome poor features (the ceiling effect).",
+    "Good features make the learning problem simpler, allowing even basic algorithms to perform well."
+  ],
+  "definitions": [],
+  "examples": [
+    "In real estate prediction, providing just the zip code vs. providing crime rate, school quality, and proximity to transit as features.",
+    "A linear model with a great feature (like 'distance to center') beats a complex neural network that only has raw coordinates without context."
+  ],
+  "relations": {
+    "builds_upon": "ch01_s01 (what a feature is)",
+    "builds_toward": "The rest of the book (why we spend so much effort on this step)"
+  },
+  "exclusions": [
+    "Do not dive into specific model architectures (e.g., how random forests work)."
+  ],
+  "terminology_preferences": {
+    "feature": "fitur",
+    "machine learning": "machine learning",
+    "algorithm": "algoritma"
+  },
+  "figures": []
+}

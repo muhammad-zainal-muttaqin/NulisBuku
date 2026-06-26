@@ -1,0 +1,43 @@
+{
+  "id": "ch11_s02",
+  "topic": "TF-IDF",
+  "scope": "The classic weighting scheme.",
+  "key_concepts": [
+    "The limitation of raw term frequencies (common words dominate the signal).",
+    "Term Frequency (TF) captures local importance in a document.",
+    "Inverse Document Frequency (IDF) penalizes words common across all documents.",
+    "TF-IDF multiplication balances local importance with global rarity."
+  ],
+  "definitions": [
+    {
+      "term": "Term Frequency (TF)",
+      "definition": "Ukuran seberapa sering sebuah kata muncul di dalam satu dokumen tertentu."
+    },
+    {
+      "term": "Inverse Document Frequency (IDF)",
+      "definition": "Ukuran kejarangan sebuah kata di seluruh kumpulan dokumen, memberikan bobot lebih pada kata yang jarang."
+    },
+    {
+      "term": "TF-IDF",
+      "definition": "Skema pembobotan teks yang mengalikan TF dan IDF untuk menonjolkan kata yang spesifik pada suatu dokumen."
+    }
+  ],
+  "examples": [
+    "Contrasting a common word like 'dan' with a rare word like 'mitokondria' in a biology corpus."
+  ],
+  "relations": {
+    "prerequisites": "Bag-of-Words and tokenization from s01.",
+    "builds_toward": "The text case study in s07 which contrasts this designed representation against learned embeddings."
+  },
+  "figures": [],
+  "exclusions": [
+    "Detailed mathematical derivation or logarithm base variations (keep it conceptual and practical)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "Term Frequency": "Term Frequency (TF)",
+    "Inverse Document Frequency": "Inverse Document Frequency (IDF)",
+    "TF-IDF": "TF-IDF",
+    "weighting": "pembobotan"
+  }
+}

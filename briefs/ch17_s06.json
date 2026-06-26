@@ -1,0 +1,33 @@
+{
+  "id": "ch17_s06",
+  "topic": "Principles II: validation over feature count; designed and learned complement each other; the road ahead",
+  "scope": "Merged (old s08+s09). Closes the spectrum thesis.",
+  "key_concepts": [
+    "More features do not automatically equal a better model; rigorous validation is far more important than raw feature count.",
+    "The spectrum of 'designed by human' and 'learned by machine' is not a battle where one side wins. They are complementary forces.",
+    "Deep learning and pretrained models handle the heavy lifting of raw, unstructured data, while human-designed features inject necessary domain expertise, constraints, and business logic.",
+    "The road ahead for feature engineering points toward human-AI collaboration, where automated systems propose representations and humans curate and validate them."
+  ],
+  "definitions": [],
+  "examples": [
+    "A hybrid medical diagnosis model uses learned representations from X-ray images via a pretrained CNN, combined with human-designed tabular features like patient age bins and specific symptom combinations. Both are strictly validated to prevent overfitting."
+  ],
+  "relations": {
+    "ch01_s03": "Formally closes the 'designed vs. learned' spectrum introduced in Chapter 1.",
+    "ch15_s08": "Reinforces the concept of hybrid models.",
+    "ch16": "Touches upon the collaborative future between humans and automated feature engineering."
+  },
+  "figures": [],
+  "exclusions": [
+    "Avoid overly dramatic or poetic conclusions.",
+    "Do not list new deep learning architectures."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "feature": "fitur",
+    "representasi yang dirancang manusia": "representasi yang dirancang manusia",
+    "representasi yang dipelajari mesin": "representasi yang dipelajari mesin",
+    "deep learning": "deep learning",
+    "pretrained model": "pretrained model"
+  }
+}

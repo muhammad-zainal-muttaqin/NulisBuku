@@ -1,0 +1,31 @@
+{
+  "id": "ch07_s02",
+  "title": "Filter methods",
+  "scope": "Correlation, mutual information, chi-square.",
+  "key_concepts": [
+    "Filter methods evaluate features based on their statistical properties, independently of any specific machine learning model.",
+    "They act as a fast, scalable pre-processing step, making them ideal for high-dimensional datasets.",
+    "Pearson/Spearman correlation measures linear or monotonic relationships between numeric features and the target. Caveat: they completely miss non-linear relationships.",
+    "Mutual information measures general dependency, effectively capturing non-linear relationships.",
+    "Chi-square tests independence between categorical features and a categorical target."
+  ],
+  "definitions": {
+    "Filter methods": "Metode seleksi fitur yang menggunakan uji statistik untuk menilai fitur secara independen dari model prediktif."
+  },
+  "examples": [
+    "Explain how a feature with a U-shaped relationship to the target might score zero in Pearson correlation but score highly in mutual information."
+  ],
+  "relations": [
+    "Contrasted with wrapper methods in s03."
+  ],
+  "terminology_preferences": {
+    "filter methods": "metode filter",
+    "correlation": "korelasi",
+    "mutual information": "mutual information (italicized)",
+    "chi-square": "chi-square (italicized)",
+    "machine learning": "machine learning (italicized)"
+  },
+  "exclude": [
+    "Formulas for mutual information and chi-square statistics. Focus on intuition and when to use them."
+  ]
+}

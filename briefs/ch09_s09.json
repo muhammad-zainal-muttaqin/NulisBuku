@@ -1,0 +1,39 @@
+{
+  "id": "ch09_s09",
+  "title": "Case study: ablation across feature groups",
+  "scope": "Honest reporting of what helped. Demonstrates a practical workflow combining the concepts of baseline, ablation, and selection across diverse sets of constructed features.",
+  "key_concepts": [
+    "Walks through a hypothetical prediction scenario (e.g., credit default risk).",
+    "Shows establishing a baseline model, then testing separate feature blocks (demographics, transaction history, app interaction logs).",
+    "Demonstrates making a final architectural decision by weighing predictive lift against computational cost and stability."
+  ],
+  "definitions": [],
+  "examples": [
+    "Dropping transaction history causes the accuracy to plummet (keep it). Dropping app interaction logs barely changes accuracy but significantly lowers latency (drop it)."
+  ],
+  "relations_to_other_chapters": [
+    "Synthesizes the concepts of Ch 9 into an applied decision-making process."
+  ],
+  "terminology_preferences": [
+    "ablation",
+    "baseline",
+    "model",
+    "fold",
+    "latency",
+    "pipeline",
+    "cross-validation"
+  ],
+  "what_to_exclude": [
+    "Python code output logs.",
+    "Exploratory Data Analysis (EDA) plotting instructions."
+  ],
+  "provenance": [
+    {
+      "source": "Synthetic case study designed for this curriculum.",
+      "excerpt_or_location": "Case study format",
+      "type": "internal",
+      "date": "2024",
+      "confidence": "verified"
+    }
+  ]
+}

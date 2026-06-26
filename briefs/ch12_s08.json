@@ -1,0 +1,33 @@
+{
+  "id": "ch12_s08",
+  "topic": "Case study: handcrafted vs. deep features (image & audio)",
+  "scope": "Both modalities compared (modality-specific leakage: frames/clips from one source recording across splits).",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "A dual case study comparing traditional handcrafted features against modern deep learned features on both visual and acoustic tasks.",
+    "Image classification comparison: using HOG features paired with a classical model versus extracting embeddings from a pretrained CNN. The learned features vastly outperform handcrafted ones in handling occlusion, rotation, and complex backgrounds.",
+    "Audio classification comparison: using MFCCs versus representations extracted from a pretrained raw-waveform model. Deep embeddings demonstrate superior capability in separating overlapping sounds and capturing semantic context.",
+    "Crucial pipeline discipline (praktik pipeline yang benar) for continuous modalities: modality-specific data leakage. If multiple image frames are extracted from the same video, or multiple short clips are cut from a single long audio recording, they share near-identical background noise and recording artifacts.",
+    "Therefore, splitting must be done at the 'source recording' level (GroupKFold), never randomly at the frame or clip level. Random splitting causes massive leakage."
+  ],
+  "definitions": [],
+  "examples": [
+    "Describe the leakage scenario: a 5-minute recording of a specific busy intersection is split into 10-second chunks. If chunk A is in the training set and chunk B is in the test set, the model memorizes the unique background hum of that specific intersection rather than learning to classify 'traffic' generically."
+  ],
+  "relations": {
+    "builds_toward": "ch17 (how to properly group and split data to avoid such leakage in real-world pipeline design)"
+  },
+  "exclusions": [
+    "Do not provide specific accuracy metrics or numbers; keep the comparison conceptual regarding 'why' one wins.",
+    "Do not write out the code for GroupKFold, just mention the concept."
+  ],
+  "terminology_preferences": {
+    "handcrafted feature": "fitur rancangan tangan",
+    "deep feature": "fitur deep learning",
+    "pipeline discipline": "praktik pipeline yang benar",
+    "data leakage": "data leakage (keep English)",
+    "split": "split (keep English)",
+    "frame": "frame"
+  },
+  "figures": []
+}

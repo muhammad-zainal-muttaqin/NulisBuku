@@ -1,0 +1,25 @@
+{
+  "id": "ch08_s05",
+  "title": "Autoencoders as learned compression",
+  "word_budget": 350,
+  "key_concepts": [
+    "Autoencoders are neural networks trained to reconstruct their own input.",
+    "By passing data through a bottleneck layer (lower dimension than input), the network is forced to learn a compressed, latent representation.",
+    "This represents a shift to the 'dipelajari mesin' (learned by machine) side of the spectrum. However, it still learns specifically from the dataset it is trained on, not external data."
+  ],
+  "equations": [
+    "Encoder network: $Z = f_{\\theta}(X)$",
+    "Decoder network: $\\hat{X} = g_{\\phi}(Z)$",
+    "Objective is to minimize reconstruction loss: $\\mathcal{L}(X, \\hat{X}) = \\|X - g_{\\phi}(f_{\\theta}(X))\\|^2$"
+  ],
+  "callouts": [
+    "Spectrum callout: Explicitly state this is an example of 'representasi yang dipelajari mesin' (learned by machine) because the network weights discover the features, unlike PCA's strict mathematical formulation."
+  ],
+  "examples": [
+    "Using a deep autoencoder to compress noisy sensor data into a clean 10-dimensional vector before feeding it to a random forest."
+  ],
+  "terminology": {
+    "keep_english": ["autoencoder", "bottleneck layer", "encoder", "decoder", "reconstruction loss", "neural network"],
+    "indonesian": ["representasi laten", "representasi yang dipelajari mesin"]
+  }
+}

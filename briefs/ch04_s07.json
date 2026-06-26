@@ -1,0 +1,25 @@
+{
+  "id": "ch04_s07",
+  "topic": "Handling unseen categories at inference",
+  "scope": "The production failure mode.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "During deployment, the pipeline will inevitably observe new category levels never processed previously.",
+    "Algorithms processing one-hot tracking strict indices will crash upon facing unrecognized label arrays.",
+    "Defining clear default fallbacks like creating an 'Other' or 'Unknown' category early mitigates functional structural crashes."
+  ],
+  "definitions": [
+    { "term": "unseen categories", "indonesian": "kategori belum terlihat", "definition": "Kelas klasifikasi variabel target yang muncul secara perdana murni pada evaluasi tes produksi observasional lapang." }
+  ],
+  "examples": [
+    "A model trained on existing phone brands encounters a new startup brand the following year."
+  ],
+  "relations": {
+    "builds_upon": "ch02_s01 (pipeline contract)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "unseen category": "kategori belum terlihat"
+  },
+  "figures": []
+}

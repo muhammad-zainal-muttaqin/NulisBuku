@@ -1,0 +1,34 @@
+{
+  "id": "ch05_s04",
+  "topic": "The missing-indicator feature",
+  "scope": "Missingness as signal.",
+  "key_concepts": [
+    "The fact that a value is missing can itself be highly predictive.",
+    "Instead of just replacing the missing value, we can add a new binary feature that flags whether the original value was missing.",
+    "This allows the machine learning model to learn if the missingness pattern itself correlates with the target variable.",
+    "It is especially useful for MNAR (Missing Not At Random) situations where the lack of information carries meaning."
+  ],
+  "definitions": [
+    {
+      "term": "Missing Indicator",
+      "definition": "A binary feature added to the dataset that equals 1 if the original feature was missing, and 0 otherwise.",
+      "indonesian_translation": "missing indicator"
+    }
+  ],
+  "examples": [
+    "In credit scoring, a missing 'employer phone number' might indicate an unstable job history, which is a strong signal for default risk. Adding a binary indicator captures this signal explicitly."
+  ],
+  "relations": {
+    "builds_on": "ch05_s01 (MNAR concept directly leads to using indicators)"
+  },
+  "figures": [],
+  "exclusions": [
+    "Tree algorithms' internal missing value handling (e.g., XGBoost's default direction) - keep focus on the engineered feature here."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "missing indicator": "missing indicator",
+    "feature": "fitur",
+    "target": "target"
+  }
+}

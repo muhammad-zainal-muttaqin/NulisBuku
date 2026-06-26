@@ -1,0 +1,59 @@
+{
+  "id": "ch14_s02",
+  "topic": "Fusion strategies: early, intermediate, late — and feature- vs. decision-level",
+  "scope": "The core design axis (where fusion happens) plus where to combine.",
+  "key_concepts": [
+    "Multimodal fusion dictates where and how distinct modalities are combined into a single predictive pipeline.",
+    "Early fusion (feature-level fusion) concatenates raw or minimally processed features from all modalities before feeding them into a single model.",
+    "Late fusion (decision-level fusion) trains independent models for each modality and aggregates their final predictions (e.g., via voting or averaging).",
+    "Intermediate fusion merges learned representations (embeddings) from different modalities at intermediate layers within a deep neural network.",
+    "The choice represents a trade-off: early fusion captures cross-modal interactions early but suffers from dimensionality imbalance; late fusion is highly modular and robust to missing data but ignores complex inter-modality dependencies."
+  ],
+  "definitions": [
+    {
+      "term": "Early fusion",
+      "english_source": "Early fusion",
+      "indonesian_target": "*early fusion*",
+      "definition": "Strategi penggabungan di tingkat fitur (*feature-level*), di mana data dari berbagai modalitas digabungkan di awal sebelum masuk ke model."
+    },
+    {
+      "term": "Late fusion",
+      "english_source": "Late fusion",
+      "indonesian_target": "*late fusion*",
+      "definition": "Strategi penggabungan di tingkat keputusan (*decision-level*), di mana setiap modalitas diproses oleh model terpisah dan hasil prediksinya digabungkan di akhir."
+    },
+    {
+      "term": "Intermediate fusion",
+      "english_source": "Intermediate fusion",
+      "indonesian_target": "*intermediate fusion*",
+      "definition": "Strategi penggabungan di mana representasi laten dari masing-masing modalitas digabungkan di dalam lapisan tersembunyi sebuah arsitektur *deep learning*."
+    }
+  ],
+  "examples": [
+    "Early fusion: Concatenating TF-IDF vectors of text with tabular age data into one big matrix, then training an XGBoost model.",
+    "Late fusion: An image classifier predicts 'cat' with 0.8 probability, a text classifier predicts 'cat' with 0.9 probability, and the final output is the average (0.85)."
+  ],
+  "relations": {
+    "precedes": ["ch14_s03", "ch14_s07"],
+    "follows": ["ch14_s01"]
+  },
+  "figures": [
+    {
+      "id": 2,
+      "type": "skema",
+      "caption_indonesian": "Spektrum Strategi Fusion Multimodal",
+      "description": "Tiga arsitektur paralel yang membandingkan letak penggabungan: Early Fusion (fitur disatukan di awal), Intermediate Fusion (lapisan neural disatukan di tengah), dan Late Fusion (keputusan model disatukan di akhir)."
+    }
+  ],
+  "exclusions": [
+    "Attention mechanisms for intermediate fusion (saved for s06)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "early fusion": "*early fusion*",
+    "late fusion": "*late fusion*",
+    "intermediate fusion": "*intermediate fusion*",
+    "feature-level": "tingkat fitur (*feature-level*)",
+    "decision-level": "tingkat keputusan (*decision-level*)"
+  }
+}

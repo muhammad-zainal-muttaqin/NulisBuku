@@ -1,0 +1,39 @@
+{
+  "id": "ch17_s04",
+  "topic": "A decision framework across data types",
+  "scope": "Routing the reader (ties to Appendix A).",
+  "key_concepts": [
+    "No single feature engineering strategy works universally. The decision depends heavily on the data modality, dataset size, and interpretability requirements.",
+    "For tabular data, the focus is on scaling, cardinality reduction, and interpretable derived features.",
+    "For structured temporal and spatial data, the focus shifts to correct windowing, avoiding leakage, and capturing structural context.",
+    "For unstructured text, image, or audio data, the approach leans heavily toward learned representations (embeddings) and pretrained models.",
+    "The decision framework routes the practitioner to the correct mental model before writing any code."
+  ],
+  "definitions": [
+    {
+      "term": "Decision framework",
+      "indonesian": "Kerangka keputusan",
+      "meaning": "A structured mapping of data types and project constraints to the most appropriate feature engineering strategies."
+    }
+  ],
+  "examples": [
+    "If working on a financial fraud detection system with strict regulatory interpretability rules, the framework points towards designed human representations (tabular bins, interaction features) rather than black-box deep tabular embeddings."
+  ],
+  "relations": {
+    "Appendix A": "Serves as the prose explanation for the technique selection map found in Appendix A.",
+    "Ch 3-15": "Acts as a capstone routing mechanism across all the data modalities discussed in the book."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not list every technique from every chapter. Keep it high-level routing.",
+    "Do not include the full Appendix A matrix here."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "embedding": "embedding",
+    "feature": "fitur",
+    "pretrained model": "pretrained model",
+    "representasi yang dirancang manusia": "representasi yang dirancang manusia",
+    "representasi yang dipelajari mesin": "representasi yang dipelajari mesin"
+  }
+}

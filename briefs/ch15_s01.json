@@ -1,0 +1,48 @@
+{
+  "id": "ch15_s01",
+  "topic": "Embeddings and the adaptation spectrum: from frozen extraction to fine-tuning",
+  "scope": "Brief recap of static vs. contextual (defined in Ch 11), then the adaptation continuum: frozen extractor -> partial -> full fine-tuning, with trade-offs.",
+  "key_concepts": [
+    "Recap of embeddings: vector representations that capture semantic meaning, transitioning from static to contextual.",
+    "The adaptation spectrum: a continuum defining how much of a pretrained model's weights are modified for a new task.",
+    "Frozen extraction: using the model as a fixed feature extractor without updating its weights. Fast, cheap, and robust against overfitting on small datasets.",
+    "Partial fine-tuning: unfreezing only the final layers of the model, allowing adaptation to specific tasks while preserving generalized foundational features.",
+    "Full fine-tuning: updating all weights in the model. Highly expressive but computationally expensive, requiring large data and risking catastrophic forgetting."
+  ],
+  "definitions": [
+    {
+      "term": "frozen extractor",
+      "definition": "A pretrained model used strictly to compute feature vectors, with its internal weights locked during training."
+    },
+    {
+      "term": "fine-tuning",
+      "definition": "The process of further training a pretrained model's weights on a specific downstream dataset."
+    }
+  ],
+  "examples": [
+    "Extracting image embeddings using a frozen ResNet, then training a simple logistic regression on those embeddings.",
+    "Performing full fine-tuning on a BERT model for a highly specialized legal text classification task."
+  ],
+  "relations": {
+    "precedes": "ch15_s02 (how to store and measure similarity between extracted embeddings).",
+    "follows": "Chapter 11 (which introduced static vs contextual text embeddings) and Chapter 12 (pretrained image/audio models)."
+  },
+  "figures": [
+    {
+      "callout": "[GAMBAR 15.1]",
+      "caption": "Spektrum adaptasi model pretrained",
+      "type": "diagram konseptual",
+      "description": "Diagram menunjukkan kontinum dari frozen extractor, partial fine-tuning, hingga full fine-tuning. Menyoroti layer mana yang dikunci (beku) dan layer mana yang diperbarui (dilatih)."
+    }
+  ],
+  "exclusions": [
+    "Do not detail the internal architecture of Transformers or CNNs (already covered in previous chapters)."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "embedding": "embedding",
+    "pretrained": "pretrained",
+    "fine-tuning": "fine-tuning",
+    "frozen extractor": "frozen extractor"
+  }
+}

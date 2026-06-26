@@ -1,0 +1,35 @@
+{
+  "id": "ch12_s04",
+  "topic": "Image embeddings and patches",
+  "scope": "Modern representations.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "The evolution from convolutional feature maps to treating images as sequences, popularized by Vision Transformers (ViT).",
+    "Image patches: breaking an image down into a grid of non-overlapping smaller squares (patches), flattening them, and treating them sequentially—much like words in a sentence.",
+    "Image embeddings: compressing the entire semantic content of a visual scene into a single, dense, continuous vector. In this vector space, visually and semantically similar images are located close together.",
+    "This paradigm shift unifies the representation format across modalities, allowing image patches to be processed with the same attention mechanisms originally designed for text."
+  ],
+  "definitions": [
+    { "term": "patch", "indonesian": "patch (potongan)", "definition": "A small, non-overlapping square region of an image, used as the fundamental unit of input for modern vision architectures." },
+    { "term": "image embedding", "indonesian": "image embedding", "definition": "A dense vector representation of an image that captures its high-level semantic meaning in a continuous vector space." },
+    { "term": "Vision Transformer (ViT)", "indonesian": "Vision Transformer (ViT)", "definition": "An architecture that applies the transformer model natively to computer vision by treating image patches as sequential tokens." }
+  ],
+  "examples": [
+    "Explain how an image of a dog chasing a ball is cut into a 16x16 grid of patches, and how the model uses attention to link the patch containing the 'dog' to the patch containing the 'ball'."
+  ],
+  "relations": {
+    "builds_toward": "ch14 (multimodal data, where image embeddings and text embeddings are combined)"
+  },
+  "exclusions": [
+    "Do not explain the mathematical details of self-attention or the transformer equation.",
+    "Do not discuss multimodal alignment (like CLIP) here; save it for chapter 14."
+  ],
+  "terminology_preferences": {
+    "patch": "patch",
+    "image embedding": "image embedding (keep English)",
+    "Vision Transformer": "Vision Transformer (ViT)",
+    "attention": "attention (keep English)",
+    "token": "token"
+  },
+  "figures": []
+}

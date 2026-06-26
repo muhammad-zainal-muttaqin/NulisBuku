@@ -1,0 +1,40 @@
+{
+  "id": "ch05_s02",
+  "topic": "Imputation as a pipeline component",
+  "scope": "Why it's a fitted, reproducible transformer, not a one-off manual edit.",
+  "key_concepts": [
+    "Imputation is not data cleaning done once in a spreadsheet; it is an active part of the machine learning pipeline.",
+    "Imputers must be fitted strictly on the training split to learn parameters (e.g., mean, median) and then used to transform both the training and inference/test data.",
+    "Performing imputation before splitting the data causes target leakage, as information from the test set influences the training set.",
+    "Treating imputation as a reproducible transformer ensures training-inference consistency."
+  ],
+  "definitions": [
+    {
+      "term": "Imputation",
+      "definition": "The process of replacing missing data with substituted values.",
+      "indonesian_translation": "imputasi"
+    },
+    {
+      "term": "Transformer",
+      "definition": "An object in a pipeline that implements fit and transform methods.",
+      "indonesian_translation": "transformer"
+    }
+  ],
+  "examples": [
+    "Calculating the median age of the entire dataset before splitting (wrong) vs. calculating the median age on the training set only, and applying that exact value to the test set (correct)."
+  ],
+  "relations": {
+    "builds_on": "ch02_s01 (Fit/transform: the pipeline as a training–inference contract)"
+  },
+  "figures": [],
+  "exclusions": [
+    "Specific imputation algorithms (covered in the next subsection)."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "pipeline discipline": "praktik pipeline yang benar",
+    "training split": "split training",
+    "test split": "split test",
+    "data leakage": "data leakage"
+  }
+}

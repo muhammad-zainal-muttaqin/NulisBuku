@@ -1,0 +1,113 @@
+# Deret Waktu & Data Sensor
+
+## Konstruksi Sampel Temporal: Lookback, Stride, Horizon, dan Penyelarasan
+
+Dalam data tabular, satu baris umumnya merepresentasikan satu unit observasi yang independen. Namun, pada data deret waktu, setiap observasi saling terhubung oleh urutan waktu. Kita tidak bisa sekadar memodelkan baris-baris tersebut secara acak. Untuk mendefinisikan unit observasi pada rentetan data kontinu, kita harus mengonstruksi sampel pembelajaran melalui proses *windowing*.
+
+*Windowing* adalah teknik menggeser sebuah bingkai dengan ukuran tetap di sepanjang deret waktu untuk memotong data menjadi sampel individual yang siap dilatih.
+
+Ada tiga parameter utama yang membentuk sampel ini. Pertama, *lookback* atau jendela input, yang menentukan seberapa jauh ke belakang model melihat sejarah untuk membuat prediksi. Kedua, *horizon* dan jendela target, yang mendefinisikan jarak ke masa depan dan bentuk target prediksi. Sebagai contoh, saat memprediksi penjualan esok hari dengan *horizon* satu hari memakai riwayat penjualan seminggu terakhir, panjang *lookback* ditetapkan sebesar tujuh.
+
+Ketiga adalah *stride*, yaitu besaran langkah yang digunakan untuk menggeser jendela ke depan saat membuat sampel berikutnya. Jika *stride* ditetapkan bernilai satu hari, jendela akan bergeser harian dan menghasilkan tumpang tindih observasi yang tinggi di antara sampel. Walaupun memperbanyak jumlah sampel latih, pendekatan ini membuat observasi yang berdekatan sangat berkorelasi secara temporal.
+
+[GAMBAR 10.1]
+Judul: Konstruksi sampel temporal: Lookback, Horizon, dan Stride
+Tipe: diagram konseptual
+Tampilkan: Visualisasi bagaimana deret waktu kontinu dipecah menjadi beberapa sampel bersarang dengan jendela input (lookback) dan target (horizon), bergeser sesuai stride.
+Sumber data: -
+
+Gambar 10.1 memperlihatkan struktur sampel yang bergeser tersebut. Penyelarasan waktu antara input dan target di sini amat rawan kebocoran informasi. Praktik *pipeline* yang benar mengharuskan penggunaan *window kausal* untuk tugas prediksi, di mana jendela input murni berhenti sebelum titik awal *horizon*. Jika kita menggunakan *window terpusat* yang merangkul waktu sebelum dan sesudah titik target, kita pada dasarnya membocorkan informasi masa depan ke dalam fitur input. *Window terpusat* ini murni untuk tugas analisis retrospektif, seperti imputasi nilai kosong atau penghalusan data historis yang sudah berlalu.
+
+Terakhir, *windowing* menuntut interval observasi yang beraturan. Data nyata yang terekam secara ireguler harus melewati proses *resampling* terlebih dahulu. Kita dapat melakukan *downsampling* untuk merangkum data berfrekuensi tinggi ke dalam interval yang lebih lambat, atau *upsampling* untuk mengisi celah observasi agar waktu antarsampel menjadi seragam. Melalui interval yang konstan, setiap pergeseran *stride* akan selalu memuat rentang waktu historis yang konsisten.
+
+
+## Fitur Lag dan Statistik Rolling
+
+Setelah mengonstruksi *lookback window*, kita memiliki bingkai waktu yang mengumpulkan observasi historis. Langkah selanjutnya adalah mengekstraksi bingkai tersebut menjadi atribut yang dapat diproses lebih lanjut. Tahapan ini bertujuan meratakan dimensi waktu. Model *machine learning* tabular standar beroperasi pada baris dan kolom yang saling lepas; model tersebut tidak mengenali urutan kejadian. Dengan memetakan rentang waktu menjadi kolom-kolom baru, kita mengubah proses historis yang dinamis menjadi deretan prediktor statis.
+
+Cara paling langsung untuk memanfaatkan sejarah adalah melalui fitur *lag*. Fitur ini menarik nilai dari langkah waktu masa lalu untuk disajikan sebagai prediktor pada masa kini. Saat memprediksi suhu udara hari ini, kita dapat menggunakan suhu dari hari kemarin sebagai fitur *lag* 1 dan rata-rata suhu tujuh hari terakhir sebagai perangkuman statistik *rolling*. Nilai *lag* sangat baik untuk menyediakan referensi historis terdekat. Meskipun begitu, menambahkan fitur *lag* terlalu banyak dapat memperlebar matriks data secara drastis. Semakin jauh rentang pengamatan harian ditarik ke belakang satu per satu, semakin besar peluang perluasan dimensi tersebut memicu risiko *overfitting*.
+
+Untuk menangkap tren tanpa menambah kolom secara berlebihan, kita mengandalkan statistik *rolling*. Pendekatan ini meringkas *lookback window* berukuran tetap menjadi sebuah nilai metrik ringkas. Alih-alih menyodorkan data tiga puluh hari sebagai tiga puluh kolom mandiri, kita cukup menghitung satu nilai rata-rata yang memetakan tren pergerakan lokal. Selain itu, perhitungan standar deviasi *rolling* berguna untuk mendeteksi fluktuasi ekstrem, dan ekstraksi batas maksimum dapat menentukan titik puncak terbaru. Penentuan panjang jendela dalam agregasi ini melibatkan sebuah *trade-off* mendasar. Jendela yang sempit dengan cepat bereaksi terhadap peristiwa terbaru tetapi sangat sensitif pada kehadiran *noise*. Sebaliknya, jendela yang panjang sanggup meredam fluktuasi sesaat demi memotret kestabilan jangka panjang, namun akan lambat menyesuaikan diri ketika arah tren utama berbalik.
+
+Di samping statistik *rolling* yang keseluruhan jendelanya terus bergeser mengikuti posisi waktu prediksi, kita juga menggunakan *expanding window*. Jendela perhitungan ini menahan batas awalnya pada satu titik yang tetap dan membiarkan ujung akhirnya terus bertambah panjang mengikuti observasi baru. Teknik ini secara khusus dipakai untuk menghitung memori agregat berjangka sangat panjang, misalnya menjumlahkan transaksi belanja seorang pelanggan dari hari pendaftaran pertama hingga hari ini. Melalui perpaduan tiga teknik representasi waktu ini (kewaspadaan sesaat dari fitur *lag*, deteksi tren lokal dari statistik *rolling*, serta ingatan kumulatif dari *expanding window*), kita dapat menuangkan sifat alami data temporal ke dalam representasi tabular klasik.
+
+
+## Differencing, Tren, dan Pola Musiman
+
+Karakteristik utama yang membedakan deret waktu dari data acak biasa adalah kehadiran tren dan efek musiman. Ketika data memiliki tren positif, seperti total penjualan bulanan yang terus bertumbuh setiap tahun, nilai observasi secara perlahan akan bergeser ke rentang angka yang semakin besar. Pergeseran ini menjadi masalah kritis bagi banyak algoritma *machine learning*, terutama model berbasis *tree* (seperti *random forest* atau *gradient boosting*).
+
+Model berbasis *tree* mempartisi data ke dalam aturan kondisi dan tidak memiliki kemampuan ekstrapolasi. Jika angka penjualan tertinggi yang pernah dilihat model selama masa pelatihan adalah seribu unit, prediksi maksimal yang bisa ia keluarkan di masa depan tidak akan jauh dari angka tersebut, meskipun tren sebenarnya sedang menanjak menuju dua ribu unit.
+
+Untuk menyelesaikan masalah ini, kita memodifikasi data agar mencapai stasioneritas (*stationarity*). Stasioneritas adalah kondisi di mana karakteristik statistik deret waktu, seperti nilai rata-rata, stabil dan tidak melayang menjauh seiring waktu. Teknik rekayasa fitur utama untuk memaksa kondisi stasioner adalah *differencing*. Alih-alih melatih model menggunakan nilai absolut pendapatan yang terus membesar, kita mengubah targetnya dan memprediksi selisih pendapatan bulan ini dikurangi bulan sebelumnya.
+
+Melalui *differencing*, kita mendesain ulang arsitektur prediksi dari "menebak total pendapatan" menjadi "menebak lompatan pendapatan". Karena besaran lompatan dari bulan ke bulan cenderung berfluktuasi di rentang numerik yang konstan, model berbasis *tree* dapat menangkap polanya dengan aman. Jika informasi arah tren tersebut juga penting, kita bisa mengekstraknya menjadi fitur secara tersendiri, misalnya dengan menghitung kemiringan garis linier pada suatu jendela waktu terakhir.
+
+Selain tren jangka panjang, data deret waktu kerap diwarnai pola musiman (*seasonality*). Pola musiman adalah fluktuasi periodik yang berulang secara teratur, seperti volume pengunjung situs web yang selalu merosot tajam di setiap akhir pekan. Karakteristik ini bisa ditangani lewat *seasonal differencing*. Mekanismenya serupa, namun kita mengurangkan nilai observasi saat ini dengan titik referensi yang sama di siklus sebelumnya (sebagai contoh, tingkat penjualan hari ini dikurangi data di hari yang sama minggu lalu).
+
+Sebagai alternatif, kita dapat menangkap efek periodik tersebut secara eksplisit melalui teknik ekstraksi elemen waktu seperti yang telah dibahas pada bab terdahulu. Dengan merekayasa representasi baru berupa penanda kategori (seperti indikator hari atau bulan), model diberi kemampuan langsung untuk mengenali dampak dari setiap musim.
+
+
+## Fitur Domain Frekuensi (FFT)
+
+Seluruh teknik yang kita bahas sejauh ini, seperti *lag*, *differencing*, dan statistik *rolling*, beroperasi di dalam domain waktu. Pendekatan ini mengekstrak pola berdasarkan perubahan amplitudo atau nilai observasi secara berurutan seiring berjalannya waktu. Fitur pada domain waktu sangat efektif untuk memodelkan deret berfrekuensi rendah, misalnya tren penjualan harian atau fluktuasi metrik ekonomi bulanan. Perubahan pada data tersebut terlihat jelas dari naik turunnya nilai absolut pada setiap titik observasi.
+
+Keterbatasan domain waktu mulai terlihat ketika kita menghadapi data sensor berfrekuensi tinggi. Data mekanis dan fisiologis yang berosilasi cepat, seperti sinyal akselerometer pada ponsel, sensor getaran pada mesin industri, atau sinyal elektrokardiogram (ECG), menghasilkan ribuan titik data per detik. Dengan data berfrekuensi setinggi ini, mengamati pergeseran amplitudo dari satu milidetik ke milidetik berikutnya jarang memberikan sinyal prediktif yang bermakna. Pola terpenting tersembunyi di dalam seberapa cepat gelombang tersebut berulang. Untuk menangkap pola periodik ini, kita memindahkan analisis dari domain waktu ke domain frekuensi.
+
+Alat komputasi utama untuk melakukan transisi ini adalah algoritma *Fast Fourier Transform* (FFT). Secara konseptual, FFT mengambil satu jendela waktu dari deret data yang kompleks dan memecahnya menjadi kumpulan gelombang periodik sederhana yang memiliki frekuensi berbeda-beda. Transformasi ini mengubah cara kita memandang data. Alih-alih merekam berapa besar simpangan sensor pada milidetik ke-10, hasil FFT memberikan informasi seberapa dominan keberadaan gelombang berfrekuensi 50 Hz di dalam seluruh jendela waktu tersebut. Sinyal mentah diurai menjadi komponen frekuensi dasar pembentuknya.
+
+Kita jarang memasukkan keluaran mentah FFT secara langsung ke dalam model. Praktik yang lebih umum adalah mengekstrak fitur spektral dari hasil transformasi tersebut. Beberapa metrik yang lazim digunakan meliputi frekuensi puncak (*peak frequency*), yaitu titik frekuensi dengan amplitudo tertinggi, energi total pada pita frekuensi tertentu, dan entropi spektral untuk mengukur kompleksitas komponen frekuensi. Kasus penggunaan klasik untuk representasi ini adalah sistem pemeliharaan prediktif pada motor industri. Kerusakan awal pada bantalan mesin sering kali tidak memengaruhi total volume getaran secara keseluruhan. Indikasi kerusakan justru muncul sebagai lonjakan energi tajam pada pita frekuensi tinggi yang spesifik. Memantau fitur spektral ini memungkinkan sistem memberikan peringatan dini sebelum kerusakan komponen memburuk.
+
+Penguraian sinyal menjadi komponen periodik melalui transformasi ini tidak terbatas pada data sensor mekanis atau medis. Pemahaman tentang dekomposisi frekuensi ini akan menjadi jembatan konseptual langsung menuju pemrosesan audio di Bab 12, tempat kita memanfaatkan prinsip yang sama untuk membangun representasi berbasis frekuensi seperti spektrogram dan fitur *Mel-Frequency Cepstral Coefficients* (MFCC).
+
+
+## Validasi Temporal: Menghindari Look-Ahead Leakage
+
+Menerapkan *cross-validation* acak standar (seperti *K-Fold*) pada data deret waktu merupakan kesalahan fundamental. Pemisahan acak mengabaikan arah jalannya waktu karena metode ini mengocok baris data sebelum membaginya ke dalam set pelatihan dan validasi. Akibatnya, data dari masa depan dapat masuk ke dalam set pelatihan sementara model diuji pada data dari masa lalu. Dalam skenario peramalan harga saham harian, pendekatan ini akan mengizinkan model berlatih menggunakan kejatuhan harga di hari Jumat untuk memprediksi harga di hari Kamis. Kesalahan ini menghasilkan *look-ahead leakage*, di mana informasi masa depan merembes ke masa lalu dan secara artifisial melambungkan akurasi. Model tampak sempurna saat dievaluasi, namun gagal total di dunia nyata karena telah mengintip jawaban.
+
+Solusi mendasar untuk masalah ini adalah melakukan *split temporal*. Validasi deret waktu mengharuskan set pelatihan secara ketat mendahului set validasi. Jika kita memiliki data historis satu tahun, kita melatih model menggunakan data dari bulan Januari hingga Oktober, lalu mengujinya secara eksklusif pada data bulan November hingga Desember. Pendekatan ini selaras dengan kondisi produksi yang sebenarnya.
+
+Meski *split temporal* sudah diterapkan, ada risiko kebocoran spesifik-modalitas yang tersembunyi akibat proses *windowing*. *Windowing* mengubah deret waktu yang panjang menjadi sampel-sampel observasi pendek yang saling tumpang-tindih. Tumpang-tindih ini berguna untuk menjaga kontinuitas informasi, namun menjadi celah kebocoran di garis batas pemisahan. Sampel terakhir di dalam set pelatihan dan sampel pertama di dalam set validasi sering kali berbagi baris data mentah yang sama di dalam jendela *lookback* mereka.
+
+Sebagai contoh, jika panjang *lookback* adalah tujuh hari, sampel pengujian pertama di hari ke-100 menggunakan data mentah dari hari ke-93 hingga hari ke-99 sebagai fitur input. Masalahnya, baris data dari rentang waktu yang sama juga digunakan untuk membentuk fitur dan target pada sampel-sampel terakhir di set pelatihan. Jika kita membelah data tepat di antara hari ke-99 dan hari ke-100 tanpa jarak pemisah, model tidak secara langsung melihat nilai target masa depan, tetapi kemiripan representasi input membuat evaluasi menjadi terlalu optimis.
+
+[GAMBAR 10.2]
+Judul: Temporal Splitting dan Purge Gap
+Tipe: diagram konseptual
+Tampilkan: Visualisasi pemisahan data temporal (urutan train lalu test) yang menyoroti perlunya purge gap (celah blok sampel yang dibuang) di batas pemisahan, agar jendela lookback dari set validasi pertama tidak menyentuh data mentah yang sama dengan jendela target dari set pelatihan terakhir.
+Sumber data: -
+
+Untuk menegakkan **praktik pipeline yang benar**, kita mencegah kebocoran antar-jendela ini dengan menyisipkan *purge gap* (celah pembersihan) di antara set pelatihan dan set validasi. *Purge gap* adalah area eksklusi tempat kita sengaja membuang sampel di sekitar batas *split temporal*.
+
+Lebar celah ini dihitung secara eksak: jumlah sampel yang dibuang harus sama dengan panjang *lookback* ditambah horizon prediksi. Horizon prediksi wajib ditambahkan karena target dari sampel pelatihan terakhir merentang ke masa depan. Kita melompati rentang waktu tersebut sepenuhnya agar set validasi terbebas dari sisa informasi historis. Dengan menerapkan *purge gap*, kita menjamin sampel pengujian pertama tidak memiliki irisan data mentah dengan sampel pelatihan terakhir. Evaluasi model menjadi ketat dan dapat diandalkan saat menghadapi data yang benar-benar baru.
+
+
+## Fitur untuk Model Klasik vs. Input Sekuensial
+
+Pendekatan rekayasa fitur temporal selalu bergantung pada keluarga model yang akan menerima data tersebut. Cara kita menyiapkan data untuk algoritma klasik berbeda secara mendasar dari cara kita memformat input untuk arsitektur *deep learning* modern. Perbedaan ini menandai salah satu transisi paling utama dalam spektrum buku ini: pergeseran dari representasi yang dirancang manusia menuju representasi yang dipelajari mesin.
+
+Untuk model klasik yang beroperasi pada data tabular, seperti *Random Forest* atau *Gradient Boosting*, setiap observasi harus disajikan sebagai vektor berdimensi tunggal yang diratakan. Model-model ini tidak memiliki konsep bawaan tentang urutan kronologis. Jika kita mengumpulkan jendela riwayat selama 30 hari, kita tidak bisa memberikan deretan data tersebut ke dalam model begitu saja. Jendela 30 hari itu harus diratakan menjadi 30 kolom fitur independen yang berjejer pada satu baris data. Karena algoritma ini memperlakukan setiap kolom secara terisolasi tanpa tahu urutan asalnya, manusia menanggung beban penuh untuk merangkai makna waktu secara eksplisit. Kita harus merancang variabel turunan, seperti nilai rata-rata bergulir atau laju perubahan harian, agar model tabular dapat memetakan tren pergerakan masa lalu.
+
+Sebaliknya, model sekuensial pada *deep learning* seperti RNN, LSTM, dan *Transformer* didesain khusus untuk menelan keseluruhan rentang temporal secara utuh. Alih-alih meratakan baris data, kita membiarkan input ini berupa *tensor* dua dimensi berukuran jumlah langkah waktu dikali jumlah fitur. Ketika kita memasukkan riwayat 30 hari ke sebuah model LSTM, struktur kronologis berisi 30 langkah beruntun tersebut tetap dipertahankan secara berurutan. Dinamika perpindahan waktu antar hari akan diserap secara internal melalui *hidden state* atau mekanisme *attention* selama proses pelatihan. Tanggung jawab pembacaan sejarah secara runtut ini beralih menjadi representasi yang dipelajari mesin.
+
+Meskipun sanggup menemukan pola dari deret angka secara mandiri, arsitektur *deep learning* tetap membutuhkan persiapan bentuk data. Model sekuensial amat peka terhadap besaran variansi data, sehingga normalisasi dan penyesuaian skala wajib dilakukan agar perhitungan *gradient* stabil. Lebih jauh lagi, model ini butuh panduan untuk memahami posisi waktu yang absolut. Model akan mencetak kinerja jauh lebih akurat apabila kita menyandingkan data masukan tersebut dengan fitur siklik, misalnya nilai sinus dan kosinus yang mewakili siklus jam atau hari dalam sepekan. Fitur eksplisit seperti ini memberikan kerangka konteks esensial yang tidak mungkin diketahui sendiri oleh mesin tanpa panduan eksternal.
+
+
+### Studi Kasus: Prediksi Deret Waktu Multivariat
+
+Untuk menyatukan seluruh konsep dalam bab ini, kita merancang *pipeline* rekayasa fitur untuk masalah deret waktu multivariat. Kasus yang dihadapi adalah memprediksi total permintaan listrik sebuah kota pada satu jam berikutnya. Prediksi ini tidak cukup mengandalkan riwayat beban listrik. Suhu udara, kelembapan, dan aktivitas penduduk bergerak bersamaan serta saling memengaruhi. Kehadiran lebih dari satu variabel yang diamati bersamaan seiring waktu menjadikan kasus ini sebagai deret waktu multivariat.
+
+Langkah pertama adalah mendefinisikan struktur sampel temporal. Kita akan menggunakan algoritma *random forest* klasik sebagai model *baseline*. Model semacam ini tidak membaca urutan waktu secara bawaan sehingga membutuhkan data tabular datar. Untuk mengubah aliran waktu kontinu menjadi baris pengamatan terpisah, kita menetapkan *horizon* prediksi sejauh satu jam ke depan dan *lookback* sepanjang 24 jam ke belakang. Rentang 24 jam dipilih secara spesifik untuk merekam satu siklus harian penuh dari aktivitas penduduk kota.
+
+Selanjutnya, kita merakit fitur dari jendela pengamatan tersebut. Untuk variabel waktu, penggunaan angka jam mentah (0 hingga 23) dapat membingungkan model. Angka 23 dan 0 terlihat berjauhan secara matematis meski berdampingan di dunia nyata. Kita menghindari bias ini dengan mengekstrak fitur siklik menggunakan fungsi sinus dan kosinus. Untuk variabel beban listrik, kita membangun 24 fitur *lag* yang merekam nilai konsumsi historis pada setiap jam di hari sebelumnya. Untuk faktor cuaca yang cenderung stabil dan memberi dampak makro, kita menghitung rata-rata *rolling* suhu selama 24 jam terakhir guna menangkap sinyal tren akumulatif dari fluktuasi harian. 
+
+Fase paling kritis dari seluruh proses ini adalah strategi validasi. Pemisahan acak dilarang keras karena mengacaukan struktur kronologi dan mengundang kebocoran informasi. Kita menerapkan *split temporal* kronologis murni: sepuluh bulan pertama dialokasikan untuk set pelatihan dan dua bulan terakhir untuk pengujian.
+
+Meskipun batas waktu ditarik secara kronologis, persinggungan data tersembunyi masih bisa terjadi. Sampel pengujian pertama selalu mensyaratkan 24 jam riwayat observasi sebagai *lookback*. Jika pemotongan terjadi di tengah malam pada akhir bulan kesepuluh, jendela riwayat dari pengujian ini akan menggunakan observasi riil yang statusnya menjadi bagian dari target di jam-jam akhir masa pelatihan. Untuk menghindari tumpang tindih waktu, kita mengeksekusi *purge gap*.
+
+```
+[KODE: contoh pemisahan temporal dengan purge gap; sumber: notebook bab]
+```
+
+Kita membuang blok data selama 25 jam (panjang *lookback* ditambah *horizon*) tepat di batas irisan pelatihan dan pengujian. Jarak pemisah ini memastikan tidak ada baris riwayat pengamatan yang bocor di antara kedua set tersebut. 
+
+Setelah batas isolasi aktif, kita masuk ke tahap akhir. Kita melakukan *fit* terhadap fungsi *scaler* guna menormalisasi nilai masukan, eksklusif hanya menggunakan data dari set pelatihan. Menerapkan praktik *pipeline* yang benar menjaga statistik target masa depan agar tidak mencemari pelatihan. Melalui disiplin ekstraksi dan *purge gap* ini, kita menjamin evaluasi *baseline* berjalan bersih, tanpa kebocoran informasi, dan mencerminkan kemampuan riil model saat diimplementasikan ke produksi.

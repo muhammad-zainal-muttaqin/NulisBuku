@@ -1,0 +1,26 @@
+{
+  "id": "ch01_s07",
+  "topic": "The feature engineering pipeline at a glance",
+  "scope": "Roadmap of the book; how the parts connect.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "Feature engineering is not a random bag of tricks, but a structured pipeline.",
+    "The journey begins with foundational transformations (Part II).",
+    "It continues to selection and dimensionality reduction to remove noise (Part III).",
+    "It branches into specialized treatments for specific data types like images, text, and graphs (Part IV).",
+    "Finally, it synthesis with deep learning and automated frameworks in modern architectures (Part V)."
+  ],
+  "definitions": [],
+  "examples": [],
+  "relations": {
+    "builds_toward": "The global structure of the book."
+  },
+  "exclusions": [
+    "Do not drill into the details of any specific chapter."
+  ],
+  "terminology_preferences": {
+    "pipeline": "pipeline",
+    "feature engineering": "rekayasa fitur"
+  },
+  "figures": []
+}

@@ -1,0 +1,25 @@
+{
+  "id": "ch04_s06",
+  "topic": "Entity embeddings",
+  "scope": "Bridge to learned representations.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Instead of defining one-hot matrices, we define a small trainable matrix of continuous vectors attached to each discrete category.",
+    "The neural network learns the precise continuous dimensions representing similarity amongst categories during training.",
+    "The first major leap from designed representations to fully learned representation for categorical variables."
+  ],
+  "definitions": [
+    { "term": "entity embedding", "indonesian": "entity embedding", "definition": "Pembentukan vektor representasi padat berkelanjutan untuk tipe pengamatan kategori nominal mentah yang disesuaikan mesin mandiri selama simulasi berjalan." }
+  ],
+  "examples": [
+    "Mapping the weekdays 'Sunday' and 'Saturday' mathematically closer together than 'Wednesday', completely formulated automatically."
+  ],
+  "relations": {
+    "builds_toward": "Bagian V (deep learning representations in chapter 15)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "entity embedding": "entity embedding"
+  },
+  "figures": []
+}

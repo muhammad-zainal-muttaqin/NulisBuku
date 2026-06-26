@@ -1,0 +1,29 @@
+{
+  "id": "ch02_s07",
+  "topic": "Common student mistakes",
+  "scope": "Concrete anti-patterns to recognize.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Recognizing specific pitfalls that often trap beginners.",
+    "Applying global normalization scaling on entire datasets before calling train_test_split.",
+    "Copying code snippets that mistakenly call fit_transform on validation or inference sets instead of using just transform.",
+    "Writing feature calculation functions completely decoupled from the validation architecture framework, relying on manual execution steps."
+  ],
+  "definitions": [],
+  "examples": [
+    "Using a simple .replace() or .apply() method without creating a transformer class. When the inference script is written two months later, the exact calculation details are forgotten."
+  ],
+  "relations": {
+    "builds_upon": "ch02_s01 to ch02_s06 Concepts"
+  },
+  "exclusions": [
+    "Keep it to top 3 pipeline feature engineering mistakes, do not list general AI mistakes like overfitting."
+  ],
+  "terminology_preferences": {
+    "fit_transform": "fit_transform",
+    "transform": "transform",
+    "transformer": "transformer",
+    "train_test_split": "train_test_split"
+  },
+  "figures": []
+}

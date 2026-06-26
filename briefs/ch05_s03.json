@@ -1,0 +1,40 @@
+{
+  "id": "ch05_s03",
+  "topic": "Simple vs. model-based imputation",
+  "scope": "Mean/median → iterative/KNN → modern (MIWAE/diffusion).",
+  "key_concepts": [
+    "Simple imputation replaces missing values with univariate statistics like mean, median, or mode. It is fast but ignores relationships between features.",
+    "Model-based imputation uses other features to predict the missing values, preserving multivariate relationships.",
+    "Iterative imputation (e.g., MICE) models each feature as a function of others in a round-robin fashion.",
+    "KNN imputation finds similar samples and averages their values to fill in the blanks.",
+    "Modern deep learning approaches like MIWAE (Missing Data Importance-Weighted Autoencoder) and diffusion models are emerging for complex, high-dimensional datasets."
+  ],
+  "definitions": [
+    {
+      "term": "Iterative Imputation",
+      "definition": "A strategy that models each feature with missing values as a function of other features.",
+      "indonesian_translation": "imputasi iteratif"
+    },
+    {
+      "term": "Simple Imputation",
+      "definition": "Imputing using only the feature's own distribution.",
+      "indonesian_translation": "imputasi sederhana"
+    }
+  ],
+  "examples": [
+    "Using median house price to fill missing house prices (simple) vs. training a regression model on location, size, and age to predict the missing house price (iterative/model-based)."
+  ],
+  "relations": {
+    "builds_on": "ch05_s01 (Understanding MCAR vs. MAR helps decide between simple and model-based)"
+  },
+  "figures": [],
+  "exclusions": [
+    "Deep mathematical formulations of MICE or diffusion models."
+  ],
+  "target_word_count_indonesian": 400,
+  "terminology_preferences": {
+    "simple imputation": "imputasi sederhana",
+    "iterative imputation": "imputasi iteratif",
+    "multivariate": "multivariat"
+  }
+}

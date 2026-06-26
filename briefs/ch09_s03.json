@@ -1,0 +1,40 @@
+{
+  "id": "ch09_s03",
+  "title": "Ablation studies",
+  "scope": "Add/remove feature groups, measure impact. Explains how to systemically drop subsets of features to measure their aggregate impact on the model's performance.",
+  "key_concepts": [
+    "An ablation study evaluates feature importance by removing components and observing the performance drop.",
+    "Features are typically removed in logical groups (e.g., all demographic features, all text embeddings) rather than one by one, especially in high-dimensional spaces.",
+    "A significant performance drop indicates the removed group holds high predictive utility."
+  ],
+  "definitions": [
+    "Ablation study: An experimental procedure where specific components or feature groups are removed from a machine learning system to evaluate their contribution."
+  ],
+  "examples": [
+    "Removing a block of historical transaction features and retraining the model. If AUC drops by 5%, the historical transactions carry strong signal."
+  ],
+  "relations_to_other_chapters": [
+    "Prepares the ground for specific importance metrics (s04, s05) which look at features individually.",
+    "Ties into evaluating complex feature construction (Ch 6)."
+  ],
+  "terminology_preferences": [
+    "ablation study",
+    "ablation",
+    "model",
+    "baseline",
+    "overfitting",
+    "pipeline"
+  ],
+  "what_to_exclude": [
+    "Neural network layer ablation (focus purely on feature ablation)."
+  ],
+  "provenance": [
+    {
+      "source": "https://arxiv.org/abs/1905.09275",
+      "excerpt_or_location": "Ablation studies in machine learning",
+      "type": "paper",
+      "date": "2019",
+      "confidence": "verified"
+    }
+  ]
+}

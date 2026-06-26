@@ -1,0 +1,38 @@
+{
+  "id": "ch13_s04",
+  "title": "Data Graf: Derajat, Sentralitas, dan Fitur Klaster",
+  "scope": "Handcrafted graph features.",
+  "key_concepts": [
+    "Graphs represent entities (nodes) and their relationships (edges). Graph data cannot be directly fed into standard tabular models without extracting structural features.",
+    "Handcrafted graph features summarize a node's local and global position in the network.",
+    "Degree features count connections. Centrality features measure importance (e.g., PageRank, betweenness). Clustering coefficients measure how connected a node's neighbors are to each other.",
+    "These are classical 'representasi yang dirancang manusia' for graph data."
+  ],
+  "definitions": [
+    {
+      "term": "Degree",
+      "meaning": "Jumlah koneksi atau sisi (edge) yang dimiliki oleh sebuah simpul (node)."
+    },
+    {
+      "term": "Centrality",
+      "meaning": "Ukuran seberapa penting atau strategis posisi sebuah simpul di dalam keseluruhan graf."
+    }
+  ],
+  "examples": [
+    "Social network fraud detection: an account with a massive out-degree but zero in-degree, and a very low clustering coefficient, might be flagged as a bot. These metrics become standard numeric features."
+  ],
+  "figures": [
+    {
+      "callout": "[GAMBAR 13.3]",
+      "caption": "Ekstraksi fitur struktural dari graf.",
+      "type": "diagram konseptual",
+      "description": "Sebuah graf sederhana di mana fitur seperti derajat, antara (betweenness), dan kedekatan (closeness) dihitung untuk simpul target, mengubahnya menjadi baris data tabular."
+    }
+  ],
+  "exclude": "Proofs of PageRank convergence or Dijkstra's algorithm for betweenness.",
+  "relations": "First half of the graph section. Represents the 'designed' end of the spectrum, setting the stage for learned representations in s06/s07.",
+  "terminology": {
+    "keep_english": ["PageRank", "betweenness", "in-degree", "out-degree"],
+    "indonesian_terms": ["graf", "simpul", "sisi", "derajat", "sentralitas", "klaster", "representasi yang dirancang manusia"]
+  }
+}

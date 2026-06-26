@@ -1,0 +1,46 @@
+{
+  "id": "ch10_s03",
+  "topic": "Differencing, trend, and seasonality",
+  "scope": "Stationarity-oriented features (differencing, explicitly modeling trend and repeating patterns).",
+  "key_concepts": [
+    "Many machine learning algorithms, especially tree-based models, struggle to extrapolate outside the numerical range seen during training. A growing trend breaks this assumption.",
+    "Differencing transforms a non-stationary series (where the mean changes over time) into a stationary one by taking the difference between consecutive observations.",
+    "By predicting the change instead of the absolute value, models can handle overall trends more safely.",
+    "Trend features can also be captured explicitly, such as by calculating the linear slope over a rolling window.",
+    "Seasonality involves repeating patterns at fixed intervals. Seasonal differencing subtracts the value from the same point in the previous cycle.",
+    "Explicit seasonal features (like day-of-week or month-of-year) allow models to learn periodic effects directly."
+  ],
+  "definitions": [
+    {
+      "term": "Differencing",
+      "meaning": "The process of computing the difference between consecutive observations to remove trends."
+    },
+    {
+      "term": "Stationarity",
+      "meaning": "A state where the statistical properties of a time series, like mean and variance, are constant over time."
+    },
+    {
+      "term": "Seasonality",
+      "meaning": "Predictable and recurring periodic fluctuations in a time series."
+    }
+  ],
+  "examples": [
+    "Instead of predicting cumulative monthly sales that grow every year, predicting the month-over-month change in sales."
+  ],
+  "relations": {
+    "to_ch06_s06": "Relates to the date/time and cyclical features discussed in Chapter 6."
+  },
+  "figures": [],
+  "exclusions": [
+    "Formal statistical tests for stationarity like Augmented Dickey-Fuller (ADF) tests."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "differencing": "differencing",
+    "trend": "tren",
+    "seasonality": "musiman",
+    "stationarity": "stasioneritas",
+    "tree-based": "berbasis tree",
+    "machine learning": "machine learning"
+  }
+}

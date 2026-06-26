@@ -1,0 +1,1 @@
+Agak mirip2 dengan modul asisten, tapi dibatasi jumlah kata: naskah utama 55k kata + gambar/tabel (naskah cetak 300 halaman)

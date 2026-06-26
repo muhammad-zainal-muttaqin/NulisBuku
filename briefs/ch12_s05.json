@@ -1,0 +1,37 @@
+{
+  "id": "ch12_s05",
+  "topic": "Audio: waveform, spectrogram, MFCC, chroma",
+  "scope": "The designed end of the audio mini-spectrum.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Audio data naturally exists as a 1D raw waveform (amplitude over time), which is dense and difficult for classical models to process directly.",
+    "To extract meaningful patterns, engineers transform audio into the frequency domain, creating representasi yang dirancang manusia (handcrafted features).",
+    "Spectrogram: a 2D visual representation of audio (time on X-axis, frequency on Y-axis, intensity as color). Treating spectrograms as 'images' allows the reuse of computer vision techniques for audio classification.",
+    "Mel-Frequency Cepstral Coefficients (MFCC): heavily engineered features designed specifically to mimic the non-linear perception of the human ear. It is the gold standard for speech recognition.",
+    "Chroma features: capturing the energy distribution across the 12 musical pitch classes, primarily used for music genre classification and chord recognition."
+  ],
+  "definitions": [
+    { "term": "waveform", "indonesian": "waveform (bentuk gelombang)", "definition": "The raw, 1D digital representation of an audio signal, recording changes in air pressure amplitude over time." },
+    { "term": "spectrogram", "indonesian": "spektrogram", "definition": "A visual representation of the spectrum of frequencies of a signal as it varies with time." },
+    { "term": "Mel-Frequency Cepstral Coefficients (MFCC)", "indonesian": "MFCC", "definition": "A representation of the short-term power spectrum of a sound, based on a linear cosine transform of a log power spectrum on a nonlinear mel scale." }
+  ],
+  "examples": [
+    "Explain how converting a voice recording into a spectrogram turns a confusing 1D squiggly line into a 2D 'picture' of sound, where vowels and consonants look like distinct shapes."
+  ],
+  "relations": {
+    "builds_toward": "ch12_s06 (how modern models bypass these designed features and learn directly from the raw waveform)"
+  },
+  "exclusions": [
+    "Do not explain the Fourier Transform (FFT) mathematics in depth.",
+    "Do not discuss deep learning models for audio yet."
+  ],
+  "terminology_preferences": {
+    "waveform": "waveform",
+    "spectrogram": "spektrogram",
+    "designed by human representation": "representasi yang dirancang manusia",
+    "pitch": "nada",
+    "frequency domain": "domain frekuensi",
+    "amplitude": "amplitudo"
+  },
+  "figures": []
+}

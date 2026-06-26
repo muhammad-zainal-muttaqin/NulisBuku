@@ -1,0 +1,43 @@
+{
+  "id": "ch12_s02",
+  "topic": "Handcrafted image features (HOG) and their limits",
+  "scope": "The designed end for vision.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Before deep learning, image processing relied heavily on handcrafted features (representasi yang dirancang manusia) to extract structural information like edges, corners, and textures from raw pixels.",
+    "Histogram of Oriented Gradients (HOG) is a prime example of a designed feature. It works by counting the occurrences of gradient orientation in localized portions of an image, capturing object shapes and silhouettes effectively.",
+    "The limitations of the designed approach: handcrafted extractors are rigid, require significant domain expertise to tune, and struggle to capture high-level semantic meaning (e.g., distinguishing complex contexts).",
+    "This establishes the 'designed by human' end of the spectrum for computer vision, highlighting why the field eventually shifted toward learned representations."
+  ],
+  "definitions": [
+    { "term": "Histogram of Oriented Gradients (HOG)", "indonesian": "Histogram of Oriented Gradients (HOG)", "definition": "A feature descriptor used in computer vision for object detection, focusing on the structure or the shape of an object through gradient directions." },
+    { "term": "gradient", "indonesian": "gradien", "definition": "A directional change in the intensity or color in an image, used to detect edges." }
+  ],
+  "examples": [
+    "Explain how HOG processes a picture of a pedestrian by looking at the sharp intensity changes (edges) around the human silhouette, rather than memorizing the color of their shirt."
+  ],
+  "relations": {
+    "builds_toward": "ch12_s03 (how CNNs automate the feature extraction process that HOG used to do manually)"
+  },
+  "exclusions": [
+    "Do not provide the mathematical formula for calculating HOG gradients or block normalization.",
+    "Do not discuss SIFT or SURF in detail, stick to HOG as the primary example."
+  ],
+  "terminology_preferences": {
+    "image": "citra",
+    "handcrafted feature": "fitur rancangan tangan",
+    "designed by human representation": "representasi yang dirancang manusia",
+    "pixel": "piksel",
+    "deep learning": "deep learning (keep English)",
+    "computer vision": "computer vision (keep English)"
+  },
+  "figures": [
+    {
+      "id": "12.1",
+      "caption": "Ekstraksi fitur Histogram of Oriented Gradients (HOG) pada citra.",
+      "type": "diagram konseptual",
+      "description": "Menampilkan gambar asli, kemudian panah gradien yang mendeteksi tepian, dan representasi akhir blok HOG yang menangkap bentuk siluet objek.",
+      "data_source": "notebook bab"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "ch13_s08",
+  "title": "Data Leakage pada Pemisahan Graf",
+  "scope": "Why graph splits are subtle (connected nodes split naively across train/test).",
+  "key_concepts": [
+    "Splitting a graph is fundamentally different from splitting tabular data because edges cross the train/test boundary.",
+    "If node A is in the training set and its connected neighbor node B is in the test set, information leaks. A GNN or neighborhood aggregation will use A's label or features to predict B.",
+    "Transductive vs Inductive learning: Transductive sees the whole graph topology during training (labels masked for test). Inductive splits the graph into entirely disconnected subgraphs.",
+    "Applying 'praktik pipeline yang benar' on graphs often requires careful temporal splits or subgraph isolation to prevent test-set features from bleeding into the training process."
+  ],
+  "definitions": [
+    {
+      "term": "Transductive learning",
+      "meaning": "Skenario di mana struktur graf secara keseluruhan (termasuk simpul uji) terlihat selama pelatihan, namun label untuk simpul uji disembunyikan."
+    },
+    {
+      "term": "Inductive learning",
+      "meaning": "Skenario di mana model dievaluasi pada graf atau subgraf yang benar-benar tidak terlihat selama fase pelatihan."
+    }
+  ],
+  "examples": [
+    "If a fraud detection GNN trains on a network where known fraudsters are directly linked to test nodes, the message passing will leak the fraud signal perfectly to the test set, artificially boosting accuracy."
+  ],
+  "exclude": "Deep dive into semi-supervised learning bounds.",
+  "relations": "The graph equivalent of s03. Ties back to Ch 2's core message on pipeline discipline.",
+  "terminology": {
+    "keep_english": ["transductive", "inductive", "target leakage", "GNN", "pipeline"],
+    "indonesian_terms": ["praktik pipeline yang benar", "simpul", "graf", "pelatihan", "uji"]
+  }
+}

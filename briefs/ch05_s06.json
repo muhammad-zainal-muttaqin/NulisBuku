@@ -1,0 +1,41 @@
+{
+  "id": "ch05_s06",
+  "topic": "Robust transformations for outliers",
+  "scope": "Reducing influence without deleting.",
+  "key_concepts": [
+    "When outliers are valid events, deleting them loses data, but keeping them as-is can skew sensitive models (like linear regression).",
+    "Robust transformations reduce the magnitude and influence of outliers without destroying the extreme signal entirely.",
+    "Techniques include capping/winsorizing (setting extreme values to a specified percentile boundary) and robust scaling (scaling based on interquartile ranges rather than mean/variance).",
+    "Logarithmic or power transformations can also compress the long tails of skewed distributions, naturally reigning in outliers."
+  ],
+  "definitions": [
+    {
+      "term": "Winsorizing / Capping",
+      "definition": "Limiting extreme values in the statistical data to reduce the effect of possibly spurious outliers.",
+      "indonesian_translation": "capping (winsorizing)"
+    },
+    {
+      "term": "Robust Scaling",
+      "definition": "Scaling features using statistics that are robust to outliers, typically the median and interquartile range.",
+      "indonesian_translation": "robust scaling"
+    }
+  ],
+  "examples": [
+    "Capping all incomes above the 99th percentile to match the exact value of the 99th percentile.",
+    "Applying a log transform to heavily skewed transaction amounts so that $1,000,000 becomes closer in scale to $10,000."
+  ],
+  "relations": {
+    "builds_on": "ch03_s03 (Robust scaling introduced in Ch 3)"
+  },
+  "figures": [],
+  "exclusions": [
+    "Repeating the exact formulas for standard scaling vs robust scaling (already in Chapter 3)."
+  ],
+  "target_word_count_indonesian": 380,
+  "terminology_preferences": {
+    "capping": "capping",
+    "winsorizing": "winsorizing",
+    "robust scaling": "robust scaling",
+    "outlier": "outlier"
+  }
+}

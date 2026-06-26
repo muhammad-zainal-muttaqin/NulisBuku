@@ -1,0 +1,39 @@
+{
+  "id": "ch11_s04",
+  "topic": "Contextual, sentence, and document embeddings",
+  "scope": "From word to longer spans.",
+  "key_concepts": [
+    "The polysemy problem of static word embeddings.",
+    "Contextual embeddings generate dynamic representations based on surrounding words.",
+    "The need to aggregate word-level signals into sentence or document-level features.",
+    "Sentence embeddings map full texts to a single dense vector space."
+  ],
+  "definitions": [
+    {
+      "term": "Contextual embedding",
+      "definition": "Representasi vektor yang nilainya berubah secara dinamis bergantung pada kata-kata lain di sekitarnya dalam sebuah kalimat."
+    },
+    {
+      "term": "Sentence embedding",
+      "definition": "Vektor tunggal yang merangkum makna dari keseluruhan kalimat atau dokumen pendek."
+    }
+  ],
+  "examples": [
+    "The word 'bisa' (venom) and 'bisa' (able) getting the exact same static vector, but completely different contextual vectors."
+  ],
+  "relations": {
+    "prerequisites": "Static word embeddings from s03.",
+    "builds_toward": "Using pretrained models to extract these embeddings in s05."
+  },
+  "figures": [],
+  "exclusions": [
+    "Transformer self-attention math."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "contextual embedding": "contextual embedding",
+    "sentence embedding": "sentence embedding",
+    "document embedding": "document embedding",
+    "polysemy": "polisemi"
+  }
+}

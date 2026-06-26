@@ -1,0 +1,37 @@
+{
+  "id": "ch10_s06",
+  "topic": "Features for classic models vs. sequential inputs",
+  "scope": "The difference between feature engineering for flattened classic models vs. sequential 2D inputs for deep learning models.",
+  "key_concepts": [
+    "The way we engineer temporal features depends entirely on the model family receiving them.",
+    "Classic tabular models (like Random Forests or Gradient Boosting) require a flattened, one-dimensional representation for each sample. The temporal structure must be explicitly extracted into engineered features like lags and rolling statistics.",
+    "Deep sequential models (like RNNs, LSTMs, and Transformers) are designed to ingest the entire temporal sequence directly as a 2D tensor (time_steps × features).",
+    "This marks a major turning point on the book's core spectrum: moving from representations designed by humans (explicit lag columns) to representations learned by machines (the internal hidden states or attention mechanisms of the deep learning model).",
+    "However, 'learned by machine' does not mean zero preparation. Sequential models still heavily rely on scaling, normalization, and explicit time-encoding features (like sine/cosine for hour of day) to provide essential structural context."
+  ],
+  "definitions": [
+    {
+      "term": "Sequential models",
+      "meaning": "Neural network architectures that process data sequentially, maintaining internal states to track temporal dependencies."
+    }
+  ],
+  "examples": [
+    "Feeding a 30-day window to an XGBoost model requires flattening it into 30 distinct feature columns, whereas feeding it to an LSTM keeps it as a sequence of 30 distinct time steps."
+  ],
+  "relations": {
+    "to_chapter_1": "Explicitly invokes the 'dirancang manusia -> dipelajari mesin' spectrum defined in Chapter 1, as this is a key modality transition."
+  },
+  "figures": [],
+  "exclusions": [
+    "Architectural details of LSTM gates or Transformer attention heads."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "classic models": "model klasik",
+    "sequential models": "model sekuensial",
+    "flattened": "diratakan",
+    "tensor": "tensor",
+    "dirancang manusia": "dirancang manusia",
+    "dipelajari mesin": "dipelajari mesin"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "ch04_s02",
+  "topic": "One-hot and ordinal encoding",
+  "scope": "The baselines; where each breaks.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "Ordinal encoding maps string targets to integer variables (1, 2, 3), but tricks linear models into assuming rank.",
+    "One-hot encoding creates a binary column for every possible category, preventing linear confusion but expanding matrix width dramatically.",
+    "Tree based models can naturally handle ordinal numbers as category pointers without assuming numeric correlation."
+  ],
+  "definitions": [
+    { "term": "one-hot encoding", "indonesian": "one-hot encoding", "definition": "Mengubah satu lajur kategori menjadi banyak lajur fitur spesifik bernilai biner tunggal (1 atau 0)." },
+    { "term": "ordinal encoding", "indonesian": "ordinal encoding", "definition": "Mengubah kategori ke nilai angka bulat berurutan." }
+  ],
+  "examples": [
+    "One-hot encoding applied to 'Color: Red, Blue, Green' creates three separate columns."
+  ],
+  "relations": {
+    "builds_upon": "ch04_s01"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "one-hot encoding": "one-hot encoding",
+    "ordinal encoding": "ordinal encoding"
+  },
+  "figures": []
+}

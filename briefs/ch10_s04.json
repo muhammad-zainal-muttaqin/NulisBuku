@@ -1,0 +1,44 @@
+{
+  "id": "ch10_s04",
+  "topic": "Frequency-domain features (FFT), briefly",
+  "scope": "When and why spectral features matter, particularly for high-frequency sensor data.",
+  "key_concepts": [
+    "Most time series features (like lags and rolling means) operate in the time domain, looking at amplitude changes over time.",
+    "For high-frequency sensor data (accelerometers, vibration sensors, ECG), critical patterns are often hidden in the frequency domain.",
+    "The Fast Fourier Transform (FFT) converts a window of time-domain data into the frequency domain, decomposing the complex signal into underlying periodic waves.",
+    "Instead of modeling the raw signal, we extract spectral features from the FFT output, such as the peak frequency, energy in specific frequency bands, or spectral entropy.",
+    "These features are highly effective for tasks like predictive maintenance (machine vibration) and human activity recognition."
+  ],
+  "definitions": [
+    {
+      "term": "Time domain",
+      "meaning": "Analysis of mathematical functions, physical signals, or time series with respect to time."
+    },
+    {
+      "term": "Frequency domain",
+      "meaning": "Analysis of signals with respect to frequency, rather than time."
+    },
+    {
+      "term": "FFT (Fast Fourier Transform)",
+      "meaning": "An efficient algorithm that computes the discrete Fourier transform, decomposing a sequence of values into components of different frequencies."
+    }
+  ],
+  "examples": [
+    "Predicting a motor failure not by the total volume of vibration, but by a sudden increase in energy at a specific high-frequency band."
+  ],
+  "relations": {
+    "to_chapter_12": "Serves as a conceptual bridge to audio features (spectrograms, MFCC) in Chapter 12, which also rely on frequency-domain transformations."
+  },
+  "figures": [],
+  "exclusions": [
+    "The mathematical formula of the Fourier Transform."
+  ],
+  "target_word_count_indonesian": 300,
+  "terminology_preferences": {
+    "time domain": "domain waktu",
+    "frequency domain": "domain frekuensi",
+    "FFT": "FFT",
+    "peak frequency": "frekuensi puncak",
+    "spectral": "spektral"
+  }
+}

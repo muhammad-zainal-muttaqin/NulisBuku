@@ -1,0 +1,7 @@
+# Pengantar {.unnumbered}
+
+Selamat datang di buku **Rekayasa Fitur Modern: Representasi Data untuk Machine Learning dan Deep Learning**.
+
+Buku ini membahas bagaimana kita merepresentasikan data, baik secara dirancang oleh manusia (*designed by human*) maupun dipelajari oleh mesin (*learned by machine*), agar dapat digunakan secara optimal oleh algoritma *machine learning* dan *deep learning*.
+
+(Bagian ini akan terus diperbarui seiring dengan penyelesaian draf per bab.)

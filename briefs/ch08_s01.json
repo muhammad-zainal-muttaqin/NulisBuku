@@ -1,0 +1,25 @@
+{
+  "id": "ch08_s01",
+  "title": "Why reduce dimensionality? Compression vs. visualization",
+  "word_budget": 350,
+  "key_concepts": [
+    "High-dimensional data suffers from the curse of dimensionality, leading to slower models and higher overfitting risk.",
+    "Dimensionality reduction creates a smaller, dense latent representation from the original feature matrix.",
+    "The two distinct goals of reduction: Compression (preprocessing to remove noise/redundancy while keeping maximum variance/signal for downstream models) vs. Visualization (mapping data to 2D or 3D spaces to let humans inspect clusters, manifolds, or patterns)."
+  ],
+  "definitions": [
+    {
+      "term": "Latent representation",
+      "meaning": "A dense, low-dimensional space that captures the underlying structure of the data."
+    }
+  ],
+  "examples": [
+    "Describe plotting 100-dimensional sensor data into 2D to find failure clusters (visualization) vs compressing it to 10 dimensions before feeding it to a classifier (compression)."
+  ],
+  "relations": "Builds on Chapter 7 (feature selection). While selection removes columns, reduction creates entirely new, compressed columns.",
+  "terminology": {
+    "keep_english": ["noise", "variance", "curse of dimensionality", "latent representation", "machine learning"],
+    "indonesian": ["fitur", "dimensi", "representasi", "kompresi", "visualisasi"]
+  },
+  "exclude": "Do not explain specific algorithms here; keep it focused on the *why*."
+}

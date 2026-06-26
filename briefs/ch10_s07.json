@@ -1,0 +1,38 @@
+{
+  "id": "ch10_s07",
+  "topic": "Case study: multivariate time-series prediction",
+  "scope": "End-to-end practical scenario demonstrating temporal sample construction, feature engineering, and a correct temporal split with a purge gap.",
+  "key_concepts": [
+    "A multivariate time-series problem involves multiple time-dependent variables, such as predicting energy demand using both historical demand and weather sensor data.",
+    "The process begins by clearly defining the prediction horizon and the lookback window.",
+    "Engineered features are constructed for a baseline classical model, combining lags, rolling averages, and cyclical date/time encodings.",
+    "The most critical step is the validation strategy: executing a strict chronological temporal split.",
+    "A purge gap is implemented between the training and validation splits to guarantee no overlap of lookback windows, ensuring an honest, leakage-free evaluation.",
+    "Transformations like standard scaling are strictly fitted on the training split only."
+  ],
+  "definitions": [
+    {
+      "term": "Multivariate time series",
+      "meaning": "A dataset where multiple variables are observed simultaneously over time."
+    }
+  ],
+  "examples": [
+    "Forecasting city-wide electricity demand for the next hour using the past 24 hours of demand, temperature, and humidity data."
+  ],
+  "relations": {
+    "to_ch10_s05": "Serves as the practical application of the temporal split and purge gap theory from s05."
+  },
+  "figures": [],
+  "exclusions": [
+    "Deep learning model architectures or extensive hyperparameter tuning."
+  ],
+  "target_word_count_indonesian": 400,
+  "terminology_preferences": {
+    "multivariate time series": "deret waktu multivariat",
+    "temporal split": "split temporal",
+    "purge gap": "purge gap",
+    "lookback": "lookback",
+    "horizon": "horizon",
+    "baseline": "baseline"
+  }
+}

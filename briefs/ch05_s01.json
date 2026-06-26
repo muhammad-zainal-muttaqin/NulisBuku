@@ -1,0 +1,47 @@
+{
+  "id": "ch05_s01",
+  "topic": "Missingness mechanisms (MCAR/MAR/MNAR)",
+  "scope": "Just enough theory to choose a strategy — inspection precedes automation.",
+  "key_concepts": [
+    "Understanding why data is missing is a prerequisite to handling it.",
+    "Missing Completely At Random (MCAR): Missingness is independent of any variable (observed or unobserved).",
+    "Missing At Random (MAR): Missingness depends only on observed variables, not on the missing values themselves.",
+    "Missing Not At Random (MNAR): Missingness depends on the unobserved value itself.",
+    "Diagnostics and inspection must always precede automated imputation strategies."
+  ],
+  "definitions": [
+    {
+      "term": "MCAR",
+      "definition": "Missingness has no relationship with any data.",
+      "indonesian_translation": "MCAR (Missing Completely At Random)"
+    },
+    {
+      "term": "MAR",
+      "definition": "Missingness can be explained by other observed variables in the dataset.",
+      "indonesian_translation": "MAR (Missing At Random)"
+    },
+    {
+      "term": "MNAR",
+      "definition": "Missingness is related to the value that is missing.",
+      "indonesian_translation": "MNAR (Missing Not At Random)"
+    }
+  ],
+  "examples": [
+    "MCAR: A sensor drops a reading because of a random power glitch.",
+    "MAR: Men are less likely to report their weight than women (missingness in weight depends on the observed gender variable).",
+    "MNAR: People with very high incomes are less likely to report their income (missingness depends on the income itself)."
+  ],
+  "relations": {
+    "builds_toward": "ch05_s02 (Imputation as a pipeline component)"
+  },
+  "figures": [],
+  "exclusions": [
+    "Mathematical proofs of Rubin's missing data theory.",
+    "Complex statistical tests for MCAR (Little's test) - keep it intuitive."
+  ],
+  "target_word_count_indonesian": 400,
+  "terminology_preferences": {
+    "missing values": "missing values",
+    "imputation": "imputasi"
+  }
+}

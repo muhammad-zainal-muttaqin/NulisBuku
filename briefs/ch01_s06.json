@@ -1,0 +1,33 @@
+{
+  "id": "ch01_s06",
+  "topic": "A map of representation structures",
+  "scope": "Survey of representation shapes so readers don't assume every representation is a flat matrix.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Not all data can or should be forced into a flat tabular matrix (X in R^(nxd)).",
+    "Different phenomena naturally require different mathematical structures (topologies).",
+    "Key structures: Flat Vectors/Matrices (tabular), Sequences (time series, text), Grids/Tensors (images), Graphs (networks/relationships), and Sets (unordered items)."
+  ],
+  "definitions": [
+    { "term": "sequence", "indonesian": "sekuens", "definition": "Data where the order of elements carries meaning." },
+    { "term": "graph", "indonesian": "graf", "definition": "A structure representing entities (nodes) and their relationships (edges)." }
+  ],
+  "examples": [
+    "A standard user profile works well as a flat vector.",
+    "A sentence or a stock price history is a sequence; reversing the order ruins the meaning.",
+    "A social network is a graph, where the connection between users is the primary signal."
+  ],
+  "relations": {
+    "builds_toward": "Part IV (Feature Engineering by Data Type)"
+  },
+  "exclusions": [
+    "Do not explain the mathematics of tensors or graph neural networks. Keep it to structural intuition."
+  ],
+  "terminology_preferences": {
+    "matrix": "matriks",
+    "sequence": "sekuens",
+    "tensor": "tensor",
+    "graph": "graf"
+  },
+  "figures": []
+}

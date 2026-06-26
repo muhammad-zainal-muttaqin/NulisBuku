@@ -1,0 +1,40 @@
+{
+  "id": "ch11_s05",
+  "topic": "Pretrained language models as feature extractors",
+  "scope": "LMs as frozen extractors.",
+  "key_concepts": [
+    "Leveraging massive, pre-trained neural networks for text representation.",
+    "The concept of using a deep learning model strictly to transform data, not to predict the final target.",
+    "Freezing the model weights to maintain extraction stability.",
+    "Pipeline efficiency: raw text in, high-quality dense features out."
+  ],
+  "definitions": [
+    {
+      "term": "Pretrained model",
+      "definition": "Model neural network besar yang telah dilatih dengan jutaan dokumen teks untuk memahami struktur bahasa."
+    },
+    {
+      "term": "Frozen extractor",
+      "definition": "Penggunaan model tanpa memperbarui bobot internalnya, hanya memanfaatkan lapisan output untuk mengambil representasi fitur."
+    }
+  ],
+  "examples": [
+    "Passing a text corpus through a frozen BERT model to obtain 768-dimensional vectors, which are then fed into a standard SVM or logistic regression classifier."
+  ],
+  "relations": {
+    "prerequisites": "Sentence and contextual embeddings from s04.",
+    "builds_toward": "The extraction vs fine-tuning trade-off in s06."
+  },
+  "figures": [],
+  "exclusions": [
+    "Model architectures (BERT vs GPT differences).",
+    "Pretraining objectives (Masked Language Modeling, Next Sentence Prediction)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "pretrained model": "pretrained model",
+    "frozen extractor": "frozen extractor",
+    "feature extractor": "feature extractor",
+    "weight": "bobot"
+  }
+}

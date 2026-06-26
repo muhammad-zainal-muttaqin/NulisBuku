@@ -1,0 +1,44 @@
+{
+  "id": "ch10_s02",
+  "topic": "Lag and rolling-statistics features",
+  "scope": "Features computed within or from the constructed window (lags, rolling stats, expanding windows).",
+  "key_concepts": [
+    "Once a temporal sample is constructed, we extract features from the lookback window to feed into standard machine learning models.",
+    "Lag features are simply past values shifted forward, serving as direct historical predictors.",
+    "Rolling statistics (such as moving averages or rolling standard deviation) aggregate the lookback window to capture local trends and volatility.",
+    "Expanding windows calculate cumulative statistics from the beginning of the available time series up to the prediction point, capturing long-term global history.",
+    "These techniques effectively flatten the temporal dimension into standard tabular features.",
+    "The choice of lag count and window length dictates the trade-off between capturing long-term stability and reacting to short-term changes."
+  ],
+  "definitions": [
+    {
+      "term": "Lag features",
+      "meaning": "Values of a variable at previous time steps used as input features."
+    },
+    {
+      "term": "Rolling statistics",
+      "meaning": "Summary metrics (like mean or variance) computed over a moving window of fixed size."
+    },
+    {
+      "term": "Expanding window",
+      "meaning": "A computational window that starts at a fixed point and grows to include all data up to the current time step."
+    }
+  ],
+  "examples": [
+    "Using yesterday's temperature (lag 1) and the average temperature over the last 7 days (rolling mean) to predict today's temperature."
+  ],
+  "relations": {
+    "to_ch10_s01": "Applies directly to the lookback windows constructed in the previous subsection."
+  },
+  "figures": [],
+  "exclusions": [
+    "Mathematical formulas for moving averages or variance calculation."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "lag features": "fitur lag",
+    "rolling statistics": "statistik rolling",
+    "expanding window": "expanding window",
+    "machine learning": "machine learning"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "ch13_s01",
+  "title": "Data Spasial: Koordinat, Sistem Referensi, Jarak, dan Kedekatan",
+  "scope": "Location as features. Coordinates, reference systems, distance & proximity.",
+  "key_concepts": [
+    "Raw latitude and longitude are often poor features on their own because standard algorithms treat them as independent numerical values, ignoring their spatial relationship and the earth's curvature.",
+    "Coordinate Reference Systems (CRS) must be handled correctly. Converting spherical coordinates (like WGS84) to projected Cartesian systems (like UTM) allows Euclidean distance calculations.",
+    "Distance features transform coordinates into meaningful continuous variables (e.g., distance to the nearest landmark).",
+    "Proximity features count or measure entities within a specific radius, capturing the density or context of a location."
+  ],
+  "definitions": [
+    {
+      "term": "Coordinate Reference System (CRS)",
+      "meaning": "Sistem yang menghubungkan koordinat dengan permukaan bumi secara akurat (misalnya WGS84 untuk lintang/bujur bola, UTM untuk proyeksi datar)."
+    },
+    {
+      "term": "Haversine distance",
+      "meaning": "Jarak terpendek antara dua titik pada permukaan bola, digunakan jika koordinat tidak diproyeksikan."
+    }
+  ],
+  "examples": [
+    "Predicting house prices: instead of passing latitude and longitude, derive 'distance to city center', 'distance to nearest station', and 'number of cafes within 1 km'."
+  ],
+  "figures": [
+    {
+      "callout": "[GAMBAR 13.1]",
+      "caption": "Transformasi dari koordinat mentah menjadi fitur spasial yang bermakna.",
+      "type": "diagram konseptual",
+      "description": "Ilustrasi titik lokasi yang dipecah menjadi beberapa anak panah yang melambangkan jarak ke stasiun, jarak ke pusat kota, dan radius kedekatan dengan fasilitas umum."
+    }
+  ],
+  "exclude": "Deep geodesy, complex projection math.",
+  "relations": "Foundational spatial section. Will be followed by spatial autocorrelation.",
+  "terminology": {
+    "keep_english": ["machine learning", "feature"],
+    "indonesian_terms": ["fitur", "spasial", "koordinat", "jarak", "kedekatan", "titik"]
+  }
+}

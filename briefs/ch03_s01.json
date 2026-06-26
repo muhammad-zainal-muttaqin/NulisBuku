@@ -1,0 +1,28 @@
+{
+  "id": "ch03_s01",
+  "topic": "Scale and distribution: why numeric features need transforming",
+  "scope": "The problem before the techniques.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "Machine learning algorithms interpret numbers strictly by their mathematical magnitude.",
+    "Without transformation, a feature with a large numerical range (like salary) will mathematically dominate a feature with a small range (like age).",
+    "Skewed distributions also violate the assumptions of many linear models, degrading performance."
+  ],
+  "definitions": [
+    { "term": "scale", "indonesian": "skala", "definition": "Rentang nilai minimum hingga maksimum yang dimiliki sebuah variabel numerik." },
+    { "term": "skewed distribution", "indonesian": "distribusi menceng", "definition": "Persebaran data numerik yang tidak merata secara simetris, sering kali memanjang ke satu sisi batas ekstremnya." }
+  ],
+  "examples": [
+    "Distance calculations (like Euclidean distance) will completely overshadow 'Age (20-60)' if 'Salary (10k-100k)' is included without scaling."
+  ],
+  "relations": {
+    "builds_upon": "ch01_s01 (features)",
+    "builds_toward": "ch03_s02 (how changing the scale fixes this problem)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "scale": "skala",
+    "distribution": "distribusi"
+  },
+  "figures": []
+}

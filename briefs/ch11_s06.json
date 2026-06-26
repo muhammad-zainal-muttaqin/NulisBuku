@@ -1,0 +1,36 @@
+{
+  "id": "ch11_s06",
+  "topic": "Fine-tuning vs. feature extraction",
+  "scope": "The key decision and its trade-offs.",
+  "key_concepts": [
+    "The core architectural choice when using pretrained models: freeze vs update.",
+    "Feature extraction uses frozen weights, yielding stable representations suitable for small datasets.",
+    "Fine-tuning updates the pretrained model's internal weights to adapt specifically to the target domain.",
+    "Trade-offs revolve around dataset size, computational resources, and risk of overfitting."
+  ],
+  "definitions": [
+    {
+      "term": "Fine-tuning",
+      "definition": "Proses melatih ulang sebagian atau seluruh bobot pada pretrained model menggunakan himpunan data tugas spesifik."
+    }
+  ],
+  "examples": [
+    "Using feature extraction for classifying 500 email reviews (avoiding overfitting).",
+    "Fine-tuning a model on 50,000 medical documents because the generic representations do not capture specific medical jargon well."
+  ],
+  "relations": {
+    "prerequisites": "Feature extraction from s05.",
+    "builds_toward": "The overall spectrum synthesis of designed vs learned in Ch 17."
+  },
+  "figures": [],
+  "exclusions": [
+    "PEFT techniques like LoRA or Adapters (keep the focus on the fundamental choice of freeze vs update)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "fine-tuning": "fine-tuning",
+    "feature extraction": "feature extraction",
+    "pretrained model": "pretrained model",
+    "overfitting": "overfitting"
+  }
+}

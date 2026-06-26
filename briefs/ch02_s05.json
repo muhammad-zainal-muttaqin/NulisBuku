@@ -1,0 +1,31 @@
+{
+  "id": "ch02_s05",
+  "topic": "Correct splitting strategies",
+  "scope": "Random, group, temporal — when each applies; ties to the cutoff from ch01_s05.",
+  "target_word_count_indonesian": 400,
+  "key_concepts": [
+    "A proper data split acts as the quarantine mechanism preventing leakage before feature extraction.",
+    "Random split works only for observations that are completely independent of one another.",
+    "Group split is required when the dataset contains clustered records, such as multiple visit records for the same patient. These must be separated by entity group, not randomly by row.",
+    "Temporal split is necessary for time-related data. A strict cutoff point prevents random selection from assigning future data into the training set."
+  ],
+  "definitions": [
+    { "term": "random split", "indonesian": "random split", "definition": "Pemisahan baris observasi secara acak tanpa mempertimbangkan klaster atau waktu." },
+    { "term": "group split", "indonesian": "group split", "definition": "Pemisahan observasi berdasarkan himpunan atau anggota dari subjek unik yang sama." },
+    { "term": "temporal split", "indonesian": "temporal split", "definition": "Pemisahan data berdasarkan batas pengurutan periode waktu kronologis dari kejadian berjalan." }
+  ],
+  "examples": [
+    "A medical dataset has 10 X-rays each for 100 patients. A simple random split might put X-rays of patient A in both train and test. A group split forces all patient A X-rays strictly into one set."
+  ],
+  "relations": {
+    "builds_upon": "ch01_s05 (unit definitions lead to group/temporal needs)",
+    "builds_toward": "ch02_s06 (how to use these inside CV)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "random split": "random split",
+    "group split": "group split",
+    "temporal split": "temporal split"
+  },
+  "figures": []
+}

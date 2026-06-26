@@ -1,0 +1,31 @@
+{
+  "id": "ch02_s02",
+  "topic": "Reusable transformers, serialization, reproducible random state",
+  "scope": "How a transformation stays identical train to inference.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Ad-hoc scripts for data cleaning are error-prone and hard to reuse.",
+    "Transformers must be implemented as distinct, reproducible objects that can be saved and loaded.",
+    "Serialization allows a fitted transformer to be written to disk and deployed alongside the model.",
+    "Reproducible random state ensures that operations involving randomness (like data splitting or sampling) can be exactly repeated."
+  ],
+  "definitions": [
+    { "term": "transformer", "indonesian": "transformer", "definition": "Objek yang memiliki fungsi fit dan transform untuk memanipulasi fitur." },
+    { "term": "serialization", "indonesian": "serialisasi", "definition": "Proses menyimpan objek komputasi dari memori ke dalam wujud berkas permanen." },
+    { "term": "random state", "indonesian": "random state", "definition": "Parameter awal untuk generator nomor acak agar algoritma menghasilkan urutan pengundian sampel yang identik." }
+  ],
+  "examples": [
+    "Saving an imputation transformer and a standard scaler together as a single binary file to be loaded in the production server."
+  ],
+  "relations": {
+    "builds_upon": "ch02_s01 (pipeline contract)",
+    "builds_toward": "ch02_s06 (how pipelines fit in CV)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "transformer": "transformer",
+    "serialization": "serialisasi",
+    "random state": "random state"
+  },
+  "figures": []
+}

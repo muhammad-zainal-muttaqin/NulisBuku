@@ -1,0 +1,34 @@
+{
+  "id": "ch12_s06",
+  "topic": "Pretrained audio encoders: raw-waveform models",
+  "scope": "The learned end (modern SOTA, not spectrogram-as-image).",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "The modern shift in audio processing moves past the 'spectrogram-as-image' crutch. We no longer rely on human-designed frequency transforms as mandatory intermediate steps.",
+    "State-of-the-art models (like wav2vec 2.0 and HuBERT) ingest the 1D raw waveform directly. This represents the ultimate shift to 'representasi yang dipelajari mesin' in the audio domain.",
+    "Self-supervised pretraining: these large models are trained on thousands of hours of unlabeled audio by masking out small segments of the waveform and forcing the model to predict the missing sound. This teaches the model the deep structure of human speech.",
+    "These pretrained audio encoders output dense semantic vectors that completely replace legacy features like MFCCs, proving that deep neural networks can learn optimal audio filters directly from raw amplitude variations."
+  ],
+  "definitions": [
+    { "term": "raw-waveform model", "indonesian": "model raw-waveform", "definition": "Deep learning architectures designed to process the native 1D time-series amplitude data of sound directly." },
+    { "term": "self-supervised learning", "indonesian": "self-supervised learning", "definition": "A training paradigm where a model learns by solving pretext tasks (like predicting hidden parts of its own input) without requiring human annotations." }
+  ],
+  "examples": [
+    "Contrast the old way (extracting MFCCs and feeding them to an SVM) with the modern way (feeding raw sound waves straight into wav2vec 2.0 to get an audio embedding)."
+  ],
+  "relations": {
+    "builds_toward": "ch12_s08 (the case study comparing these deep learned features against handcrafted ones)"
+  },
+  "exclusions": [
+    "Do not explain the specific quantization mathematics inside wav2vec 2.0.",
+    "Do not detail the transformer architecture layers, focus on the feature extraction paradigm shift."
+  ],
+  "terminology_preferences": {
+    "raw waveform": "raw waveform",
+    "learned by machine representation": "representasi yang dipelajari mesin",
+    "self-supervised learning": "self-supervised learning (keep English)",
+    "spectrogram": "spektrogram",
+    "deep learning": "deep learning (keep English)"
+  },
+  "figures": []
+}

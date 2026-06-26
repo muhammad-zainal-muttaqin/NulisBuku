@@ -1,0 +1,34 @@
+{
+  "id": "ch11_s07",
+  "topic": "Case study: document classification — TF-IDF vs. contextual embedding",
+  "scope": "Designed vs. learned, head to head (modality-specific leakage: vectorizer fit before split, duplicate/same-author docs across folds).",
+  "key_concepts": [
+    "A direct comparison of a pipeline using designed representations (TF-IDF) and one using learned representations (SBERT).",
+    "Both pipelines terminate in a standard classifier (e.g., Logistic Regression) to isolate the impact of the representation.",
+    "The risk of vectorizer leakage: fitting the TF-IDF vocabulary on the entire dataset before making the train-test split.",
+    "Modality-specific text leakage: inadvertently placing duplicate documents or documents from the exact same author in both training and validation splits."
+  ],
+  "definitions": [],
+  "examples": [
+    "Building two scikit-learn pipelines: one extracting TF-IDF features, another extracting frozen SBERT embeddings, and comparing their classification accuracy on the same dataset."
+  ],
+  "relations": {
+    "prerequisites": "TF-IDF (s02), sentence embeddings (s04), and pipeline leakage concepts (Ch 2).",
+    "builds_toward": "The global pipeline design synthesis in Ch 17."
+  },
+  "figures": [],
+  "exclusions": [
+    "Deeply tracing the SBERT tensor outputs or coding the full model.",
+    "Evaluating deep neural network classifiers (keep the classifier simple to evaluate just the feature representations)."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "vectorizer": "vectorizer",
+    "leakage": "leakage",
+    "pipeline": "pipeline",
+    "split": "split",
+    "training": "training",
+    "validation": "validation",
+    "praktik pipeline yang benar": "praktik pipeline yang benar"
+  }
+}

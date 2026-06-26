@@ -1,0 +1,31 @@
+{
+  "id": "ch02_s06",
+  "topic": "Pipelines inside cross-validation",
+  "scope": "Where transformation must live to stay honest.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Cross-validation relies on rotating training and assessment folds. If features are engineered prior to execution, data leakage traverses across the rotating folds.",
+    "To remain statistically honest, the sequence of feature transformations must be bundled inside an encompassing execution pipeline.",
+    "The pipeline executes the fit function limited exclusively to the internal training fold, and runs the transform function against the validation fold independently per cycle."
+  ],
+  "definitions": [
+    { "term": "cross-validation", "indonesian": "cross-validation", "definition": "Metode evaluasi kinerja iteratif algoritma dengan menukar partisi bagian data observasi latih dan prediksi secara bergantian." },
+    { "term": "fold", "indonesian": "fold", "definition": "Satu segmen partisi himpunan dari skema irisan pecahan data yang dialokasikan di fase silang cross-validation." }
+  ],
+  "examples": [
+    "Imputing the mean of a feature inside cross-validation. The pipeline calculates a new mean at each fold using strictly that block's training points.",
+    "[KODE: a standard pipeline embedded inside cross_val_score showing standard scaler handling; sumber: notebook bab]"
+  ],
+  "relations": {
+    "builds_upon": "ch02_s01 (pipeline contract), ch02_s05 (splits)"
+  },
+  "exclusions": [
+    "Avoid going into grid search hyperparameter tuning, stay focused on feature transformation integrity inside CV."
+  ],
+  "terminology_preferences": {
+    "cross-validation": "cross-validation",
+    "fold": "fold",
+    "pipeline": "pipeline"
+  },
+  "figures": []
+}

@@ -1,0 +1,36 @@
+# === Sensitive — JANGAN pernah di-commit ===
+.secret/
+.antigravitycli/
+*_KEY_DO_NOT_SHARE*
+*.key
+.env
+.env.*
+
+# === Quarto / build output (regenerable) ===
+website/.quarto/
+website/_book/
+website/index.tex
+/.quarto/
+_build/
+
+# === Tool caches ===
+.impeccable/
+
+# === Temp / scratch ===
+temp_pipeline_concat.txt
+tmp_all_reads.txt
+*.tmp
+*.log
+
+# === OS / editor ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+
+# === Python ===
+__pycache__/
+*.pyc
+.venv/
+venv/

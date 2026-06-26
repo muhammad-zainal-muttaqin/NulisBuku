@@ -1,0 +1,39 @@
+{
+  "id": "ch09_s06",
+  "title": "Stability across folds; importance ≠ causality",
+  "scope": "Two critical caveats when interpreting feature evaluation metrics. High importance doesn't guarantee the feature is consistently useful, nor does it imply a causal mechanism.",
+  "key_concepts": [
+    "Evaluating feature importance on a single train-test split is vulnerable to variance.",
+    "A reliable feature maintains consistent importance rankings across all cross-validation folds.",
+    "A feature with high predictive utility merely has a strong mathematical correlation with the target; it does not necessarily cause the target outcome."
+  ],
+  "definitions": [
+    "Cross-validation stability: The degree to which a feature's calculated importance remains constant across different partitions of the training data."
+  ],
+  "examples": [
+    "Umbrella sales are highly predictive of traffic accidents, but banning umbrellas won't stop accidents. The model exploits the correlation, but there is no causality."
+  ],
+  "relations_to_other_chapters": [
+    "Connects to Ch 2 validation strategies (cross-validation).",
+    "Points forward to Ch 17 regarding making actionable decisions from ML models."
+  ],
+  "terminology_preferences": [
+    "cross-validation",
+    "fold",
+    "feature importance",
+    "model",
+    "baseline"
+  ],
+  "what_to_exclude": [
+    "Causal inference frameworks like do-calculus or instrumental variables."
+  ],
+  "provenance": [
+    {
+      "source": "https://christophm.github.io/interpretable-ml-book/feature-importance.html",
+      "excerpt_or_location": "Feature importance vs causality",
+      "type": "book",
+      "date": "2023",
+      "confidence": "verified"
+    }
+  ]
+}

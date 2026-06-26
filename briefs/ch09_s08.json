@@ -1,0 +1,36 @@
+{
+  "id": "ch09_s08",
+  "title": "Documenting feature decisions",
+  "scope": "Feeds Appendix C (feature documentation template). Discusses why engineering a feature requires logging its origin, logic, and evaluation results for long-term maintainability.",
+  "key_concepts": [
+    "An undocumented feature becomes a liability because the engineering team will not know if it is safe to alter or remove later.",
+    "Documentation should capture the business logic, the exact mathematical transformation, the source data, and the initial baseline impact.",
+    "Good logging prevents duplicate engineering effort and allows new team members to trace complex derivations."
+  ],
+  "definitions": [],
+  "examples": [
+    "Recording that 'ratio_income_debt' was created because raw debt alone produced poor separation across income brackets, and it improved the validation AUC by 0.04."
+  ],
+  "relations_to_other_chapters": [
+    "Directly provides the foundation for the Feature Documentation Template in Appendix C."
+  ],
+  "terminology_preferences": [
+    "machine learning",
+    "feature",
+    "pipeline",
+    "baseline",
+    "validation"
+  ],
+  "what_to_exclude": [
+    "Instructions on setting up automated data catalogs like Amundsen or Datahub."
+  ],
+  "provenance": [
+    {
+      "source": "https://www.hopsworks.ai/post/feature-store-vs-data-warehouse",
+      "excerpt_or_location": "Feature documentation and sharing",
+      "type": "blog",
+      "date": "2022",
+      "confidence": "verified"
+    }
+  ]
+}

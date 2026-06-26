@@ -1,0 +1,26 @@
+{
+  "id": "ch03_s06",
+  "topic": "Which models are sensitive vs. insensitive to scale",
+  "scope": "The model-family decision lens: k-NN/SVM vs. trees.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "Not all machine learning algorithms care about scaling and feature distributions.",
+    "Distance-based and gradient-based models (k-NN, SVM, neural networks, linear regression with regularization) are highly sensitive to unscaled data.",
+    "Tree-based models (Decision Trees, Random Forest, Gradient Boosting) rely completely on value splitting, making them strictly immune and insensitive to magnitude or outlier skewness."
+  ],
+  "definitions": [],
+  "examples": [
+    "A decision tree cutting 'Age < 30' splits exactly the same whether age is stated as 25 or scaled to 0.2."
+  ],
+  "relations": {
+    "builds_upon": "ch03_s01-s05 (the entire chapter context)",
+    "builds_toward": "The recurring model-family callout across the book."
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "tree-based": "tree-based",
+    "gradient-based": "berbasis gradien",
+    "distance-based": "berbasis jarak"
+  },
+  "figures": []
+}

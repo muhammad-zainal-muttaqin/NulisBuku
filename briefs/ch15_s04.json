@@ -1,0 +1,33 @@
+{
+  "id": "ch15_s04",
+  "topic": "Boundary with Chapter 8: Transferred Representations vs. Internal Compression",
+  "scope": "Clarifying the boundary: Ch 8 is compressing your own data without supervision; Ch 15 is transferring semantic representations from massive external data.",
+  "key_concepts": [
+    "There is a distinct conceptual boundary between dimensionality reduction (covered in Chapter 8) and the pretrained embeddings discussed here.",
+    "Methods in Chapter 8, such as PCA or autoencoders, compress the specific dataset you currently possess without injecting any outside knowledge.",
+    "Pretrained models transfer rich semantic representations learned from massive, external datasets into your pipeline.",
+    "An autoencoder trained from scratch on your own data is an internal compression technique, despite using a neural network.",
+    "The true dividing line is not 'statistical methods versus neural networks', but rather 'compressing your own data versus transferring external knowledge'."
+  ],
+  "definitions": [],
+  "examples": [
+    "Training an autoencoder to reduce 1,000 tabular features down to 50 dimensions is internal data compression. In contrast, passing text through a pretrained BERT model to get 768-dimensional vectors is transferring external representations."
+  ],
+  "relations": {
+    "precedes": "ch15_s05 (the debate on whether deep learning replaces feature engineering entirely).",
+    "follows": "ch15_s03 (domain shift, which is specific to external data transfer).",
+    "references": "Chapter 8 (Dimensionality Reduction & Latent Representations)."
+  },
+  "figures": [],
+  "exclusions": [
+    "Do not re-explain the mechanics of PCA, SVD, or Autoencoders."
+  ],
+  "target_word_count_indonesian": 330,
+  "terminology_preferences": {
+    "embedding": "embedding",
+    "pretrained": "pretrained",
+    "autoencoder": "autoencoder",
+    "reduksi dimensi": "reduksi dimensi",
+    "feature": "fitur"
+  }
+}

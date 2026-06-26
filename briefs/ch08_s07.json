@@ -1,0 +1,23 @@
+{
+  "id": "ch08_s07",
+  "title": "Case study: PCA & autoencoder on high-dimensional data",
+  "word_budget": 350,
+  "key_concepts": [
+    "Compare applying linear compression (PCA) vs. learned compression (Autoencoder) on a high-dimensional dataset.",
+    "Discuss how each handles variance and reconstruction error.",
+    "Point the reader to the chapter's notebook for the full code implementation."
+  ],
+  "examples": [
+    "Describe the process: Fitting PCA to retain 95% variance vs. training an autoencoder with an equivalent bottleneck size, then evaluating downstream accuracy on a simple classifier."
+  ],
+  "figures": [
+    "[GAMBAR 8.1] Judul: Perbandingan Ruang Laten PCA vs. Autoencoder. Tipe: plot data. Tampilkan: Scatter plot 2D dari komponen/dimensi utama PCA bersanding dengan dimensi laten Autoencoder, memperlihatkan perbedaan pemisahan kelas. Sumber data: notebook bab 8."
+  ],
+  "code_placeholders": [
+    "[KODE: Pipeline scikit-learn yang menggabungkan StandardScaler, PCA, dan model klasifikasi; sumber: notebook bab 8]"
+  ],
+  "terminology": {
+    "keep_english": ["PCA", "autoencoder", "variance", "bottleneck", "classifier", "pipeline", "StandardScaler"],
+    "indonesian": ["studi kasus", "ruang laten"]
+  }
+}

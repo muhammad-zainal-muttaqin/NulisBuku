@@ -1,0 +1,48 @@
+{
+  "id": "ch06_s01",
+  "topic": "Ratios, differences, and interaction features",
+  "scope": "The most common derivations: combining existing features through simple arithmetic (ratios, differences, products) to make relationships explicit for the model.",
+  "key_concepts": [
+    "Derived features provide the model with explicit signals that it might otherwise struggle to learn or would require a more complex model architecture to approximate.",
+    "Differences (subtraction) measure the gap or change between two related quantities, often representing growth, deficit, or elapsed time.",
+    "Ratios (division) capture relative proportions, normalizing absolute values to create comparable metrics across different scales.",
+    "Interaction features (multiplication) represent the combined effect of two or more features, particularly when their joint impact is not merely additive."
+  ],
+  "definitions": [
+    {
+      "term": "interaction feature",
+      "target_indonesian": "fitur interaksi",
+      "definition": "A new feature created by multiplying two or more existing features to capture their combined effect."
+    },
+    {
+      "term": "derived feature",
+      "target_indonesian": "fitur turunan",
+      "definition": "A feature constructed by applying mathematical or logical operations to one or more raw features."
+    }
+  ],
+  "examples": [
+    {
+      "description": "Difference: Subtracting \"expenses\" from \"income\" to create a \"net profit\" feature."
+    },
+    {
+      "description": "Ratio: Dividing \"total debt\" by \"total assets\" to calculate a \"debt-to-asset ratio\", which is much more informative for credit risk than the absolute numbers."
+    },
+    {
+      "description": "Interaction: Multiplying \"house age\" by \"requires renovation flag\" to create a feature that captures the compounded negative effect on property price."
+    }
+  ],
+  "relations": {
+    "builds_toward": "Polynomial features in ch06_s02, which is a generalization of interaction features.",
+    "prerequisites": "Basic understanding of numeric representations from Chapter 3."
+  },
+  "figures": [],
+  "exclusions": [
+    "Mathematical proofs of why linear models fail at XOR problems (keep it intuitive).",
+    "Automated feature synthesis (save for Chapter 16)."
+  ],
+  "target_word_count_indonesian": 400,
+  "terminology_preferences": {
+    "English": ["machine learning", "baseline"],
+    "Indonesian": ["fitur", "fitur turunan", "fitur interaksi", "model", "data"]
+  }
+}

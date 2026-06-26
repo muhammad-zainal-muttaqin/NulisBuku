@@ -1,0 +1,34 @@
+{
+  "id": "ch03_s07",
+  "topic": "Case study: transformation effects on k-NN, SVM, tree-based",
+  "scope": "Same data, three model families.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Showing the empirical impact of applying scaling vs leaving data raw across three different model families.",
+    "For k-NN and SVM: Accuracy improves dramatically after standardization because large-scale features no longer dominate the Euclidean space.",
+    "For tree-based: Accuracy remains identical pre- and post-scaling, proving their immunity.",
+    "Takeaway decision: Always scale before distance/gradient models, but skip the computational overhead for tree-based architectures."
+  ],
+  "definitions": [],
+  "examples": [
+    "A dataset with 'Salary' (large values) and 'Years Experience' (small values)."
+  ],
+  "relations": {
+    "builds_upon": "ch03_s06 (model sensitivity)"
+  },
+  "exclusions": [
+    "Do not show block code. Keep it descriptive."
+  ],
+  "terminology_preferences": {
+    "standardization": "standardisasi",
+    "tree-based": "tree-based"
+  },
+  "figures": [
+    {
+      "caption": "Dampak skala fitur terhadap akurasi berbagai keluarga model algoritma",
+      "type": "plot data",
+      "description": "A bar chart comparing model accuracy (k-NN, SVM, Random Forest) on raw versus standard-scaled data.",
+      "data_source": "Notebook Bab 3"
+    }
+  ]
+}

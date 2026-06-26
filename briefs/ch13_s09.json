@@ -1,0 +1,26 @@
+{
+  "id": "ch13_s09",
+  "title": "Studi Kasus: Prediksi Berbasis Lokasi dan Klasifikasi Simpul",
+  "scope": "Case study: location-based prediction & node classification (one per half).",
+  "key_concepts": [
+    "Spatial Case: Predicting house prices using raw coordinates vs. spatial proximity features. Demonstrates how designed distance/neighborhood features drastically improve standard tree-based model performance, and highlights spatial cross-validation blocking.",
+    "Graph Case: Node classification on a citation network (e.g., Cora). Compares a baseline using only handcrafted degree features against Node2Vec embeddings and a GNN. Shows how message passing captures topology better than raw counts."
+  ],
+  "definitions": [],
+  "examples": [
+    "Spatial: House price prediction using a Random Forest. Baseline is just lat/lon. Enhanced model uses 'distance to park' and spatial lag.",
+    "Graph: Paper topic classification. Baseline uses in-degree/out-degree. Enhanced model uses a simple GNN embedding."
+  ],
+  "code_placeholders": [
+    {
+      "callout": "[KODE: Pemisahan data latih dan uji menggunakan spatial block cross-validation untuk mencegah kebocoran spasial; sumber: notebook bab 13]",
+      "description": "Menunjukkan pemisahan data berdasarkan blok koordinat spasial alih-alih acak k-fold."
+    }
+  ],
+  "exclude": "Code blocks written out, complex data loading steps.",
+  "relations": "Synthesizes the spatial half (s01-s03) and graph half (s04-s08). Points to the chapter notebook for implementation details.",
+  "terminology": {
+    "keep_english": ["Node2Vec", "GNN", "cross-validation", "baseline", "random forest", "machine learning"],
+    "indonesian_terms": ["simpul", "latih", "uji", "graf", "spasial", "ketetanggaan", "studi kasus"]
+  }
+}

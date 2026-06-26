@@ -1,0 +1,35 @@
+{
+  "id": "ch01_s01",
+  "topic": "Data, attributes, features, representation",
+  "scope": "Core vocabulary; what 'a feature' actually is vs. raw data.",
+  "target_word_count_indonesian": 350,
+  "key_concepts": [
+    "Difference between raw data (data mentah) and features (fitur).",
+    "Attributes vs. Features: an attribute is a property of the data; a feature is an attribute transformed into a useful form for learning.",
+    "Representation (representasi): how data is structured and presented to the machine learning model so it can learn effectively."
+  ],
+  "definitions": [
+    { "term": "raw data", "indonesian": "data mentah", "definition": "Directly collected information, not yet processed or optimized for a model." },
+    { "term": "feature", "indonesian": "fitur", "definition": "A measurable property or characteristic of a phenomenon that has been extracted and prepared for a model." },
+    { "term": "representation", "indonesian": "representasi", "definition": "The mathematical or structural format in which features are organized for the algorithm." }
+  ],
+  "examples": [
+    "Show the difference by comparing raw text (a review) vs. word frequency counts (features).",
+    "Compare an raw image (pixels) vs. edges / color histograms (features)."
+  ],
+  "relations": {
+    "builds_toward": "ch01_s02 (how features set the learning ceiling)"
+  },
+  "exclusions": [
+    "Do not discuss matrix math or specific extraction algorithms here. Keep it conceptual.",
+    "Do not mention the 'designed by human vs. learned by machine' spectrum here (that belongs to ch01_s03)."
+  ],
+  "terminology_preferences": {
+    "feature": "fitur",
+    "representation": "representasi",
+    "raw data": "data mentah",
+    "machine learning": "machine learning (keep English)",
+    "attribute": "atribut"
+  },
+  "figures": []
+}

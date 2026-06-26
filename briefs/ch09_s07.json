@@ -1,0 +1,41 @@
+{
+  "id": "ch09_s07",
+  "title": "Sensitive information and proxy features: privacy, fairness, data minimization",
+  "scope": "Direct sensitive attributes; proxies (postcode, device type); embeddings that retain private information; removing vs. retaining protected attributes and the fairness effect; data minimization; 'improves accuracy' ≠ 'legitimate'.",
+  "key_concepts": [
+    "Dropping sensitive attributes (race, gender) is not enough to ensure fairness because models can learn proxies.",
+    "A proxy feature is an outwardly neutral feature (like ZIP code) that heavily correlates with a sensitive attribute.",
+    "Learned embeddings can unintentionally encode and leak sensitive information present in the raw text or image.",
+    "Data minimization dictates that only strictly necessary features should be computed and retained."
+  ],
+  "definitions": [
+    "Proxy feature: A feature that is not inherently sensitive but statistically correlates strongly with a protected attribute.",
+    "Data minimization: The principle of restricting the collection and use of data to only what is strictly necessary for a specific objective."
+  ],
+  "examples": [
+    "Removing a 'gender' column but leaving 'shoe size' and 'height', which the model uses to reconstruct the missing gender variable and discriminate anyway."
+  ],
+  "relations_to_other_chapters": [
+    "Re-emerges as a core design principle in Ch 17."
+  ],
+  "terminology_preferences": [
+    "proxy feature",
+    "embedding",
+    "model",
+    "data minimization",
+    "machine learning"
+  ],
+  "what_to_exclude": [
+    "Complex mathematical definitions of fairness (equalized odds, demographic parity calculations).",
+    "Legal compliance details (GDPR, CCPA rules)."
+  ],
+  "provenance": [
+    {
+      "source": "https://fairlearn.org/main/user_guide/assessment/index.html",
+      "excerpt_or_location": "Proxies and unfairness",
+      "type": "docs",
+      "date": "2024",
+      "confidence": "verified"
+    }
+  ]
+}

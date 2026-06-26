@@ -1,0 +1,35 @@
+{
+  "id": "ch13_s06",
+  "title": "Embedding Simpul: Node2Vec dan Representasi Laten",
+  "scope": "Learned graph representations (Node embeddings like Node2Vec). Academic primary.",
+  "latex_notation": true,
+  "key_concepts": [
+    "Instead of manually counting degrees or paths, we can learn a low-dimensional vector representation (embedding) for each node.",
+    "This is a prime example of 'representasi yang dipelajari mesin' on graphs.",
+    "Node2Vec uses biased random walks to generate 'sentences' of nodes, then applies word embedding techniques (like Word2Vec) to learn vectors.",
+    "Nodes that appear in similar structural contexts end up close together in the latent vector space."
+  ],
+  "definitions": [
+    {
+      "term": "Node embedding",
+      "meaning": "Vektor numerik padat yang mewakili sebuah simpul, di mana posisi vektor menangkap struktur dan properti graf simpul tersebut."
+    },
+    {
+      "term": "Random walk",
+      "meaning": "Eksplorasi graf dengan melompat dari satu simpul ke simpul tetangga secara acak untuk memetakan struktur lokal."
+    }
+  ],
+  "examples": [
+    "By taking random walks on a network of academic papers, Node2Vec produces a 64-dimensional vector $\\mathbf{z}_v$ for each paper. Standard logistic regression can then predict the paper's topic using this vector."
+  ],
+  "latex_equations": [
+    "Probabilitas transisi untuk *random walk* dari simpul $v$ ke tetangganya: $P(c_i = x \\mid c_{i-1} = v) = \\frac{\\pi_{vx}}{Z}$",
+    "Fungsi objektif *embedding* yang memaksimalkan probabilitas tetangga $\\mathcal{N}_S(u)$ dari sebuah simpul $u$ diberikan representasinya $\\mathbf{z}_u$: $\\max_{\\mathbf{z}} \\sum_{u \\in V} \\log P(\\mathcal{N}_S(u) \\mid \\mathbf{z}_u)$"
+  ],
+  "exclude": "Deep derivation of Skip-Gram or hierarchical softmax.",
+  "relations": "Marks the pivot from designed (s04/s05) to learned (s06/s07) in graph data. Mention the spectrum: this is 'representasi yang dipelajari mesin'.",
+  "terminology": {
+    "keep_english": ["embedding", "random walk", "Word2Vec", "Node2Vec"],
+    "indonesian_terms": ["simpul", "laten", "vektor", "representasi yang dipelajari mesin"]
+  }
+}

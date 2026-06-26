@@ -1,0 +1,36 @@
+{
+  "id": "ch02_s03",
+  "topic": "A taxonomy of leakage",
+  "scope": "Target, train-test contamination, temporal, between-group leakage.",
+  "target_word_count_indonesian": 400,
+  "key_concepts": [
+    "Data leakage gives a model an artificially high accuracy during training that fails drastically in production.",
+    "Target leakage: When a feature is a proxy for the target or contains information functionally generated after the target.",
+    "Train-test contamination: When parameter calculations (like global mean) compute over the test set before the split.",
+    "Temporal leakage: Utilizing future data points to predict past data points.",
+    "Between-group leakage: Splitting data strictly randomly when observation units exist in correlated groups, exposing the model to the group identity rather than predictive features."
+  ],
+  "definitions": [
+    { "term": "data leakage", "indonesian": "data leakage", "definition": "Kondisi saat informasi pengujian atau target tak sengaja masuk ke dalam proses pelatihan." },
+    { "term": "target leakage", "indonesian": "kebocoran target", "definition": "Penggunaan atribut fitur yang baru diketahui bersamaan atau setelah target terjadi." },
+    { "term": "train-test contamination", "indonesian": "kontaminasi partisi latih-uji", "definition": "Kondisi saat fase pelatihan menyerap informasi pola agregat dari himpunan distribusi uji." }
+  ],
+  "examples": [
+    "Target leakage: Predicting customer churn by using an 'account closed date' feature.",
+    "Train-test contamination: Filling missing values with the mean of the entire dataset before splitting it into train/test."
+  ],
+  "relations": {
+    "builds_upon": "ch01_s05 (the concept of index time)",
+    "builds_toward": "ch02_s04 (when it typically happens)"
+  },
+  "exclusions": [
+    "Do not provide specific python code."
+  ],
+  "terminology_preferences": {
+    "data leakage": "data leakage",
+    "target leakage": "kebocoran target",
+    "train-test contamination": "kontaminasi latih-uji",
+    "temporal leakage": "kebocoran temporal"
+  },
+  "figures": []
+}

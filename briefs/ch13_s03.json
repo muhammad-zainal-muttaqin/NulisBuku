@@ -1,0 +1,38 @@
+{
+  "id": "ch13_s03",
+  "title": "Data Leakage pada Data Spasial dan Spatial Cross-Validation",
+  "scope": "The spatial-specific leakage callout.",
+  "key_concepts": [
+    "Spatial data is highly prone to target leakage because neighboring points share information (spatial autocorrelation).",
+    "Standard random splitting (k-fold) is dangerous for spatial data. A point in the test set might be physically right next to a point in the training set, artificially inflating validation performance.",
+    "Spatial cross-validation fixes this by splitting data geographically. A model is trained on one region and tested on a separate, distant region to ensure true generalization.",
+    "This is the application of 'praktik pipeline yang benar' specific to spatial data."
+  ],
+  "definitions": [
+    {
+      "term": "Spatial cross-validation",
+      "meaning": "Metode validasi di mana pemisahan data latih dan uji dilakukan berdasarkan batas wilayah geografis, bukan secara acak."
+    },
+    {
+      "term": "Praktik pipeline yang benar",
+      "meaning": "Disiplin dalam menghindari kebocoran data, yang dalam konteks spasial berarti memblokir observasi yang berdekatan agar tidak terpisah ke partisi latih dan uji."
+    }
+  ],
+  "examples": [
+    "Predicting deforestation: if pixels are split randomly, the test pixels are surrounded by train pixels. Spatial block splitting forces the model to predict on an entirely unseen forest tract."
+  ],
+  "figures": [
+    {
+      "callout": "[GAMBAR 13.2]",
+      "caption": "Pemisahan acak vs. pemisahan blok spasial (spatial cross-validation).",
+      "type": "skema",
+      "description": "Dua peta berdampingan. Kiri: titik latih dan uji tersebar acak bak garam dan merica. Kanan: peta dibagi menjadi blok-blok besar, di mana seluruh blok A menjadi latih dan seluruh blok B menjadi uji."
+    }
+  ],
+  "exclude": "Overly mathematical definitions of block buffering. Keep it intuitive.",
+  "relations": "Crucial tie-back to Chapter 2 (leakage). Spatial autocorrelation from s02 is the *reason* s03 leakage happens.",
+  "terminology": {
+    "keep_english": ["cross-validation", "pipeline", "k-fold", "target leakage"],
+    "indonesian_terms": ["praktik pipeline yang benar", "spasial", "pelatihan", "validasi"]
+  }
+}

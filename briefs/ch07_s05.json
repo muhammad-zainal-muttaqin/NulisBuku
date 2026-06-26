@@ -1,0 +1,34 @@
+{
+  "id": "ch07_s05",
+  "title": "Selection stability and nested validation",
+  "scope": "Avoiding selection leakage.",
+  "key_concepts": [
+    "Feature selection stability: A robust selection process should ideally pick the same core features even if the training data changes slightly.",
+    "Selection leakage is a critical failure mode: performing feature selection on the entire dataset BEFORE splitting into training and test sets leaks test set information into the model.",
+    "This violates 'praktik pipeline yang benar'. Feature selection is a data-driven transformation and MUST be part of the pipeline, fitted only on the training split.",
+    "Nested cross-validation: When using wrapper methods or tuning selection hyperparameters, use an inner loop for selection/tuning and an outer loop for unbiased evaluation."
+  ],
+  "definitions": {
+    "Selection stability": "Konsistensi subset fitur yang terpilih ketika metode seleksi diterapkan pada variasi data latih yang berbeda."
+  },
+  "examples": [
+    "Describe a disastrous scenario: running mutual information on the full dataset, selecting the top 10 features, and then doing cross-validation. Explain why the cross-validation score will be overly optimistic."
+  ],
+  "relations": [
+    "Directly references Chapter 2 (praktik pipeline yang benar, data leakage). This is a primary home for the leakage callout.",
+    "Points toward Chapter 17 synthesis."
+  ],
+  "callouts": [
+    "praktik pipeline yang benar"
+  ],
+  "terminology_preferences": {
+    "selection stability": "stabilitas seleksi",
+    "selection leakage": "leakage seleksi",
+    "nested cross-validation": "nested cross-validation (italicized)",
+    "pipeline": "pipeline (italicized)",
+    "cross-validation": "cross-validation (italicized)"
+  },
+  "exclude": [
+    "Detailed code implementation of nested cross-validation."
+  ]
+}

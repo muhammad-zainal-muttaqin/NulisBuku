@@ -1,0 +1,39 @@
+{
+  "id": "ch17_s07",
+  "topic": "Case study: designing pipelines from scratch for several scenarios",
+  "scope": "Applies the whole book.",
+  "key_concepts": [
+    "A full pipeline design connects the abstract principles into concrete architectural choices.",
+    "Scenario 1: Retail demand forecasting. Requires structured windowing, temporal splits, rolling aggregations, and strict avoidance of look-ahead leakage.",
+    "Scenario 2: Medical image classification with patient metadata. Requires a hybrid multimodal pipeline: image augmentation and a pretrained CNN extractor combined with standardized numerical patient features, fused late in the model.",
+    "Each scenario begins by defining the target and the observation unit, mapping out the available data sources, selecting the proper validation strategy, and choosing the appropriate representations."
+  ],
+  "definitions": [],
+  "examples": [
+    "In the demand forecasting scenario, the unit is (Store, Product, Week). The target is sales volume in Week T+1. The split is strictly chronological. The features include rolling averages from Week T-1 to T-4. In the medical scenario, the unit is an individual patient exam. The features combine continuous blood pressure (robustly scaled) with X-ray embeddings extracted via a frozen CNN."
+  ],
+  "relations": {
+    "All Chapters": "Acts as the practical synthesis of Part I (foundations), Part II (tabular), Part IV (time-series/image), and Part V (hybrid/pretrained)."
+  },
+  "figures": [
+    {
+      "id": 2,
+      "caption": "Arsitektur dua pipeline kasus studi: deret waktu tabular dan hibrida multimodal.",
+      "type": "skema",
+      "description": "A side-by-side architectural diagram. Left: Retail forecasting showing time windows and temporal splits. Right: Medical hybrid showing image CNN extraction joining with tabular patient data."
+    }
+  ],
+  "exclusions": [
+    "Do not provide explicit code blocks for the full pipelines; keep the focus on the architectural decisions.",
+    "Keep the scenarios high-level to stay within the word budget."
+  ],
+  "target_word_count_indonesian": 350,
+  "terminology_preferences": {
+    "pipeline": "pipeline",
+    "split": "split",
+    "feature": "fitur",
+    "target": "target",
+    "multimodal": "multimodal",
+    "baseline": "baseline"
+  }
+}

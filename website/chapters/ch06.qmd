@@ -1,0 +1,150 @@
+# Pembentukan Fitur Turunan
+
+## Pembentukan Fitur Turunan: Rasio, Selisih, dan Interaksi
+
+Dalam *machine learning*, model yang kita gunakan sering kali membutuhkan panduan eksplisit untuk memahami pola di dalam data. Meskipun beberapa arsitektur yang kompleks mampu menemukan hubungan antar-variabel secara mandiri, proses ini menuntut waktu pelatihan yang lebih lama dan volume data yang jauh lebih besar. Untuk memberikan jalan pintas bagi model, kita bisa merancang fitur turunan. Fitur turunan adalah atribut baru yang dibangun dengan menerapkan operasi matematika pada satu atau beberapa fitur mentah. Dengan menyediakan representasi yang dirancang manusia ini, kita memberikan sinyal kuat secara langsung. Model bisa langsung fokus mempelajari pola tanpa harus meraba-raba hubungan tersembunyi.
+
+Ada tiga operasi aritmatika sederhana yang paling mendasar dalam menciptakan fitur turunan, yaitu selisih, rasio, dan interaksi. Pendekatan dasar ini sangat efektif untuk meningkatkan kinerja *baseline* suatu model secara instan.
+
+**Selisih (Pengurangan)**
+Pengurangan antara dua nilai digunakan untuk mengukur perubahan, defisit, atau rentang waktu yang terlewat. Operasi ini mengekspos jarak antar-fitur secara eksplisit. Sebagai contoh, dalam sistem persetujuan pinjaman, memberikan data "pendapatan bulanan" dan "pengeluaran bulanan" kepada model linear tidak akan langsung memperlihatkan kapasitas finansial pelamar. Kita perlu mengurangkan pengeluaran dari pendapatan untuk menciptakan fitur tunggal berupa "pendapatan bersih". Fitur turunan ini jauh lebih berguna karena langsung mencerminkan sisa dana yang dialokasikan pelamar untuk melunasi cicilan.
+
+**Rasio (Pembagian)**
+Rasio berguna untuk menangkap proporsi relatif, sekaligus menormalkan nilai absolut ke dalam skala yang seragam. Sebagai ilustrasi, pertimbangkan fitur "total utang" untuk mengevaluasi risiko kebangkrutan sebuah perusahaan. Utang senilai satu miliar mungkin terdengar fantastis dan berisiko tinggi. Namun, profil risiko aktualnya menurun drastis jika perusahaan tersebut memiliki aset senilai seratus miliar. Dengan membagi utang terhadap aset, kita memperoleh fitur rasio utang terhadap aset. Rasio ini menggantikan angka absolut dengan metrik proporsional yang menempatkan perusahaan rintisan kecil dan korporasi raksasa pada landasan perbandingan yang sama.
+
+**Interaksi (Perkalian)**
+Fitur interaksi diciptakan dengan mengalikan dua fitur atau lebih. Kita menggunakan operasi ini untuk menangkap efek gabungan yang dampaknya bukan sekadar penjumlahan linier biasa. Ada banyak kasus di mana kombinasi dua atribut menghasilkan penguatan efek secara ganda. Misalkan kita sedang memprediksi harga rumah menggunakan fitur "usia rumah" dan fitur biner penanda "butuh renovasi". Rumah tua jelas mengalami penyusutan nilai. Akan tetapi, rumah berumur puluhan tahun yang sekaligus memerlukan perbaikan atap yang rusak akan menderita kejatuhan harga yang jauh lebih parah daripada penjumlahan kedua efek tersebut. Perkalian antara usia dan status renovasi membentuk fitur interaksi yang merepresentasikan kerugian berlipat ganda ini. Interaksi sederhana dari dua variabel ini juga menjadi basis bagi pembentukan fitur polinomial yang lebih kompleks pada sub-bab berikutnya.
+
+Melalui tiga operasi aritmatika ini, rekayasa fitur menerjemahkan logika dunia nyata menjadi representasi angka yang jauh lebih mudah diolah oleh model.
+
+
+## Fitur Polinomial: Ekspresivitas versus Ledakan Fitur
+
+Fitur interaksi yang telah kita bahas sebelumnya merupakan salah satu bentuk sederhana dari ekspansi polinomial. Fitur polinomial membawa konsep interaksi selangkah lebih jauh. Ekspansi ini secara prinsip memangkatkan fitur mentah hingga derajat tertentu serta mengalikan kombinasi dari berbagai fitur tersebut. Sebagai contoh, mari kita asumsikan kita memiliki dua buah fitur dasar, yaitu $A$ dan $B$. Jika kita menerapkan ekspansi polinomial derajat dua, proses komputasi ini tidak sekadar menghasilkan fitur interaksi $A \times B$, tetapi juga menciptakan fitur kuadrat independen dari masing-masing fitur dasar, yaitu $A^2$ dan $B^2$.
+
+Alasan utama melakukan ekspansi polinomial adalah untuk meningkatkan ekspresivitas model secara signifikan. Banyak algoritma *machine learning* standar, terutama model yang bersifat linier, berasumsi bahwa hubungan antara fitur dan target selalu berbentuk garis lurus atau bidang datar. Asumsi dasar ini sering kali terlalu kaku untuk menangkap pola dunia nyata yang kompleks, melengkung, atau berfluktuasi. Bayangkan Anda mencoba menyesuaikan sebuah penggaris lurus pada sekumpulan titik data yang membentuk kurva mangkuk. Dengan menciptakan fitur baru yang dikuadratkan atau dipangkatkan tiga, kita memproyeksikan data ke ruang dimensi yang lebih tinggi. Di dalam ruang dimensi baru ini, sebuah model linier sederhana kini dapat membuat batasan keputusan yang melengkung. Model tersebut dapat mengikuti kontur data secara akurat tanpa harus mengubah arsitektur algoritma dasarnya sama sekali.
+
+`[KODE: scikit-learn PolynomialFeatures dengan degree=2; sumber: notebook bab]`
+
+Meskipun sangat menjanjikan, kekuatan analitis ini memiliki trade-off utama yaitu risiko terjadinya ledakan fitur. Jumlah fitur turunan baru yang dihasilkan tumbuh secara kombinatorial seiring peningkatan derajat polinomial dan bertambahnya jumlah fitur mentah. Pertumbuhan jumlah fitur ini melonjak sangat tajam secara eksponensial.
+
+`[GAMBAR 6.1]`
+Judul: Pertumbuhan Jumlah Fitur pada Ekspansi Polinomial
+Tipe: plot data
+Tampilkan: Grafik kurva eksponensial yang menunjukkan bagaimana jumlah fitur turunan meroket seiring peningkatan derajat polinomial pada dataset dengan 10, 50, dan 100 fitur mentah.
+Sumber data: notebook bab
+
+Sebagai gambaran praktis, bayangkan Anda memiliki dataset dengan 100 fitur awal. Ekspansi polinomial derajat dua ke seluruh fitur tersebut akan meledakkan jumlahnya menjadi lebih dari 5.000 fitur baru. Kenaikan derajat sedikit saja ke derajat tiga akan menghasilkan lebih dari 170.000 fitur turunan. Ruang dimensi yang membengkak luar biasa ini menciptakan berbagai masalah komputasi. Konsumsi memori melonjak drastis hingga membebani sistem keras, dan waktu pelatihan model menjadi jauh lebih lambat karena mesin harus mempelajari bobot untuk setiap elemen baru tersebut.
+
+Ancaman paling berbahaya dari ledakan fitur ini adalah risiko *overfitting*. Ketika model disajikan dengan ratusan ribu variasi interaksi buatan, model cenderung menghafal data latih dan menemukan pola kebetulan semata. Pola ini mungkin tampak sangat akurat saat pelatihan, tetapi langsung gagal ketika dihadapkan pada skenario dunia nyata. Oleh karena itu, fitur polinomial sangat jarang diterapkan pada seluruh dataset secara membabi buta. Praktisi biasanya hanya memilih secara cermat segelintir fitur spesifik yang diyakini memiliki hubungan non-linier yang kuat terhadap target. Fitur-fitur tersebut kemudian diekspansi secara terbatas pada derajat rendah.
+
+
+## Agregasi dan Fitur Berbasis Kelompok
+
+Sebagian besar fitur mentah hanya merekam informasi pada tingkat observasi tunggal. Model yang hanya melihat satu baris data akan kehilangan konteks lingkungan dari observasi tersebut. Pola prediktif sering kali baru muncul ketika kita meletakkan suatu entitas berdampingan dengan entitas lain. Untuk menghadirkan konteks ini, kita menggunakan teknik agregasi dan membangun fitur berbasis kelompok. Fitur ini diciptakan dengan menghitung statistik agregat untuk kategori spesifik, kemudian menyematkan nilai tersebut kepada seluruh anggota di dalam kategori yang sama.
+
+Prosesnya diawali dengan mengelompokkan data berdasarkan fitur kategorikal, seperti ID pengguna, kode pos, atau jenis produk. Setelah kelompok terbentuk, kita menghitung metrik ringkasan statistik dari fitur numerik di dalam masing-masing kelompok. Metrik yang umum digunakan meliputi rata-rata, nilai tengah, nilai maksimum, nilai minimum, jumlah observasi, atau simpangan baku. Langkah krusial berikutnya adalah menggabungkan kembali hasil agregasi ini ke dalam tabel data asli. Melalui penggabungan ini, setiap observasi individu kini diperkaya dengan informasi menyeluruh mengenai kelompoknya.
+
+Fitur berbasis kelompok sangat kuat karena perilaku target sering kali didorong oleh penyimpangan relatif, bukan sekadar nilai absolut. Sebagai contoh pada prediksi harga properti, harga rumah satu miliar rupiah mungkin tergolong mahal di kota kecil, tetapi dianggap murah di kawasan bisnis ibu kota. Jika model hanya menerima harga absolut, nuansa geografis ini akan hilang. Dengan menghitung rata-rata harga rumah per kawasan dan menciptakan fitur harga relatif (selisih antara harga rumah spesifik dengan rata-rata kawasannya), kita memberikan sinyal yang jauh lebih tajam mengenai nilai properti tersebut.
+
+Contoh lain adalah pada sistem deteksi penipuan. Sebuah transaksi kartu kredit senilai lima juta rupiah mungkin wajar bagi seorang pebisnis, namun sangat mencurigakan jika dilakukan oleh seorang mahasiswa yang rata-rata transaksinya hanya seratus ribu rupiah. Dengan menghitung rata-rata jumlah transaksi per pengguna dan menggabungkannya kembali ke setiap transaksi individu, model mendapatkan dasar pembanding untuk setiap orang. Ketika sebuah transaksi baru terpaut jauh dari rata-rata historis pengguna, algoritma *machine learning* dapat dengan mudah mengenali anomali tersebut.
+
+Pada dasarnya, agregasi memaksa data untuk menceritakan kondisi di luar batasan satu baris observasi. Pendekatan ini memberikan gambaran yang lebih utuh mengenai perilaku suatu entitas jika dibandingkan dengan entitas lain di dalam kelompoknya. Kemampuan merangkum kelompok ini menjadi fondasi penting sebelum kita melangkah untuk menangani fitur relasional dan log peristiwa, yang memperluas konsep ini ke penggabungan data lintas tabel.
+
+
+## Fitur Relasional dan Log Kejadian: Penggabungan dan Kebenaran Point-in-Time
+
+Dalam praktiknya, data mentah jarang sekali tersaji dalam satu *dataset* tunggal berbentuk tabel datar. Informasi di dunia nyata umumnya tersebar di berbagai tabel relasional. Untuk membangun satu baris observasi utuh bagi sebuah model prediktif, kita harus merangkum informasi lintas sumber, misalnya mencocokkan profil statis pengguna dengan riwayat interaksinya. Proses mengekstraksi log kejadian menjadi representasi yang siap pakai ini adalah fondasi utama bagi analisis perilaku pengguna.
+
+Tantangan pertama dari data relasional adalah proses penggabungan tabel itu sendiri. Saat menggabungkan tabel pengguna dengan tabel transaksi (relasi satu-ke-banyak), kita berisiko memicu efek *fan-out*. Efek ini adalah duplikasi baris yang tidak disengaja pada tabel utama akibat penggabungan dengan tabel sekunder yang memiliki banyak kecocokan data. Jika satu pengguna memiliki lima puluh transaksi, penggabungan mentah akan menggandakan data pengguna tersebut menjadi lima puluh baris. Ini merusak struktur data karena target prediksi kita berada pada tingkat pengguna, bukan tingkat transaksi. Solusi untuk menghindari distorsi ini adalah melakukan agregasi log kejadian terlebih dahulu. Kita wajib meringkas riwayat tindakan menjadi fitur tingkat-entitas tunggal, seperti "total transaksi", sebelum menggabungkannya kembali ke profil pengguna.
+
+Setelah agregasi berhasil dilakukan, muncul tantangan yang bisa berakibat fatal: menjaga kebenaran *point-in-time*. Ini merupakan jaminan bahwa fitur yang dihitung untuk suatu momen tertentu hanya bergantung pada informasi yang benar-benar tersedia sebelum momen tersebut tiba. Mematuhi jaminan ini adalah perwujudan langsung dari praktik *pipeline* yang benar saat menangani data historis.
+
+[GAMBAR 6.2]
+Judul: Mekanisme As-Of Join untuk Menghindari Kebocoran Data
+Tipe: skema
+Tampilkan: Diagram yang membandingkan join standar (yang tidak sengaja memasukkan kejadian dari masa depan) dengan as-of join yang secara ketat memutus agregasi tepat sebelum waktu prediksi.
+Sumber data: pembuat gambar
+
+Bayangkan kita ingin memprediksi apakah seorang pengguna akan berhenti berlangganan pada tanggal 1 Agustus. Kita berniat membuat fitur agregasi berupa "jumlah keluhan dalam 30 hari terakhir". Jika kita secara serampangan menjumlahkan seluruh keluhan pengguna sepanjang tahun kalender, kita menyebabkan *data leakage* yang parah. Model secara diam-diam akan melihat data keluhan dari bulan September, sebuah informasi dari masa depan yang belum terjadi pada bulan Agustus. Model akan tampak sempurna saat pelatihan, tetapi gagal saat diuji.
+
+Untuk mencegah kebocoran semacam ini, kita menggunakan teknik yang disebut *as-of join*. Berbeda dengan pencocokan tabel biasa, *as-of join* secara cerdas memasangkan sebuah baris ke catatan paling mutakhir di tabel lain yang secara ketat terjadi sebelum stempel waktu referensi. Mekanisme ini menarik garis potong waktu yang tegas, sehingga agregasi log kejadian dihentikan dengan aman tepat di batas indeks prediksi.
+
+Pemenuhan kebenaran *point-in-time* ini sanggup mengubah sekumpulan log kejadian mentah menjadi representasi historis yang valid dan tidak menyimpang. Pemahaman mendalam tentang teknik memeras sinyal dari data relasional ini menjadi pijakan penting, terutama sebelum kita merakit kerangka otomatisasi rekayasa fitur secara menyeluruh pada bab selanjutnya.
+
+
+## Fitur Berbasis Domain: Menyandikan Pengetahuan Pakar
+
+Sebagian besar teknik rekayasa fitur berakar pada operasi matematika dan statistik terhadap *dataset*. Namun, sumber sinyal prediktif terbaik sering kali tidak datang dari komputasi buta, melainkan dari pemahaman mendalam tentang masalah yang diselesaikan. Fitur berbasis domain adalah rumusan matematis eksplisit dari keahlian manusia dan logika spesifik industri. Fitur ini menerjemahkan aturan bisnis, standar medis, atau formula keuangan menjadi variabel matematika yang siap dicerna oleh model.
+
+Pendekatan ini merupakan wujud paling murni dari representasi yang dirancang manusia. Alih-alih berharap agar model *machine learning* menemukan logika bisnis atau pedoman medis dari awal, kita menyuntikkan pengetahuan tersebut secara langsung ke dalam *dataset*. Dengan demikian, model tidak perlu lagi mempelajari fakta dasar melalui proses coba-coba. Jika kita tahu bahwa suatu kombinasi variabel memiliki makna krusial di dunia nyata, kita wajib menyediakannya sebagai fitur yang matang. Langkah ini menghemat waktu pelatihan dan meningkatkan akurasi secara signifikan.
+
+Sebagai contoh, pertimbangkan prediksi risiko kesehatan menggunakan *dataset* medis yang berisi tinggi dan berat badan. Sebuah model *machine learning* kompleks mungkin pada akhirnya mampu memetakan interaksi non-linier antara kedua variabel ini untuk mendeteksi obesitas. Namun, kita tidak perlu membuang sumber daya untuk memaksa model menebak hubungan tersebut. Dokter telah lama menggunakan Indeks Massa Tubuh (BMI) sebagai metrik standar. Dengan menghitung nilai BMI dan menambahkannya sebagai fitur baru, model langsung menerima sinyal kuat yang teruji alih-alih sekadar angka mentah.
+
+Prinsip serupa berlaku di sektor finansial. Saat mengevaluasi pengajuan hipotek, analis kredit menggunakan formula keuangan yang sudah mapan, seperti rasio *loan-to-value*. Rasio ini membandingkan jumlah pinjaman dengan nilai taksir properti. Rumus tersebut lahir dari puluhan tahun kebijaksanaan industri perbankan. Mengubah metrik keuangan ini menjadi atribut baru memastikan bahwa model mengevaluasi risiko dengan kacamata yang sama seperti pakar manusia, bukan sekadar menebak korelasi secara acak.
+
+Pada akhirnya, fitur berbasis domain menawarkan efisiensi yang luar biasa. Pendekatan ini meringankan beban komputasi dan memastikan keputusan model selalu berakar pada logika ilmiah atau komersial yang nyata. Fitur ini menegaskan bahwa rekayasa fitur yang efektif selalu memadukan teknik data dengan pemahaman lapangan. Konsep ini akan menjadi kunci pemahaman kita saat mempertimbangkan kapan harus menggunakan representasi yang dirancang manusia dibandingkan representasi yang dipelajari mesin di bagian akhir buku ini.
+
+
+## Fitur Waktu dan Siklik
+
+Data stempel waktu (*timestamp*) mentah nyaris tidak memiliki makna prediktif secara langsung bagi model *machine learning*. Stempel waktu biasanya direkam sebagai deretan angka yang membesar, seperti nilai detik UNIX. Jika dimasukkan langsung, model hanya melihat garis lurus yang naik tanpa henti. Format ini gagal menangkap pola perilaku berulang yang terikat erat dengan ritme kalender manusia. Agar berguna, stempel waktu tersebut harus dibongkar menjadi komponen-komponen terpisah.
+
+Langkah ekstraksi pertama yang umum adalah membuat komponen kalender. Dari satu stempel waktu transaksi, kita dapat menurunkan berbagai kolom baru yang lebih informatif. Kita bisa memisahkan jam kejadian, hari dalam minggu, bulan, atau membuat penanda biner akhir pekan dan hari libur nasional. Penjualan ritel dan tingkat kemacetan jalan raya sepenuhnya digerakkan oleh rutinitas kalender ini. Dengan menyediakan atribut tersebut secara eksplisit, model langsung menerima variabel terstruktur yang memetakan aktivitas harian tanpa perlu memecahkan pola rumit dari deret tunggal.
+
+Namun, sekadar memecah waktu menjadi nilai numerik biasa memunculkan masalah matematis mendasar. Waktu pada dasarnya memiliki sifat siklik. Dalam kenyataan, bulan Desember berdekatan dengan bulan Januari berikutnya, dan jam 23:00 malam berdekatan dengan jam 01:00 dini hari. Jika kita menyajikan waktu dalam rentang linear dari 0 hingga 23, model yang beroperasi berdasarkan perhitungan jarak matematis akan menganggap angka 0 dan 23 terpisah sangat jauh. Kesalahan evaluasi jarak ini merusak pemahaman algoritma terhadap transisi pergantian periode.
+
+Untuk memulihkan bentuk aslinya, kita menerapkan teknik *encoding* siklik. Alih-alih membiarkan waktu direpresentasikan oleh sumbu linear, kita menggunakan fungsi trigonometri. Nilai jam dari rentang 0 hingga 23 diubah menjadi dua fitur terpisah menggunakan sinus dan kosinus, yakni direpresentasikan oleh nilai `sin(2π * jam / 24)` dan `cos(2π * jam / 24)`.
+
+[GAMBAR 6.3]
+Judul: Transformasi Siklik dengan Sinus dan Kosinus
+Tipe: diagram konseptual
+Tampilkan: Diagram berbentuk jam yang menunjukkan bagaimana nilai jam (0-23) dipetakan ke dalam koordinat lingkaran dua dimensi (sinus dan kosinus) sehingga jam 23 dan jam 0 berada berdekatan.
+Sumber data: pembuat gambar
+
+Gambar 6.3 memperlihatkan bagaimana *encoding* siklik memetakan waktu secara melingkar ke ruang dua dimensi. Sebuah nilai jam tunggal direpresentasikan sebagai pasangan koordinat matematis. Representasi melingkar ini menjamin jarak temporal antara akhir siklus dan awal siklus yang baru dipertahankan dengan proporsi yang benar oleh model. Transformasi ini menyempurnakan pengolahan fitur numerik sekaligus menjadi fondasi untuk pemodelan deret waktu di tahap lebih lanjut.
+
+
+## Risiko Ledakan Fitur
+
+Rekayasa fitur kerap disalahartikan sebagai perlombaan untuk memperbanyak jumlah kolom. Perangkat lunak saat ini mempermudah kita menghasilkan ribuan turunan melalui proses matematis seperti polinomial, rasio, interaksi antarvariabel, dan agregasi ganda. Memperbanyak fitur tidak otomatis menaikkan tingkat kinerja model *machine learning*. Ekspansi variabel tanpa kendali ini memicu masalah struktural pada dataset yang dikenal sebagai ledakan fitur.
+
+Praktik manipulasi kombinatorial membesarkan dimensi data dengan sangat cepat. Sebagai ilustrasi matematis, ketika kita memproduksi seluruh rasio dan selisih yang mungkin dari 100 fitur dasar, dataset akan seketika membengkak dengan hampir 10.000 fitur baru. Sebagian besar dari belasan ribu kolom tambahan tersebut berupa fluktuasi acak atau *noise* murni. Kolom tersebut tidak memberikan sinyal komputasi yang valid bagi model.
+
+Dimensi berlebih ini secara langsung memantik kemunculan kutukan dimensi. Ketika dimensi baru ditambahkan, volume total dari ruang fitur membesar secara eksponensial. Titik-titik data observasi menjadi saling terpencar dan posisinya terdistribusi secara sangat jarang di dalam ruang geometris tersebut. Algoritma kesulitan memetakan batas pemisah karena bentang observasinya terlalu luas dan sepi. Jarak antarobservasi yang renggang ini mempermudah algoritma menghafal pola *noise* dari data pelatihan. Akibatnya, model rentan mengalami *overfitting* akut dan mendegradasi kinerja saat memproses prediksi data baru.
+
+Penumpukan parameter secara serentak juga membawa multikolinearitas yang melumpuhkan performa statistik. Multikolinearitas merujuk pada fenomena saat dua atau lebih variabel prediktor berkorelasi sangat tinggi dan membawakan sinyal tumpang tindih secara berulang. Mengekstrak metrik dasar yang sama menggunakan variasi operasi hitung akan mereplikasi sebaran data aslinya. Redundansi observasi ini merusak cara kerja algoritma parametrik seperti regresi linier, karena model kehilangan kapabilitas memisahkan kontribusi prediktif variabel secara independen. Kesalahan ini membuat estimasi bobot koefisien menjadi tidak stabil dan gagal untuk diinterpretasi.
+
+Sistem arsitektur prediktif berbasis pohon keputusan cenderung memiliki ketahanan lebih baik terhadap variabel ganda ini. Walaupun demikian, struktur komputasinya tetap harus menanggung beban operasi matematis yang tidak efisien. Durasi komputasi untuk fase pelatihan memanjang drastis karena sistem wajib mengukur setiap ribuan pembagian cabang tambahan dari fitur kosong tersebut. Kebutuhan alokasi memori pada prosesor ikut melonjak tajam tanpa menawarkan hasil akurasi model yang lebih tinggi.
+
+Penciptaan atribut matematis yang baru wajib memiliki landasan teori yang kuat. Kita mendefinisikan representasi yang dirancang manusia untuk memandu model mengenali pola faktual. Mendistorsi dataset dengan ledakan dimensi tanpa saringan justru mengacaukan kemampuan abstraksi jaringan. Risiko penurunan ketepatan akibat kutukan dimensi dan tumpang tindih multikolinearitas membuktikan bahwa tahapan penyaringan mutlak diperlukan. Argumen komputasi ini merupakan landasan bagi kita saat mendalami metodologi seleksi fitur di Bab 7 dan mekanisme evaluasi model di Bab 9.
+
+
+## Memvalidasi Manfaat Fitur Turunan Baru
+
+Pembentukan fitur turunan berawal dari sebuah hipotesis empiris. Saat menggabungkan atau mentransformasi atribut, kita bertindak berdasarkan intuisi bahwa interaksi tersebut akan memperjelas pola spesifik. Namun, sebuah fitur yang secara logika sangat masuk akal bagi pemahaman manusia belum tentu memberikan nilai tambah pada model. Sering kali, algoritma sudah mampu mengekstrak informasi serupa secara langsung dari data mentahnya. Alih-alih meningkatkan performa, penambahan fitur baru justru berisiko menyumbang *noise* atau memicu *overfitting*. Dalam kondisi *overfitting*, model mengalokasikan kapasitas komputasinya untuk menghafal kombinasi nilai dari fitur turunan pada data latih, sehingga gagal melakukan generalisasi saat memproses data baru.
+
+Untuk memvalidasi hipotesis tersebut, kita membutuhkan perbandingan langsung terhadap sebuah *baseline*. *Baseline* adalah model referensi sederhana yang dilatih menggunakan sekumpulan fitur mentah tanpa rekayasa tambahan. Sebagai contoh, pertimbangkan sebuah model yang dilatih hanya menggunakan atribut usia dan pendapatan mentah. Kita lalu merekayasa fitur turunan berupa rasio kekayaan terhadap usia. Untuk mengujinya, kita melatih model kedua yang menggunakan kombinasi usia, pendapatan, serta fitur rasio tersebut, lalu membandingkan hasil prediksinya dengan model awal.
+
+Metrik evaluasi dari kedua model kemudian dianalisis. Jika model yang menggunakan tambahan rasio kekayaan terhadap usia tidak mencetak performa yang melampaui *baseline*, fitur baru tersebut harus dieliminasi. Mempertahankan fitur yang tidak terbukti berguna hanya akan memperbesar dimensi data secara sia-sia. Matriks fitur yang terlalu lebar akan membebani memori komputasi dan membuka celah bagi model untuk memodelkan korelasi kebetulan. Membuang fitur yang redundan memaksa algoritma untuk hanya bergantung pada sinyal yang benar-benar prediktif.
+
+Perbandingan metrik ini wajib didasarkan pada prosedur *cross-validation*. Kualitas sebuah fitur tidak bisa diukur menggunakan skor performa pada data latih. Penambahan fitur ke dalam algoritma hampir selalu menurunkan tingkat galat latih, menciptakan ilusi bahwa model menjadi lebih akurat. Melalui *cross-validation*, performa diukur menggunakan potongan data validasi yang terisolasi. Jika fitur rasio tersebut memang menangkap pola perilaku secara umum, peningkatan metrik akan konsisten di seluruh lipatan data. Jika fitur itu hanya menyebabkan *overfitting*, skor *cross-validation* akan sangat bervariasi atau bahkan memburuk.
+
+Bab 9 akan membahas metode evaluasi kualitas fitur secara rinci. Materi tersebut mencakup penggunaan teknik studi ablasio untuk mengevaluasi efektivitas kelompok atribut, serta metode SHAP untuk mendiagnosis kontribusi individual. Pada tahap rekayasa ini, aturannya cukup ketat: setiap fitur turunan baru membebani sistem, sehingga kelayakannya harus dibuktikan melalui uji empiris yang objektif.
+
+
+## Studi Kasus: Fitur Turunan pada Data Transaksi, Kesehatan, dan Pendidikan
+
+Pengetahuan domain merupakan fondasi intelektual utama dalam rekayasa fitur turunan. Fitur prediktif yang andal berakar dari pemahaman logis tentang mekanisme dan aturan di dunia nyata yang membentuk interaksi sistem. Tiga bidang empiris berikut mengilustrasikan bagaimana spesialisasi domain mengarahkan rancangan transformasi atribut mentah menjadi representasi spesifik.
+
+Pada domain transaksi perbankan dan *e-commerce*, tabel data asal sering berwujud angka nominal pengeluaran yang bersanding dengan stempel waktu tunggal. Model *machine learning* umumnya kesulitan menangkap pola perilaku konsumen apabila menganalisis setiap transaksi secara terisolasi. Pengetahuan kebiasaan finansial mendorong praktisi untuk mendesain fitur agregasi temporal, seperti kalkulasi rata-rata pengeluaran harian pengguna selama tiga puluh hari terakhir. Praktisi juga umum memformulasikan perhitungan rasio nominal transaksi silang terhadap estimasi pendapatan pengguna per bulan. Penambahan fitur rasio ini memberi pedoman proporsi bagi model deteksi penipuan dalam menilai wajar atau tidaknya lonjakan nilai transaksi baru.
+
+Di bidang kesehatan, formulir rekam medis mencatat variabel biologis pasien seperti tinggi dan berat badan pada sel terpisah. Tenaga klinis selalu mempertimbangkan korelasi antara dimensi-dimensi ini sebagai standar analisis keparahan medis. Kita dapat mentransformasikan bobot total dan kuadrat tinggi pasien menjadi metrik Indeks Massa Tubuh (BMI) dalam satu kolom terpusat. Lebih jauh lagi, fitur komparatif yang menyoroti pergeseran nilai kesehatan di antara jadwal observasi sering menyimpan relevansi prediktif lebih tinggi ketimbang status akhir pasien. Menghitung delta atau selisih tingkat tekanan darah kunjungan saat ini dengan kunjungan sebelumnya menghasilkan parameter lintasan medis, mendeskripsikan progres kondisi pasien tanpa mewajibkan model melacak seluruh riwayat rekam medisnya.
+
+[GAMBAR 6.1]
+Judul: Contoh Pembentukan Fitur Turunan Berbasis Pengetahuan Domain
+Tipe: diagram konseptual
+Tampilkan: Tabel atau skema perbandingan yang memetakan masukan atribut mentah menjadi fitur turunan, beserta logika domain yang melatarbelakanginya, di bidang transaksi finansial, kesehatan klinis, dan pendidikan digital.
+Sumber data: -
+
+Sistem manajemen informasi pendidikan dituntut memproses log aktivitas belajar dalam variasi kuantitas masuk (*login*) maupun statistik penyelesaian ujian. Namun, pedagogi menetapkan bahwa keteraturan belajar mencerminkan komitmen siswa dengan lebih presisi dibanding jumlah interaksi sesaat pada momentum persiapan ujian. Parameter *login* beruntun harian dapat disintesis menjadi indikator durabilitas motivasi belajar per siswa. Pendekatan lain melibatkan fitur perbandingan proporsional modul tugas yang dirampungkan dengan akumulasi sisa kuota penugasan. Melalui intervensi yang dituntun oleh wawasan teori, rekayasa fitur menerjemahkan data mentah masif menjadi sekumpulan pola perilaku padat yang siap dipelajari oleh model.

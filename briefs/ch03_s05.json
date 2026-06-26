@@ -1,0 +1,28 @@
+{
+  "id": "ch03_s05",
+  "topic": "Clipping and binning",
+  "scope": "Discretization and its trade-offs.",
+  "target_word_count_indonesian": 300,
+  "key_concepts": [
+    "Instead of smoothing out raw measurements, we can cap them or group them into categories.",
+    "Clipping manually caps extreme values safely at a specified minimum/maximum boundary.",
+    "Binning (discretization) converts numerical features into categorical ranges. It intentionally destroys fine-grained linear correlation to allow simple models to capture non-linear steps."
+  ],
+  "definitions": [
+    { "term": "clipping", "indonesian": "clipping", "definition": "Memotong nilai data pada batas absolut minimum atau maksimum yang ditentukan." },
+    { "term": "binning", "indonesian": "binning", "definition": "Mengubah data numerik kontinu menjadi kelompok-kelompok diskrit berdasarkan batas rentang (interval)." }
+  ],
+  "examples": [
+    "Capping 'number of houses owned' at 5+ (clipping).",
+    "Converting 'Age' into categorical bins like 'Teenager', 'Adult', 'Senior' (binning) so linear models understand thresholds."
+  ],
+  "relations": {
+    "builds_upon": "ch03_s03 (handling outliers)"
+  },
+  "exclusions": [],
+  "terminology_preferences": {
+    "clipping": "clipping",
+    "binning": "binning"
+  },
+  "figures": []
+}
