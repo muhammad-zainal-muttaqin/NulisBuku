@@ -2,107 +2,201 @@
 
 ## Jenis-Jenis Variabel Kategorikal
 
-Model *machine learning* tidak dapat memproses label teks mentah secara langsung. Algoritma pembelajaran pada dasarnya merupakan fungsi matematis yang beroperasi di atas ruang matriks. Oleh karena itu, label teks seperti nama kota tidak memiliki makna matematis sebelum diubah menjadi angka. Proses penerjemahan ke representasi numerik ini disebut *encoding*. Sebelum memilih strategi *encoding*, kita harus memahami karakteristik intrinsik variabel tersebut. Secara umum, terdapat tiga jenis utama yang akan kita temui.
+Model *machine learning* tidak dapat memproses label teks mentah secara langsung karena algoritma beroperasi pada ruang vektor matematis. Proses penerjemahan label ini ke dalam representasi numerik disebut *encoding*. Sebelum memilih strategi *encoding*, analisis terhadap karakteristik intrinsik dari variabel tersebut wajib dilakukan. Berdasarkan panduan arsitektur seperti *Feature-engine*, data kategorikal terbagi menjadi tiga klasifikasi operasional:
 
-Pertama, kategori **nominal**. Kategori ini berisi sekumpulan label yang berdiri sejajar dan tidak memiliki tingkatan logis. Sebagai contoh, nama kota seperti Jakarta, Bandung, dan Surabaya adalah data nominal. Kita tidak bisa mengatakan bahwa Jakarta lebih besar dari Bandung secara matematis. Karena tidak ada urutan intrinsik, memberikan representasi angka berurutan (misalnya 1 untuk Jakarta dan 2 untuk Bandung) dapat menyesatkan model. Model mungkin akan keliru mengasumsikan bahwa Bandung bernilai dua kali lipat dari Jakarta.
+*   **Nominal:** Label tanpa tingkatan logis atau urutan intrinsik. Contohnya adalah nama kota (Jakarta, Surabaya) atau warna produk. Mengubah data ini menjadi representasi angka berurutan (misalnya 1 dan 2) dapat menyesatkan model linier karena menciptakan asumsi magnitudo palsu.
+*   **Ordinal:** Kategori dengan makna hierarki yang jelas, seperti ukuran (*Small*, *Medium*, *Large*). Posisi relatif antar label membawa informasi penting. Algoritma harus dapat menangkap pola hierarkis ini, meskipun jarak matematis antar level mungkin tidak seragam.
+*   **Kardinalitas Tinggi (*High-Cardinality*):** Fitur dengan jumlah level unik yang masif, seperti ID pengguna, alamat IP, atau kode pos (fitur yang tampak numerik namun beroperasi sebagai kategori). Kardinalitas tinggi rentan menyebabkan *overfitting* yang ekstrem, terutama pada model berbasis pohon (*tree-based models*), karena model cenderung membuat percabangan memori spesifik untuk kategori yang langka.
 
-Kedua, kategori **ordinal**. Berbeda dengan nominal, kategori ordinal memiliki makna hierarki yang jelas. Contoh paling umum adalah ukuran pakaian seperti *Small*, *Medium*, dan *Large*. Posisi relatif antar label membawa informasi penting yang memandu algoritma. Sebuah model perlu mengetahui bahwa *Medium* berada di antara *Small* dan *Large*. Meskipun urutannya pasti, jarak absolut antar level belum tentu seragam. Mempertahankan informasi urutan ini sangat penting agar model dapat menangkap pola hierarkis data secara akurat.
+[GAMBAR 4.1: Diagram - Dampak kardinalitas tinggi pada percabangan dan overfitting model pohon]
 
-Ketiga, fitur dengan **kardinalitas tinggi** (*high-cardinality*). Fitur ini mungkin bersifat nominal atau ordinal secara statistik, tetapi dari sudut pandang rekayasa fitur, ini merupakan tantangan komputasi tersendiri. Fitur berkardinalitas tinggi menampung variasi level unik dalam jumlah yang sangat masif, seperti kode pos, ID pengguna, atau alamat IP. Jika kita memaksakan metode *encoding* standar untuk fitur ini, matriks data akan membengkak menjadi sangat besar dan terlalu jarang (*sparse*). Hal ini tidak hanya membebani memori, tetapi juga menyulitkan model dalam menemukan sinyal prediktif yang valid.
-
-Pemahaman akan perbedaan antara kategori nominal, ordinal, dan fitur kardinalitas tinggi merupakan prasyarat sebelum merancang *pipeline* transformasi data. Pemilihan teknik *encoding* yang tepat bergantung sepenuhnya pada sifat kategori ini.
+Satu nuansa teknis yang kritis dalam perancangan *pipeline* adalah penanganan nilai kosong (*missing values*) seperti `np.nan` atau `None`. Dalam ekosistem produksi modern seperti Scikit-Learn versi 1.9, nilai kosong tidak selalu harus dibuang atau diimputasi secara terpisah. Kerangka kerja tersebut memungkinkan penanganan nilai kosong sebagai entitas kategori mandiri secara langsung di dalam kelas *encoder*, misalnya menggunakan parameter `encoded_missing_value` pada *OrdinalEncoder* untuk memetakan nilai `NaN` ke angka *integer* khusus secara deterministik. Pemahaman akan kelas kardinalitas dan perlakuan khusus terhadap entitas kosong ini menetapkan fondasi bagi teknik transformasi yang akan diaplikasikan.
 
 
 ## *One-Hot* dan *Ordinal Encoding*
 
-Model *machine learning* hanya dapat memproses angka, sehingga data kategorikal harus diterjemahkan ke dalam format numerik sebelum pelatihan. Dua pendekatan mendasar yang sering digunakan sebagai *baseline* adalah *ordinal encoding* dan *one-hot encoding*. Pemilihan teknik ini bergantung pada model yang digunakan serta apakah kategori tersebut memiliki urutan hierarki secara bawaan.
+Model *machine learning* hanya dapat memproses format numerik. Data kategorikal wajib diterjemahkan menjadi angka sebelum masuk ke tahap pelatihan. Dua pendekatan dasar untuk konversi ini adalah *ordinal encoding* dan *one-hot encoding*. Pemilihan metode bergantung pada keluarga model yang dipakai serta struktur hierarki bawaan dari fitur tersebut.
 
-*Ordinal encoding* mengubah kategori ke nilai angka bulat berurutan. Jika suatu fitur memiliki tingkatan alami seperti "Kecil", "Sedang", dan "Besar", metode ini langsung merepresentasikan urutan tersebut secara padat. Kelemahannya muncul saat kita menerapkannya pada data nominal dan melatihnya menggunakan model linier. Misalkan kita memetakan kategori kota: "Jakarta" menjadi 1, "Bandung" menjadi 2, dan "Surabaya" menjadi 3. Model linier akan salah menafsirkan angka-angka tersebut sebagai besaran matematis. Model memproses nilai "Surabaya" seolah tiga kali lebih besar dari "Jakarta", atau menarik kesimpulan bahwa "Bandung" merupakan nilai rata-rata dari keduanya.
+#### *Ordinal Encoding*
 
-Model berbasis pohon terhindar dari cacat asumsi ini. Algoritma pohon memproses angka ordinal murni sebagai penunjuk kategori tanpa memedulikan rentang ukurannya. Model ini hanya membelah data berdasarkan kriteria spesifik pada batas angka tertentu, tanpa memperhitungkan korelasi absolut antar-label.
+*Ordinal encoding* memetakan setiap kategori menjadi bilangan bulat berurutan. Misalnya, fitur ukuran baju dengan tingkatan alami "Kecil", "Sedang", dan "Besar" diubah langsung menjadi 1, 2, dan 3.
 
-Untuk mencegah kebingungan hierarki pada model linier, kita menggunakan *one-hot encoding*. Metode ini mengubah satu lajur kategori menjadi banyak lajur fitur spesifik bernilai biner tunggal (1 atau 0). Sebagai contoh, penerapan teknik ini pada fitur warna "Merah", "Biru", dan "Hijau" akan menduplikasi lajur awal menjadi tiga kolom terpisah. Jika data mentah memuat nilai "Merah", maka lajur khusus merah bernilai 1, sedangkan lajur biru dan hijau bernilai 0.
+Karakteristik implementasi *ordinal encoding*:
+*   **Berfungsi baik pada model berbasis pohon:** Algoritma seperti *decision tree* dan *random forest* memproses angka-angka ini murni sebagai penanda kategori untuk batas pembelahan data (*split*). Model tidak menyimpulkan jarak matematis absolut antar-angka.
+*   **Keliru pada model linier untuk data nominal:** Jika memetakan kategori kota tanpa urutan alami—misalnya "Jakarta" (1), "Bandung" (2), dan "Surabaya" (3)—model linier membaca angka tersebut secara proporsional. Model menyimpulkan secara keliru bahwa "Surabaya" bernilai tiga kali lipat "Jakarta".
+*   **Penanganan nilai kosong dan baru:** Pustaka eksekusi modern (seperti `OrdinalEncoder` versi terbaru pada scikit-learn) menyediakan parameter untuk mengalokasikan data kosong atau kategori tak dikenal saat *inference* ke angka spesifik seperti -1. Fitur ini menjaga pipeline tetap berjalan tanpa gagal eksekusi.
 
-Pendekatan *one-hot encoding* mencegah korelasi matematis keliru, tetapi memicu masalah fatal saat berhadapan dengan data berskala besar. Saat sebuah atribut nominal berisi ratusan kategori unik, teknik ini memaksa penciptaan ratusan fitur biner baru. Matriks pelebaran ini membentuk ruang data yang didominasi oleh angka nol (*sparse*), yang secara drastis memakan ruang memori dan menghambat efisiensi komputasi model.
+#### *One-Hot Encoding*
+
+Untuk mewakili data nominal tanpa memaksakan urutan palsu, data direpresentasikan ulang menggunakan *one-hot encoding*. Metode ini memecah satu kolom kategori menjadi beberapa kolom fitur biner terpisah.
+
+Transformasi kategorinya dirumuskan dalam bentuk vektor:
+
+$$ \mathbf{x} = [x_1, x_2, \dots, x_K] \in \{0, 1\}^K $$
+
+Di mana $K$ adalah jumlah total kategori unik pada fitur tersebut. Elemen $x_i$ bernilai $1$ jika observasi termasuk dalam kategori ke-$i$, dan $0$ untuk seluruh kategori lainnya. Atribut data berisi warna "Merah", "Biru", dan "Hijau" akan dipetakan sedemikian rupa sehingga pengamatan "Merah" berubah menjadi representasi vektor $[1, 0, 0]$.
+
+[GAMBAR 4.1: Matriks - Transformasi lajur tunggal nominal menjadi matriks fitur One-Hot Encoding]
+
+Karakteristik eksekusi *one-hot encoding*:
+*   **Mengeliminasi bias urutan:** Setiap opsi kategori terisolasi dalam kolom masing-masing. Model linier memproses kelompok-kelompok tersebut sebagai fitur independen.
+*   **Ekspansi ruang data (*dimensionality*):** Untuk fitur dengan kardinalitas tinggi yang memiliki ratusan elemen unik, pelebaran dimensi matriks terjadi secara drastis. Matriks tersebut didominasi angka nol (*sparse matrix*), yang membebani alokasi memori sistem dan menekan efisiensi.
+*   **Pengelompokan ambang batas minimum:** Pelebaran matriks dikendalikan dengan menetapkan batasan frekuensi pemunculan terendah (*minimum frequency threshold*). Kategori kategori jarang digabungkan ke satu kolom sisa (*infrequent bucket*), yang juga dirancang menampung label tak terduga yang ditemui saat tahapan *inference*.
 
 
-## *Frequency* dan *Count Encoding*
+## Frequency dan Count Encoding
 
-Ketika menghadapi fitur dengan kardinalitas tinggi, pemakaian representasi biner menjadi tidak praktis karena akan menghasilkan dimensi kolom yang membengkak. Pendekatan yang efisien untuk mengatasi masalah ini adalah menggunakan teknik *frequency encoding* atau *count encoding*.
+Fitur dengan kardinalitas tinggi membuat representasi biner memakan terlalu banyak memori karena dimensi matriks membengkak. *Frequency encoding* dan *count encoding* menawarkan solusi kompresi dengan mengganti label kategori menggunakan metrik distribusinya, tanpa perlu menambah kolom baru.
 
-Kedua metode ini beroperasi dengan cara yang serupa. Alih-alih memecah label kategori menjadi lajur-lajur baru, kita langsung mengganti nama kategori tersebut dengan angka distribusinya. Pada *count encoding*, kita mengganti label kategori dengan jumlah kemunculan mentahnya di dalam dataset. Sebagai contoh, alih-alih mempertahankan nama ratusan kota asal pesanan secara tekstual, kita mengganti setiap entri nama kota dengan total angka pesanan yang berasal dari kota bersangkutan.
+Mekanisme kedua metode tersebut adalah:
+*   **Count encoding**: Mengubah label kategori menjadi jumlah kemunculan mentahnya (frekuensi absolut) pada dataset latih. Sebagai contoh, atribut nama kota diganti dengan angka total transaksi dari kota tersebut.
+*   **Frequency encoding**: Mengubah label kategori menjadi nilai proporsi kemunculannya terhadap total baris data.
 
-Sementara itu, *frequency encoding* secara spesifik mengganti nama kelas kategori tekstual dengan nilai persentase proporsi kemunculannya di himpunan rujukan awal. Jika sebuah kota muncul seratus kali dari total seribu baris data, nilai untuk kota tersebut diubah menjadi proporsi numerik sebesar 0,1.
+Kalkulasi proporsi pada *frequency encoding* untuk sebuah kategori $c$ didefinisikan melalui persamaan:
 
-Keuntungan dari kedua teknik ini adalah kemampuannya mereduksi ribuan kategori menjadi satu kolom numerik tunggal. Reduksi ekstrem ini sering kali mempertahankan sinyal yang kuat untuk pemodelan, karena frekuensi kemunculan sebuah atribut biasanya memiliki korelasi dengan target prediksi. Sebuah kota dengan tingkat pesanan harian yang sangat tinggi cenderung merepresentasikan profil demografi, ketersediaan logistik, atau perilaku konsumen yang jauh berbeda dari kota dengan transaksi sporadis. Pengubahan teks menjadi metrik frekuensi memberikan cara bagi model untuk mengevaluasi skala dari suatu entitas.
+$$ f(c) = \frac{N(c)}{N_{total}} $$
 
-Risiko dari teknik kompresi ini adalah terjadinya tabrakan nilai. Karena model hanya menerima representasi berupa angka hasil hitungan, dua entitas yang sepenuhnya berbeda akan terbaca sebagai input identik jika memiliki jumlah kemunculan yang persis sama. Jika sebuah dataset mencatat bahwa Kota Tegal dan Kota Blitar masing-masing menghasilkan tepat 150 transaksi, kedua kota tersebut akan sama-sama diubah menjadi angka numerik 150. Model secara otomatis memproses kedua wilayah geografis tersebut sebagai titik data yang tidak bisa dibedakan. Kita perlu memeriksa sebaran distribusi kategori awal guna memastikan tingkat tabrakan nilai ini tidak sampai membuang karakteristik penting yang dibutuhkan saat prediksi.
+Di mana $N(c)$ mewakili jumlah observasi untuk kategori $c$ di dalam data latih, dan $N_{total}$ adalah ukuran total baris data latih.
+
+[GAMBAR 4.X: Diagram Transformasi - Pemetaan label teks pada count encoding menjadi nilai numerik berdasarkan jumlah observasi]
+
+Teknik ini memadatkan ribuan kategori ke dalam satu kolom numerik tunggal. Kompresi ini efektif karena tingkat frekuensi kemunculan atribut sering kali memiliki korelasi langsung dengan variabel target. Kota dengan volume pesanan harian yang besar biasanya memiliki profil demografi atau logistik yang berbeda dari kota dengan transaksi sporadis. Konversi ini memberi model representasi skala untuk mengevaluasi suatu entitas.
+
+Pendekatan berbasis hitungan ini membawa dua risiko teknis saat diimplementasikan ke produksi:
+1.  **Tabrakan nilai (collision)**: Dua kategori berbeda dengan jumlah kemunculan sama persis akan diubah menjadi nilai identik. Jika Kota Tegal dan Kota Blitar sama-sama tercatat 150 kali, model akan kehilangan kapasitas untuk membedakan karakteristik kedua kota tersebut.
+2.  **Kategori tidak dikenal (unseen categories)**: Entitas baru yang muncul pada fase inferensi tidak memiliki rekam jejak frekuensi dari data latih, sehingga memicu galat pemrosesan.
+
+Pustaka standar menyediakan parameter bawaan untuk memitigasi celah tersebut:
+*   **Penggabungan label minoritas**: Kelas `CountEncoder` dari pustaka `category_encoders` memiliki metode `combine_min_categories()` untuk menyatukan kategori berfrekuensi rendah ke dalam satu kelompok sebelum perhitungan. Langkah ini mereduksi potensi tabrakan nilai acak antar-entitas langka.
+*   **Penanganan nilai inferensi**: Kelas `CountFrequencyEncoder` dari `Feature-engine` menggunakan parameter `unseen='encode'` untuk secara otomatis memberikan skor nol pada label kategori yang tidak pernah diobservasi selama pelatihan model.
+
+Distribusi kategori awal perlu diperiksa untuk memvalidasi bahwa tingkat tabrakan nilai akibat transformasi ini tidak mengorbankan variansi penting dalam dataset.
 
 
 ## *Target Encoding* dan Risiko *Leakage*
 
-Kardinalitas tinggi pada variabel kategori merupakan kendala operasional saat merancang fitur. Saat dihadapkan pada ratusan kategori unik, transformasi konvensional sering memecah matriks terlalu lebar. *Target encoding* merupakan implementasi pengubahan rasio fitur berbasis rekap agregat ukuran target keluaran modelnya. Metode ini mengganti kategori dengan rata-rata target spesifiknya, merangkum representasi kelompok ke dimensi kontinu padat tanpa memperbanyak lajur kosong.
+Kardinalitas tinggi pada variabel kategori memicu pelebaran dimensi matriks secara masif jika dikonversi secara naif menggunakan metode biner seperti *one-hot encoding*. *Target encoding* (atau *mean encoding*) adalah teknik alternatif yang memampatkan berbagai label kategori menjadi satu lajur numerik kontinu. Representasi ini dibentuk dengan mengganti setiap string kategori menggunakan nilai rata-rata probabilitas target dari sekumpulan observasi yang memiliki label tersebut.
 
-Sebagai ilustrasi, sistem prediksi harga rumah dapat memiliki atribut kode pos dengan seribu variasi unik. Transformasi *one-hot* *encoding* akan memicu ribuan lajur biner yang membuat ukuran matriks membengkak. Melalui *target encoding*, kita langsung mengganti string kode pos dengan historis rata-rata harga rumah lokal. Kardinalitas tinggi ini dikompresi menjadi lajur tunggal yang padat. Teknik ini menangkap hubungan linier kategori dan target tanpa mengurai matriks biner yang berongga (*sparse*).
+Kelompok kategori minoritas dengan sampel yang sangat sedikit rentan memunculkan rata-rata agregat yang fluktuatif (bervariansi tinggi). Implementasi operasional meredam anomali ini menggunakan metode pemulusan (*smoothing*). Arsitektur pemulusan berbasis *empirical Bayes shrinkage* memadukan probabilitas asli kelompok spesifik bersama rata-rata distribusi keseluruhan populasi umum:
 
-Kemampuan kompresi besar ini membawa kerentanan akut terhadap *data leakage*. Nilai representasi baru dihitung langsung dari label target keluaran. Apabila agregasi ini dikalkulasi secara gabungan pada seluruh data tanpa pemisahan, kita membocorkan informasi label ke dalam pembentukan fitur. Informasi data uji akan terserap dan mencemari rata-rata yang dipakai sistem selama pelatihan. Akibat kontaminasi himpunan latih dan uji, akurasi tervalidasi akan nampak sangat tinggi, tetapi performa model akan anjlok saat dipaparkan pada sampel masa depan.
+$$ S_i = \lambda_i \mu_i + (1 - \lambda_i) \mu_{global} $$
 
-Pencegahan insiden *leakage* semacam ini sangat bergantung pada **praktik pipeline yang benar**. Pengukuran agregat target wajib dihitung murni menggunakan kumpulan observasi di dalam himpunan latih saja. Begitu nilai rata-rata tiap kategori direkam, nilai tersebut dikunci menjadi peta transformasi konstan. Angka agregat pelatih inilah yang kemudian diterapkan secara berulang untuk memodifikasi himpunan uji atau menerjemahkan titik data mentah saat sistem beroperasi pada tahap *inference*.
+Rasio penyeimbang probabilitas diatur oleh pembobot $\lambda_i$, yang diformulasikan menurut persentase sampel melalui persamaan:
 
-Selain kendala kebocoran informasi, kategori yang berisi sangat sedikit unit sampel menyisakan tantangan variansi. Nilai rata-rata target yang dihasilkan dari kelompok observasi kecil sangat rentan terpengaruh fluktuasi pengukuran. Arsitektur rekayasa yang presisi mengantisipasi masalah ini dengan menerapkan pemulusan probabilitas (*smoothing*) atau menggunakan skema validasi silang bersarang. Metode pemulusan mencampur angka rata-rata kelompok tersebut dengan target agregat populasi. Akibatnya, bobot nilai dari kelompok kategori yang langka ditarik mendekati rata-rata distribusi utamanya. Strategi ini menstabilkan format transformasi dan menjamin model tidak terseret oleh probabilitas kebetulan pada pecahan observasi sampel minoritas.
+$$ \lambda_i = \frac{n_i}{n_i + m} $$
+
+Keterangan notasi:
+*   $S_i$: Nilai numerik terenkode yang merepresentasikan kategori $i$.
+*   $\mu_i$: Rata-rata keluaran nilai target lokal pada kelompok label $i$.
+*   $\mu_{global}$: Rata-rata nilai target keseluruhan berdasarkan gabungan himpunan data latih.
+*   $n_i$: Angka total observasi (frekuensi kejadian) kategori $i$.
+*   $m$: Parameter penyetelan regulasi guna menarik variansi sampel yang renggang kembali menuju rata-rata absolut sistem.
+
+Ketika frekuensi kelas tersebut padat ($n_i \gg m$), nilai batas $\lambda_i$ beranjak mengikat pada proporsi 1, sehingga sistem condong meyakini akurasi rata-rata kelompok ($\mu_i$). Jika kategori berstatus langka atau observasinya minim, dominasi $\lambda_i$ menciut dan model meregulasi komputasi akhir mendekat ke angka landasan empiris populasinya ($\mu_{global}$).
+
+#### Mekanisme Pemblokiran *Data Leakage*
+
+Pemanfaatan kolom sasaran untuk mencetak parameter lajur prediksi membawa dampak destruktif laten dari perisitiwa *data leakage* (kebocoran informasi). Apabila kalkulasi perataan probabilitas dijalankan absolut menjaring observasi dari seluruh set data, matriks latih akan mencuri pandang jawaban akhir bagian data target (*test set*). Kontaminasi internal semacam ini mendemonstrasikan evaluasi metrik akurasi validasi awal yang fiktif sekaligus kegagalan total inferensi pada set produksi masa mendatang.
+
+Kedisiplinan isolasi arsitektur diimplementasikan mandiri pada pustaka modern untuk merintangi masuknya kebocoran parameter model. Kerangka komputasi algoritma populer menawarkan jaminan integritas prediksi menumpang tiga taktik teknis dominan berikut:
+
+*   **Pemisahan Himpunan Terisolasi:** Probabilitas spesifik variabel sepenuhnya diukur dari rentang matriks observasi data latih tanpa interpolasi baris asing. Peta target statis ini dibekukan secara logis oleh kelas *encoder*. Begitu tahapan model dihadapkan pada nilai asing sewaktu masa intervensi data inferensi, prosedur transformasinya memanggil titik tumpuan darurat cadangannya memakai target $\mu_{global}$.
+*   **Validasi Silang Internal (*Cross-fitting*):** Implementasi transformer sejenis `TargetEncoder` pada pustaka scikit-learn mendelegasikan pemecahan tumpukan himpunan pelatih menembus beberapa sub-lipatan blok bergantian (*folds*). Rata-rata sasaran baris pada satu lipatan absolut diturunkan mengecualikan pengelompokannya sendiri, dan menghimpun basis angka memanen lipatan tumpukan sisanya.
+*   **Statistik Target Terurut (*Ordered Target Statistics*):** Algoritma pohon keputusan mahir (CatBoost) menyabotase rantai kebocoran mengusung prinsip matematika barisan sekuensial. Ruang tabel dieksekusi menurut serangkaian permutasi pengurutan acak. Estimasi bobot terhitung menumpang jejak angka probabilitas terbatas menghitung deretan rekam jejak baris teridentifikasi yang hadir lebih dahulu di atas target pengisian bersangkutan. Mekanika komputasi asimetris satu jalur ini melenyapkan sirkulasi siklus ganda tanpa mengharuskan pertukaran pengulangan kepingan *fold*.
+
+[GAMBAR 4.3: Diagram Alur - Skema validasi silang (cross-fitting) dalam komputasi agregat target encoding untuk memblokir indikasi kebocoran informasi dari data uji]
 
 
 ## *Hashing* untuk Fitur Berkardinalitas Tinggi
 
-Tantangan utama dari fitur berkardinalitas tinggi adalah ancaman ledakan memori. Saat jumlah kategori bertambah tanpa kendali, metode tradisional yang mengharuskan mesin menghafal setiap variasi label akan menjadi sangat tidak efisien. Memori yang dibutuhkan untuk menyimpan pemetaan dari kategori ke dalam indeks akan terus membengkak seiring bermunculannya data unik yang baru.
+Fitur dengan ratusan ribu atau jutaan kategori unik, seperti alamat IP maupun ID transaksi, akan memicu ledakan dimensi jika diproses menggunakan pendekatan *one-hot*. Metode konvensional mengharuskan sistem menyimpan kamus pemetaan untuk setiap kategori yang muncul. Seiring bertambahnya data baru, kebutuhan memori terus membengkak hingga melampaui kapasitas komputasi perangkat keras.
 
-*Hashing* hadir sebagai solusi deterministik untuk mengelola ledakan ini. Secara definisi, *hashing* adalah operasi memetakan deretan ukuran tak terbatas dari parameter tekstual agar jatuh pada panjang ukuran nilai memori baku terhingga. Alih-alih menyimpan kamus referensi untuk setiap nilai yang muncul, *hashing* menerapkan fungsi matematis secara langsung pada string aslinya. Fungsi ini mengubah string kategori menjadi angka indeks dalam rentang lebar lajur yang dipatok secara statis sejak awal. Metode ini sepenuhnya menghilangkan kebutuhan untuk mengingat atau menghafal kategori yang sudah pernah dilihat sebelumnya.
+Tanpa perlu memelihara kamus referensi, *feature hashing* (atau *hashing trick*) menerapkan fungsi matematis secara langsung pada teks kategori untuk menghasilkan angka indeks yang tetap. Teks diubah menjadi vektor numerik dengan lebar lajur yang dipatok statis sejak awal. Operasi ini berpusat pada kalkulasi *modulo* terhadap hasil *hash*. Posisi indeks kolom untuk sebuah kategori $c$ ditentukan oleh persamaan:
 
-Sebagai ilustrasi, bayangkan kita membangun model yang menerima masukan berupa alamat IP. Dalam sistem berskala besar, model mungkin menjumpai ratusan ribu alamat IP yang terus bertambah. Mengalokasikan satu kolom untuk setiap alamat akan membuat ukuran matriks fitur tidak terkendali. Melalui *hashing*, kita dapat memetakan ribuan alamat IP unik tersebut agar secara ketat masuk ke dalam batas operasional tetap, misalnya hanya pada 128 lajur angka. Berapapun jumlah alamat baru yang masuk di kemudian hari, lebar fitur yang diserap oleh model akan tertahan konstan pada 128 kolom tersebut.
+$$ \text{indeks}(c) = \text{hash}(c) \pmod{k} $$
 
-Keuntungan ini membawa sebuah kompromi yang tidak bisa dihindari, yakni kolisi. Karena kita memetakan variasi kategori tanpa batas ke dalam ruang lajur yang sempit, terdapat probabilitas di mana dua string yang berbeda menghasilkan indeks *hash* yang sama. Saat dua kategori yang tidak berkaitan jatuh pada lajur yang sama, model akan menyatukannya sebagai entitas tunggal. Akibatnya, sinyal prediktif dapat menjadi buram karena informasi spesifik tertutup oleh pengelompokan tersebut. Kita secara sadar menukar ketajaman akurasi dari representasi eksak demi mendapatkan kepastian perlindungan batas memori.
+Di mana $\text{hash}(c)$ adalah keluaran dari algoritma pemetaan cepat (umumnya MurmurHash3), dan $k$ adalah batas dimensi kolom maksimum yang dialokasikan (parameter *n_components*). Sistem tidak lagi perlu menghafal kategori lama atau membuat rutinitas penanganan khusus untuk label baru pada tahap inferensi. Nilai teks apa pun langsung dikomputasi oleh rumus dan selalu memetakan diri ke salah satu kolom dalam rentang $k$.
+
+[GAMBAR 4.5: Diagram konseptual - Ilustrasi mekanisme hashing trick dan terjadinya hash collision saat dua teks kategori dipetakan ke dalam satu indeks matriks yang sama]
+
+Kepastian ukuran ini dibayar dengan risiko benturan (*collision*). Ruang vektor tujuan ($k$) dirancang jauh lebih sempit daripada variasi input yang tanpa batas, sehingga dua kategori berbeda sangat mungkin terpetakan ke indeks yang sama. Sistem pada akhirnya memadukan dua objek yang tidak berhubungan menjadi satu entitas, yang membuat sinyal prediktifnya bercampur dan memburam.
+
+Untuk meredam bias dari tumpukan benturan ini, pustaka `scikit-learn` melalui modul `FeatureHasher` menerapkan mekanisme *alternate sign*. Komputasi memanfaatkan fungsi *hash* kedua untuk mendistribusikan nilai secara asimetris. Ketika banyak kategori bertabrakan pada satu indeks, nilainya dijumlahkan dengan tanda positif dan negatif yang berselang-seling. Secara ekspektasi matematis, derau dari label yang saling menumpuk akan menetralkan satu sama lain.
+
+Secara operasional, penggunaan teknik *hashing* menuntut penyesuaian ekspektasi pada pengembangan model:
+* Stabilitas komputasi tetap terjaga di hadapan serbuan label tak terduga, meski ketajaman batas keputusan pudar sebanding dengan besarnya proporsi benturan.
+* Pemrosesan data yang berat menjadi lebih ringan berkat dukungan eksekusi paralel dan pemecahan matriks menjadi *chunk* terpisah, sebagaimana diimplementasikan oleh `HashingEncoder` dalam pustaka `category_encoders`.
+* Kejelasan representasi hilang sepenuhnya karena lajur fitur berubah menjadi kotak hitam matematis. Satu lajur kolom tidak lagi mewakili konteks spesifik, yang menjadi alasan perpustakaan analitis seperti `Feature-engine` secara eksplisit menolak menyertakan modul *hashing* ke dalam alat mereka.
 
 
 ## *Entity Embedding*
 
-Sejauh ini, seluruh teknik transformasi variabel kategorikal yang kita bahas bersandar pada aturan matematis statis. Pendekatan seperti *one-hot* menghasilkan matriks biner yang nilainya pasti, tanpa memedulikan kemiripan makna di balik data. Namun, pergeseran signifikan pada rekayasa fitur terjadi seiring hadirnya arsitektur *deep learning*. Konsep *entity embedding* menjadi lompatan besar pertama dari *representasi yang dirancang manusia* menuju *representasi yang dipelajari mesin* untuk variabel kategorikal.
+Transformasi kategori konvensional seperti *one-hot encoding* menghasilkan matriks biner yang lebar, renggang, dan mengabaikan kemiripan semantik antar-kategori. Pendekatan *entity embedding* menyelesaikan masalah kardinalitas ini dengan menempatkan setiap tingkat kategori ke dalam ruang vektor padat berdimensi rendah. Nilai di dalam vektor merupakan bobot parameter yang terus diperbarui sepanjang proses pelatihan jaringan saraf (Guo & Berkhahn, 2016).
 
-Secara konseptual, *entity embedding* merupakan pembentukan vektor representasi padat berkelanjutan untuk tipe pengamatan kategori nominal mentah yang disesuaikan mesin mandiri selama simulasi berjalan. Alih-alih mendefinisikan lajur biner yang besar dan amat renggang, pendekatan ini menyiapkan sebuah matriks kecil berisi vektor bilangan kontinu. Matriks ini bertindak sebagai tabel pencarian tempat setiap kategori diskret terhubung langsung dengan koordinat numeriknya di dalam sebuah ruang representasi.
+Matriks *embedding* bekerja sebagai sebuah tabel pencarian (*lookup table*). Pemetaan dari ruang kategori menuju koordinat kontinu dirumuskan melalui perkalian antara vektor *one-hot* dengan matriks bobot:
 
-Kunci dari teknik ini terletak pada sifat dimensi berkelanjutan tersebut. Nilai di dalam matriks pencarian ini bukanlah angka acak yang dibiarkan statis. Nilai tersebut merupakan parameter yang ikut dilatih oleh jaringan saraf bersamaan dengan proses pelatihan model utama. Selama model berusaha menekan tingkat kesalahan prediksinya, jaringan belajar menentukan dimensi berkelanjutan yang sangat presisi untuk mewakili hubungan kemiripan antar kategori.
+$$
+\mathbf{e}_i = \mathbf{W} \mathbf{x}_i
+$$
 
-Sebagai ilustrasi, mari kita lihat fitur hari dalam sepekan. Jika representasi disusun dengan aturan matematis biasa, semua hari akan berjarak sama persis satu sama lain. Melalui *entity embedding*, matriks akan menata ruang sedemikian rupa sehingga vektor atribut "Minggu" dan "Sabtu" saling berdekatan secara matematis karena kesamaan pola akhir pekan. Pada saat yang sama, keduanya mengambil jarak menjauh dari hari "Rabu". Pemetaan koordinat spasial ini dirumuskan sepenuhnya secara otomatis berdasarkan pola interaksi data.
+Penjelasan notasi:
+*   $\mathbf{e}_i \in \mathbb{R}^d$ adalah representasi vektor padat berdimensi $d$ untuk kategori ke-$i$.
+*   $\mathbf{W} \in \mathbb{R}^{d \times |V|}$ merupakan matriks *embedding* yang berisi bobot parameter jaringan saraf, dengan $|V|$ sebagai total kardinalitas unik.
+*   $\mathbf{x}_i \in \{0,1\}^{|V|}$ menunjukkan bentuk *one-hot* dari kategori tersebut.
 
-Pendekatan ini memberikan dua keuntungan operasional. Pertama, vektor padat mampu menekan ukuran matriks secara drastis saat menghadapi kardinalitas tinggi tanpa menyebabkan pemborosan memori. Kedua, kolom baru yang dihasilkan berhasil menyimpan logika kemiripan antar label secara struktural langsung di dalam bobot parameternya.
+[GAMBAR 4.X: Diagram Konseptual - Proses pemetaan indeks kategori berformat one-hot menjadi vektor kontinu berdimensi rendah melalui lapisan embedding]
 
-Keberhasilan memetakan fitur diskret ke dalam koordinat kontinu membuktikan kekuatan jaringan saraf dalam menggali struktur relasional dari data mentah. Terobosan mendasar ini menjadi fondasi penting sekaligus jembatan yang akan mengantar kita memasuki pembahasan arsitektur representasi tingkat lanjut pada Bagian V nanti.
+Pelatihan matriks $\mathbf{W}$ berintegrasi langsung dengan pembaruan parameter model utama. Berdasarkan fungsi kerugian (*loss function*), arsitektur saraf akan menyesuaikan koordinat geometri dari setiap atribut. Pembaruan matriks ini menanamkan tiga karakteristik pada fitur kategorikal:
+
+*   **Penyusutan dimensi:** Struktur kontinu menghilangkan lonjakan dimensi yang memicu masalah *overfitting*, terutama saat algoritma pohon keputusan memproses basis data dengan ribuan tingkat kardinalitas.
+*   **Pemetaan kedekatan semantik:** Kategori yang membagikan distribusi respons ekuivalen pada target diletakkan berdekatan dalam ruang Euclidean. Vektor menempatkan letak kategori "Sabtu" dan "Minggu" secara berdampingan jika keduanya menampilkan pola perilaku akhir pekan yang identik, sambil memisahkan klaster "Rabu" pada jarak yang lebih jauh.
+*   **Portabilitas fitur:** Nilai *embedding* akhir hasil simulasi dapat diekstrak menjadi deretan fitur numerik statis. Ekstraksi ini memungkinkan model *machine learning* tradisional seperti *gradient boosting* untuk menikmati representasi vektor padat tanpa ikut memproses arsitektur jaringan saraf di tahap produksi.
+
+Aplikasi vektor padat kini melibatkan arsitektur bahasa yang terlatih penuh (*pretrained language models*). Bakumenko et al. (2024) membuktikan pemrosesan teks dari nama label kategorikal non-linguistik, seperti ID produk atau kode pos, mampu berubah menjadi himpunan vektor semantik yang meningkatkan kinerja prediktif model. Desain rekomendasi terpadu (Lei et al., 2026) turut mengintegrasikan *embedding* kategorikal sebagai satu modalitas utama yang setara dengan pemrosesan teks dan citra. Pendekatan pemetaan parameter ini merintis transisi awal teknik rekayasa data menuju pemanfaatan struktur model arsitektur dalam, tanpa menuntut intervensi logika transformasi dari pengguna.
 
 
 ## Menangani Kategori Belum Terlihat Saat *Inference*
 
-Data pelatihan pada dasarnya hanyalah potret dari masa lalu. Sebaik apa pun kelengkapan data historis yang kita miliki, kondisi di dunia nyata akan terus berubah dan memunculkan entitas baru. Akibatnya, sebuah *pipeline* yang beroperasi di lingkungan produksi hampir dipastikan akan berhadapan dengan kategori belum terlihat. Kategori belum terlihat ini merupakan kelas atau label baru pada variabel kategorikal yang muncul secara murni saat model dievaluasi di lapangan, dan sama sekali tidak ada di dalam himpunan data latih.
+Data pelatihan adalah potret statis dari kejadian masa lalu. Di lingkungan produksi, model sering kali menghadapi perubahan kondisi yang memunculkan entitas baru. Kategori belum terlihat (*unseen categories*) merupakan kelas atau label pada fitur kategorikal yang baru muncul saat model dievaluasi di lapangan dan sama sekali tidak ada di dalam himpunan data latih. Contoh nyatanya adalah kemunculan merek gawai rintisan baru atau kode pos dari wilayah pemekaran.
 
-Mari ambil contoh sebuah model prediksi harga gawai bekas. Saat dilatih, model tersebut mungkin hanya melihat nama-nama pabrikan besar yang mendominasi pasar saat itu. Namun, ketika model digunakan tahun depan, sangat mungkin muncul sebuah merek gawai dari perusahaan rintisan baru. Merek baru inilah yang menjadi representasi kategori belum terlihat.
+Kehadiran kategori asing memicu kegagalan struktural pada *pipeline* produksi. Algoritma seperti *one-hot encoding* membangun indeks lajur secara kaku berdasarkan daftar kategori saat fase *fit*. Ketika transformator menerima label baru pada fase *transform*, dimensi matriks menjadi tidak selaras. Sistem tidak sekadar memproduksi prediksi keliru, melainkan langsung memicu galat komputasi yang menghentikan keseluruhan program.
 
-Kehadiran kategori asing ini adalah salah satu penyebab utama kegagalan fatal pada sistem produksi. Seperti prinsip kontrak *pipeline* yang dibahas sebelumnya, setiap tahap transformasi mengunci aturan ketat berdasarkan data latih. Algoritma seperti *one-hot encoding* membangun indeks lajur yang kaku berdasarkan daftar kategori awal. Ketika komponen tersebut menerima label yang tidak dikenali, struktur parameter menjadi tidak cocok. Sistem tidak sekadar menghasilkan prediksi yang keliru, melainkan langsung memicu galat struktural yang memutus keseluruhan proses komputasi otomatis.
+[GAMBAR 4.7: Diagram Alur - Mekanisme pipeline menangani kategori belum terlihat melalui pengelompokan proaktif dan nilai fallback saat inference]
 
-Untuk mencegah kelumpuhan layanan semacam ini, desain *pipeline* harus menyediakan rute pengaman yang jelas. Langkah perlindungan yang paling tangguh adalah secara proaktif membuat satu kategori darurat bernama "Lainnya" atau "Tidak Diketahui" sejak fase awal rekayasa fitur. 
+Sistem yang tangguh mengharuskan perancang fitur menetapkan rute pengaman secara eksplisit. Terdapat beberapa strategi utama untuk meredam kegagalan akibat kategori belum terlihat:
 
-Pada saat pelatihan, kita dapat mengalihkan kategori-kategori minor yang frekuensinya sangat rendah ke dalam keranjang "Lainnya" ini. Langkah tersebut sekaligus melatih model untuk mengevaluasi kelas yang tidak spesifik. Kemudian, ketika kategori belum terlihat sungguh-sungguh muncul saat *inference*, *pipeline* akan otomatis memetakannya ke kelas darurat tersebut. Mekanisme pengaman ini memastikan ukuran matriks fitur yang masuk ke model tetap sama persis dengan matriks pelatihan. Sistem terhindar dari galat dan tetap mampu menjaga stabilitas prediksi saat menghadapi data yang sama sekali baru.
+*   **Pengabaian kategori (pemetaan ke nol):** Pada pendekatan *one-hot encoding*, kategori baru dapat diabaikan secara paksa. Seluruh lajur fitur biner untuk observasi tersebut akan bernilai nol. Model linier mampu menyerap observasi ini melalui nilai *intercept*, namun representasi ini gagal membedakan antara entitas baru dan ketiadaan informasi.
+*   **Pemetaan ke nilai integer khusus:** Pada *ordinal encoding*, kategori baru dialokasikan ke nilai skalar yang berada di luar rentang pelatihan, misalnya -1. Model berbasis pohon menangani pendekatan ini dengan sangat baik karena algoritma pembelahan dapat memisahkan nilai ekstrem tersebut ke cabang tersendiri.
+*   **Substitusi nilai rata-rata global:** *Target encoding* modern mengatasi kategori belum terlihat dengan mensubstitusi nilai rata-rata target dari keseluruhan populasi data latih. Estimasi netral ini mencegah model memberikan skor ekstrem pada kelas yang tidak memiliki rekam jejak.
+
+Rumus substitusi rata-rata global untuk kategori asing didefinisikan sebagai:
+
+$$ \hat{y}_{unseen} = \frac{1}{N} \sum_{i=1}^{N} y_i $$
+
+Di mana $\hat{y}_{unseen}$ mewakili nilai *encoding* untuk kategori baru, $N$ merepresentasikan total jumlah observasi pada data latih, dan $y_i$ adalah nilai target aktual pada setiap observasi.
+
+*   **Pengelompokan proaktif kategori jarang:** Keranjang penampung dibangun sejak awal dengan menggabungkan kategori-kategori minoritas menjadi satu label "Lainnya" selama pelatihan. Saat *inference*, entitas yang benar-benar baru secara otomatis dimasukkan ke keranjang ini. Langkah ini melatih model untuk mengenali perilaku dari populasi minoritas gabungan tersebut.
+*   **Pemetaan berbasis kemiripan teks:** Kategori baru sering kali sekadar kesalahan pengetikan dari kategori yang sudah ada. Transformator berbasis kemiripan teks menghitung jarak Levenshtein terhadap daftar kategori di memori, sehingga masukan seperti "Jakrta" tetap dapat direpresentasikan melalui dimensi fitur "Jakarta" berdasarkan skor kemiripan terdekat.
+
+Pendekatan di atas memastikan arsitektur *pipeline* berjalan lancar tanpa interupsi. Dimensi fitur yang dikirimkan ke estimator selalu konsisten antara waktu pelatihan dan waktu *inference*, sehingga stabilitas model tetap terjaga.
 
 
 ## Studi Kasus: Perbandingan *Encoding* pada Data Berkardinalitas Tinggi
 
-Sebagai penutup bab ini, kita akan meninjau perbandingan ragam teknik representasi kategorikal melalui studi prediksi harga barang ritel melintasi berbagai zona kode pos. Skenario ini mewakili masalah lazim tentang fitur berkardinalitas tinggi, yakni saat sebuah atribut mengandung ribuan label wilayah yang unik. Analisis difokuskan pada evaluasi ketahanan setiap metode *encoding* dalam mengelola variabel skala besar, serta alasan mengapa beberapa bentuk transformasi tidak dapat dipaksa beroperasi di lingkungan produksi nyata. Praktik ini dijalankan secara langsung di dalam notebook bab ini untuk menyoroti pencapaian akurasi prediktif dari masing-masing teknik.
+Studi kasus prediksi harga ritel melintasi puluhan ribu zona kode pos menguji batas efektivitas berbagai teknik *encoding*. Fitur berkardinalitas tinggi seperti kode pos menuntut representasi yang mampu menjaga sinyal prediktif tanpa meledakkan dimensi matriks. Evaluasi perbandingan antar-teknik ini wajib dijalankan menggunakan *nested cross-validation* untuk memastikan nilai dari metode *supervised* seperti *target encoding* tidak bocor (*leakage*) ke dalam lipatan pengujian.
 
-Pendekatan operasional paling awal biasanya berbentuk representasi biner melalui *one-hot encoding*. Dalam kasus kardinalitas tinggi, bentuk awal ini memicu ekspansi ruang yang tidak terkendali. Karena setiap label spesifik dipetakan menjadi satu kolom independen, matriks data membengkak menjadi ribuan lajur vektor berdensitas sangat rendah. Efek pelebaran ini langsung membebani batas memori sistem dan memperlambat laju pelatihan model. Selain inefisiensi komputasi, dominasi nilai nol yang memenuhi keseluruhan blok matriks akan mengaburkan pola fungsional. Hadirnya ribuan variabel kosong justru berbalik mengundang gejala *overfitting*, akibat model terjebak mengenali detail sporadis dari dimensi fitur yang sangat jarang aktif.
+Hasil komparasi kinerja algoritma pemetaan terbagi ke dalam tiga perilaku utama:
 
-Sebagai mekanisme kompromi untuk menghindari ledakan fitur, teknik *hashing* membatasi alokasi lebar kolom secara statis. Fungsi matematis menekan puluhan ribu ragam kategori ke dalam panjang kolom yang sifatnya tetap. Pembatasan ketat ini secara efektif menahan inflasi jumlah parameter model. Akan tetapi, pemangkasan paksa ini berisiko memicu tabrakan informasi atau kolisi internal. Algoritma matematis dapat memetakan dua atau lebih kode pos dengan perilaku pasar bertolak belakang ke dalam indeks fitur yang persis sama. Tabrakan profil wilayah ini menghapus ketajaman resolusi data, sehingga model kesulitan memisahkan identitas asal dan menghasilkan skor presisi yang lebih rendah.
+*   **Matriks tersebar (*sparse*):** *One-hot encoding* memetakan setiap kode pos menjadi satu kolom biner independen. Matriks data membengkak seketika menjadi puluhan ribu lajur vektor berdensitas sangat rendah. Efek pelebaran ini langsung membebani batas memori sistem, memperlambat komputasi secara drastis, dan mengundang *overfitting* karena model berusaha mengenali pola dari dimensi fitur yang sangat jarang aktif.
+*   **Kompresi deterministik:** Teknik *hashing* menekan ruang kardinalitas tinggi ke dalam alokasi lebar kolom yang statis. Metode ini efektif menahan inflasi jumlah parameter model, tetapi menanggung risiko tabrakan informasi (*collision*). Dua atau lebih kode pos dengan karakteristik perilaku pasar yang saling bertolak belakang dapat terpetakan ke dalam satu indeks yang sama, menghilangkan ketajaman resolusi data prediktif.
+*   **Representasi padat (*dense*):** *Target encoding* dan *entity embedding* mengkonversi setiap kategori menjadi besaran numerik berdensitas tinggi tanpa memperlebar kolom matriks awal. *Entity embedding* mendekatkan titik koordinat kategori yang bernilai serupa di dalam ruang vektor arsitektur *deep learning*, sedangkan *target encoding* memanfaatkan nilai agregasi target masa lalu.
 
-Performa analitik paling optimal dibuktikan oleh metode yang beroperasi dengan nilai padat, yakni *target encoding* dan arsitektur *entity embedding*. Kedua bentuk kalkulasi ini sanggup memproyeksikan ribuan variasi kode pos ke dalam rentang fitur numerik tanpa memperlebar ukuran kolom awal matriks. *Target encoding* mengubah kategori menjadi besaran numerik yang menghimpun rasio nilai target historis dari masing-masing lokasi. Sementara itu, posisi vektor parameter pada *entity embedding* menyusun titik koordinat dengan cara mendekatkan kategori bernilai pasar serupa. Bukti performa menempatkan strategi representasi berdensitas tinggi ini di peringkat akurasi teratas, membuktikan stabilitas yang jauh lebih kokoh dibandingkan pemetaan lajur matriks tersebar (*sparse*).
+Keunggulan *target encoding* pada data berkardinalitas tinggi, terutama saat menghadapi kategori langka, dikendalikan oleh mekanisme penaksir *empirical Bayes* atau *shrinkage*. Mekanisme penyusutan ini menstabilkan representasi melalui rumusan:
 
-[GAMBAR 4.1]
-Judul: Akurasi perbandingan ragam teknik encoding pada dataset dengan kardinalitas tinggi
-Tipe: plot data
-Tampilkan: Chart comparing accuracy across One-Hot, Hashing, and Target Encoding handling thousands of distinct labels.
-Sumber data: Notebook Bab 4
+$$ S_i = \lambda_i \bar{y}_i + (1 - \lambda_i) \bar{y} $$
+
+Di mana $S_i$ adalah representasi akhir untuk kategori $i$, $\bar{y}_i$ mewakili nilai rata-rata target historis pada kategori $i$ tersebut, dan $\bar{y}$ merupakan rata-rata target global dari keseluruhan data latih. Besaran pembobot $\lambda_i \in [0, 1]$ diatur oleh tingkat frekuensi kemunculan kategori $i$. Ketika sebuah kode pos sangat jarang muncul, besaran $\lambda_i$ akan mengecil mendekati nol. Mekanisme matematis ini otomatis menarik representasi wilayah langka tersebut kembali ke rata-rata global $\bar{y}$, yang secara langsung mencegah model mempelajari kesimpulan keliru dari sampel minoritas.
+
+[GAMBAR 4.5: Plot Data - Perbandingan metrik akurasi prediktif dan konsumsi memori antara One-Hot, Hashing, dan Target Encoding pada fitur berkardinalitas tinggi]
+
+Bukti pengukuran pada lingkungan sistem produksi menunjukkan bahwa representasi padat memberikan performa klasifikasi yang jauh lebih tangguh. Metode pemetaan densitas tinggi terbukti lebih stabil menahan distorsi data dibanding pendekatan matriks tersebar lebar, menjadikannya pilihan prioritas untuk mengurai tumpukan fitur berkardinalitas tinggi di lapangan.

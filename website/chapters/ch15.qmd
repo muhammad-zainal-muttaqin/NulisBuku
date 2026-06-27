@@ -2,140 +2,267 @@
 
 ## Spektrum Adaptasi: Dari *Frozen Extractor* hingga *Fine-Tuning*
 
-Pada Bab 11, kita telah melihat bagaimana *embedding* teks bertransisi dari representasi statis menjadi representasi kontekstual. Secara mendasar, *embedding* merupakan representasi vektor yang dipelajari mesin untuk merangkum makna semantik dari sebuah data. Saat ini, representasi tersebut lazimnya dihasilkan oleh model *pretrained* berskala besar yang telah dilatih pada miliaran contoh. Namun, saat kita ingin menggunakan model *pretrained* ini untuk target tugas spesifik, kita dihadapkan pada satu pilihan teknis. Seberapa banyak bobot internal model tersebut yang harus dimodifikasi agar selaras dengan *dataset* baru kita? Keputusan ini tidak terbagi dalam kategori terpisah, melainkan menyusun sebuah kontinum yang dikenal sebagai spektrum adaptasi.
+*Embedding* mengompresi makna semantik data ke dalam vektor padat. Saat ini, representasi tersebut umumnya dihasilkan oleh model *pretrained* berskala besar. Namun, pemakaian model *pretrained* untuk tugas spesifik memunculkan satu pertanyaan teknis: seberapa banyak bobot internal model yang harus dimodifikasi agar selaras dengan *dataset* target? Keputusan ini membentuk sebuah kontinum yang dikenal sebagai spektrum adaptasi.
 
-[GAMBAR 15.1]
-Judul: Spektrum adaptasi model pretrained
-Tipe: diagram konseptual
-Tampilkan: Diagram menunjukkan kontinum dari frozen extractor, partial fine-tuning, hingga full fine-tuning. Menyoroti layer mana yang dikunci (beku) dan layer mana yang diperbarui (dilatih).
-Sumber data: -
+[GAMBAR 15.1: Skema - Spektrum adaptasi model pretrained, memperlihatkan transisi dari frozen extractor, partial fine-tuning, PEFT, hingga full fine-tuning dengan penyorotan pada layer yang dibekukan versus dilatih]
 
-Gambar 15.1 memperlihatkan tiga penanda utama pada spektrum adaptasi ini. Di batas paling kiri terdapat pendekatan *frozen extractor*. Pendekatan ini menggunakan model *pretrained* secara kaku sebagai pengekstraksi fitur tanpa memperbarui bobot internalnya sama sekali. Seluruh lapisan model dibiarkan terkunci. Data baru dilewatkan ke dalam model, lalu vektor *embedding* yang keluar pada ujung lapisan ditangkap untuk melatih algoritma pendamping seperti regresi logistik. Sebagai contoh, kita dapat memakai model ResNet yang dibekukan untuk mengekstrak fitur visual dari gambar medis. Karena tidak melatih ulang bobot model, *frozen extractor* sangat efisien secara waktu dan komputasi, serta tahan terhadap *overfitting* saat ukuran *dataset* yang tersedia masih terbatas.
+Secara matematis, prediksi model pada tugas baru diformulasikan sebagai fungsi komposit dari pengekstraksi fitur *pretrained* $g_\phi$ dan lapisan klasifikasi baru $f_\theta$. Optimasi model dilakukan dengan meminimalkan fungsi kerugian, misalnya *Cross-Entropy* ($\mathcal{L}$), terhadap data latih berukuran $N$:
 
-Bergerak ke area tengah, kita mendapati pendekatan *partial fine-tuning*. Strategi ini membuka beberapa lapisan terakhir dari model agar dapat diperbarui selama proses pelatihan, sementara lapisan-lapisan awalnya tetap dikunci. Konsep utamanya adalah mempertahankan fitur-fitur fundamental yang telah dipelajari dengan baik oleh lapisan awal, lalu mengizinkan lapisan akhir beradaptasi dengan pola yang sangat spesifik pada tugas baru. Pendekatan ini memberi titik keseimbangan, menawarkan fleksibilitas adaptasi yang memadai tanpa menuntut beban komputasi sebesar pelatihan model dari awal.
+$$ \min_{\theta, \phi} \sum_{i=1}^{N} \mathcal{L}(y_i, f_\theta(g_\phi(x_i))) $$
 
-Di ujung spektrum yang berlawanan, terdapat *full fine-tuning*. Dalam pendekatan ini, setiap lapisan pada model *pretrained* dibuka dan seluruh bobot parameternya diperbarui mengikuti *dataset* tugas yang baru. Tingkat penyesuaian yang tinggi ini menghasilkan kapasitas representasi yang maksimal. Contoh terapannya adalah melakukan *full fine-tuning* pada model BERT untuk keperluan klasifikasi teks hukum yang kosakatanya sangat khusus. Akan tetapi, pendekatan ini menguras banyak daya komputasi. Selain membutuhkan perangkat keras yang mumpuni dan *dataset* berskala besar, *full fine-tuning* juga mendatangkan risiko *catastrophic forgetting*, yaitu kondisi ketika model melupakan pengetahuan umum sebelumnya akibat terlalu menyesuaikan diri dengan rentang data yang sempit.
+Di mana $x_i$ adalah input, $y_i$ adalah label, $\phi$ mewakili bobot model *pretrained*, dan $\theta$ merupakan bobot lapisan klasifikasi. Pendekatan adaptasi ditentukan oleh perlakuan terhadap parameter $\phi$ selama proses optimasi. Terdapat empat titik utama pada spektrum adaptasi ini:
+
+1. **Frozen Extractor**
+   Pendekatan ini mengunci seluruh bobot model *pretrained* sehingga parameter tidak berubah ($\Delta\phi = 0$). Model berfungsi secara kaku sebagai pengekstraksi fitur statis. Vektor *embedding* yang keluar dari lapisan model digunakan untuk melatih algoritma pendamping, sehingga hanya parameter $\theta$ yang diperbarui.
+   * **Karakteristik:** Sangat efisien secara waktu dan komputasi. Pendekatan ini juga tahan terhadap *overfitting* saat jumlah *dataset* terbatas. Contoh terapannya adalah pemakaian ResNet beku untuk mengekstrak fitur visual dari gambar rontgen medis.
+
+2. **Partial Fine-Tuning**
+   Strategi ini membuka beberapa lapisan terakhir dari model *pretrained* untuk diperbarui, sedangkan lapisan awalnya dibiarkan terkunci.
+   * **Karakteristik:** Memberikan titik keseimbangan komputasi dan akurasi. Lapisan awal tetap mempertahankan pengetahuannya dalam mendeteksi fitur fundamental, sementara lapisan akhir diizinkan beradaptasi menangkap pola spesifik pada *dataset* baru.
+
+3. **Parameter-Efficient Fine-Tuning (PEFT)**
+   Mengingat arsitektur model yang kian masif, pembaruan seluruh bobot menjadi sangat lambat dan mahal. PEFT, seperti metode LoRA (*Low-Rank Adaptation*), mengunci bobot utama $\phi$ dan menginjeksi matriks berukuran sangat kecil yang dapat dilatih ke dalam arsitektur model.
+   * **Karakteristik:** Menghasilkan performa setara *full fine-tuning* dengan melatih sebagian kecil parameter saja (sering kali di bawah 1% dari total parameter asli). Metode ini menjadi standar industri adaptasi model besar sejak tahun 2024.
+
+4. **Full Fine-Tuning**
+   Setiap lapisan model dibuka dan seluruh bobot parameternya ($\phi$ dan $\theta$) diperbarui secara bersamaan mengikuti spesifikasi *dataset* target.
+   * **Karakteristik:** Menawarkan kapasitas representasi model yang maksimal, namun menguras banyak daya perangkat keras. Pendekatan ini mendatangkan risiko *catastrophic forgetting*, yaitu kondisi saat model kehilangan pengetahuan umum asalnya akibat beradaptasi terlalu spesifik pada rentang data baru.
 
 
 ## Penyimpanan Embedding dan Metrik Kemiripan
 
-Setelah kita menghasilkan *embedding*, baik melalui proses ekstraksi dari model *pretrained* maupun lewat *fine-tuning*, representasi tersebut membutuhkan penyimpanan dan mekanisme perbandingan yang efisien agar berguna di tahap produksi. Sebuah vektor *embedding* tunggal tidak memiliki makna tanpa konteks vektor lainnya. Oleh karena itu, vektor berdimensi tinggi ini disimpan di dalam *feature bank* (sering disebut basis data vektor). *Feature bank* merupakan sistem penyimpanan khusus yang dioptimalkan untuk mengindeks, menyimpan, dan melakukan pencarian vektor dalam skala besar secara cepat.
+Setelah representasi diekstraksi dari model *pretrained* atau melalui proses *fine-tuning*, representasi tersebut membutuhkan penyimpanan dan mekanisme perbandingan yang efisien. Sebuah vektor *embedding* tunggal tidak bermakna tanpa konteks vektor lainnya. Vektor berdimensi tinggi ini disimpan di dalam *feature bank* (sering disebut basis data vektor), yang dirancang khusus untuk menangani pencarian kemiripan.
 
-Sebagai contoh, bayangkan sistem rekomendasi produk. Sistem akan mengubah gambar atau deskripsi setiap produk menjadi vektor *embedding*, lalu menyimpan semuanya di dalam *feature bank*. Ketika pengguna ingin mencari item yang mirip dengan pembelian terbarunya, sistem cukup mengubah produk tersebut menjadi vektor kueri. Sistem kemudian mencari ke dalam *feature bank* untuk menemukan produk lain yang letaknya paling berdekatan dengan vektor kueri tersebut menggunakan *cosine similarity* tanpa perlu melakukan prediksi ulang.
+Penerapan *feature bank* di lingkungan produksi memiliki beberapa karakteristik operasional:
+*   **Kapasitas skala besar:** Mampu mengindeks dan menyimpan jutaan hingga miliaran vektor secara bersamaan.
+*   **Pencarian sub-linear:** Sistem menghindari pemindaian setiap vektor satu per satu. Pendekatan yang dipakai adalah pemanfaatan struktur indeks kompresi, seperti *Inverted File Index* atau *Product Quantization*, guna mempercepat penemuan tetangga terdekat.
+*   **Pustaka standar industri:** Implementasi seperti FAISS (Facebook AI Similarity Search) bertindak sebagai mesin pencari utama. FAISS menjembatani pembuatan *embedding* dari model (misalnya *sentence-transformers*) dengan sistem pencarian waktu nyata.
 
-Untuk menentukan arti "berdekatan" atau "paling mirip" dalam ruang berdimensi tinggi, kita membutuhkan metrik kemiripan. Pilihan metrik mendefinisikan cara perhitungan jarak antar dua vektor *embedding*. Metrik yang paling dominan digunakan adalah *cosine similarity*. Metrik ini mengukur kosinus sudut antara dua vektor tanpa memedulikan panjang (magnitudo) vektor tersebut, yang secara formal dinyatakan sebagai:
+[GAMBAR 15.2: Skema - Alur kerja feature bank dari penyimpanan vektor ke dalam indeks FAISS hingga proses komparasi vektor kueri untuk menemukan tetangga terdekat]
+
+Untuk menentukan arti "paling mirip" dalam ruang berdimensi tinggi, sistem memakai metrik kemiripan. Metrik ini mendefinisikan cara perhitungan jarak antara dua vektor. Pada *representasi yang dipelajari mesin* untuk teks atau citra, metrik yang dominan adalah *cosine similarity*. 
+
+Metrik ini mengukur kosinus sudut antara dua vektor tanpa memedulikan panjang (magnitudo) vektor, dengan formulasi:
 
 $$
 \text{Cosine Similarity}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\| \|\mathbf{v}\|}
 $$
 
-Karena *cosine similarity* hanya melihat arah orientasi vektor, metrik ini sangat tangguh menangkap kemiripan semantik. Hal ini berguna saat membandingkan dua dokumen teks yang membahas topik sama persis, namun satu dokumen jauh lebih panjang. Panjang dokumen akan memperbesar magnitudo vektor, tetapi arah orientasi informasinya tetap sama sehingga *cosine similarity* mereka tetap tinggi.
+Notasi pada persamaan tersebut memiliki definisi:
+*   $\mathbf{u}$ dan $\mathbf{v}$ merepresentasikan dua vektor *embedding* berdimensi $d$ yang diukur tingkat kemiripannya.
+*   $\mathbf{u} \cdot \mathbf{v}$ melambangkan *dot product* (perkalian titik) antara kedua vektor.
+*   $\|\mathbf{u}\|$ dan $\|\mathbf{v}\|$ merupakan norma L2 (panjang atau magnitudo) dari masing-masing vektor.
 
-Alternatif lain yang lebih ringan secara komputasi adalah *dot product*. Operasi ini hanya mengalikan elemen vektor secara langsung. Jika vektor $\mathbf{u}$ dan $\mathbf{v}$ telah melewati normalisasi L2 (sehingga panjangnya persis satu), hasil *dot product* menjadi identik dengan *cosine similarity*. Praktik ini sangat umum karena jauh lebih cepat dihitung oleh mesin.
+Terdapat tiga pendekatan evaluasi jarak yang biasanya dipilih sesuai tuntutan arsitektur dan jenis data:
 
-Sebagai perbandingan, kita juga mengenal jarak Euclidean, yang mengukur jarak garis lurus sesungguhnya antara dua titik di ruang berdimensi $d$:
-
-$$
-\text{Euclidean Distance}(\mathbf{u}, \mathbf{v}) = \sqrt{\sum_{i=1}^{d} (u_i - v_i)^2}
-$$
-
-Jarak Euclidean sangat sensitif terhadap magnitudo vektor. Jika skala absolut atau intensitas nilai di dalam vektor memiliki makna krusial, jarak Euclidean merupakan pilihan tepat. Namun, pada representasi yang dipelajari mesin untuk memahami bahasa atau citra, informasi terpenting umumnya terletak pada arah orientasi vektornya, bukan magnitudonya. Oleh karena itu, *cosine similarity* tetap menjadi pilihan metrik standar.
+1.  **Cosine Similarity:** Mengabaikan panjang vektor dan hanya melihat arah orientasi. Pendekatan ini sangat tangguh untuk membedakan kemiripan semantik murni. Dua dokumen dengan pembahasan identik akan menghasilkan arah vektor yang searah, meski salah satu dokumen berukuran jauh lebih panjang.
+2.  **Dot Product:** Alternatif yang jauh lebih ringan secara komputasi karena membuang proses pembagian magnitudo. Jika seluruh vektor $\mathbf{u}$ dan $\mathbf{v}$ di dalam basis data telah dinormalisasi L2 (memiliki panjang tepat satu), perhitungan *dot product* menjadi identik secara matematis dengan *cosine similarity*. Menormalisasi vektor di awal merupakan praktik standar untuk meminimalkan beban komputasi saat melayani kueri berskala masif.
+3.  **Jarak Euclidean (L2 Distance):** Menghitung jarak garis lurus aktual antara dua koordinat titik. Berbeda dengan dua metrik sebelumnya, jarak Euclidean sensitif terhadap magnitudo vektor. Metrik ini digunakan jika intensitas ukuran fitur memiliki arti langsung, tetapi kurang ideal untuk membandingkan *embedding* dari bidang pemrosesan bahasa alami (NLP) atau visi komputer.
 
 
 ## Evaluasi Kualitas Embedding dan Risiko Domain Shift
 
-Tidak ada representasi yang sempurna. Sebuah *embedding* pada dasarnya hanyalah pemetaan ke dalam ruang vektor. Kualitasnya murni bergantung pada seberapa baik vektor representasi tersebut memisahkan kelas atau menangkap kesamaan untuk tugas prediksi spesifik kita. *Embedding* yang istimewa untuk satu masalah bisa menjadi tidak berguna untuk masalah lain.
+Sebuah *embedding* adalah pemetaan data ke ruang vektor. Namun, kualitas representasi ini sangat bergantung pada konteks tugas. Vektor yang memisahkan kelas dengan baik pada satu dataset bisa gagal total pada dataset lain. Hasil dari *Massive Text Embedding Benchmark* (MTEB) mengonfirmasi bahwa tidak ada model *embedding* tunggal yang mendominasi seluruh jenis tugas prediksi; setiap representasi memiliki keunggulan spesifik.
 
-Untuk mengukur kualitas ini, kita sering menggunakan metode yang disebut *linear probing*. Evaluasi ini dilakukan dengan mengambil model *pretrained* sebagai *frozen extractor* untuk mengubah data menjadi fitur, lalu melatih model klasifikasi linear sederhana di atasnya. Kita menggunakan model linear (seperti regresi logistik) karena kita murni menguji kualitas fiturnya saja. Jika model klasifikasi yang sangat sederhana ini mampu mencapai akurasi tinggi, itu membuktikan bahwa *embedding* telah berhasil memisahkan kelas target secara tegas di dalam ruang vektor. Artinya, model *pretrained* telah menanggung beban berat menstrukturkan data. Jika akurasi tinggi baru tercapai setelah melatih model yang kompleks di atas *embedding*, artinya representasi awal tersebut gagal mengurai kerumitan data target.
+### Metode Linear Probing
 
-Alasan utama strategi transfer representasi gagal adalah fenomena *domain shift*. Kondisi ini terjadi ketika terdapat divergensi fundamental antara distribusi data yang digunakan saat model *pretrained* dilatih dengan data pada tugas target kita. Algoritma bertumpu pada asumsi bahwa data inferensi memiliki karakteristik dasar yang serupa dengan data pelatihan. Saat kita mengimpor representasi dari luar, kita membawa serta asumsi bentuk dunia dari data asalnya.
+Untuk mengevaluasi kualitas *embedding* tanpa bias dari arsitektur klasifikasi yang rumit, kita menggunakan *linear probing*. Metode ini memperlakukan model *pretrained* murni sebagai ekstraktor fitur statis (*frozen extractor*) dan menempatkan model linier sederhana di ujungnya.
 
-Bayangkan kita mengambil model visi yang dilatih pada jutaan gambar objek sehari-hari (seperti kucing atau mobil) untuk mengekstraksi fitur dari citra rontgen medis. Model tersebut telah belajar membedakan tekstur bulu atau kilau logam, tetapi belum pernah melihat patologi medis. Saat memproses rontgen, model tidak menemukan pola dasar yang dikenalinya. Akibatnya, model memetakan semua citra rontgen ke dalam vektor-vektor yang saling tumpang-tindih rapat. Vektor ini menjadi tidak informatif dan kehilangan utilitas prediktifnya karena gagal membedakan rontgen paru-paru sehat dari yang sakit. Dalam skenario semacam ini, penggunaan *frozen extractor* menjadi sama sekali tidak memadai.
+Langkah pengujian ini mencakup:
+*   **Pembekuan parameter:** Seluruh bobot arsitektur model dikunci agar tidak berubah selama proses pelatihan tahap akhir.
+*   **Ekstraksi representasi:** Data target dimasukkan ke model untuk menghasilkan vektor *embedding* $f(x_i)$.
+*   **Pelatihan klasifikasi linier:** Sebuah pengklasifikasi sederhana (seperti regresi logistik) dilatih pada vektor tersebut.
 
-Ketika menghadapi *domain shift* yang parah seperti ini, *pipeline* kita harus bergeser lebih jauh di sepanjang spektrum adaptasi. Kita tidak bisa lagi mempertahankan ekstraktor dalam keadaan beku. Kita perlu beralih ke *fine-tuning* parsial atau penuh, memaksa model menyesuaikan bobot internalnya agar mempelajari struktur relevan dari distribusi data yang baru. Memahami risiko pergeseran domain ini merupakan bentuk evaluasi esensial sebelum kita sepenuhnya menyerahkan desain representasi kepada model dari luar.
+Secara matematis, *linear probing* mencari nilai matriks bobot linier $W$ yang meminimalkan kerugian *Cross-Entropy* pada klasifikasi klasifikasi multikelas:
+
+$$ L(W) = -\frac{1}{N} \sum_{i=1}^{N} \sum_{c=1}^{C} y_{i,c} \log \left( \frac{\exp(W_c^T f(x_i))}{\sum_{k=1}^{C} \exp(W_k^T f(x_i))} \right) $$
+
+Di mana:
+*   $f(x_i)$ adalah representasi yang dipelajari mesin dan parameter asalnya dibiarkan tetap (*frozen*).
+*   $W_c$ adalah vektor bobot lapisan klasifikasi untuk kelas $c$.
+*   $y_{i,c}$ adalah label bernilai 1 jika sampel $i$ berada di kelas $c$, dan 0 jika tidak.
+
+Jika model linier sederhana mampu meminimalkan fungsi kerugian ini dan meraih akurasi tinggi, model *pretrained* terbukti sukses menyusun data dan memisahkan kelas target di ruang vektor. Sebaliknya, jika akurasi tinggi baru didapat setelah kita mengganti model linier dengan algoritma non-linier yang lebih rumit, berarti representasi dasar tersebut gagal menstrukturkan data dengan baik.
+
+[GAMBAR 15.3: Skema - Arsitektur linear probing memisahkan frozen pre-trained model dan layer klasifikasi linier]
+Judul: Evaluasi Linear Probing
+Tipe: skema
+Tampilkan: Model pre-trained dalam keadaan beku (frozen) yang mengeluarkan vektor fitur (embedding) ke layer klasifikasi linier sederhana.
+
+### Mengidentifikasi Domain Shift
+
+Transfer representasi dari luar kerap menemui jalan buntu akibat *domain shift*—perbedaan fundamental antara sebaran data tempat model *pretrained* dilatih dengan data tugas akhir kita. Model membawa asumsi bentuk data dari proses pelatihannya; saat asumsi ini dilanggar, representasi yang dihasilkan kehilangan makna.
+
+Kondisi *domain shift* menimbulkan dampak beruntun dalam *pipeline*:
+*   **Kebutaan terhadap fitur target:** Model visi yang dilatih membedakan hewan dan kendaraan tidak memiliki referensi tekstur untuk mengurai patologi citra medis (seperti rontgen paru-paru).
+*   **Tumpang-tindih representasi:** Akibat gagal mendeteksi pola yang relevan, model memetakan gambar rontgen pasien sehat dan sakit ke koordinat vektor yang berdekatan atau bertumpuk.
+*   **Degradasi fungsi prediktif:** Karena ruang vektor gagal memisahkan konsep yang berbeda, model klasifikasi akhir tidak memiliki fitur diskriminatif untuk dipelajari.
+
+Ketika *domain shift* terlalu tajam, arsitektur *frozen extractor* tidak lagi memadai. Praktisi perlu menggeser strategi menjauhi pembekuan total dan mulai melakukan *fine-tuning* parsial maupun menyeluruh. Pembaruan bobot ini secara langsung memaksa jaringan saraf menyesuaikan diri untuk mempelajari struktur dan distribusi khusus dari dataset target yang baru.
 
 
 ## Batas Konseptual: Transfer Representasi vs. Kompresi Data Internal
 
-Pembaca sering kali menyamakan representasi laten hasil reduksi dimensi pada Bab 8 dengan *embedding* dari model *pretrained* di bab ini. Keduanya sekilas melakukan hal identik, yakni memetakan input berdimensi tinggi menjadi vektor berdimensi rendah. Namun, keduanya memiliki perbedaan fundamental dari sisi sumber pengetahuan.
+Representasi laten hasil reduksi dimensi (seperti yang dibahas pada Bab 8) dan *embedding* dari *pre-trained model* sering dianggap serupa karena keduanya memetakan input berdimensi tinggi menjadi vektor berdimensi rendah. Perbedaan fundamental di antara keduanya terletak pada sumber pengetahuan yang membentuk representasi tersebut.
 
-Metode reduksi dimensi seperti PCA atau *autoencoder* beroperasi secara murni untuk mengompresi himpunan data yang Anda miliki saat ini. Teknik tersebut melipat redundansi dan menemukan sumbu variasi dari dalam matriks fitur Anda sendiri. Jika dataset pelatihan hanya memuat sepuluh ribu sampel, representasi akhir mutlak dibentuk oleh pola dari sepuluh ribu observasi tersebut. Proses ini murni bersifat internal dan tidak menyerap pengetahuan dari luar *pipeline*.
+Pendekatan ini dapat dibedakan berdasarkan asal datanya:
 
-Sebaliknya, model *pretrained* memindahkan representasi semantik yang telah dipelajari dari jutaan titik data eksternal ke dalam masalah prediksi Anda. Keluaran model *pretrained* sudah memiliki struktur makna yang kaya sebelum berinteraksi dengan dataset lokal. Teknik ini menyuntikkan pemahaman abstrak, seperti relasi antar kata atau hirarki visual objek, ke dalam *pipeline*. Konsep kompleks tersebut mustahil dipelajari secara kokoh jika model ekstraksi hanya dibatasi pada data lokal yang sempit.
+*   **Kompresi Data Internal:** Metode seperti PCA, SVD, atau *autoencoder* beroperasi secara murni pada himpunan data lokal. Teknik ini menemukan sumbu variasi dan melipat redundansi dari dalam matriks fitur itu sendiri. Representasi akhirnya dibentuk sepenuhnya oleh pola observasi lokal, tanpa tambahan informasi eksternal.
+*   **Transfer Representasi Eksternal:** *Pre-trained model* mentransfer struktur makna dari jutaan data eksternal ke dalam masalah prediksi spesifik. Model ini membawa pemahaman abstrak—seperti relasi semantik teks atau hierarki fitur visual—yang tidak mungkin dipelajari secara kokoh dari dataset lokal yang sempit.
 
-Garis batas konseptual ini tidak dipisahkan oleh penggolongan "metode statistik versus jaringan saraf tiruan". Sebuah *autoencoder* berarsitektur *deep learning* tetap beroperasi sebagai alat kompresi internal apabila dilatih dari awal hanya menggunakan data historis proyek terkait. Pembagi sejati antara keduanya murni pada asal representasi: apakah algoritma sekadar memadatkan data Anda sendiri, atau mentransfer pengetahuan dari luar.
+Batas kedua kategori ini bukanlah perbedaan "metode statistik vs. jaringan saraf tiruan". Sebuah *autoencoder* berarsitektur *deep learning* tetap beroperasi sebagai alat kompresi internal jika dilatih dari awal hanya menggunakan data proyek terkait. Pembeda utamanya terletak pada asal representasi: apakah algoritma memadatkan data target itu sendiri, atau mentransfer pengetahuan dari luar.
 
-Sebagai ilustrasi praktis, bayangkan melatih *autoencoder* untuk mereduksi 1.000 atribut transaksi menjadi 50 dimensi laten. Langkah ini adalah bentuk kompresi data internal. Anda menyaring *noise* spesifik transaksi agar algoritma klasifikasi dapat berlatih lebih efisien. Di sisi lain, ketika meneruskan ulasan teks konsumen ke dalam model BERT untuk memperoleh *embedding* 768 dimensi, Anda mengubah tata bahasa global menjadi sebuah fitur siap pakai. Memisahkan dua jalur ini akan memandu perancang *pipeline* dalam menimbang risiko. *Embedding* dari luar sangat membantu dataset kecil, tetapi mengundang kerentanan *domain shift* ketika distribusi data aslinya meleset jauh dari masalah prediksi spesifik Anda.
+[GAMBAR 15.1: Skema - Skema Transfer Learning (membekukan layer)]
+
+Secara matematis, perbedaan tersebut terlihat dari fungsi objektif yang digunakan saat melatih pembentuk representasi. Pada transfer representasi, *pre-trained model* umumnya dioptimalkan lebih dulu untuk tugas klasifikasi eksternal (misalnya membedakan kelas objek pada ImageNet) menggunakan fungsi kerugian *Cross-Entropy*:
+
+$$ \mathcal{L}_{CE} = - \sum_{i=1}^{C} y_i \log(\hat{y}_i) $$
+
+Di mana:
+*   $C$ adalah jumlah total kelas target pada dataset eksternal.
+*   $y_i$ merupakan label kelas aktual dari sebuah observasi.
+*   $\hat{y}_i$ mewakili probabilitas prediksi yang dihasilkan oleh model.
+
+Bobot jaringan yang telah mengoptimalkan $\mathcal{L}_{CE}$ pada distribusi eksternal tersebut kemudian dibekukan (*frozen*) dan digunakan sebagai ekstraktor fitur tetap untuk masalah lokal. Konsep ini berbeda dengan kompresi internal yang meminimalkan fungsi kerugian rekonstruksi (seperti *mean squared error* pada *autoencoder*) tanpa mengandalkan label klasifikasi dari luar *pipeline*.
+
+Pemisahan kompresi dan transfer membawa konsekuensi teknis pada perancangan *pipeline*:
+*   **Kapasitas Pembelajaran:** Ekstraksi fitur dari luar menjadi solusi utama ketika dataset pelatihan terlalu kecil untuk membentuk matriks representasi sendiri.
+*   **Risiko *Domain Shift*:** *Pre-trained model* berisiko mengalami pergeseran domain jika distribusi asli pelatihannya jauh meleset dari konteks prediksi akhir (misalnya *embedding* bahasa umum diterapkan pada dokumen legal). Kompresi internal terhindar dari risiko ini karena fondasinya dibangun langsung di atas distribusi target.
 
 
-## Apakah *Deep Learning* Menghapus Kebutuhan Rekayasa Fitur?
+## Apakah Deep Learning Menghapus Kebutuhan Rekayasa Fitur?
 
-Sebuah mitos yang sangat umum di kalangan praktisi pemula adalah bahwa *deep learning* telah sepenuhnya menggantikan peran rekayasa fitur. Karena jaringan saraf tiruan mampu mengekstraksi pola rumit secara otomatis langsung dari data mentah, banyak yang berasumsi campur tangan manusia tidak lagi diperlukan. Namun, ini adalah sebuah kesalahpahaman yang besar. Pada kenyataannya, *deep learning* tidak menghapus rekayasa fitur; ia sekadar menggeser fokus utama dari tahapan tersebut ke ranah yang berbeda.
+Banyak praktisi pemula berpandangan bahwa *deep learning* telah menggantikan peran rekayasa fitur secara keseluruhan. Jaringan saraf tiruan memang mampu mengekstraksi pola rumit secara otomatis dari data mentah. Kemampuan ini sering memunculkan asumsi bahwa campur tangan manusia tidak lagi dibutuhkan. Namun, *deep learning* tidak menghilangkan rekayasa fitur, melainkan sekadar menggeser ranah fokusnya.
 
-Model *deep learning* memang sangat unggul dalam membentuk representasi yang dipelajari mesin. Keunggulan ini sangat nyata ketika model memproses data tidak terstruktur seperti kumpulan teks, citra, atau gelombang audio. Meskipun mesin mampu mengekstrak pola padat tersebut dengan baik, sistem tidak bisa merumuskan masalah prediksinya sendiri. Keputusan mengenai unit observasi yang tepat, definisi variabel target, horizon waktu prediksi, serta bagaimana sampel data secara keseluruhan dikonstruksi tetap menjadi wilayah tanggung jawab manusia. Praktik rekayasa fitur telah berevolusi dari sekadar menghitung transformasi matematis secara eksplisit untuk setiap variabel tunggal. Kini, fokus para perancang bergeser pada arsitektur masukan data, yaitu merancang bagaimana aliran informasi diformulasikan agar jaringan saraf dapat mencernanya secara efisien.
+Model *deep learning* sangat unggul dalam membentuk representasi yang dipelajari mesin. Keunggulan ini terlihat paling jelas ketika algoritma memproses data tidak terstruktur seperti kumpulan teks, citra, atau gelombang audio. Meskipun algoritma mampu mengekstrak pola padat dari data mentah, sistem komputasi tidak dapat merumuskan masalah prediksinya sendiri. Keputusan fundamental terkait penyusunan data tetap berada di tangan perancang manusia. Beberapa keputusan utama meliputi:
 
-Lebih jauh lagi, representasi yang dirancang manusia tetap menyimpan nilai yang tidak bisa digantikan oleh kemampuan jaringan murni. Fitur-fitur yang dirancang secara spesifik oleh pakar domain berfungsi untuk menyuntikkan bias induktif yang sangat kuat ke dalam model. Pengetahuan khusus tentang aturan logika bisnis, batasan fisika yang mengikat lingkungan nyata, atau standar formula rasio keuangan sangat sulit dipelajari oleh *deep learning* semata-mata dari data acak. Model sering kali gagal menemukan aturan logis tersebut murni dari probabilitas, terutama jika kumpulan data latih terbatas atau diwarnai oleh *noise* tingkat tinggi. Fitur buatan manusia memberikan panduan mutlak agar algoritma tidak membuang kapasitas pembelajarannya mencari pola pada aturan yang sebenarnya sudah diketahui pasti kebenarannya.
+*   **Penentuan unit observasi:** Mendefinisikan secara pasti batas satu sampel data observasi tunggal.
+*   **Definisi variabel target:** Menetapkan label yang harus diprediksi beserta horizon waktu yang relevan.
+*   **Konstruksi arsitektur masukan:** Menyusun aliran informasi agar jaringan saraf dapat mencernanya secara maksimal.
 
-Sebagai kesimpulan, representasi yang dirancang manusia dan representasi yang dipelajari mesin harus dipandang sebagai dua elemen yang secara fundamental saling melengkapi. Manusia memiliki peran esensial untuk membingkai masalah prediksi, menetapkan batasan logika domain, dan menstrukturkan lingkungan pembelajaran. Mesin kemudian mengambil ruang tersebut untuk menggali pola rumit yang bersembunyi di balik dimensi data skala besar. Kemitraan yang seimbang inilah yang pada akhirnya menghasilkan sebuah *pipeline* pemodelan yang jauh lebih efisien, cerdas secara kontekstual, dan tangguh diimplementasikan dalam berbagai masalah dunia nyata.
+Praktik rekayasa fitur telah beralih dari kalkulasi transformasi matematis eksplisit untuk setiap variabel tunggal menuju injeksi bias induktif. Representasi yang dirancang manusia berguna untuk memasukkan pengetahuan pakar ke dalam model. Aturan logika bisnis spesifik, batasan fisika lingkungan nyata, maupun formula baku rasio keuangan merupakan contoh pola yang sulit dipelajari murni dari probabilitas data. 
+
+[GAMBAR 15.4: Skema - Perbandingan arsitektur fine-tuning penuh dengan feature extraction beku]
+
+Dalam proses pelatihannya, jaringan saraf berfokus menyesuaikan parameter untuk meminimalkan penyimpangan prediksi. Sebagai contoh, pembaruan *pre-trained weights* dalam tugas klasifikasi multikelas umumnya menggunakan fungsi kerugian *cross-entropy*:
+
+$$ \mathcal{L} = -\frac{1}{N} \sum_{i=1}^{N} \sum_{c=1}^{C} y_{i,c} \log(\hat{y}_{i,c}) $$
+
+Di mana $\mathcal{L}$ melambangkan nilai total fungsi kerugian, $N$ adalah jumlah sampel latih, $C$ merepresentasikan jumlah kelas target, $y_{i,c}$ menyatakan probabilitas aktual kelas (*ground truth*), dan $\hat{y}_{i,c}$ adalah probabilitas prediksi keluaran model. 
+
+Representasi yang dirancang manusia menuntun algoritma agar proses penurunan nilai $\mathcal{L}$ tidak membuang kapasitas model untuk mencari pola yang sebenarnya sudah diketahui kebenarannya. Tanpa panduan tersebut, model rentan menghafal gangguan acak (*noise*), terlebih ketika pasokan data latih sangat terbatas.
+
+Pergeseran peran rekayasa fitur semakin meluas seiring penggunaan model bahasa besar (LLM). Dua praktik terbaru membuktikan bahwa rekayasa fitur berubah bentuk:
+
+*   **Ekstraksi fitur berbasis *prompting*:** Memanfaatkan LLM untuk menarik struktur dari teks tidak terstruktur, seperti klasifikasi sentimen atau daftar entitas. Hasil ekstraksi ini kemudian dipasok sebagai fitur untuk model prediksi lain.
+*   ***Retrieval-Augmented Generation* (RAG):** Mengambil dokumen eksternal untuk melengkapi ruang konteks suatu *prompt*. Praktik ini setara dengan metode rekayasa fitur dinamis, karena dokumen hasil penelusuran beroperasi sebagai representasi berdimensi tinggi yang memperbaiki pemahaman konteks model.
+
+Pendekatan menggunakan representasi yang dirancang manusia maupun representasi yang dipelajari mesin harus dipandang sebagai dua entitas yang saling melengkapi. Manusia bertugas membingkai batasan dan logika domain, sementara mesin mengeksplorasi pola tersembunyi pada dimensi tinggi. Kemitraan ini menghasilkan *pipeline* pembelajaran yang tangguh dan dapat diandalkan pada berbagai skenario nyata.
 
 
 ## Representasi Input: Tokenisasi dan Augmentasi Data
 
-Pernyataan bahwa rekayasa fitur tidak mati di era *deep learning* paling jelas terlihat pada cara kita menyiapkan data *input*. Jaringan saraf tiruan adalah mesin matematika yang tidak dapat memproses teks tertulis, gelombang suara, atau cahaya secara langsung. Mereka hanya menerima matriks angka yang terstruktur rapi. Proses menerjemahkan realitas mentah menjadi format numerik ini adalah wujud nyata dari rekayasa fitur. Kini, langkah perancangan tersebut menempati garda terdepan dari setiap *pipeline* model modern sebagai prasyarat mutlak sebelum mesin memulai proses pembelajaran.
+Rekayasa fitur tidak hilang di era *deep learning*. Jaringan saraf tidak memproses teks, gelombang suara, atau cahaya secara langsung; model hanya menerima matriks angka. Proses menerjemahkan data mentah menjadi format numerik ini tetap dirancang oleh manusia dan menjadi prasyarat sebelum model mulai belajar.
 
-Pada pemrosesan teks, contoh nyata rekayasa fitur yang bertahan adalah tokenisasi. Keputusan mengenai cara memecah rentetan karakter menjadi unit diskret memengaruhi langsung kemampuan model. Tokenisasi berbasis *subword*, seperti *Byte-Pair Encoding* atau BPE, merupakan keputusan desain struktural yang krusial. Saat menghadapi kata kompleks yang asing, metode ini memungkinkannya dipecah menjadi fragmen subkata yang sudah dikenal oleh model. Keputusan ini memampukan mesin untuk mengenali makna dari bagian-bagian kecil tanpa harus menambah ukuran kosakata hingga tak terhingga.
+Beberapa praktik rekayasa fitur konvensional yang tetap bertahan dalam *pipeline* model modern meliputi:
 
-Bentuk rekayasa lain yang esensial di ekosistem *deep learning* adalah augmentasi data. Secara konseptual, augmentasi data adalah praktik menyuntikkan variasi buatan yang disengaja ke dalam data latih. Pada pengolahan citra, kita rutin membalik gambar secara acak atau sedikit mengubah tingkat kecerahan warnanya. Tujuannya adalah menanamkan pengetahuan domain ke data, memberi petunjuk bahwa objek tetap sama identitasnya walau posisinya bergeser. Melalui modifikasi proaktif ini, kita mencegah model menghafal orientasi spesifik dan memaksanya mengenali pola yang lebih tangguh.
+*   **Tokenisasi teks:** Kita perlu memecah rentetan karakter menjadi unit diskret. Pendekatan berbasis *subword* seperti *Byte-Pair Encoding* (BPE) memecah kata kompleks menjadi fragmen yang lebih kecil. Metode ini membatasi ukuran kosakata model sekaligus membantu mesin mengenali makna dari potongan kata. Pada tahap ini, token khusus sering ditambahkan untuk merangkum konteks kalimat.
 
-Selain transformasi pada teks dan citra, pra-pemrosesan numerik klasik seperti normalisasi fitur tetap mutlak diperlukan. Jaringan saraf sangat sensitif terhadap perbedaan skala pada *input*. Jika satu fitur bernilai ribuan sementara fitur lainnya hanya berupa desimal kecil, perhitungan *gradient* selama pelatihan akan menjadi sangat tidak stabil. Skala ekstrem yang dibiarkan ini akan mengacaukan pembaruan bobot dan menghalangi jaringan saraf untuk mencapai titik konvergen yang efisien.
+[GAMBAR 15.3: Skema - Ekstraksi CLS token dari Transformer]
 
-Langkah-langkah tersebut membuktikan bahwa transformasi konvensional belum usang. Praktik ini menegaskan bahwa representasi yang dirancang manusia belum hilang, melainkan hanya bergeser tempat. Manusia tetap bertugas merancang batasan awal *input*, yang kemudian berfungsi sebagai fondasi agar representasi yang dipelajari mesin dapat terbentuk secara optimal.
+*   **Augmentasi data:** Praktik ini menambahkan variasi buatan ke dalam data latih. Pada pengolahan citra, kita sering membalik gambar, menggeser piksel, atau mengubah kecerahan warnanya. Modifikasi ini menanamkan pengetahuan domain dan mencegah model hanya menghafal posisi objek.
+*   **Normalisasi fitur numerik:** Jaringan saraf sensitif terhadap perbedaan skala *input*. Jika satu fitur berada di rentang ribuan sementara fitur lain berupa pecahan desimal, turunan (*gradient*) dari fungsi kerugian menjadi tidak proporsional. Dalam tugas klasifikasi, pembaruan bobot model dievaluasi menggunakan fungsi *Cross-Entropy*:
+
+$$ L = - \sum_{c=1}^{C} y_c \log(\hat{y}_c) $$
+
+Di mana $L$ adalah nilai kerugian, $C$ adalah jumlah kelas target, $y_c$ adalah label sebenarnya, dan $\hat{y}_c$ adalah probabilitas prediksi dari model. Skala *input* mentah yang ekstrem akan mengacaukan perhitungan turunan dari persamaan ini dan menghambat konvergensi jaringan.
+
+Langkah-langkah tersebut memperlihatkan bagaimana rekayasa konvensional hanya bergeser posisi. Transformasi awal ini adalah bentuk representasi yang dirancang manusia. Manusia menyiapkan batasan dan struktur *input* yang terukur, yang selanjutnya berfungsi sebagai fondasi bagi model untuk mengekstraksi representasi yang dipelajari mesin pada lapisan-lapisan berikutnya.
 
 
-## *Deep learning* pada Data Tabular: Mempelajari Embedding Terstruktur
+## *Deep Learning* pada Data Tabular: Mempelajari Embedding Terstruktur
 
-Selama bertahun-tahun, algoritma berbasis pohon seperti *gradient boosting* mendominasi pemodelan untuk data *tabular*. Namun, *deep learning* kini berkembang menjadi alternatif dengan kemampuannya mempelajari representasi vektor secara langsung dari data terstruktur. Pada Bab 4, kita telah membahas penggunaan *entity embedding* untuk memetakan variabel kategorikal berdimensi tinggi menjadi vektor numerik. *Deep learning tabular* memperluas konsep tersebut. Pendekatan ini memetakan seluruh fitur kategorikal dan numerik ke dalam ruang vektor yang sama untuk menghasilkan representasi baris data yang utuh.
+Algoritma berbasis pohon seperti *gradient boosting* telah lama menjadi pilihan utama untuk data *tabular*. Kini, *deep learning* menawarkan pendekatan yang berbeda: mempelajari representasi vektor secara langsung dari tabel. Jika Bab 4 menggunakan *entity embedding* khusus untuk variabel kategorikal, *deep tabular learning* memperluas perlakuan ini ke seluruh baris. Tujuannya adalah memetakan fitur kategorikal dan numerik ke dalam ruang vektor yang seragam, sehingga model dapat menyatukannya menjadi satu representasi utuh.
 
-Arsitektur modern seperti TabNet dan FT-Transformer mempelopori cara pandang baru terhadap baris data. FT-Transformer merupakan contoh dari *tabular transformer*, yaitu arsitektur jaringan saraf yang mengadaptasi mekanisme *attention* dari model *transformer* teks untuk memproses kolom-kolom dalam dataset *tabular*. Alih-alih melihat satu baris data sebagai deretan angka sederhana, model ini memperlakukan setiap fitur tunggal sebagai sebuah token. Proses ini menyerupai cara model bahasa memproses kata-kata di dalam kalimat. Jaringan saraf kemudian mempelajari interaksi kompleks antar-token fitur tersebut seiring berjalannya iterasi pelatihan.
+**Arsitektur dan Tokenisasi Fitur**
 
-Dengan cara kerja ini, model *deep tabular* berfungsi sangat baik sebagai *feature extractor*. Model mengubah baris data mentah menjadi representasi vektor padat yang kaya informasi. Sebagai contoh, bayangkan satu baris data metrik kesehatan pasien yang memuat tekanan darah, usia, dan kode diagnosis. Kita dapat memasukkan baris data mentah ini ke dalam model FT-Transformer, lalu mengekstrak satu *embedding* pasien berwujud vektor padat dari lapisan sebelum akhir. *Embedding* tunggal ini merangkum seluruh metrik kesehatan pasien beserta interaksi antar-fiturnya. Vektor padat tersebut kemudian siap diteruskan ke model prediksi hilir yang lebih sederhana. Ekstraksi ini akan menjadi dasar saat kita menggabungkan representasi yang dipelajari mesin dengan representasi yang dirancang manusia di sub-bab berikutnya.
+Arsitektur modern seperti FT-Transformer dan TabNet mengadaptasi mekanisme *attention* dari pemrosesan bahasa alami untuk membaca baris data. Alih-alih melihat baris sebagai rentetan skalar statis, model memperlakukan setiap nilai fitur sebagai sebuah token independen.
 
-Meskipun *deep learning* mampu mengekstraksi representasi secara otomatis, *gradient boosting* umumnya masih lebih tangguh untuk dataset *tabular* berukuran kecil hingga menengah. Algoritma pohon membelah ruang data secara independen. Pendekatan ini membuat model mampu menangani fitur yang belum diskalakan, batasan non-linear yang tajam, serta keberadaan nilai *outlier* secara alami tanpa memerlukan tahap normalisasi berlebih.
+Agar dapat diproses bersama, setiap nilai numerik dan kategorikal harus diubah menjadi *embedding* dengan dimensi yang sama. Untuk fitur kategorikal, model menggunakan *lookup table* standar. Untuk fitur numerik $j$ dengan nilai skalar $x_j$, transformasi linear (tokenisasi numerik) dilakukan melalui persamaan:
 
-Model *deep tabular* baru menunjukkan nilai tambahnya pada skenario spesifik dengan skala yang jauh lebih besar. Pertama, ketika dataset berukuran masif dan sistem menuntut pembelajaran representasi yang terus berkelanjutan. Kedua, arsitektur ini sangat krusial ketika *pipeline* kita perlu menggabungkan data *tabular* dengan data tidak terstruktur, seperti ulasan pelanggan berbentuk teks atau citra foto produk. Karena teks, citra, dan baris *tabular* secara alami diolah menjadi ruang *embedding* yang sama, proses fusi multimodal tersebut ke dalam satu sistem jaringan saraf tunggal dapat berjalan secara utuh.
+$$ T_{num}^{(j)} = \mathbf{w}_j x_j + \mathbf{b}_j $$
+
+Keterangan:
+*   $T_{num}^{(j)}$ adalah *embedding* berwujud vektor padat untuk fitur numerik tersebut.
+*   $\mathbf{w}_j$ adalah vektor bobot yang dipelajari mesin.
+*   $\mathbf{b}_j$ adalah vektor bias.
+*   $x_j$ adalah nilai skalar numerik asli.
+
+Setelah tokenisasi, arsitektur *transformer* menyisipkan token khusus (biasa disebut token `[CLS]`) di awal barisan fitur. Lapisan *attention* kemudian mempelajari interaksi antar-fitur. Token `[CLS]` ini bertugas menghimpun informasi dari seluruh fitur lain untuk menjadi *embedding* final dari baris data tersebut.
+
+[GAMBAR 15.3: Diagram Konseptual - Ekstraksi CLS token dari Transformer untuk menghasilkan embedding tunggal dari sebuah baris data tabular]
+
+**Ekstraksi Fitur dan *Foundation Models***
+
+Berkat representasi seragam ini, model *deep tabular* berfungsi sangat baik sebagai ekstraktor fitur. Vektor padat yang ditarik dari token `[CLS]` merangkum seluruh variabel beserta relasinya. Vektor ini kemudian dapat diteruskan ke model prediksi hilir yang lebih ringan.
+
+Riset terbaru pada rentang 2024–2025 bahkan mendorong pendekatan ini lebih jauh melalui *tabular foundation models* seperti TabPFN. Arsitektur ini memanfaatkan *in-context learning*, di mana model membaca kumpulan contoh data latih langsung di dalam *prompt* memori tanpa memerlukan pembaruan bobot sama sekali. Terobosan ini menandai titik di mana data tabular mulai mendapatkan model prapelatih (*pretrained*) yang mampu menggeneralisasi lintas dataset, sama seperti yang terjadi pada teks dan citra.
+
+**Memilih Antara *Deep Learning* dan *Gradient Boosting***
+
+Meskipun sangat menjanjikan, *deep learning* tabular tidak otomatis menggantikan algoritma pohon. Pemilihan metode sangat bergantung pada ukuran dan sifat data:
+
+*   **Pilih *Gradient Boosting* (XGBoost, LightGBM, CatBoost) ketika:**
+    *   Volume data berada pada skala kecil hingga menengah (umumnya di bawah 50.000 baris).
+    *   Data memiliki variasi rentang nilai skalar yang ekstrem atau *outlier* tebal (pemisahan pada algoritma pohon tidak sensitif terhadap skala fitur).
+    *   Tugas prediksi menuntut pembentukan batasan keputusan tak-linear tanpa penalaan parameter jaringan saraf yang rumit.
+
+*   **Pilih *Deep Tabular Learning* ketika:**
+    *   Dataset berukuran masif dan sistem produksi memerlukan pembaruan representasi secara berkelanjutan (*incremental learning*).
+    *   Sistem menuntut ekstraksi representasi per baris (berupa *embedding* padat) untuk digunakan ulang pada modul hilir.
+    *   Terdapat kebutuhan fusi multimodal. Representasi *tabular* berbasis vektor dapat langsung digabungkan dengan representasi teks atau citra di dalam satu ruang arsitektur jaringan yang terintegrasi.
 
 
 ## Model Hybrid: Menggabungkan Fitur Rekayasa dan Embedding
 
-Dalam sistem prediksi skala produksi, perdebatan untuk memilih antara rekayasa fitur tradisional atau representasi *deep learning* menjadi tidak relevan. *Pipeline* produksi yang tangguh menolak kompromi tersebut dan mengadopsi arsitektur model *hybrid*, yakni sistem prediktif yang dirancang untuk menerima fitur *tabular* buatan dan *embedding* padat secara bersamaan. Pendekatan ini secara eksplisit mengawinkan representasi yang dirancang manusia dengan representasi yang dipelajari mesin ke dalam satu alur pemrosesan terpadu.
+Sistem *machine learning* tingkat produksi jarang menggunakan rekayasa fitur tabular atau representasi *deep learning* secara eksklusif. Arsitektur *hybrid* mengintegrasikan representasi yang dirancang manusia dengan representasi yang dipelajari mesin untuk mengoptimalkan sistem prediktif. Pendekatan ini menggabungkan keunggulan dari kedua jenis fitur:
 
-Kekuatan model *hybrid* berasal dari sifat saling melengkapi antara kedua jenis representasi tersebut. *Embedding* yang dipelajari mesin sangat unggul dalam menangkap nuansa semantik rumit dari data tidak terstruktur seperti teks tulisan, urutan kejadian, atau piksel citra. Namun, model *deep learning* murni sering kali kesulitan menginternalisasi aturan bisnis absolut atau konteks historis yang spesifik. Di sinilah representasi yang dirancang manusia mengambil alih. Fitur rekayasa menyediakan batasan logika yang tegas, bias induktif yang kuat, serta konteks matematika konkret seperti rasio atau agregasi riwayat, yang memandu *embedding* agar tidak memprediksi terlalu jauh dari nalar domain.
+*   **Fitur rancangan manusia:** Menginjeksi batasan logika yang tegas, aturan bisnis absolut, dan ukuran matematika konkret (seperti agregasi waktu atau rasio finansial) yang sulit diinferensi secara mandiri oleh jaringan saraf.
+*   **Representasi *embedding*:** Mengekstraksi pola semantik dari data tidak terstruktur (citra, audio, atau teks panjang) yang mustahil dikodekan melalui aturan pemrograman manual.
 
-Pemodelan harga perumahan memberikan contoh kasus yang jelas. Sebuah model prediktif berbasis citra dapat mengukur nilai estetika rumah dari sekumpulan foto interior, mengenali pencahayaan alami, atau mengidentifikasi gaya arsitektur yang diminati pasar. Masalahnya, data visual tersebut tidak memuat informasi jarak geografis ke stasiun kereta terdekat atau rasio spesifik luas lahan terhadap luas bangunan riil. Di sisi sebaliknya, model regresi tradisional yang hanya beroperasi di atas data koordinat dan ukuran fisik akan mengabaikan nilai premium dari sentuhan arsitektur mewah. Model *hybrid* menutupi kelemahan parsial ini. Sistem memproses *embedding* citra secara paralel dengan fitur rancangan manusia seperti proporsi lahan dan metrik kedekatan fasilitas umum.
+[GAMBAR 15.6: Skema - Arsitektur model hybrid yang menggabungkan fitur rekayasa tabular dengan representasi vektor embedding dari model terlatih]
 
-Secara struktural, fusi ini terjadi pada tahap sebelum lapisan pengambilan keputusan. Konkatenasi vektor menjadi standar industri. Vektor fitur *tabular* yang sudah dinormalisasi disejajarkan langsung ke ujung vektor *embedding* dari model *pretrained* untuk membentuk satu set *input* yang memanjang. Keseluruhan representasi tergabung ini diteruskan bersama ke lapisan klasifikasi akhir di dalam jaringan saraf atau diumpankan ke dalam algoritma berbasis pohon.
+Secara struktural, penggabungan ini dilakukan melalui operasi konkatenasi vektor sebelum lapisan prediksi akhir. Vektor fitur tabular yang telah melewati tahap normalisasi dan pemrosesan awal disejajarkan dengan vektor *embedding* dari ekstraktor model *pretrained*.
 
-Pendekatan ini mendominasi aplikasi kompleks seperti deteksi penipuan perbankan dan sistem rekomendasi skala besar. Kombinasi kemampuan pengenalan pola semantik dengan kepatuhan terhadap logika domain memastikan model beroperasi secara reliabel di sistem nyata.
+Secara matematis, operasi fusi ini diformulasikan sebagai:
+
+$$ \mathbf{x}_{hybrid} = [\mathbf{x}_{engineered} \parallel \mathbf{e}_{learned}] $$
+
+Di mana:
+*   $\mathbf{x}_{hybrid}$ adalah vektor gabungan akhir yang diteruskan ke algoritma penyelesaian klasifikasi atau regresi.
+*   $\mathbf{x}_{engineered} \in \mathbb{R}^d$ adalah vektor fitur tabular rancangan manusia yang telah diskalakan.
+*   $\mathbf{e}_{learned} \in \mathbb{R}^k$ adalah representasi padat yang diekstraksi dari model *pretrained* (misalnya dari representasi *bottleneck* pada ResNet atau ekstrasi token CLS pada arsitektur Transformer).
+*   $\parallel$ melambangkan operasi konkatenasi vektor.
+
+Kasus pemodelan harga perumahan menggambarkan interaksi ini secara konkret. Model *hybrid* memproses data melalui dua jalur paralel:
+1.  **Jalur tidak terstruktur:** Model visi komputasi memproses fitur gambar untuk menghasilkan vektor *embedding* dari sekumpulan foto interior rumah. Vektor ini mendeteksi variabel abstrak seperti estetika, pencahayaan alami, dan gaya arsitektur.
+2.  **Jalur tabular:** Sistem merekayasa data numerik dan kategorikal, seperti vektor spasial (jarak ke fasilitas transportasi), proporsi dimensi bangunan, dan usia properti.
+
+Bila beroperasi secara terpisah, *embedding* visual tidak memiliki referensi tentang ukuran geografis maupun rasio spasial, sedangkan model regresi tabular mengabaikan diferensiasi estetika visual. Penggabungan vektor $\mathbf{x}_{hybrid}$ menutupi kedua titik buta tersebut. Keseluruhan representasi gabungan ini kemudian diteruskan sebagai *input* tambahan ke jaringan *multilayer perceptron* (MLP) penutup atau digunakan dalam algoritma *gradient boosting*, sehingga prediksi akhir model tetap terjangkar secara logis pada aturan metrik spesifik *domain*.
 
 
-## Studi Kasus: Pretrained Extractor dan Model Hybrid
+## Studi Kasus: *Pretrained Extractor* dan Model *Hybrid*
 
-Studi kasus prediksi pengembalian barang (*product returns*) di platform *e-commerce* mengilustrasikan cara menyatukan seluruh konsep representasi ini dalam sebuah *pipeline* prediksi yang utuh. Tugas ini mengharuskan sistem untuk memproses dua jenis masukan yang sangat berbeda secara bersamaan: deskripsi tekstual ulasan pelanggan dan riwayat transaksi terstruktur milik pelanggan tersebut. Karakteristik data ganda ini mengharuskan kita merancang sebuah *pipeline* *hybrid* yang memadukan keunggulan jaringan saraf tiruan dengan kekuatan rekayasa fitur tradisional.
+Studi kasus prediksi pengembalian barang (*product returns*) pada platform niaga digital sangat relevan untuk mengilustrasikan cara menyatukan seluruh konsep representasi ini ke dalam satu *pipeline* prediktif yang solid. Sistem dituntut memproses dua sumber modalitas secara serentak: ulasan teks dari pelanggan dan riwayat transaksi tabular dari pelanggan yang bersangkutan. Karakteristik ganda ini dipecahkan melalui arsitektur *hybrid* yang menyinergikan ekstraksi *deep learning* modern dengan ketajaman fitur rekayasa klasik.
 
-Langkah pertama dalam menyusun arsitektur ini adalah menangani teks ulasan. Pada jalur ini, representasi yang dipelajari mesin menjadi tumpuan utama. Teks mentah diteruskan ke dalam model bahasa besar yang sudah menjalani prapelatihan (*pretrained*), seperti BERT. Model ini difungsikan murni sebagai *frozen extractor*. Bobot jaringannya tidak diperbarui selama proses ekstraksi; model sekadar menerima teks lalu menghasilkan keluaran berupa vektor *embedding* padat, misalnya berdimensi 768. Vektor ini memadatkan arti kata, konteks kalimat, serta sentimen emosional dari ulasan pelanggan ke dalam format yang siap diproses secara matematis.
+Konstruksi arsitektur ini membelah aliran pemrosesan matriks ke dalam dua jalur paralel:
+*   **Jalur Ekstraksi Teks (Representasi yang Dipelajari Mesin):** Teks ulasan pelanggan diumpankan ke dalam model bahasa *pretrained* (seperti BERT) yang dikonfigurasi secara ketat sebagai *frozen extractor*. Bobot jaringan dikunci untuk memastikan stabilitas; model semata-mata mengonversi makna semantik ke dalam *embedding* padat berdimensi tinggi (misalnya vektor berukuran 768).
+*   **Jalur Transformasi Tabular (Representasi yang Dirancang Manusia):** Atribut numerik dan kategorikal diproses menggunakan rekayasa pengetahuan domain. Praktisi merancang indikator spesifik seperti kalkulasi rasio historis retur, persentase deviasi harga produk terhadap rata-rata kategori, serta interval hari pengiriman. Pasca-imputasi dan standardisasi skala, jalur ini mendistilasi logika bisnis menjadi vektor berdimensi sangat sempit (misalnya 10 dimensi).
 
-Pada saat yang sama, jalur tabular beroperasi memproses basis data transaksi. Di sinilah representasi yang dirancang manusia menempati peran sentral. Analis menggunakan pengetahuan domain untuk menyusun serangkaian fitur eksplisit yang menetapkan batasan logis bagi pengklasifikasi. Sistem menghitung rasio historis pengembalian barang pelanggan terkait, selisih harga produk pesanan dengan rata-rata kategorinya, hingga interval waktu pengiriman. Fitur-fitur ini kemudian melewati komponen imputasi serta penskalaan nilai, yang pada akhirnya memproduksi sebuah vektor numerik ringkas berdimensi 10.
+Kedua arus fitur ini berujung pada tahap penggabungan matriks (*concatenation*). Di dalam ekosistem pengembangan *machine learning*, fusi ini diorkestrasi secara elegan menggunakan kelas fungsional `FeatureUnion` dari pustaka *Scikit-Learn*. Metode ini menumpuk vektor *embedding* teks dan fitur rekayasa tabular menjadi satu kesatuan vektor gabungan berdimensi 778 untuk setiap baris observasi.
 
-[GAMBAR 15.2]
-Judul: Arsitektur *pipeline* hybrid: penyatuan embedding teks dengan fitur tabular rekayasa
-Tipe: skema
-Tampilkan: Skema menunjukkan teks mentah diproses oleh frozen BERT extractor menjadi vektor. Di jalur bawah, data tabular mentah diproses oleh *pipeline* rekayasa/skala menjadi vektor. Kedua vektor digabungkan (concatenate) lalu dimasukkan ke dalam classifier.
-Sumber data: -
+[GAMBAR 15.5: Diagram - Arsitektur integrasi pipeline hibrida menggabungkan ekstraktor teks pretrained dengan transformasi fitur tabular]
 
-Titik pertemuan arsitektur ini terjadi pada tahap penggabungan (*concatenation*). Vektor *embedding* berdimensi 768 dan vektor rekayasa berdimensi 10 direkatkan menjadi satu representasi gabungan berdimensi 778 untuk setiap sampel pengamatan. Sesuai praktik *pipeline* yang benar, perhitungan agregasi tabular maupun ekstraksi vektor wajib dijalankan secara ketat setelah data dibagi ke dalam himpunan latih dan himpunan uji. Menghitung rata-rata harga kategori atau membiarkan informasi teks set pengujian terakses sebelum pemisahan data akan memicu *data leakage*, sehingga model tampak sangat kuat saat dievaluasi tetapi gagal memberikan prediksi riil yang berguna.
+Matriks raksasa hasil perpaduan tersebut kemudian diserahkan kepada algoritma pengklasifikasi akhir seperti *XGBoost*. Validitas arsitektur ini sangat bergantung pada kepatuhan terhadap aturan pencegahan kebocoran data (*data leakage*): seluruh operasi kalkulasi rata-rata tabular dan pemetaan vektorisasi teks harus murni dipelajari pasca-partisi data (*data split*). 
 
-```python
-[KODE: contoh penyatuan pipeline sklearn FeatureUnion yang menggabungkan ekstraktor teks pretrained dengan transformer numerik; sumber: notebook bab]
-```
-
-Vektor berdimensi 778 ini diumpankan ke sebuah pengklasifikasi akhir, seperti XGBoost. Arsitektur ini membuktikan bahwa keluaran dari lapisan *deep learning* dapat berpadu mulus sebagai masukan bagi *machine learning* klasik. Model *hybrid* semacam ini umumnya mencatat performa lebih baik dibandingkan pendekatan yang hanya memakai satu jenis representasi. Pendekatan ini menyandingkan kemampuan model mencerna nuansa abstrak bahasa dengan nilai ukur transaksi historis yang pasti. Notebook bab ini mengeksekusi perbandingan *hybrid* tersebut untuk membuktikan keunggulannya. Pada contoh ini, konstruksi fitur tabular masih dipandu logika manusia, sebuah proses yang berpeluang besar untuk diotomatisasi pada bab selanjutnya.
+Model *hybrid* secara konsisten mengalahkan pendekatan yang memaksakan seluruh data masuk secara buta ke dalam kerangka *deep learning*. Pendekatan ini berhasil mengawinkan intuisi mesin dalam mencerna abstraksi linguistik tak terstruktur dengan perhitungan logika numerik transparan yang dirancang khusus oleh pakar industri. Rekayasa parameter tabular di sini masih dipandu oleh perhitungan manual, sebuah rintangan efisiensi iterasi yang akan dipecahkan lewat mekanisme eksplorasi fitur secara otomatis pada pembahasan bab berikutnya.

@@ -1,112 +1,236 @@
 # Pipeline, Validasi, dan Data Leakage
 
-## Fit dan Transform: *Pipeline* sebagai Kontrak Pelatihan dan Inferensi
+## Fit dan Transform: Pipeline sebagai Kontrak Pelatihan dan Inferensi
 
-Dalam *machine learning*, terdapat aturan baku yang pantang dilanggar: transformasi data menuntut konsistensi absolut antara tahap pelatihan dan tahap inferensi. Model mengharapkan bahwa fitur dari data masa depan akan diubah menggunakan aturan dan metrik skala yang persis sama dengan data pelatihannya. Konsistensi ini adalah inti dari *praktik pipeline yang benar*.
+Transformasi data dalam *machine learning* menuntut konsistensi absolut antara tahap pelatihan dan tahap inferensi. Model mengharapkan fitur dari data masa depan diubah menggunakan aturan dan metrik yang sama persis dengan data pelatihannya. Konsistensi ini adalah inti dari praktik *pipeline* yang benar.
 
-Kunci utama untuk menjaga konsistensi ini terletak pada mekanisme *fit* dan *transform*. Tahap *fit* adalah proses pengamatan dan perhitungan parameter dari sebuah *dataset* pelatihan. Pada tahap ini, sistem melihat data latih untuk menghitung rata-rata, standar deviasi, atau memetakan rentang kategori. Selanjutnya, fungsi *transform* beroperasi sebagai tahap pengaplikasian parameter *fit* pada data observasi untuk menghasilkan representasi akhir.
+Kunci untuk menjaga konsistensi ini terletak pada dua mekanisme utama:
+*   **Tahap *fit*:** Proses pengamatan dan perhitungan parameter dari *dataset* pelatihan. Sistem membaca data latih untuk menetapkan acuan, seperti menghitung nilai rata-rata, standar deviasi, atau batas rentang kategori.
+*   **Tahap *transform*:** Proses pengaplikasian parameter hasil *fit* pada data observasi untuk menghasilkan matriks fitur akhir.
 
-Aturan utamanya sangat ketat: perhitungan parameter pada tahap *fit* hanya boleh dilakukan menggunakan data pelatihan. Setelah parameter tersebut dikunci, operasi *transform* menggunakan acuan yang sama persis untuk mengubah data pelatihan, validasi, maupun kumpulan data inferensi kelak.
+Aturannya tegas. Perhitungan parameter pada tahap *fit* hanya boleh menyentuh data pelatihan. Setelah parameter dikunci, operasi *transform* menggunakan acuan tersebut untuk memodifikasi data pelatihan, data validasi, maupun kumpulan data inferensi kelak.
 
-Sebagai ilustrasi, misalkan kita melakukan standardisasi pada sekumpulan data pelatihan. Tahap *fit* menemukan bahwa fitur tersebut memiliki rata-rata 5,0 dengan standar deviasi 2,0. Beberapa bulan kemudian, sekumpulan data inferensi baru tiba. Bisa saja rata-rata aktual dari data baru tersebut adalah 7,0. Di sinilah letak ujiannya: kita wajib mengurangi setiap nilai pada data inferensi dengan 5,0 dan membaginya dengan 2,0. Acuan dari data pelatihan ini mutlak dipertahankan.
+[GAMBAR 2.1: Ilustrasi - Tabel ke Matriks Fitur pada proses fit dan transform dalam lingkungan pelatihan dan inferensi]
 
-Jika kita malah menghitung ulang rata-rata pada populasi data inferensi (misalnya akibat keliru memanggil metode `fit_transform` pada data baru tersebut), makna fitur akan bergeser dari standar aslinya. Model akan salah mengartikan besaran nilainya. Fenomena ini dikenal dengan istilah *training-serving skew*, yaitu sebuah kesalahan fatal yang membuat prediksi model menjadi tidak valid di lingkungan produksi meskipun metrik akurasi pelatihannya terlihat sangat tinggi.
+Secara konseptual, kontrak transformasi ini direpresentasikan dengan rumusan:
 
-Mengingat manipulasi transformasi manual rentan terhadap kelalaian, kita perlu mengamankan proses ini ke dalam sebuah *pipeline*. *Pipeline* adalah rangkaian operasi pemrosesan data dan algoritma yang disatukan menjadi satu objek.
+$$ X_{transform} = T(X_{raw}; \theta_{pelatihan}) $$
 
-Sebuah *pipeline* secara formal membungkus kontrak *fit* dan *transform* ini. Saat dilatih, *pipeline* memastikan pencarian parameter terisolasi murni pada himpunan data latih. Setelahnya, *pipeline* secara otomatis menyalurkan parameter bawaan tersebut ke tahap *transform* untuk menangani setiap data baru. Lewat mekanisme ini, integritas keseluruhan tahap rekayasa fitur akan senantiasa terjaga.
+Di mana $X_{raw}$ adalah data observasi mentah yang akan diubah, $T$ mewakili fungsi transformasi, dan $\theta_{pelatihan}$ melambangkan parameter yang diekstraksi secara eksklusif dari data pelatihan. Informasi dari data pengujian atau inferensi dilarang bocor ke dalam $\theta_{pelatihan}$.
+
+Misalkan kita menstandardisasi sebuah fitur. Tahap *fit* menemukan fitur tersebut memiliki rata-rata 5,0 dengan standar deviasi 2,0 pada populasi data pelatihan. Beberapa bulan kemudian, data inferensi baru masuk dengan rata-rata aktual populasi 7,0. Kita tetap wajib mengurangi setiap nilai pada data inferensi dengan 5,0 dan membaginya dengan 2,0. Acuan distribusi masa pelatihan mutlak dipertahankan.
+
+Jika kita memanggil fungsi *fit* ulang pada kelompok data inferensi, kita telah menghitung acuan yang baru. Makna fitur akan melenceng dari standar awalnya dan model akan salah menafsirkan nilai tersebut. Fenomena ini disebut *training-serving skew*, sebuah anomali yang membuat akurasi model menjadi berantakan di lingkungan produksi meskipun performa pelatihannya tinggi.
+
+Mengingat manipulasi transformasi secara manual rentan memicu kelalaian, kita mengikat proses ini ke dalam sebuah *pipeline*. Objek tunggal ini menyatukan operasi pemrosesan data dan algoritma untuk membungkus kontrak *fit* dan *transform* secara terpusat. Saat dilatih, *pipeline* membatasi pencarian parameter murni pada himpunan data latih. Objek ini kemudian menyalurkan parameter tersebut ke tahap *transform* untuk menangani data baru secara konsisten.
+
+Praktik rekayasa modern melengkapi abstraksi *pipeline* ini dengan berbagai utilitas. Ekosistem pustaka seperti scikit-learn menyediakan konfigurasi `set_output(transform='pandas')` agar setiap *transformer* mengembalikan *DataFrame* pandas, bukan *array* tanpa label. Fitur ini menjaga nama kolom tetap utuh sepanjang rantai transformasi untuk memudahkan pelacakan asal-usul fitur. Untuk eksekusi skala besar, pengembang juga dapat memanfaatkan mekanisme *caching* lewat parameter `memory` guna mencegah komputasi ulang *transformer* pada objek yang sama. Integrasi antara disiplin kontrak transformasi dan utilitas kode ini memastikan seluruh representasi data selaras dan stabil.
 
 
 ## Transformer yang Dapat Digunakan Ulang, Serialisasi, dan Random State
 
-Banyak praktisi pemula merangkai kode pembersihan data dan rekayasa fitur sebagai rentetan skrip sekali jalan (*ad-hoc*). Mereka menambal nilai bolong, menghapus baris, atau mengubah isi kolom satu per satu secara langsung pada tabel utama. Penulisan kode parsial seperti ini mungkin terasa cepat pada tahap eksplorasi awal, tetapi pendekatan ini rentan patah dan membuka celah kesalahan. Logika operasi *ad-hoc* sangat sulit diulang secara presisi ketika algoritma harus memproses titik data baru kelak. Hal ini memicu ketidaksesuaian fatal antara struktur data latih di atas kertas dan wujud data inferensi aktual di lingkungan nyata.
+Banyak praktisi merangkai pemrosesan data sebagai rentetan skrip *ad-hoc*. Mereka menambal nilai bolong, mengubah skala, atau mengevaluasi fitur secara langsung pada tabel utama. Sebagai contoh, saat mereka memutuskan untuk menyaring kolom berdasarkan kalkulasi rasio *missing values*:
 
-Untuk mengatasi jebakan tersebut serta memastikan kontrak *pipeline* senantiasa utuh, setiap metode transformasi wajib dikapsulkan menjadi sebuah *transformer*. *Transformer* adalah objek mandiri yang memiliki fungsi spesifik, seperti *fit* dan *transform*, untuk memanipulasi fitur. Pendekatan berbasis objek ini memastikan seluruh parameter yang dipelajari dari *dataset*, misalnya nilai rata-rata kolom untuk imputasi, tersimpan dengan rapi secara internal. Parameter penting ini lantas terisolasi secara aman dari risiko modifikasi manual yang tidak disengaja.
+$$ r_{missing} = \frac{N_{na}}{N_{total}} $$
 
-Keunggulan paling mendasar dari penggunaan objek *transformer* adalah kemampuannya untuk disimpan secara permanen dan dioperasikan ulang pada lingkungan produksi. Proses menyimpan wujud objek komputasi dari dalam memori menuju wujud berkas fisik disebut sebagai tindakan serialisasi. Melalui mekanisme serialisasi, kita bisa mengemas rangkaian operasi secara utuh. Sebagai contoh praktis, kita dapat menyatukan *transformer* pengisi data kosong dengan *transformer* skala standar menjadi satu berkas biner tunggal. Berkas biner inilah yang nantinya dikirimkan mendampingi model prediktif utama ke *server* produksi. Sistem di lingkungan produksi cukup memuat ulang berkas *transformer* tersebut, lalu secara otomatis dapat mengubah fitur data inferensi baru dengan takaran yang persis sama seperti tahap pelatihan.
+Di mana $r_{missing}$ adalah rasio kekosongan data pada suatu fitur, $N_{na}$ mewakili jumlah baris yang tidak memiliki nilai, dan $N_{total}$ adalah populasi observasi keseluruhan. Keputusan mengeksekusi modifikasi *ad-hoc* di luar kerangka komputasi utama cenderung rapuh dan membuka celah kesalahan. Hasilnya, muncul ketidaksesuaian struktural antara data latih dan wujud data inferensi aktual ketika model berjalan di lingkungan produksi.
 
-Selain menjaga ketat parameter transformasi, validitas rekayasa fitur juga sangat bergantung pada kendali kita atas elemen keacakan matematis. Saat memisahkan *dataset* atau menarik sampel, algoritma menjalankan generator nomor acak di balik layar. Jika pengundian ini dibiarkan bergulir bebas, bentuk distribusi fitur akan berubah drastis pada setiap eksekusi. Kita mengendalikan persoalan ini dengan selalu menyetel nilai *random state*. *Random state* memberikan nilai awal pada generator probabilitas agar algoritma menghasilkan urutan sampel acak yang identik setiap saat. Penguncian sumber keacakan ini memastikan seluruh alur pemrosesan dapat direplikasi secara presisi oleh pihak lain, sekaligus membangun fondasi kokoh untuk metode pengujian validasi silang pada tahap selanjutnya.
+Setiap operasi modifikasi fitur wajib dikapsulkan ke dalam sebuah *transformer*. Objek mandiri ini memisahkan secara tegas fase pembelajaran parameter internal (`fit`) dari fase modifikasi data itu sendiri (`transform`). Parameter yang dipelajari dari $N_{total}$ baris—seperti batas rentang normalisasi atau nilai imputasi—terkunci aman dari risiko intervensi manual yang tidak disengaja.
+
+[GAMBAR 2.2: Diagram Alur - Siklus eksplorasi-ekstraksi-seleksi yang dibungkus dalam objek transformer mandiri]
+
+#### Serialisasi dan Persistensi Model
+
+Objek *transformer* yang telah menampung parameter dapat disimpan secara permanen. Proses mentransfer wujud komputasi dari memori menuju berkas fisik ini dinamakan serialisasi. Praktik rekayasa fitur modern berpegang pada standar berikut:
+*   **Format Python Native:** Pustaka `joblib` atau `pickle` merupakan spesifikasi resmi untuk menyimpan objek dalam ekosistem scikit-learn.
+*   **Format Lintas Bahasa:** Spesifikasi ONNX (*Open Neural Network Exchange*) diprioritaskan saat algoritma akan beroperasi di luar kerangka Python, misalnya pada arsitektur mesin C++ atau Java.
+Berkas biner hasil serialisasi dikirimkan mendampingi model prediktif utama ke *server* produksi, demi menjamin data baru diproses dengan takaran yang mutlak sama dengan tahapan pelatihan.
+
+#### Pipeline Khusus untuk Resampling
+
+Data yang tidak seimbang (*imbalanced data*) memunculkan tantangan struktural terhadap kontrak desain *transformer*. Algoritma *resampling* seperti SMOTE secara aktif mengubah jumlah baris sampel pada titik eksekusinya.
+*   **Hindari Pipeline Standar:** Skema objek *pipeline* bawaan mengasumsikan konsistensi jumlah baris secara persis. Memaksakan penerapan algoritma *resampling* pada kerangka ini sering kali memicu perubahan matriks inferensi yang keliru.
+*   **Gunakan Pipeline Ekstensi:** Pustaka pelengkap seperti `imblearn.pipeline.Pipeline` memastikan penambahan sampel sintetis (`fit_resample`) hanya aktif selama berlangsungnya fase pelatihan. Tahapan tersebut secara otomatis diabaikan pada saat inferensi berjalan tunggal (`transform`).
+Tanpa penyekatan fungsional ini, sampel tiruan akan meluber ke dalam himpunan data pengujian murni, sehingga memproduksi estimasi performa akurasi yang tidak valid.
+
+#### Pengendalian Keacakan (Random State)
+
+Keterulangan rekayasa fitur bertumpu pada kontrol elemen keacakan matematis. Generator nomor acak mengoperasikan proses sentral seperti pemisahan *dataset* awal. Pengendalian *random state* menyusun fondasi keakuratan pengujian silang (*cross-validation*):
+*   **Objek Pemisah (Splitter):** Memberikan nilai bilangan bulat (integer) secara langsung merupakan langkah teraman. Penetapan ketat ini menggaransi struktur lipatan pengujian akan selalu identik ketika teknisi membandingkan kinerja dari beberapa model.
+*   **Estimator atau Transformer:** Menyerahkan instans objek `RandomState` memastikan tiap siklus lipatan data menerima urutan acak yang independen serta solid secara statistik.
+*   **Hindari Benih Global:** Menyetel angka acak (seed) secara global pada tingkat *runtime* pustaka numerik berisiko menimbulkan komplikasi algoritma sekunder yang sulit dilacak pada landasan kode berskala luas.
 
 
-## Taksonomi *data leakage*
+## Taksonomi *Data Leakage*
 
-Validasi model yang tampak meyakinkan di tahap awal sering kali hancur lebur akibat satu celah konseptual bernama *data leakage*. *Data leakage* adalah kondisi saat informasi dari himpunan pengujian atau variabel target tak sengaja masuk ke dalam proses pelatihan. Kebocoran ini sangat menipu karena memberikan model tingkat akurasi yang tinggi secara artifisial saat masa pelatihan. Seorang praktisi mungkin mengira telah menemukan solusi yang sempurna, tetapi model tersebut pasti gagal total saat digunakan untuk memprediksi kondisi nyata di lapangan produksi. Mesin sebenarnya tidak mempelajari pola, melainkan sekadar menyontek kunci jawaban yang bocor.
+Validasi model *machine learning* sering kali menghasilkan metrik performa tinggi di tahap awal, namun gagal saat diuji pada data riil. Penyebab utama kegagalan ini adalah *data leakage* (kebocoran data). Kondisi ini terjadi ketika informasi dari himpunan pengujian atau variabel target masuk ke dalam proses pelatihan. Mesin tidak lagi mempelajari pola generalisasi, melainkan menyontek jawaban dari fitur yang bocor.
 
-Kita perlu mengenali dan menghindari empat tipe utama kebocoran ini.
+[GAMBAR 2.4: Skema - Mekanisme data leakage yang menunjukkan masuknya informasi pengujian atau masa depan ke dalam fase pelatihan model]
 
-Pertama, kebocoran target (*target leakage*). Kondisi ini terjadi akibat penggunaan atribut fitur yang berfungsi sebagai proksi bagi target, atau nilai yang baru diketahui bersamaan atau setelah target itu sendiri terjadi. Fitur semacam ini mustahil ada pada momen prediksi riil berjalan. Contoh klasiknya adalah memprediksi apakah seorang pelanggan akan membatalkan langganan dengan memasukkan fitur "tanggal penutupan akun". Fitur ini secara fungsional dihasilkan setelah kejadian target. Alhasil, model hanya menyontek jawaban status akhir. Saat memprediksi pelanggan yang masih aktif, kolom tanggal tersebut pasti kosong, sehingga model menjadi tidak berdaya karena fitur andalannya tidak tersedia.
+Terdapat enam tipe utama kebocoran data yang merusak validitas model:
 
-Kedua, kontaminasi latih-uji (*train-test contamination*). Kebocoran ini lebih sulit dideteksi karena lazim bersumber dari agregasi data yang tampak tidak berbahaya. Kontaminasi terjadi saat fase pelatihan tanpa sadar ikut menyerap informasi pola agregat dari himpunan distribusi uji. Kesalahan umum pemula adalah menghitung nilai rata-rata dari seluruh data untuk mengisi nilai yang kosong, lalu barulah membelah data tersebut menjadi himpunan latih dan uji. Akibatnya, perhitungan statistik pada himpunan latih sudah tidak steril karena ikut dipengaruhi oleh himpunan uji. Untuk menghindari hal ini, kita harus menerapkan praktik *pipeline* yang benar. Himpunan uji wajib bertindak sebagai simulasi data masa depan yang sepenuhnya baru, sehingga proses kalkulasi parameter apapun harus dilakukan murni pada data latih saja.
+1.  **Kebocoran Target (*Target Leakage*)**
+    Kebocoran ini muncul saat atribut fitur bertindak sebagai proksi target, atau nilainya baru direkam setelah kejadian target berlangsung. Fitur tersebut secara logis tidak akan tersedia pada momen prediksi di lapangan.
+    *   **Kasus:** Memprediksi pembatalan layanan pelanggan menggunakan fitur "tanggal penutupan akun". Fitur ini hanya terisi setelah target mencapai status batal.
+    *   **Deteksi:** Kebocoran target menghasilkan fitur dengan metrik kepentingan anomali. Secara matematis, perhitungan dasar *permutation feature importance* mengukur penurunan performa saat satu fitur diacak. Formula konseptualnya adalah:
+    $$ I_j = \text{Error}(f(X_{\pi(j)}), Y) - \text{Error}(f(X), Y) $$
+    Di mana $I_j$ adalah tingkat kepentingan fitur ke-$j$, $\text{Error}$ adalah fungsi kerugian dari prediksi model $f$, $X$ adalah matriks fitur asli, $Y$ adalah target aktual, dan $X_{\pi(j)}$ adalah matriks fitur dengan nilai pada kolom ke-$j$ yang diacak. Jika fitur ke-$j$ memuat *target leakage*, pengacakan kolom tersebut akan menghancurkan bocoran proksi jawaban, sehingga nilai error melonjak drastis dan skor $I_j$ menjadi sangat dominan dibandingkan fitur lainnya.
 
-Ketiga, kebocoran temporal (*temporal leakage*). Saat berhadapan dengan nilai data historis atau deret waktu, kita dituntut untuk mempertahankan urutan kronologis yang ketat. Kebocoran temporal terjadi saat kita memanfaatkan observasi dari masa depan untuk menyusun prediksi kejadian di masa lalu. Kasus ini sering muncul secara tidak sengaja ketika kita melakukan pemisahan himpunan data secara acak murni, tanpa memperhatikan urutan waktu kejadian. Model yang menerima masukan data dari hari esok untuk menebak hari ini akan menghancurkan tatanan probabilitas sebab-akibat yang semestinya ia pelajari, sehingga peramalannya tidak valid.
+2.  **Kontaminasi Latih-Uji (*Train-Test Contamination*)**
+    Fase pelatihan menyerap informasi statistik dari himpunan data uji secara tidak sengaja. Kontaminasi ini bermula dari proses agregasi fitur yang mendahului tahap pemisahan data.
+    *   **Kasus:** Menghitung rata-rata seluruh populasi data untuk imputasi nilai kosong, kemudian membelah data menjadi himpunan latih dan uji. Parameter rata-rata pada himpunan latih sudah tidak steril karena nilainya ikut terbentuk oleh distribusi himpunan uji.
+    *   **Pencegahan:** Seluruh kalkulasi agregat atau perhitungan parameter transformasi wajib dilakukan eksklusif pada himpunan latih, lalu diaplikasikan searah ke himpunan uji.
 
-Keempat, kebocoran antar-kelompok (*between-group leakage*). Beberapa dataset memuat unit observasi yang berada dalam kelompok-kelompok yang saling berkorelasi erat. Sebagai contoh, sebuah rekam medis mungkin memiliki puluhan baris kunjungan untuk satu subjek pasien yang sama. Memecah baris-baris ini secara acak akan melempar sebagian kunjungan pasien tersebut ke himpunan latih dan sisanya menyeberang ke himpunan uji. Mesin akhirnya menyeleweng dengan menghafalkan ciri khas keidentikan subjek tersebut, bukan mempelajari corak indikator parameter prediksi tujuannya yang lebih luas. Model terekspos pada identitas kelompok dan akan kebingungan saat diuji pada pasien yang benar-benar baru.
+3.  **Kebocoran Temporal (*Temporal Leakage*)**
+    Deret waktu dan data historis memiliki ketergantungan kronologis yang ketat. Penggunaan observasi masa depan untuk menyusun prediksi kejadian masa lalu membalikkan urutan kausalitas.
+    *   **Kasus:** Memisahkan riwayat transaksi perbankan secara acak tanpa mempertahankan urutan waktu kejadian. Model mengeksploitasi pola transaksi hari Jumat untuk menebak probabilitas penipuan yang terjadi pada hari Selasa sebelumnya.
+
+4.  **Kebocoran Antar-Kelompok (*Between-Group Leakage*)**
+    Sebagian dataset memuat unit observasi berkelompok dengan korelasi kuat antarbarisnya. Memecah data secara acak murni akan mendistribusikan anggota dari satu entitas kelompok ke dalam himpunan latih dan himpunan uji secara bersamaan.
+    *   **Kasus:** Rekam medis menyimpan sepuluh baris riwayat kunjungan dari pasien yang sama. Jika riwayat kunjungan pasien tersebut disebar melintasi batas himpunan latih dan uji, model akan menghafalkan identitas unik sang pasien, alih-alih belajar mendiagnosis indikator gejala klinis umum.
+
+5.  **Kebocoran *Embedding* (*Embedding Leakage*)**
+    Praktik ekstraksi representasi modern sering memanfaatkan model praletih untuk mengubah data mentah menjadi vektor padat (*embedding*). Jika ekstraksi ini berbarengan dengan proses penyesuaian bobot (*fine-tuning*) pada keseluruhan dataset sebelum pemisahan data dilakukan, kebocoran representasi terjadi.
+    *   **Kasus:** Melakukan adaptasi lapisan model pada seluruh korpus teks proyek, kemudian menyimpan representasi akhirnya sebagai fitur numerik input klasifikasi. Vektor fitur latih sudah terpengaruh secara matematis oleh konteks semantik dokumen pengujian.
+
+6.  **Kebocoran Penyesuaian LLM (*LLM Fine-Tuning Leakage*)**
+    Pada komputasi teks skala masif, kebocoran target terwujud dalam bentuk kontaminasi memori korpus. Dokumen pengujian masuk ke dalam tumpukan data prapelatihan atau dataset instruksi (*instruction-tuning*).
+    *   **Kasus:** *Large Language Model* mencetak akurasi evaluasi nyaris sempurna pada dataset *benchmark* pemrograman (seperti HumanEval). Tingkat akurasi ini palsu karena baris kode evaluasi tersebut telah terekspos ke model selama masa pembelajarannya, mengubah pengujian generalisasi menjadi sekadar tes hafalan memori.
 
 
 ## Mengapa Leakage Bermula pada Tahap Rekayasa Fitur
 
-Akurasi model yang menipu secara fantastis hampir tidak pernah disebabkan oleh pemilihan algoritma yang salah atau proses *hyperparameter tuning* yang keliru. Algoritma *machine learning* pada dasarnya adalah mesin matematis yang terisolasi; mereka hanya mengoptimalkan pola dari data yang disajikan di hadapannya. Oleh karena itu, *data leakage* praktis tidak pernah terjadi di dalam algoritma itu sendiri. Sebaliknya, kebocoran ini hampir secara eksklusif menetas jauh sebelum model dilatih, yakni pada tahap persiapan data dan rekayasa fitur. Di tahap inilah struktur tabel diubah besar-besaran, membuka pintu masuk bagi informasi evaluasi untuk merembes ke ranah pelatihan.
+Kebocoran data (*data leakage*) hampir tidak pernah bersumber dari algoritma *machine learning*. Algoritma pada dasarnya hanyalah pengoptimal matematis yang menyesuaikan bobot berdasarkan pola pada set data yang diterimanya. Sebaliknya, kebocoran informasi justru terjadi jauh lebih awal, yakni pada tahap persiapan data dan rekayasa fitur. Saat kita mengubah tabel struktural mentah menjadi matriks representasi numerik, risiko masuknya informasi dari himpunan uji (*test set*) ke dalam parameter pelatihan (*training set*) menjadi sangat tinggi.
 
-Inti dari rekayasa fitur adalah menciptakan representasi baru agar pola lebih mudah dikenali oleh model. Sayangnya, tindakan mengkonstruksi representasi ini sering kali menuntut kita untuk melihat data secara agregat. Proses pembuatan fitur turunan seperti menghitung rata-rata, jumlah total, atau proporsi rasio kelompok adalah gerbang utama bagi kontaminasi. Ketika kita menghitung rata-rata pendapatan untuk suatu wilayah, perhitungan tersebut meleburkan informasi dari banyak baris sekaligus. Jika hitungan agregat itu tanpa sengaja menyedot angka dari baris observasi yang sejatinya dialokasikan untuk himpunan uji, maka nilai akhir fitur tersebut pada himpunan latih tidak lagi steril. Ia telah mengintip sebagian dari masa depan.
+Tujuan utama rekayasa fitur adalah mengekstraksi representasi data yang membuat pola target lebih mudah dikenali oleh model. Proses transformasi ini sering menuntut kalkulasi pada tingkat populasi. Kebocoran data umumnya berasal dari tiga praktik transformasi yang memecah batas isolasi partisi:
 
-Kesalahan struktural yang paling fatal adalah menerapkan transformasi fitur secara global ke seluruh *dataset* tabular sebelum melakukan pemisahan (*split*). Mari ambil contoh teknik *target encoding*. Teknik ini mengubah sebuah variabel kategorikal menjadi angka dengan cara membaca langsung rata-rata dari kolom target. Apabila komputasinya dieksekusi ke seluruh *dataset* utuh sebelum data dipotong menjadi partisi latih dan uji, maka setiap baris data kini menyimpan rangkuman dari seluruh populasi. Nilai fitur di dalam himpunan latih secara diam-diam membawa serpihan kunci jawaban dari himpunan uji. Pemotongan partisi yang dilakukan belakangan menjadi tidak ada gunanya, sebab kontaminasi sudah terlanjur menyatu pada tataran nilai matriks sejak awal.
+*   **Perhitungan Statistik Agregat:** Fitur turunan yang mengumpulkan informasi lintas observasi secara bersamaan, seperti menghitung rata-rata pengeluaran warga dalam satu kode pos atau persentase rasio keberhasilan masa lalu.
+*   **Transformasi Skala Menyeluruh:** Menerapkan fungsi normalisasi (seperti Standard Scaler) ke keseluruhan *dataset* tabular sebelum melakukan proses pemotongan data (*splitting*).
+*   **Imputasi dan Evaluasi Atribut:** Menghitung ukuran metrik kriteria seleksi atau statistik pengisian nilai kosong menggunakan seluruh observasi gabungan, alih-alih mengukurnya murni dari himpunan latih.
 
-Fakta bahwa kebocoran berakar kuat pada proses transformasi inilah yang menjadi alasan mengapa buku ini menjadikan isu *leakage* sebagai peringatan yang berulang. Setiap teknik rekayasa fitur baru membawa risiko spesifiknya sendiri terhadap isolasi data. Mengingat kerentanan ini melekat pada saat fitur diekstraksi, kita tidak bisa hanya mengandalkan kehati-hatian manual. Rentannya celah ini menuntut penegakan praktik *pipeline* yang benar. Praktik *pipeline* yang benar adalah disiplin merancang urutan transformasi di dalam struktur isolasi yang ketat agar tidak terjadi kebocoran informasi antar partisi pengujian. Disiplin perancangan inilah yang memastikan bahwa segala proses kalkulasi skala, rasio, hingga *encoding* sama sekali buta dari keberadaan data himpunan uji sejak baris pertama skrip dieksekusi.
+Sebagai contoh konkret, dalam menangani atribut tak lengkap, kita umumnya menghitung rasio *missing values* untuk memutuskan kelayakan suatu fitur:
+
+$$ r_{missing} = \frac{N_{missing}}{N_{total}} $$
+
+Di mana $r_{missing}$ adalah proporsi kekosongan data, $N_{missing}$ merupakan jumlah observasi yang tidak memiliki nilai untuk kolom tersebut, dan $N_{total}$ adalah total baris. Apabila penyebut $N_{total}$ mencakup jumlah observasi gabungan sebelum *dataset* dipisah, maka keputusan seleksi (misalnya mencabut fitur jika $r_{missing} > 0.4$) telah dipengaruhi oleh kondisi data pengujian. Ketika pemotongan baris baru dilakukan setelah transformasi ini, nilai atau struktur ruang fitur pada himpunan latih sudah secara permanen terjangkiti informasi dari masa depan.
+
+[GAMBAR 2.4: Skema - Mekanisme data leakage akibat transformasi agregasi sebelum pemisahan dataset]
+
+Kerentanan operasi fitur terhadap kontaminasi inilah yang menjadi pemicu perlunya praktik *pipeline* yang benar. Mengisolasi partisi evaluasi secara konsisten tidak dapat digantungkan pada kehati-hatian penulisan skrip manual, namun harus dikunci melalui instrumen pemrograman spesifik:
+
+1.  **Isolasi di Tingkat Pustaka:** Menggunakan kelas pembungkus seperti `ColumnTransformer` yang dijahit di dalam objek utama `Pipeline`. Dalam eksekusi validasi (*cross-validation*), struktur ini menjamin bahwa seluruh perhitungan varians atau perhitungan proporsi dipaksa untuk *fit* ulang pada setiap sub-partisi latih, membiarkan partisi evaluasinya sama sekali buta dari parameter kalkulasi.
+2.  **Isolasi di Tingkat Infrastruktur:** Pada arsitektur produksi, fitur-fitur kompleks disajikan melalui perantara *feature store* seperti Feast. Komponen infrastruktur ini memberlakukan operasi *point-in-time join* yang mengamankan konsistensi waktu; algoritma hanya dizinkan mengakses fitur agregat dengan catatan log yang divalidasi tercatat kuat sebelum stempel waktu kedatangan *event* data prediksi.
 
 
 ## Strategi Pemisahan Data yang Benar
 
-Pemisahan data bukan sekadar proses membagi tabel menjadi dua tumpukan. Lebih dari itu, pemisahan data bertindak sebagai mekanisme karantina utama yang wajib dipasang untuk mencegah kebocoran informasi (*leakage*) sebelum kita mulai mengeksekusi rekayasa fitur apa pun. Memilih strategi pemisahan yang keliru dapat menghasilkan evaluasi model yang menyesatkan, yang mana sama berbahayanya dengan kesalahan pada logika perhitungan fitur itu sendiri. Strategi yang tepat sangat bergantung pada sifat asal mula data serta bagaimana kita merumuskan unit observasi. Secara mendasar, terdapat tiga pendekatan utama yang masing-masing merespons seberapa mandiri baris-baris data tersebut.
+Pemisahan data berfungsi sebagai mekanisme karantina untuk mencegah *leakage* sebelum kita mengeksekusi rekayasa fitur. Memilih strategi pemisahan yang keliru akan menghasilkan evaluasi model yang menyesatkan. Strategi yang tepat sangat bergantung pada struktur asal data dan kemandirian antar-unit observasi.
 
-Pendekatan paling umum adalah *random split*, yakni pemisahan baris observasi secara acak tanpa mempertimbangkan klaster atau waktu. Metode ini ideal—dan pada dasarnya hanya valid digunakan—ketika setiap titik observasi benar-benar mandiri. Selama tidak ada hubungan atau ketergantungan antar-baris, *random split* bekerja dengan sangat baik. Pengundian ini secara statistik menjamin bahwa ragam pola dan variasi data akan terdistribusi sama rata antara kelompok latih dan uji, memberikan model pijakan belajar yang seimbang.
+Tiga pendekatan utama dalam memisahkan data pelatihan dan pengujian meliputi:
 
-Masalah serius akan muncul apabila pengacakan murni diterapkan pada data yang memiliki struktur berkelompok, hierarkis, atau berisi rekam jejak subjek yang sama berulang kali. Untuk skenario semacam ini, kita harus beralih menggunakan *group split*. *Group split* adalah pemisahan observasi berdasarkan himpunan atau anggota dari subjek unik yang sama. Bayangkan sebuah dataset medis yang memuat 10 pindaian rontgen berbeda untuk masing-masing 100 orang pasien. Bila kita memaksakan pemisahan acak biasa, besar kemungkinan sebagian rontgen milik pasien A akan mendarat di kelompok latih dan sebagian lainnya menyusup ke kelompok uji. Dampaknya amat buruk: model justru akan asyik menghafal karakteristik anatomi spesifik dada pasien A untuk menjawab kunci ujian, ketimbang benar-benar belajar membedakan pola penyakit. *Group split* mencegah kebocoran semacam ini dengan menggeser unit pemisahan dari level baris ke level subjek. Seluruh rontgen milik pasien A akan ditarik utuh secara ketat ke dalam satu partisi saja. Logika serupa juga wajib diterapkan pada kasus lain, seperti riwayat kunjungan satu pelanggan di toko atau deret sensor dari satu mesin pabrik.
+*   **Random split**: Memisahkan baris observasi secara acak. Metode ini valid ketika setiap titik observasi benar-benar mandiri. Pengacakan mendistribusikan pola secara merata antara kelompok latih dan uji, tetapi akan memicu *leakage* jika data memiliki struktur kelompok atau runtunan waktu.
+*   **Group split**: Memisahkan observasi berdasarkan identitas subjek. Pendekatan ini wajib diterapkan pada data yang memuat rekam jejak subjek yang sama berulang kali, misalnya pindaian rontgen dari beberapa pasien atau riwayat kunjungan pelanggan.
+*   **Temporal split**: Memisahkan data berdasarkan urutan waktu kronologis. Metode ini memastikan model hanya belajar dari peristiwa masa lalu untuk memprediksi masa depan.
 
-Terakhir, apabila dataset mendokumentasikan peristiwa berbasis deret waktu, maka metode acak maupun kelompok tidak lagi memadai. Kita mutlak membutuhkan perlindungan *temporal split*. *Temporal split* adalah pemisahan data berdasarkan batas pengurutan periode waktu kronologis dari kejadian berjalan. Data observasi berjalur waktu ini wajib dibelah dengan satu titik potong (*cutoff*) waktu yang amat tegas. Aturan ini sangat krusial untuk mencegah algoritma pengacakan tanpa sengaja mencomot data dari masa depan dan menyusupkannya ke dalam kumpulan pelatihan masa lalu. Di dunia nyata, sebuah sistem yang diluncurkan hari ini tidak akan pernah memiliki akses untuk mengintip kejadian esok hari. Oleh karena itu, *temporal split* merancang simulasi pemisahan yang meniru batasan realitas tersebut, demi memastikan model diuji secara jujur pada kemampuannya menebak masa depan berbekal rentetan masa lalu.
+[GAMBAR 2.5: Diagram Konseptual - Perbandingan strategi pemisahan data: Random, Group, dan Temporal Split]
+
+**Pemisahan Berbasis Kelompok (Group Split)**
+Apabila memaksakan pemisahan acak pada data rekam medis, sebagian rontgen milik pasien A dapat masuk ke kelompok latih, sementara sisa rontgen miliknya jatuh ke kelompok uji. Model cenderung menghafal karakteristik anatomi spesifik pasien tersebut ketimbang belajar membedakan pola penyakit. *Group split* menggeser unit pemisahan dari level baris ke level subjek. Syarat mutlak dari pemisahan ini dirumuskan sebagai:
+
+$$ G_{latih} \cap G_{uji} = \emptyset $$
+
+Di mana $G_{latih}$ adalah himpunan pengenal unik subjek (seperti ID pasien) pada partisi pelatihan, dan $G_{uji}$ adalah himpunan pengenal pada partisi pengujian. Implementasi seperti `GroupKFold` atau `StratifiedGroupKFold` di pustaka *machine learning* memastikan seluruh rekam jejak milik satu subjek masuk secara utuh ke dalam satu partisi, sekaligus mempertahankan distribusi target prediksi.
+
+**Pemisahan Temporal (Temporal Split)**
+Sistem yang beroperasi di dunia nyata tidak memiliki akses ke data masa depan. *Temporal split* menyimulasikan batasan ini melalui titik potong waktu yang tegas. Pada proses *cross-validation* untuk data sekuensial, kelas utilitas seperti `TimeSeriesSplit` memastikan partisi pelatihan selalu berasal dari periode sebelum partisi pengujian. Kita juga dapat mendefinisikan parameter *gap* untuk memberikan jeda observasi antara partisi latih dan uji, yang berguna untuk menyimulasikan latensi ketersediaan fitur saat model diterapkan di lingkungan produksi.
+
+**Validasi Silang Bersarang (Nested Cross-Validation)**
+Bentuk *leakage* lain terjadi ketika kita menala hiperparameter (misalnya ambang batas seleksi fitur) lalu mengevaluasi performa akhir pada partisi data yang sama. Praktik ini memicu bias optimistis karena keputusan penalaan dipengaruhi oleh partisi uji. *Nested cross-validation* menyelesaikan masalah ini dengan memisahkan dua proses:
+1.  **Putaran dalam (inner loop)**: Digunakan murni untuk menala dan mencari hiperparameter terbaik.
+2.  **Putaran luar (outer loop)**: Digunakan untuk mengestimasi performa generalisasi pada sisa data yang benar-benar tidak tersentuh oleh putaran dalam.
+
+Disiplin pemisahan data ini menjamin bahwa seluruh transformasi fitur selanjutnya dikalibrasi pada partisi yang bersih, sehingga estimasi performa model tetap jujur.
 
 
 ## *Pipeline* di Dalam *Cross-Validation*
 
-Menguji model *machine learning* dengan satu kali pemisahan data latih dan uji tidak selalu memberikan estimasi kinerja yang stabil. Kinerja akhir bisa tampak memuaskan hanya karena model kebetulan mendapat kombinasi data observasi yang spesifik. Untuk mengatasi hal ini, kita menggunakan *cross-validation*. *Cross-validation* adalah metode evaluasi kinerja iteratif algoritma dengan menukar partisi bagian data observasi latih dan prediksi secara bergantian.
+Menguji model dengan satu kali pemisahan data latih dan uji rentan menghasilkan estimasi kinerja yang tidak stabil. Skor akurasi tinggi bisa saja muncul akibat distribusi acak pada satu pemisahan tertentu. Praktisi menggunakan *cross-validation* (validasi silang) untuk mengevaluasi kinerja secara iteratif dan mendapatkan taksiran yang lebih andal.
 
-Skema rotasi data ini bergantung pada pembagian unit set yang disebut *fold*. *Fold* adalah satu segmen partisi himpunan dari skema irisan pecahan data yang dialokasikan di fase silang *cross-validation*. Dalam pelaksanaannya, himpunan data dibagi menjadi sekumpulan *fold* berukuran seimbang. Di setiap perputaran iterasi, satu *fold* disisakan khusus sebagai blok validasi, sementara kumpulan *fold* sisanya disatukan sebagai kelompok data pelatihan.
+Secara matematis, estimasi kesalahan melalui $K$-Fold *Cross-Validation* dihitung sebagai rata-rata dari seluruh iterasi:
 
-Risiko kebocoran data atau *leakage* meningkat drastis saat tahapan rekayasa fitur dieksekusi bersamaan dalam skema silang ini. Praktik keliru yang paling lazim adalah mengaplikasikan fungsi transformasi pada keseluruhan dataset sebelum instruksi *cross-validation* dijalankan. Sebagai gambaran, apabila proses perhitungan parameter standardisasi skala dilakukan menyeluruh sejak tahap awal, nilai statistiknya pasti turut menyerap rentang distribusi nilai dari *fold* yang semestinya dikunci murni sebagai set penilai. Dampaknya, bocoran informasi menjalar bebas melintasi batasan rotasi antar-*fold*. Saat waktu validasi tiba, skor metrik model pada *fold* tersebut akan melonjak tinggi secara menyesatkan karena representasi distribusi awalnya sudah pernah terbaca.
+$$ CV_{(K)} = \frac{1}{K} \sum_{k=1}^K E_k $$
 
-Demi memastikan keabsahan metrik statistik, seluruh urutan penyesuaian fitur mesti dibungkus utuh ke dalam objek *pipeline*. Daripada mentransformasi fitur terlebih dulu lalu menyerahkannya kepada fungsi silang, kita menyuplai tabel observasi asli beriringan dengan objek *pipeline*. Pendekatan ini merelokasi ruang eksekusi transformasi ke dalam perputaran isolasi internal di setiap tahapan *cross-validation*.
+Di mana $K$ adalah total jumlah partisi data (*fold*), dan $E_k$ mewakili nilai kesalahan (seperti *Mean Squared Error*) saat mengevaluasi model pada *fold* validasi ke-$k$.
 
-Pada perputaran tersebut, *pipeline* merestriksi eksekusi tahap *fit* secara ketat agar bekerja hanya pada blok *fold* yang sedang dialokasikan sebagai data pelatihan. Begitu parameter hitungan baru terbentuk lewat data latih, objek ini baru akan meluncurkan fungsi *transform* secara mandiri, khusus menyasar blok *fold* validasi yang tengah disisihkan pada siklus tersebut.
+Skema ini membagi himpunan data menjadi kumpulan *fold* berukuran seimbang. Di setiap perputaran, satu *fold* bertindak sebagai blok validasi, dan kumpulan *fold* sisanya disatukan sebagai data pelatihan. Masalah muncul ketika tahapan rekayasa fitur diimplementasikan keliru bersamaan dengan rotasi iteratif ini.
 
-Contoh penggunaannya sangat relevan saat menerapkan teknik imputasi penyisipan nilai tengah secara berulang. Bersama *pipeline*, ukuran nilai tengah akan senantiasa dihitung ulang dari awal pada transisi setiap putarannya menggunakan batas baris-baris data dari unit pelatihan spesifik kala itu. Unit observasi pada kumpulan validasi dijamin terisolasi mutlak dari partisipasi kalkulasi parameter, menjaga penerapan praktik *pipeline* yang benar.
+**Risiko Kebocoran Data dalam Validasi Silang**
 
+Kesalahan paling umum adalah menjalankan fungsi transformasi pada seluruh dataset sebelum fungsi *cross-validation* dipanggil. Jika perhitungan parameter standardisasi dilakukan secara global di awal, nilai statistik tersebut ikut menyerap informasi dari baris-baris data yang nantinya bertindak sebagai blok validasi.
+
+Dampaknya terhadap evaluasi metrik:
+* Skor validasi melonjak tinggi karena distribusi data validasi sudah terdeteksi di tahap pelatihan.
+* Model mempelajari pola observasi yang seharusnya tertutup rapat.
+* Performa model anjlok ketika dihadapkan pada data baru di lingkungan produksi.
+
+[GAMBAR 2.5: Skema - Aliran data pada cross-validation: pendekatan keliru (transformasi global) vs pendekatan benar (transformasi terisolasi per fold)]
+
+**Mekanisme Isolasi Transformasi**
+
+Untuk menjamin evaluasi tidak bias, seluruh urutan penyesuaian fitur harus dirangkai ke dalam satu objek *pipeline*. Tabel observasi asli diteruskan beriringan dengan objek *pipeline* ke dalam fungsi silang. Metode ini mengunci ruang eksekusi transformasi berada di dalam perputaran internal setiap tahapan *cross-validation*.
+
+Cara kerja *pipeline* di setiap rotasi silang:
+1. **Isolasi Penghitungan:** Tahap `fit()` pada *pipeline* dibatasi secara ketat hanya pada blok data pelatihan iterasi berjalan. 
+2. **Transformasi Validasi:** Objek *pipeline* yang sudah menyimpan parameter dari data pelatihan meluncurkan `transform()` mandiri pada blok validasi yang sedang disisihkan.
+3. **Pembaruan Parameter:** Pada transisi rotasi berikutnya, ukuran seperti nilai tengah (imputasi) atau simpangan baku dihitung ulang dari nol berdasarkan himpunan pelatihan iterasi baru.
+
+**Optimalisasi Komputasi dan Nested CV**
+
+Menjalankan rekayasa fitur berulang kali di dalam skema silang, terlebih bila digabung dengan pencarian *hyperparameter* (*GridSearchCV*), memakan beban komputasi yang masif. Scikit-learn menyediakan fasilitas untuk mengoptimalkan kendala teknis ini.
+
+* **Caching Transformasi:** Inisiasi objek `Pipeline` mendukung argumen `memory` untuk merekam status keluaran langkah *transformer* (seperti ekstraksi fitur berat) ke dalam diska penyimpanan. *Pipeline* otomatis memanggil hasil kalkulasi yang tersimpan jika parameter dan observasi masukan tidak berubah di perputaran selanjutnya.
+* **Nested Cross-Validation:** Untuk mencegah kebocoran informasi melalui pemilihan *hyperparameter*, evaluasi model terbaik dilakukan lewat validasi silang bersarang (*nested CV*). Perputaran dalam (*inner loop*) berfokus menala setelan rekayasa fitur, sementara perputaran luar (*outer loop*) bekerja menaksir kinerja murni generalisasi tanpa intervensi penyetelan algoritma.
+
+```python
+## [KODE: Pipeline standar terintegrasi dengan cross_val_score, mendemonstrasikan isolasi transformasi fitur dan penyimpanan cache memory; sumber: notebook bab]
 ```
-[KODE: a standard pipeline embedded inside cross_val_score showing standard scaler handling; sumber: notebook bab]
-```
 
 
-## Kesalahan Umum Mahasiswa
+## Kesalahan Praktik pada Alur Transformasi
 
-Memahami konsep rekayasa fitur tidak menjamin penulisan kode yang bebas masalah. Mahasiswa sering terjebak pada beberapa anti-pola teknis saat membangun alur transformasi data. Kesalahan-kesalahan ini berakar dari pelanggaran terhadap *praktik pipeline yang benar* dan secara diam-diam merusak integritas model. Setidaknya ada tiga bentuk kesalahan yang paling sering berulang.
+Memahami konsep rekayasa fitur belum tentu menjamin penulisan kode yang bebas masalah. Saat merancang alur transformasi, pengembang sering kali secara tak sengaja melanggar *praktik pipeline yang benar*. Pelanggaran ini merusak integritas model secara diam-diam melalui kebocoran informasi (*data leakage*) atau diskrepansi tipe data. Dokumentasi panduan *Common Pitfalls* dari pustaka *Scikit-Learn* menyoroti beberapa pola kelalaian yang secara konsisten berulang dalam implementasi lapangan:
 
-Kesalahan pertama adalah melakukan transformasi skala secara global sebelum memecah data. Pemula kerap memanggil fungsi standardisasi atau normalisasi pada seluruh matriks fitur sekaligus, baru kemudian memecahnya menggunakan *train_test_split*. Langkah ini menciptakan kontaminasi informasi atau *leakage*. Saat pengubah skala menghitung nilai rata-rata dan varians dari seluruh baris, informasi distribusi dari himpunan uji ikut masuk ke dalam parameter tersebut. Fitur pada himpunan latih akhirnya memuat petunjuk tersembunyi mengenai data uji. Saat model dievaluasi, skor yang dihasilkan akan tampak optimis namun menyesatkan, karena data uji tidak lagi berstatus sebagai data baru yang belum pernah dilihat model.
+*   **Pemanggilan `fit_transform` berulang pada himpunan uji:** Metode `fit_transform` didesain untuk menghitung konstanta acuan (seperti *mean* dan varians) sekaligus menerapkannya pada himpunan data latih. Kesalahan fatal terjadi ketika perintah ini dipanggil kembali pada himpunan uji (*test set*). Pemanggilan ulang ini akan menimpa dan menghapus parameter acuan latih, lalu menggantinya dengan rentang skala yang murni bersandar pada distribusi himpunan uji. Kontrak konsistensi pun hancur. Dokumentasi *Scikit-Learn* mendemonstrasikan secara empiris bahwa kelalaian inkonsistensi penskalaan ini dapat mengakibatkan lonjakan galat *Mean Squared Error* (MSE) dari 0.90 menjadi 62.80. Aturan mutlaknya: himpunan uji hanya boleh dieksekusi menggunakan perintah `transform`.
+*   **Seleksi fitur sebelum pemisahan data:** Bentuk kebocoran data yang paling sering tidak disadari. Praktisi menyeleksi dan membuang fitur (berdasarkan korelasi atau varians) menggunakan seluruh tumpukan data utuh sebelum membaginya menjadi himpunan latih dan uji. Membiarkan mekanisme seleksi mengintip sebaran target dari data uji akan melahirkan ilusi performa yang sangat meyakinkan. Demonstrasi numerik *Scikit-Learn* membuktikan bahwa menyeleksi fitur sebelum partisi data dapat menggelembungkan akurasi model dari 0.50 (akurasi acak murni) menjadi 0.76 padahal dataset tersebut sepenuhnya berisi *noise* acak.
+*   **Ekstraksi *embedding* global:** Bentuk modern dari kontaminasi silang ini muncul pada pemrosesan teks. Praktisi menginisiasi vektorisasi (seperti matriks TF-IDF) terhadap gabungan korpus dokumen utuh, kemudian baru membelah hasilnya menjadi kelompok latih dan uji. Praktik ini secara langsung membocorkan informasi frekuensi kemunculan kata spesifik dari himpunan uji ke dalam fitur latih. Seluruh proses inisialisasi kamus teks wajib diletakkan setelah partisi mentah selesai.
 
-Kesalahan kedua adalah memanggil *fit_transform* pada himpunan validasi atau *inference*. Saat melatih model, pemanggilan *fit_transform* memang diperlukan agar sebuah *transformer* dapat mempelajari parameter sekaligus mengubah format data latih. Namun, mahasiswa sering kali menyalin kode tersebut untuk memproses data uji. Pemanggilan ini memaksa *transformer* membuang parameter yang sudah dipelajari sebelumnya dan menghitung ulang ukuran patokan baru yang murni berasal dari data uji sekilas. Kontrak konsistensi antara fase pelatihan dan *inference* menjadi rusak. Model akan menerima fitur dengan skala atau struktur yang sepenuhnya berbeda dari yang dipelajarinya. Himpunan di luar data latih secara ketat hanya boleh diproses menggunakan instruksi *transform*.
+[GAMBAR 2.4: Diagram - Ilustrasi kebocoran informasi (*data leakage*) akibat pelaksanaan seleksi fitur yang mendahului proses partisi *dataset*]
 
-Kesalahan ketiga adalah memodifikasi fitur secara manual tanpa menggunakan struktur *transformer* yang formal. Mahasiswa sering memanipulasi kolom fitur menggunakan fungsi sejenis `.replace()` atau `.apply()` secara terpisah dari arsitektur validasi utama. Cara ini mungkin memfasilitasi eksperimen cepat, tetapi sangat rapuh untuk jangka panjang. Ketika skrip untuk tahap *inference* ditulis beberapa bulan kemudian, detail presisi dari perhitungan fitur tersebut sering kali terlupakan atau dijalankan dengan urutan yang berbeda. Pendekatan yang tepat adalah membungkus logika manipulasi manual tersebut ke dalam kelas *transformer* buatan sendiri. Praktik ini memastikan setiap titik data baru otomatis melewati alur transformasi yang persis sama tanpa intervensi lanjutan.
+*   **Manipulasi fitur kustom di luar objek *pipeline*:** Mengubah format matriks menggunakan fungsi modifikasi lepas (seperti eksekusi `.replace()` atau penghapusan spasi teks di luar kerangka estimator) sangatlah rapuh. Ketika sistem berpindah dari *notebook* eksperimen ke lingkungan *inference* produksi, sekuens modifikasi tanpa pembungkus kelas ini hampir pasti terlupakan. Solusi permanennya adalah membungkus logika fungsi kustom ke dalam kelas pewaris *transformer* resmi (*custom transformer*), sehingga ia dapat disatukan dan diekspor (*serialize*) di dalam satu objek *pipeline* utuh yang tak terpisahkan.
 
 
 ## Studi Kasus: *Pipeline* yang Valid vs. *Pipeline* yang Bocor
 
-Untuk melihat wujud nyata akibat *data leakage*, mari periksa skenario pembuatan model penaksir harga *real estate*. Misalkan kita memiliki *dataset* observasi properti, namun sebagian data pada kolom ukuran lahan kosong. Kita perlu mengisi kekosongan ini menggunakan metode imputasi rata-rata. Langkah ini tampak sederhana, tetapi urutan eksekusinya akan menentukan apakah model mengukur performa secara jujur atau malah menyontek informasi dari masa depan. Kita akan membandingkan hasil metrik dari dua pendekatan arsitektur komputasi yang bertolak belakang.
+Dalam skenario pembuatan model penaksir harga *real estate*, sebagian data pada atribut ukuran lahan mungkin kosong. Nilai yang hilang ini dapat diisi menggunakan metode imputasi rata-rata. Urutan eksekusi imputasi menentukan apakah evaluasi model berjalan objektif atau mengalami kebocoran data (*data leakage*). Berikut adalah perbandingan dua pendekatan komputasi untuk menangani kondisi tersebut:
 
-Pendekatan pertama mewakili jalan pintas yang berbahaya, yakni manipulasi *dataset* secara global. Sebelum data dipecah, nilai rata-rata ukuran lahan dihitung menggunakan seluruh observasi yang tersedia. Angka rata-rata ini kemudian disuntikkan untuk menambal semua sel kosong. Baru setelah tabel tampak utuh, data dipisahkan menjadi bagian pelatihan dan pengujian. Akibatnya, nilai rata-rata yang masuk ke dalam data latih sebenarnya ikut dibentuk oleh informasi dari data uji. Saat model dievaluasi, metrik akurasi sering kali melonjak tajam menghasilkan skor kesempurnaan semu. Angka fantastis ini hanyalah ilusi komputasional; model tidak benar-benar cerdas, melainkan hanya menghafal karakteristik distribusi masa depan yang bocor saat proses imputasi.
+**1. Manipulasi Global (Menghasilkan Kebocoran Data)**
+* *Dataset* utuh digunakan untuk menghitung nilai rata-rata ukuran lahan sebelum dilakukan pemisahan data.
+* Sel kosong pada seluruh baris diisi dengan nilai rata-rata global tersebut.
+* *Dataset* yang sudah terisi penuh kemudian dipisah menjadi himpunan pelatihan dan pengujian.
 
-Pendekatan kedua adalah implementasi komitmen perlindungan yang berpedoman pada praktik *pipeline* yang benar. Pada skema ini, instruksi pertama di dalam kode adalah memotong *dataset* menjadi himpunan pelatihan murni dan himpunan pengujian independen. Setelah sekat pemisah didirikan, operasi penambalan nilai dibungkus secara tertutup di dalam instrumen *pipeline*. Rata-rata ukuran lahan dihitung murni berdasarkan deretan data latih saja. Nilai rata-rata yang steril inilah yang diterapkan untuk mengisi kekosongan pada fase pelatihan, dan kelak digunakan kembali secara konsisten pada tahap pengujian. Dengan urutan ini, data uji tetap terisolasi dan tidak menyumbangkan informasi apa pun ke dalam fase pembentukan fitur.
+Dampaknya, nilai imputasi pada data latih ikut dibentuk oleh statistik data uji. Akurasi evaluasi akan melonjak secara semu karena model telah terekspos pada karakteristik distribusi data uji sejak tahap pembentukan fitur.
 
-[GAMBAR 2.1]
-Judul: Arsitektur perbandingan antara manipulasi dataset global versus pipeline tertutup
-Tipe: diagram konseptual
-Tampilkan: Block diagram contrasting preprocessing before a split (a shared leaky bucket parameter) vs. a contained transformer pipeline working purely after isolating a train split.
-Sumber data: Konseptual
+**2. Isolasi *Pipeline* (Pendekatan yang Valid)**
+* *Dataset* langsung dipotong menjadi himpunan pelatihan murni dan himpunan pengujian independen sebagai langkah paling awal.
+* Nilai rata-rata ukuran lahan dihitung murni berdasarkan observasi pada himpunan pelatihan.
+* Nilai rata-rata ini diterapkan untuk mengisi sel kosong pada fase pelatihan, dan kelak digunakan kembali secara konsisten pada tahap pengujian.
 
-Ketika performa pendekatan kedua dievaluasi, rasio akurasinya wajar jika merosot dan tidak sedramatis arsitektur pertama. Namun, angka yang lebih rendah ini justru mencerminkan taksiran prediksi yang realistis. Evaluasi berjalan sepenuhnya pada data yang belum pernah dijumpai sebelumnya, merepresentasikan ketahanan model saat menghadapi observasi baru di dunia nyata. Kontras perbandingan ini memperlihatkan alasan mengapa pengamanan aliran data diwajibkan dalam rekayasa fitur. Tanpa isolasi *pipeline* yang tegas, praktik rekayasa fitur berisiko meloloskan kalkulasi yang cacat dan membangun model yang sekadar menipu diri sendiri.
+Secara matematis, jika $N_{train}$ adalah jumlah observasi valid pada data latih, rata-rata $\mu_{train}$ dihitung sebagai:
+
+$$ \mu_{train} = \frac{1}{N_{train}} \sum_{i=1}^{N_{train}} x_i $$
+
+Pada persamaan tersebut, $x_i$ mewakili nilai ukuran lahan yang tersedia di dalam data latih. Nilai $\mu_{train}$ tunggal ini kemudian dipertahankan untuk menambal nilai kosong pada observasi di data uji. Pendekatan ini memastikan data uji tetap terisolasi dan tidak berkontribusi pada komputasi parameter fitur.
+
+[GAMBAR 2.4: Skema - Ilustrasi data leakage akibat imputasi global sebelum pemisahan data dibandingkan dengan pipeline tertutup]
+
+Saat dievaluasi, performa dari pendekatan kedua umumnya lebih rendah dibandingkan pendekatan pertama. Skor yang menurun ini justru mencerminkan kemampuan prediksi yang realistis saat model menghadapi observasi baru. Tanpa isolasi *pipeline* yang tegas, rekayasa fitur berisiko meloloskan kalkulasi cacat yang membuat validasi model tidak sah. Pada skala produksi, pencegahan kebocoran temporal ini juga dapat diamankan oleh infrastruktur pelengkap seperti *feature store* melalui mekanisme *point-in-time join*, sehingga data dari masa depan terblokir dan tidak memengaruhi perhitungan fitur pelatihan historis.

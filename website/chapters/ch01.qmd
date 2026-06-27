@@ -2,129 +2,242 @@
 
 ## Data, Atribut, Fitur, dan Representasi
 
-Model *machine learning* tidak memproses dunia nyata dengan cara yang sama seperti kita. Sebuah model analisis sentimen tidak benar-benar memahami makna kalimat layaknya manusia membaca teks, dan model pengenalan wajah tidak melihat bentuk visual secara utuh. Agar sebuah algoritma dapat mengenali pola, informasi dari dunia fisik harus diterjemahkan terlebih dahulu ke dalam wujud angka.
+Model *machine learning* tidak memproses informasi layaknya manusia. Sebuah algoritma analisis sentimen tidak membaca makna gramatikal kalimat, dan model deteksi objek tidak melihat bentuk visual secara utuh. Agar algoritma dapat mengenali pola, informasi fisik harus diterjemahkan ke dalam wujud numerik. 
 
-Titik awal dari proses penerjemahan ini adalah data mentah (*raw data*). Data mentah merupakan informasi yang dikumpulkan langsung dari sumber aslinya dan belum diproses untuk kebutuhan algoritma. Contoh data mentah meliputi kumpulan teks ulasan pengguna yang diambil dari sebuah situs web, rekaman suara dari mikrofon, atau susunan nilai piksel pembentuk foto digital. Algoritma jarang sekali bisa langsung menemukan pola yang efektif jika hanya diberikan data mentah ini.
+Proses ini dimulai dari data mentah (*raw data*). Data mentah adalah catatan kejadian atau hasil pengukuran yang dikumpulkan langsung dari sumbernya, belum melalui manipulasi untuk pemodelan. 
 
-Setiap data mentah secara alami memiliki berbagai atribut. Atribut merupakan sifat bawaan atau karakteristik dasar yang melekat pada data tersebut. Sebagai contoh, jumlah karakter adalah atribut dari sebuah teks, sedangkan resolusi tinggi dan lebar merupakan atribut dari sebuah gambar. Atribut pada dasarnya sekadar mendeskripsikan kondisi data secara teknis. Sering kali, atribut bawaan semacam ini belum memuat sinyal yang cukup kuat bagi model untuk membedakan pola atau membuat prediksi yang akurat.
+Beberapa contoh data mentah meliputi:
+*   Kumpulan teks ulasan pengguna yang diambil dari *database*.
+*   Rekaman suara berformat `.wav` dari sensor mikrofon.
+*   Susunan nilai piksel *Red-Green-Blue* (RGB) pembentuk foto digital.
 
-Agar model dapat belajar dengan baik, kita membutuhkan fitur. Fitur adalah atribut yang telah diproses, diukur, dan diekstraksi secara sengaja agar memiliki daya pembeda yang relevan dengan tugas model tersebut. Mari kita ambil contoh teks ulasan. Alih-alih memberikan teks kalimat mentah apa adanya kepada model analisis sentimen, kita bisa mengekstrak fitur berupa frekuensi kemunculan kata-kata bernuansa positif atau negatif. Pada gambar wajah, alih-alih menyuapkan jutaan nilai piksel mentah yang kurang bermakna, kita dapat mengekstrak fitur yang lebih informatif seperti histogram warna atau deteksi tepi bentuk wajah. Fitur menonjolkan informasi krusial bagi algoritma dan membuang detail yang tidak penting.
+Algoritma jarang sekali dapat mempelajari pola yang efektif jika hanya diberikan data mentah ini secara langsung.
 
-Setelah fitur diekstraksi, langkah terakhir adalah menyusunnya ke dalam sebuah representasi. Representasi adalah format struktural dan matematis yang mengorganisasi kumpulan fitur tersebut menjadi masukan akhir yang siap diproses oleh algoritma. Bentuk representasi ini disesuaikan dengan kebutuhan matematis model, sering kali berupa susunan vektor atau matriks. Keputusan kita dalam menyaring data mentah menjadi fitur yang bernilai, lalu membungkusnya dalam representasi yang tepat, akan sangat menentukan batas kemampuan sebuah algoritma *machine learning* dalam belajar.
+[GAMBAR 1.1: Diagram Alur - Hirarki transformasi dari Data Mentah -> Atribut -> Fitur -> Representasi Matriks]
 
+Setiap data mentah secara alami memuat berbagai atribut. Atribut merupakan karakteristik bawaan atau metadata dasar. Pada teks, jumlah karakter adalah atribut. Pada gambar, resolusi matriks tinggi dan lebar merupakan atribut. Atribut mendeskripsikan struktur data secara teknis, namun sering kali tidak memuat sinyal statistik yang cukup kuat untuk membedakan satu sampel dengan sampel lainnya dalam konteks prediksi.
 
-## Peran Fitur dalam *machine learning*
+Agar model mendapatkan sinyal pembelajaran yang kuat, kita mengekstrak fitur. Fitur adalah atribut yang telah diproses, diseleksi, atau ditransformasi secara terarah sehingga memiliki daya pembeda (*discriminative power*) untuk tugas prediksi tertentu. 
 
-Sebagaimana telah kita pelajari, fitur adalah atribut terukur yang kita berikan kepada sistem. Namun, perannya jauh lebih fundamental daripada sekadar angka masukan. Dalam *machine learning*, representasi data secara langsung menetapkan batas atas teoretis dari kinerja yang dapat dicapai oleh sebuah model. Sehebat apa pun algoritma yang digunakan, model tersebut tidak akan bisa mempelajari pola jika informasinya memang tidak ada di dalam data.
+Secara matematis, ekstraksi fitur dari data mentah dapat didefinisikan sebagai fungsi transformasi:
 
-Ketika representasi gagal menangkap sinyal penting dari permasalahan, algoritma hanya akan menerima *noise*. Menghadapi situasi ini, praktisi sering kali mencoba memperbesar ukuran model, menggunakan arsitektur yang lebih kompleks, atau menambah waktu pelatihan. Sayangnya, semua upaya komputasi ini tidak akan menaikkan akurasi secara bermakna. Algoritma tidak bisa memunculkan informasi dari kehampaan; kinerjanya mutlak tertahan oleh kualitas fitur yang buruk.
+$$ \phi(x) = \mathbf{x} $$
 
-Sebaliknya, fitur yang dirancang dengan baik akan menyederhanakan masalah yang harus diselesaikan. Fitur yang tepat mengangkat pola-pola relevan ke permukaan, sehingga algoritma tidak perlu menebak atau melakukan transformasi yang terlalu rumit. Kondisi ini membuat algoritma yang sederhana sekalipun mampu menghasilkan prediksi yang akurat dan stabil.
+Di mana:
+*   $x$ adalah data mentah awal.
+*   $\phi(\cdot)$ adalah fungsi atau serangkaian fungsi pemrosesan fitur.
+*   $\mathbf{x}$ adalah vektor numerik hasil ekstraksi yang mewakili data mentah tersebut.
 
-Sebagai contoh keseharian, pertimbangkan kasus prediksi harga rumah. Bayangkan jika kita hanya memberikan data mentah berupa kode pos kepada model. Bagi mesin, kode pos hanyalah deretan angka nominal tanpa makna bawaan. Algoritma harus bersusah payah memetakan sendiri hubungan tata ruang yang rumit untuk memahami mengapa satu area bernilai lebih mahal dari area lainnya.
+Sebagai contoh, pada kasus klasifikasi teks ulasan pengguna, kita tidak memasukkan susunan string secara langsung. Kita mengukur dan mengekstrak fitur spesifik, seperti rasio kemunculan kata-kata berkonotasi negatif terhadap total kata. Pada kasus gambar wajah, alih-alih menyuapkan jutaan intensitas cahaya dari setiap piksel, kita mengekstrak fitur abstrak seperti jarak antar-mata atau pola deteksi tepi. Transformasi $\phi$ ini menekan *noise* dan menonjolkan informasi yang secara langsung berkolerasi dengan target prediksi.
 
-Sekarang, mari kita ubah pendekatannya. Alih-alih menggunakan kode pos mentah, kita menyediakan fitur kontekstual yang spesifik: jarak ke stasiun transit terdekat, kualitas sekolah di sekitar lokasi, dan tingkat kejahatan lingkungan. Kita baru saja mengubah data administratif yang kabur menjadi sinyal yang secara langsung menggerakkan nilai properti.
-
-Dampak dari perubahan representasi ini sangat dramatis. Sebuah model regresi linear sederhana yang dibekali fitur jarak ke stasiun transit bisa dengan mudah mengungguli algoritma *neural network* kompleks yang hanya dilatih menggunakan titik koordinat geografis mentah. Algoritma yang kompleks tetap terkekang oleh batas atas fitur yang minim konteks, sementara model sederhana melesat berkat sinyal yang jernih.
-
-Dinamika inilah yang membuat rekayasa fitur menjadi penentu keberhasilan utama. Sepanjang buku ini, kita akan melihat bahwa upaya mengekstraksi dan menyempurnakan fitur bukanlah sekadar langkah persiapan data biasa. Proses ini adalah cara kita mendongkrak batas atas kemampuan sistem *machine learning* itu sendiri.
-
-
-## Representasi: Spektrum Dirancang Manusia hingga Dipelajari Mesin
-
-Praktik rekayasa fitur beroperasi pada sebuah spektrum yang luas. Di satu ujung ekstrem, kita memiliki **representasi yang dirancang manusia**, sedangkan di ujung lainnya terdapat **representasi yang dipelajari mesin**. Memahami posisi suatu teknik pada spektrum ini bukanlah sekadar pembagian teoritis, melainkan prinsip pengorganisasian utama yang mendasari keseluruhan struktur buku ini.
-
-Representasi yang dirancang manusia merujuk pada fitur yang dibentuk melalui logika eksplisit dan pemahaman domain yang disuntikkan secara langsung oleh manusia. Pada pendekatan ini, kitalah yang bertindak sebagai penerjemah utama. Kita mengubah data mentah menjadi format yang lebih bermakna, dan algoritma hanya menerima hasil akhir dari kalkulasi tersebut. Sebagai contoh, untuk memprediksi risiko penyakit kardiovaskular, dokter mengetahui bahwa sekadar tinggi dan berat badan belum memberikan konteks yang utuh; proporsi keduanyalah yang memiliki makna medis. Pengetahuan domain ini diformulasikan oleh manusia menjadi satu fitur baru yang eksplisit, yaitu *Body Mass Index* (BMI). Mesin tidak menemukan konsep BMI secara mandiri; manusialah yang merancangnya. Kekuatan utama dari pendekatan ini adalah interpretabilitas. Saat model membuat keputusan berdasarkan fitur seperti BMI, kita dapat melacak dan memahami alasannya dengan jelas.
-
-Di sisi lain, representasi yang dipelajari mesin menyerahkan tugas ekstraksi fitur secara internal kepada algoritma selama proses pelatihannya. Pendekatan ini bersinar saat kita berhadapan dengan data yang sangat tidak terstruktur. Model menerima masukan dalam bentuk elemen tingkat terendah, lalu membangun hierarki abstraksinya sendiri tanpa instruksi eksplisit dari manusia. Ambil contoh pemrosesan citra dengan *convolutional neural network* (CNN). Saat memproses citra wajah, kita tidak menulis rumus matematis untuk mendeteksi letak lengkung mata atau variasi pencahayaan pada bayangan hidung, karena mendefinisikan hal tersebut secara spesifik nyaris mustahil. Kita hanya menyajikan matriks piksel mentah. Model tersebut kemudian belajar mendeteksi tepi, tekstur, dan bentuk objek secara otomatis. Representasi yang kuat, seperti *embedding* pada *deep learning*, terbentuk murni melalui pembaruan parameter model tanpa intervensi logika dari manusia.
-
-Dalam arsitektur *machine learning* modern, sistem yang paling kokoh jarang berada murni di satu ujung spektrum. Praktisi sering kali menyusun fitur tabular berbasis pengetahuan domain secara teliti, lalu menggabungkannya dengan algoritma yang mengekstraksi representasi kompleks dari data teks atau gambar. Keduanya saling melengkapi.
-
-Spektrum inilah yang menjadi tulang punggung narasi buku ini. Kita akan memulai perjalanan dari teknik representasi yang dirancang manusia, di mana kita memegang kendali penuh atas logika fitur. Setelah fondasi tersebut kuat, kita perlahan beranjak menuju representasi yang dipelajari mesin, mengkaji bagaimana model tingkat lanjut mengambil alih proses ekstraksi. Memahami kapan harus merancang secara eksplisit dan kapan membiarkan mesin belajar adalah inti sejati dari praktik rekayasa fitur yang utuh.
+Setelah diekstraksi, susunan fitur ini diorganisasi ke dalam sebuah representasi. Representasi adalah format struktural—umumnya berupa matriks atau tensor—yang menyatukan fitur-fitur individual menjadi satu kesatuan masukan matematis yang siap dioptimasi oleh fungsi objektif model. Kualitas representasi matematis $\mathbf{x}$ ini merupakan batas atas bagi performa algoritma. Model linier sederhana dengan representasi fitur yang terstruktur baik dapat melampaui performa jaringan saraf tiruan kompleks yang dilatih pada representasi yang buruk.
 
 
-## Mitos "Rekayasa Fitur Telah Mati" di Era *deep learning*
+## Peran Fitur dalam *Machine Learning*
 
-Kemampuan model *deep learning* mengekstraksi representasi internal yang kompleks sering memunculkan pandangan keliru. Karena jaringan saraf mampu menemukan pola dari data mentah secara mandiri, beredar mitos bahwa peran manusia dalam rekayasa fitur sudah usang. Pandangan ini mengasumsikan seluruh proses ekstraksi informasi kini sepenuhnya digantikan oleh mesin. Faktanya, rekayasa fitur tidak mati; praktiknya hanya berpindah tempat dan berubah bentuk.
+Dalam sistem *machine learning*, fitur memiliki peran yang jauh lebih mendasar daripada sekadar angka masukan. Representasi data secara langsung menetapkan batas atas teoretis dari akurasi yang dapat dicapai oleh sebuah model. Sehebat apa pun algoritma yang digunakan, model tersebut tidak akan mampu mempelajari pola jika informasinya memang tidak tersedia di dalam data.
 
-Pada pendekatan klasik, waktu banyak dihabiskan merumuskan fitur secara eksplisit, seperti menghitung rata-rata bergerak atau frekuensi kata. Di era *deep learning*, algoritma memang mengambil alih pembentukan representasi internal. Namun, manusia tetap memegang kendali penuh merancang tugas pembelajaran. Model tidak otomatis memahami batasan domain atau konteks operasional dari masalah yang diselesaikan. Peran manusia bergeser dari sekadar membuat variabel baru menjadi membingkai target, menstrukturkan masukan, dan menerapkan batasan domain sebelum data menyentuh jaringan saraf.
+Peran ini sangat terlihat pada formulasi paling dasar dalam pembelajaran terarah (*supervised learning*). Pertimbangkan sebuah model regresi linear:
 
-Pergeseran rekayasa fitur ini sangat terlihat pada tugas klasifikasi citra. Model memang mampu mengenali piksel untuk membentuk representasi yang dipelajari mesin secara internal, seperti mendeteksi tekstur dan batas objek. Akan tetapi, manusia tetap harus merancang bentuk data mentah yang disuapkan. Kitalah yang merancang pemotongan gambar (*cropping*), mengubah ukuran (*resizing*), menormalkan warna, dan menentukan augmentasi rotasi. Keputusan mengenai representasi yang dirancang manusia di tahap penyiapan ini pada akhirnya memandu sekaligus membatasi apa yang bisa dipelajari model.
+$$ \hat{y} = \mathbf{w}^T \mathbf{x} + b $$
 
-Pola serupa terjadi pada pemrosesan teks. Arsitektur bahasa modern dirancang mengekstraksi *embedding* semantik secara otomatis. Namun, kualitas representasi yang dipelajari mesin tersebut sangat bergantung pada keputusan awal manusia dalam menstrukturkan data. Kita tetap harus mendefinisikan bagaimana teks dipecah menjadi unit-unit kecil (*tokenization*), membatasi panjang maksimal dokumen masukan, dan membersihkan karakter tak relevan. Keputusan desain ini secara langsung mendikte rentang informasi yang pada akhirnya terlihat oleh model.
+Dalam persamaan ini, $\hat{y}$ adalah label atau target prediksi, $\mathbf{x} \in \mathbb{R}^d$ mewakili vektor fitur sebagai variabel independen, $\mathbf{w}$ adalah bobot yang dipelajari mesin, dan $b$ melambangkan bias. Fokus utama kita terletak pada $\mathbf{x}$. Jika vektor fitur $\mathbf{x}$ hanya berisi *noise* atau kekurangan sinyal yang relevan, algoritma tidak memiliki materi dasar untuk menyesuaikan bobot $\mathbf{w}$ secara akurat. Mesin tidak dapat menciptakan informasi dari kehampaan.
 
-Pada dasarnya, algoritma *deep learning* bertugas menjalankan optimasi matematis berdasarkan kerangka data yang disuapkan kepadanya. Membingkai target prediksi yang tepat dan menerapkan batasan domain merupakan langkah krusial dalam rekayasa fitur modern. Tanpa arahan ini, model sekuat apa pun akan memetakan pola tanpa arah operasional yang jelas. Rekayasa fitur tidak menghilang, melainkan berevolusi menjadi rancangan kondisi masukan yang tepat agar mesin dapat belajar secara optimal.
+[GAMBAR 1.1: diagram konseptual - Perbandingan arsitektur jaringan saraf tiruan kompleks pada data mentah di sisi kiri, dan model linear sederhana pada fitur yang direkayasa di sisi kanan, menunjukkan model sederhana mampu melampaui batas atas performa model kompleks.]
+
+Prinsip ini melahirkan pergerakan *data-centric AI* di industri dan akademis. Paradigma ini menekankan bahwa rekayasa data yang sistematis memberikan peningkatan performa yang jauh lebih besar dibandingkan sekadar merombak arsitektur model. Representasi fitur yang tepat akan memberikan beberapa keuntungan langsung:
+
+*   **Menyederhanakan ruang masalah:** Pola-pola relevan diangkat ke permukaan sehingga algoritma tidak perlu menebak atau melakukan transformasi internal yang rumit.
+*   **Mengungguli kompleksitas model:** Algoritma yang linier dan sederhana sering kali mengalahkan arsitektur *deep learning* jika dibekali dengan fitur yang kaya sinyal.
+*   **Meningkatkan efisiensi komputasi:** Model membutuhkan lebih sedikit data latih dan iterasi pembelajaran untuk mencapai titik konvergensi yang stabil.
+
+Sebagai contoh nyata, pertimbangkan sistem prediksi harga properti. Jika kita menyuapkan data mentah berupa kode pos, mesin menerima deretan angka nominal tanpa makna bawaan. Algoritma harus bersusah payah memetakan sendiri pola tata ruang untuk memahami mengapa satu area bernilai lebih mahal dari area lainnya.
+
+Pendekatan rekayasa fitur mengubah data administratif tersebut menjadi sinyal prediktif. Alih-alih kode pos mentah, kita menyediakan metrik spesifik seperti jarak ke stasiun transit, kualitas sekolah, dan tingkat kejahatan lingkungan. Dampaknya langsung terlihat jelas pada performa sistem. 
+
+Sebuah regresi linear yang dibekali fitur jarak ke stasiun transit akan melesat dan mudah mengungguli algoritma yang kompleks tetapi hanya mengandalkan titik koordinat geografis. Model yang canggih tetap terkekang oleh batas atas dari fitur yang minim konteks. Oleh karena itu, ekstraksi dan penyempurnaan representasi bukan sekadar langkah persiapan data, melainkan metode utama kita untuk mendongkrak kemampuan prediktif sistem itu sendiri.
+
+
+## Representasi yang Dirancang Manusia dan Dipelajari Mesin
+
+Praktik rekayasa fitur beroperasi pada sebuah spektrum. Pada satu sisi terdapat **representasi yang dirancang manusia** (*designed representation*), dan pada sisi lainnya terdapat **representasi yang dipelajari mesin** (*learned representation*). Spektrum ini menjadi kerangka utama untuk memahami seluruh teknik dalam buku ini.
+
+#### Representasi yang Dirancang Manusia
+
+Representasi yang dirancang manusia dibentuk menggunakan logika eksplisit dan pengetahuan domain. Kita bertindak sebagai penerjemah yang mengubah data mentah menjadi format yang bermakna bagi algoritma.
+
+Sebagai contoh, dalam prediksi risiko penyakit kardiovaskular, tinggi dan berat badan secara terpisah tidak memberikan konteks medis yang utuh. Pengetahuan domain merangkum kedua variabel tersebut ke dalam fitur eksplisit baru, yaitu *Body Mass Index* (BMI). Manusia mendefinisikan fitur ini melalui persamaan matematika:
+
+$$ \text{BMI} = \frac{w}{h^2} $$
+
+Di mana $w$ adalah berat badan dalam kilogram, dan $h$ adalah tinggi badan dalam meter. Algoritma tidak menemukan konsep BMI; manusialah yang merancangnya.
+
+Karakteristik utama pendekatan ini meliputi:
+*   **Interpretabilitas tinggi:** Keputusan model dapat dilacak langsung ke logika pembentukan fitur.
+*   **Ketergantungan domain:** Kualitas fitur bergantung pada seberapa baik manusia memahami masalah tersebut.
+*   **Efisiensi data:** Model sering kali membutuhkan lebih sedikit data untuk pelatihan karena sinyal telah diekstraksi ke dalam fitur.
+
+#### Representasi yang Dipelajari Mesin
+
+Sebaliknya, representasi yang dipelajari mesin menyerahkan tugas ekstraksi fitur kepada algoritma. Pendekatan ini banyak digunakan pada data tidak terstruktur seperti teks, citra, atau audio.
+
+Saat memproses citra wajah dengan *convolutional neural network* (CNN), kita tidak merumuskan letak lengkung mata atau bayangan. Kita menyajikan matriks piksel mentah, lalu model belajar mengenali tepi, tekstur, hingga bentuk objek secara mandiri. *Embedding* pada pemrosesan teks terbentuk murni melalui pembaruan parameter model tanpa campur tangan logika manusia.
+
+Karakteristik utama pendekatan ini meliputi:
+*   **Abstraksi hierarkis:** Model menyusun representasi dari elemen paling dasar (piksel, karakter) hingga pola kompleks.
+*   **Minim asumsi awal:** Tidak memerlukan aturan baku dari spesialis domain.
+*   **Kebutuhan komputasi dan data:** Sangat bergantung pada volume data yang besar agar mesin mampu memetakan representasi.
+
+[GAMBAR 1.1: Diagram Konseptual - Spektrum representasi dari fitur rancangan manusia di sisi kiri hingga representasi yang dipelajari mesin di sisi kanan, dengan ruang kolaborasi di tengah]
+
+#### Pergeseran Bentuk dan Pendekatan Hybrid
+
+Praktik modern jarang berada di satu titik murni. Batas antara kedua spektrum ini saling membaur, khususnya dengan perkembangan *self-supervised learning* (SSL).
+
+Metode seperti SimCLR (pembelajaran kontrastif) atau *masked autoencoders* (MAE) membuktikan bahwa manusia tidak perlu lagi menyusun persamaan fitur secara eksplisit. Manusia merancang strategi augmentasi data atau tugas rekonstruksi proksi (*pretext task*). Mesin kemudian mempelajari representasi dari tugas tersebut. Dalam paradigma ini, peran manusia bergeser dari mendefinisikan formula menjadi mendefinisikan lingkungan pembelajaran. Mengetahui kapan harus merancang fitur secara langsung dan kapan menyerahkan ekstraksi pada mesin adalah keputusan desain terpenting dalam merancang arsitektur prediktif.
+
+
+## Mitos "Rekayasa Fitur Telah Mati"
+
+Di masa lalu, ekstraksi atribut secara manual merupakan proses utama dalam pengembangan model prediksi. Pendekatan konvensional ini memiliki beberapa kelemahan fundamental:
+*   **Intensitas Komputasi Manusia:** Praktisi harus merumuskan dan menguji kombinasi matematis (seperti rasio atau logaritma) satu per satu secara manual untuk menemukan korelasi prediksi yang berguna.
+*   **Batas Insting Pakar:** Penemuan fitur sangat terbelenggu oleh kedalaman pengetahuan domain spesifik. Pola abstrak yang berada di luar insting tebakan awal rekayasawan umumnya terabaikan.
+*   **Kegagalan pada Dimensi Tinggi:** Formulasi manual terbukti sangat tidak efisien untuk memetakan interaksi non-linear yang rapat pada format data mentah berdimensi tinggi, seperti matriks piksel citra atau rentetan gelombang suara.
+
+Keberhasilan luar biasa model *deep learning* dalam menemukan pola internal (*feature learning*) secara otomatis sering memunculkan kesimpulan keliru bahwa kelemahan di atas membuat peran rekayasa manusia tak lagi diperlukan. Pandangan ini mengasumsikan bahwa jaringan saraf telah mengambil alih seluruh fungsi penggalian informasi.
+
+Kenyataannya, rekayasa fitur sama sekali tidak mati; ia hanya berpindah tempat dan mengubah wujud operasinya. Daripada menyusun rumusan variabel numerik secara eksplisit, praktisi masa kini bertugas merancang parameter ruang pembelajaran agar representasi yang dipelajari mesin dapat memusatkan perhatiannya ke arah yang benar.
+
+[GAMBAR 1.4: Diagram - Skema perbandingan alur kerja rekayasa fitur manual dengan *feature learning* pada arsitektur *deep learning*]
+
+Evolusi peran manusia ini menonjol pada tiga sisi utama operasi analitik modern:
+*   **Konstruksi Konteks (*Context Construction*):** Berdasarkan pandangan praktisi industri terkemuka (Chip Huyen, 2024), proses perakitan konteks untuk arsitektur *foundation models* adalah padanan absolut (*equivalent*) dari rekayasa fitur pada *machine learning* klasik. Strategi seperti *Retrieval-Augmented Generation* (RAG) untuk menyaring dokumen relevan dan modifikasi kueri memiliki tujuan yang sama persis: menyediakan informasi pendukung terbaik agar model mampu menjawab prediksi dengan presisi.
+*   **Rancangan Augmentasi Data:** Pada paradigma *self-supervised learning*, model dipelatih tanpa injeksi label target dari manusia. Proses konvergensi digerakkan murni oleh operasi augmentasi gambar atau teks. Manusia mendesain batas logis dari augmentasinya, sementara jaringan neural bekerja menyarikan representasi invarian berdasarkan desain tersebut.
+*   **Pembingkaian Geometri Sampel:** Jaringan saraf tidak memiliki pemahaman bawaan akan logika kronologis dunia nyata. Pengaturan indeks waktu prediksi (*prediction horizon*), penentuan unit observasi komputasi, serta penegakan batas waktu (*cutoff time*) agar model tidak merampas informasi dari masa depan (*data leakage*) mutlak dikendalikan secara mekanis oleh rekayasawan.
+
+Gerakan AI berbasis data (*data-centric AI*) mempertegas kesimpulan bahwa merekayasa kualitas masukan—baik dalam wujud matriks tabel, vektor augmentasi, maupun injeksi konteks semantik—secara terstruktur akan memproduksi model komersial yang jauh lebih tangguh ketimbang sekadar mengeksploitasi jutaan parameter komputasi.
 
 
 ## Dari Pertanyaan Prediksi ke Tabel Pembelajaran: Unit, Target, dan Batas Ketersediaan
 
-Sebagian besar proyek *machine learning* berawal dari pertanyaan bisnis yang luas, seperti "siapa pelanggan yang akan berhenti?" atau "transaksi mana yang mencurigakan?". Meskipun intuitif bagi manusia, algoritma tidak dapat memprosesnya secara langsung. Sebelum melakukan ekstraksi fitur apa pun, kita harus menerjemahkan pertanyaan tersebut ke dalam struktur tabel pembelajaran yang ketat. Tabel ini menjadi fondasi awal, di mana setiap baris mewakili satu contoh spesifik dan satu kolom mewakili jawaban. Proses ini membutuhkan tiga penetapan: unit observasi, target beserta horizon prediksinya, dan waktu prediksi.
+Sebagian besar proyek *machine learning* berawal dari pertanyaan bisnis praktis, seperti identifikasi pelanggan yang berisiko berhenti atau deteksi transaksi penipuan. Algoritma tidak dapat merespons pertanyaan kualitatif ini secara langsung. Tahap pertama sebelum merekayasa fitur adalah menerjemahkan masalah bisnis ke dalam struktur tabel pembelajaran (*learning table*). Tabel ini menetapkan fondasi operasional data, di mana setiap baris mewakili satu sampel spesifik dan setiap kolom memuat fitur serta label target.
 
-Langkah pertama adalah menentukan **unit observasi**. Unit observasi mendefinisikan apa persisnya wujud dari satu baris data di dalam *dataset*. Satu baris tidak selalu berarti satu entitas individu. Tergantung pada pertanyaannya, unit observasi bisa berupa sebuah entitas (seperti pengguna), sebuah kejadian (seperti transaksi), atau kombinasi entitas dan waktu (seperti pelanggan di bulan tertentu). Jika kita memprediksi pembatalan kartu kredit di akhir bulan, unit observasi yang tepat adalah kombinasi pelanggan dan bulan. Artinya, setiap pelanggan memiliki beberapa baris dalam *dataset*, yang masing-masing merepresentasikan status mereka pada bulan yang berbeda.
+Penyusunan tabel pembelajaran mensyaratkan tiga penetapan operasional:
 
-Setelah unit observasi jelas, kita mendefinisikan **target** dan **horizon prediksi**. Target adalah label aktual yang ingin diprediksi oleh algoritma, sedangkan horizon prediksi adalah rentang waktu spesifik di masa depan saat target tersebut diamati. Menggunakan contoh kartu kredit, pertanyaan bisnis "siapa yang akan berhenti?" diubah menjadi pernyataan operasional yang terukur: memprediksi apakah pelanggan tertentu akan membatalkan kartunya (target) dalam kurun waktu 30 hari ke depan (horizon prediksi).
+*   **Unit observasi**: Mendefinisikan wujud pasti dari satu baris data. Satu baris tidak selalu merepresentasikan satu entitas statis. Unit observasi dapat berupa entitas (pengguna), kejadian (transaksi), atau kombinasi entitas dan rentang waktu (pengguna pada bulan tertentu). Untuk kasus prediksi pembatalan langganan, unit observasi yang paling tepat adalah kombinasi spesifik antara pelanggan dan bulan kalender.
+*   **Target dan horizon prediksi**: Target merupakan label terukur yang dioptimasi oleh model, sedangkan horizon prediksi menentukan rentang waktu masa depan saat target tersebut divalidasi. Masalah "siapa pelanggan yang akan berhenti" diturunkan menjadi target kuantitatif berupa probabilitas pengguna menutup akun mereka dalam jendela 30 hari ke depan.
+*   **Waktu prediksi (*index time*)**: Titik acuan temporal pasti ketika model dipanggil untuk memberikan prediksi di lingkungan produksi. Titik ini beroperasi sebagai batas mutlak ketersediaan fitur. Seluruh kalkulasi representasi fitur historis hanya sah dieksekusi menggunakan rekaman data yang telah terakumulasi sebelum batas waktu ini.
 
-Batasan paling kritis sebelum merekayasa fitur adalah menetapkan **waktu prediksi** (*index time*). Waktu prediksi merupakan titik acuan pasti ketika model harus memberikan prediksinya. Titik ini berlaku sebagai batas mutlak ketersediaan fitur. Dalam kasus prediksi kartu kredit, jika waktu prediksi ditetapkan pada hari terakhir bulan berjalan, maka semua kalkulasi fitur hanya boleh dihitung menggunakan riwayat data yang terjadi sebelum titik waktu tersebut.
+[GAMBAR 1.5: Skema - Linimasa pembentukan sampel yang membagi rentang data historis untuk perhitungan fitur, titik waktu prediksi (index time) sebagai batas ketersediaan, dan horizon prediksi di masa depan untuk evaluasi target.]
 
-Waktu prediksi memisahkan garis waktu menjadi masa lalu yang legal dan masa depan yang terlarang. Mengabaikan batas ini akan memicu ***data leakage***, yaitu kondisi ketika informasi dari masa depan, atau label target itu sendiri, secara tidak sengaja terserap ke dalam perhitungan fitur.
+Penetapan batas waktu prediksi memisahkan periode historis yang legal untuk dianalisis dari periode masa depan yang sepenuhnya tertutup. Kegagalan mempertahankan garis batas temporal ini memicu terjadinya *data leakage*, sebuah anomali fatal di mana informasi dari masa depan atau dari label target tanpa sengaja merembes masuk ke dalam kalkulasi fitur. Praktik *point-in-time correctness* direkayasa pada sistem platform fitur modern demi menjamin seluruh nilai turunan dihitung akurat sesuai dengan kondisi aktual masa lalu tepat pada saat *index time*.
 
-Sebagai contoh, jika kita memasukkan jumlah komplain bulan depan sebagai fitur untuk memprediksi pembatalan di periode yang sama, kita telah mengambil data dari masa depan. Model yang terpapar *data leakage* akan terlihat menghasilkan akurasi yang luar biasa tinggi saat tahap pelatihan. Namun, model tersebut pasti gagal saat dihadapkan pada skenario dunia nyata karena fitur dari masa depan tersebut belum tersedia pada waktu operasinya yang sesungguhnya.
+Setelah tabel pembelajaran divalidasi dan integritas batas waktunya ditegakkan, tiap unit observasi ditransformasikan ke dalam representasi vektor numerik. Sistem *machine learning* menggunakan input tersebut untuk memetakan hubungan sistematis terhadap label target. Pada mayoritas arsitektur model modern, pemetaan pola ini bekerja dengan mentransformasikan vektor fitur asli melalui operasi matriks parameter yang dipelajari mesin:
+
+$$ \mathbf{h}_i = \mathbf{x}_i^\top W + \mathbf{b} $$
+
+Keterangan variabel:
+*   $\mathbf{x}_i \in \mathbb{R}^d$ adalah vektor fitur awal berdimensi $d$ untuk observasi ke-$i$, diekstraksi secara murni dari rentang data legal sebelum waktu prediksi.
+*   $W \in \mathbb{R}^{d \times k}$ mewakili matriks parameter berdimensi $d \times k$ yang dipelajari mesin secara otomatis dari himpunan data latih.
+*   $\mathbf{b} \in \mathbb{R}^k$ melambangkan vektor bias untuk penyesuaian fungsi.
+*   $\mathbf{h}_i \in \mathbb{R}^k$ menghasilkan vektor representasi laten berdimensi $k$ yang membentuk esensi abstraksi data, siap digunakan untuk inferensi target prediktif.
+
+Jika vektor fitur mentah $\mathbf{x}_i$ terkontaminasi oleh kebocoran masa depan, optimasi selama pelatihan akan mendesak pembaruan matriks parameter $W$ untuk mengeksploitasi sinyal ilusi tersebut. Dampaknya, model akan melaporkan evaluasi validasi yang sangat tinggi di fase eksperimen, lalu runtuh sepenuhnya saat dihadapkan pada realitas produksi di mana variabel manipulatif dari masa depan belum tersedia.
 
 
 ## Peta Struktur Representasi Data
 
-Saat pertama kali memproses data untuk *machine learning*, kita sering tergoda untuk meratakan semuanya menjadi baris dan kolom. Meskipun matriks tabular datar ($X \in \mathbb{R}^{n \times d}$) lazim digunakan, tidak semua bentuk data cocok dipaksakan ke dalam kerangka tunggal ini. Berbagai fenomena alam dan aktivitas manusia secara natural membutuhkan topologi matematis yang berbeda. Memaksakan data berstruktur ke dalam bentuk datar acap kali menghilangkan sinyal penting di dalamnya. Berikut adalah peta struktur representasi utama yang perlu dipahami:
+Saat memproses data untuk *machine learning*, memaksakan seluruh informasi menjadi baris dan kolom datar sering kali membuang banyak sinyal prediktif. Berbagai fenomena memiliki topologi matematis yang berbeda sejak awal. Berikut adalah lima struktur representasi utama yang sering kita hadapi:
 
-**Vektor dan Matriks Datar (Tabular)**
-Ini adalah struktur klasik yang mengasumsikan setiap fitur dapat berdiri sendiri. Pada matriks tabular, setiap baris mewakili pengamatan mandiri, dan setiap kolom adalah atribut yang terpisah. Sebagai contoh, profil pengguna standar berisi usia, pendapatan, dan lokasi amat cocok direpresentasikan sebagai vektor datar. Mengubah urutan kolom fitur tidak akan mengubah makna observasi. Bentuk ini adalah representasi alami bagi algoritma *tree-based* atau regresi linear.
+1. **Vektor dan Matriks Datar (Tabular)**
+   Setiap baris mewakili pengamatan mandiri, dan setiap kolom merupakan atribut terpisah ($X \in \mathbb{R}^{n \times d}$). Mengacak urutan kolom tidak mengubah makna pengamatan. Ini adalah format input utama untuk model linier dan *tree-based*.
 
-**Sekuens (*Sequence*)**
-Sekuens adalah data di mana urutan elemen membawa makna yang krusial. Contoh utamanya mencakup riwayat harga saham dan urutan kata dalam kalimat. Karena posisi setiap elemen menyimpan konteks spesifik, kita tidak bisa mengacaknya; membalik urutan sebuah kalimat pasti merusak maknanya.
+2. **Sekuens (*Sequence*)**
+   Urutan antar elemen menjadi penentu makna. Data deret waktu atau teks dokumen tergolong dalam struktur ini. Mengubah susunan kata dalam kalimat akan merusak konteks informasi.
 
-**Grid dan Tensor**
-Untuk data spasial seperti citra, informasi tidak hadir sebagai atribut mandiri yang terisolasi. Piksel direpresentasikan sebagai grid dimensi yang saling berhubungan secara lokal, seperti grid 2D untuk citra hitam-putih atau tensor 3D untuk citra berwarna. Elemen-elemen yang letaknya saling berdekatan secara spasial membentuk atribut visual penting, seperti batas tepi atau tekstur.
+3. **Grid dan Tensor**
+   Informasi terbentuk dari kedekatan spasial antarelemen, bukan dari nilai elemen yang terisolasi. Piksel pada citra direpresentasikan sebagai grid multi-dimensi (*tensor*), di mana kelompok yang letaknya berdekatan membangun pola visual seperti sudut atau tekstur.
 
-**Graf (*Graph*)**
-Terkadang sinyal paling berharga berasal dari hubungan antar entitas, bukan dari atribut entitas itu sendiri. Graf memetakan entitas sebagai titik (*nodes*) dan relasinya sebagai garis penghubung (*edges*). Contohnya adalah jejaring sosial; koneksi antarpengguna sering memberikan sinyal prediktif yang jauh lebih kuat dibandingkan sekadar atribut profil pengguna tersebut.
+4. **Graf (*Graph*)**
+   Sinyal utama berasal dari relasi antar entitas. Graf memetakan entitas sebagai titik (*node*) dan interaksinya sebagai garis (*edge*). Contoh aplikasinya mencakup deteksi penipuan transaksi dan analisis jejaring sosial.
 
-**Himpunan (*Set*)**
-Himpunan adalah kelompok elemen tanpa urutan khusus, tetapi keanggotaan kolektifnya bermakna, seperti halnya daftar barang dalam keranjang belanja.
+5. **Himpunan (*Set*)**
+   Sekelompok elemen tanpa urutan spesifik, namun keanggotaan kolektifnya memberi arti. Daftar keranjang belanja transaksi pengguna adalah contoh dari struktur himpunan.
 
-Memahami variasi struktur data ini akan memandu tahapan persiapan kita ke depannya. Bagian IV dari buku ini kelak akan membedah secara khusus bagaimana strategi rekayasa fitur harus disesuaikan untuk masing-masing fondasi ini.
+Arsitektur *deep learning* modern, terutama model dasar multimodal, kini mampu menyerap langsung beragam struktur tersebut. Model memetakan bentuk asalnya menjadi representasi yang dipelajari mesin secara iteratif. Proses pemetaan pada jaringan saraf umumnya bertumpu pada transformasi lapisan berikut:
+
+$$ h^{(l)} = \sigma(W^{(l)} h^{(l-1)} + b^{(l)}) $$
+
+Persamaan di atas memperbarui representasi data melalui komponen berikut:
+- $h^{(l-1)}$ merupakan input atau representasi fitur dari lapisan sebelumnya.
+- $W^{(l)}$ adalah matriks bobot yang menentukan kekuatan kombinasi dari fitur-fitur tersebut.
+- $b^{(l)}$ berfungsi sebagai vektor *bias* untuk memberikan pergeseran nilai.
+- $\sigma$ melambangkan fungsi aktivasi non-linear yang memungkinkan jaringan menangkap pola kompleks.
+- $h^{(l)}$ adalah hasil akhir berupa representasi laten pada lapisan ke-$l$.
+
+[GAMBAR 1.1: skema - Peta hierarki representasi data mulai dari matriks tabular, sekuens, tensor citra, hingga struktur graf dan penggabungan multimodal]
+
+Perbedaan fondasi topologi ini sangat menentukan teknik rekayasa fitur yang dipilih. Pembahasan mendalam mengenai strategi transformasi untuk masing-masing tipe data tersebut akan diuraikan lebih lanjut pada Bagian IV dan V.
 
 
-## Sekilas Tentang *pipeline* Rekayasa Fitur
+## Sekilas Tentang *Pipeline* Rekayasa Fitur
 
-Praktik rekayasa fitur jauh lebih sistematis daripada sekadar mencoba berbagai metode secara acak. Seluruh operasi transformasi dirangkai membentuk sebuah *pipeline*. Struktur ini menjamin data mentah melewati serangkaian proses secara berurutan, konsisten, dan terhindar dari kebocoran informasi (*leakage*) hingga akhirnya menjadi representasi yang siap diterima oleh model prediksi. Konstruksi berurutan dari *pipeline* ini sekaligus menjadi peta jalan utama materi di buku ini.
+Praktik rekayasa fitur jauh lebih sistematis daripada sekadar mencoba berbagai metode secara acak. Seluruh operasi transformasi dirangkai membentuk sebuah *pipeline*. Secara formal, *pipeline* merupakan komposisi fungsi matematis yang diterapkan secara berurutan pada data mentah:
 
-Perjalanan *pipeline* selalu dimulai dengan transformasi mendasar untuk data tabular konvensional (Bagian II). Tahap ini berhadapan dengan masalah format numerik dan kekosongan nilai pada data nyata. Algoritma matematis memerlukan input terstandardisasi. Oleh sebab itu, fitur numerik dengan rentang besar perlu diselaraskan distribusinya melalui teknik *scaling*. Teks kategori diterjemahkan menjadi format numerik menggunakan metode *encoding*, sementara kekosongan data ditangani secara sistematis menggunakan pendekatan probabilitas atau statistik (*imputation*).
+$$ \mathbf{X}_{\text{transform}} = f_k(f_{k-1}(\dots f_1(\mathbf{X}_{\text{raw}}))) $$
 
-Setelah representasi dasar terbentuk, matriks data sering kali membengkak dan memuat informasi redundan. Tahap selanjutnya berfokus pada seleksi fitur dan reduksi dimensi (Bagian III). Memasukkan atribut secara berlebihan dapat menurunkan akurasi dan memperlambat komputasi. Menggunakan kedua teknik tersebut, *pipeline* menyingkirkan elemen yang sekadar memuat *noise* dan mengompresi fitur yang tumpang-tindih. Model pada akhirnya hanya menggunakan sinyal prediktif yang paling kuat.
+Di mana $\mathbf{X}_{\text{raw}}$ adalah matriks data mentah awal, $f_1, \dots, f_k$ mewakili serangkaian fungsi transformasi (seperti *scaling*, *encoding*, atau *imputation*), dan $\mathbf{X}_{\text{transform}}$ adalah representasi akhir yang siap diumpankan ke dalam model. Struktur berurutan ini menjamin konsistensi antara tahap pelatihan dan *inference*, sekaligus mencegah terjadinya *leakage*.
 
-*Pipeline* kemudian memiliki cabang penanganan spesifik untuk data non-tabular (Bagian IV). Setiap jenis data memiliki struktur alami yang esensial. Deret waktu mengandalkan urutan historis, citra resolusi tinggi bergantung pada kedekatan piksel spasial, dokumen teks bertumpu pada konteks kalimat, dan jaringan graf membawa informasi relasional. Masing-masing modalitas memerlukan teknik ekstraksi khusus agar makna dan posisinya bertahan sebelum diumpankan ke model.
+[GAMBAR 1.4: Skema - Diagram alir dari data mentah menuju representasi akhir, memetakan bab-bab di buku ini dari transformasi dasar tabular (Bagian II) hingga representasi modern (Bagian V)]
 
-Tahap paling akhir memperlihatkan bagaimana desain pemrosesan ini terintegrasi dengan arsitektur *machine learning* modern (Bagian V). Fungsi rekayasa fitur berkembang melampaui perhitungan statis. Praktik modern memanfaatkan kapabilitas *deep learning*, mengekstraksi informasi lewat *pretrained model*, dan menyertakan kerangka kerja otomatis. Fase ini menyeimbangkan komposisi antara representasi yang dirancang manusia dengan hierarki abstraksi pada representasi yang dipelajari mesin.
+Konstruksi *pipeline* ini bertindak sebagai peta jalan materi di dalam buku:
+
+*   **Transformasi Data Tabular (Bagian II):** Fase ini berhadapan dengan masalah format numerik dan kekosongan nilai. Algoritma memerlukan input terstandardisasi, sehingga fitur numerik diselaraskan melalui *scaling*. Teks kategori diterjemahkan lewat *encoding*, data yang hilang ditangani dengan *imputation* berbasis *pipeline*, dan fitur turunan dibentuk secara logis.
+*   **Seleksi dan Reduksi Dimensi (Bagian III):** Matriks data sering kali membengkak dan memuat redundansi. Bagian ini menyingkirkan *noise* dan mengompresi fitur yang tumpang tindih, memastikan model hanya menggunakan sinyal prediktif yang kuat.
+*   **Rekayasa Fitur Berdasarkan Jenis Data (Bagian IV):** Data non-tabular membawa struktur alami. Deret waktu mengandalkan urutan historis, citra bertumpu pada kedekatan piksel, dan teks berbasis pada urutan token. Setiap modalitas menuntut teknik ekstraksi spesifik.
+*   **Rekayasa Fitur dalam ML Modern (Bagian V):** Praktik terkini memanfaatkan arsitektur *deep learning* dan ekstraksi informasi melalui *pretrained model*, serta mengeksplorasi sistem otomasi representasi.
+
+Sepanjang perjalanan merancang *pipeline*, Anda akan mengambil keputusan yang berada pada spektrum antara representasi yang **dirancang manusia** dan representasi yang **dipelajari mesin**. Berikut adalah perbandingan kapan sebaiknya menggunakan masing-masing ujung spektrum:
+
+*   **Representasi yang dirancang manusia** (*designed representation*):
+    *   Paling tepat ketika data berukuran kecil atau domain masalah membutuhkan pengetahuan pakar yang kuat (misalnya, penyusunan rasio finansial spesifik).
+    *   Menjadi pilihan utama saat interpretabilitas menjadi syarat mutlak, sehingga setiap fitur dapat dilacak kembali ke sumber operasional aslinya.
+    *   Digunakan saat memakai keluarga model klasik seperti regresi logistik atau *random forest* yang tidak memetakan hierarki non-linier secara otomatis.
+*   **Representasi yang dipelajari mesin** (*learned representation*):
+    *   Lebih unggul saat menangani volume data tak terstruktur yang masif, seperti korpus teks raksasa atau jutaan citra resolusi tinggi.
+    *   Cocok ketika pola fitur terlalu kompleks untuk dirumuskan melalui aturan matematis manual.
+    *   Diimplementasikan menggunakan *deep learning* atau dengan mengekstraksi *embedding* padat dari *pretrained model*.
+
+Sebuah *pipeline* dalam skenario nyata sering kali merupakan bentuk hibrida yang memadukan kedua pendekatan ini. Bagian Penutup (Bagian VI) akan menyintesiskan seluruh komponen tersebut menjadi satu kerangka kerja desain yang utuh.
 
 
 ## Studi Kasus: Data Transaksi ke Matriks Fitur
 
-Untuk menyatukan konsep-konsep formulasi yang telah dibahas sebelumnya, mari kita bedah sebuah kasus nyata: memproses log transaksi *e-commerce*. Di dalam basis data mentah, rekaman transaksi tidak tersusun rapi berdasarkan pengguna, melainkan menumpuk sebagai riwayat kejadian beruntun. Satu baris mewakili satu kejadian transaksi sesaat.
+Log transaksi *e-commerce* mentah tidak tersusun rapi berdasarkan pengguna. Data ini menumpuk sebagai riwayat kejadian beruntun, di mana satu baris mewakili satu kejadian sesaat. Model *machine learning* tabular tidak menerima masukan berupa log berukuran dinamis. Sebagian pengguna mungkin berbelanja satu kali, sementara yang lain ratusan kali. Karena algoritma menuntut vektor fitur berukuran seragam, kita harus merekayasa log vertikal ini menjadi matriks fitur horizontal.
 
-Model *machine learning* tabular tidak bisa langsung mencerna log yang jumlahnya dinamis ini. Seorang pengguna mungkin baru berbelanja sekali, sementara yang lain telah bertransaksi ratusan kali. Algoritma menuntut masukan berupa vektor fitur berukuran seragam. Oleh karena itu, kita harus merancang rekayasa data untuk menyulap log vertikal yang panjang tersebut menjadi sebuah matriks fitur horizontal.
+Langkah pertama adalah menetapkan **unit observasi** dan **target**. Pada kasus ini, unit observasinya adalah profil pelanggan individual. Target prediksinya adalah sebuah keputusan biner: apakah pengguna akan *churn* (berhenti berlangganan) pada bulan berikutnya.
 
-Langkah awal adalah mengunci definisi **unit** dan **target**. Di sini, unit observasi kita adalah setiap profil pelanggan individual. Target yang ingin diprediksi adalah sebuah keputusan biner: apakah pengguna tersebut akan *churn* (berhenti menggunakan layanan) di bulan depan.
+Setelah target ditentukan, kita menetapkan **waktu prediksi** (*index time*). Titik waktu ini memisahkan data masa lalu yang dapat digunakan dan data masa depan yang dilarang. Jika evaluasi ditetapkan pada 1 Oktober, semua perhitungan fitur wajib menggunakan log sebelum tanggal tersebut. Mengambil informasi melewati waktu prediksi mengakibatkan *leakage*.
 
-Setelah target jelas, hal paling fundamental berikutnya adalah menetapkan **waktu prediksi** (*index time*). Waktu prediksi adalah titik waktu yang memisahkan antara masa lalu dan masa depan secara imajiner. Jika batas evaluasi ditetapkan pada tanggal 1 Oktober, maka segala perhitungan fitur wajib menggunakan log yang terjadi persis sebelum tanggal tersebut. Mengambil informasi transaksi yang terjadi melewati waktu prediksi akan memicu kebocoran informasi (*leakage*), sebuah kecacatan fatal yang merusak integritas *pipeline* evaluasi model.
+Dalam skala produksi nyata—seperti arsitektur *feature store* skala besar—transformasi ini berjalan dalam *pipeline* yang terstruktur. Perjalanan dari log mentah hingga menjadi matriks fitur ini sekaligus memetakan jalan (*roadmap*) struktur buku ini:
 
-[GAMBAR 1.1]
-Judul: Transformasi dari log transaksi (data mentah) ke matriks fitur
-Tipe: diagram konseptual
-Tampilkan: Diagram showing raw event rows fanning inward and aggregating into a single summarized row per user ID.
-Sumber data: Konseptual
+1. **Transformasi Tabular (Bagian II):** Mengonversi log mentah menjadi fitur terhitung per pengguna melalui agregasi dan pembentukan fitur turunan.
+   - *Frekuensi*: Jumlah transaksi unik selama 30 hari sebelum waktu prediksi.
+   - *Moneter*: Total pengeluaran pelanggan pada rentang waktu yang sama.
+   - *Perilaku*: Persentase belanja elektronik dibandingkan pengeluaran keseluruhan.
+2. **Seleksi dan Reduksi Dimensi (Bagian III):** Menyaring fitur agregasi yang redundan dan mengevaluasi kualitas fitur yang dipertahankan.
+3. **Penanganan Tipe Data Berbeda (Bagian IV):** Mengekstraksi fitur khusus apabila log transaksi mencakup data tak terstruktur, seperti teks ulasan atau deret waktu sensor.
+4. **Rekayasa Fitur dalam ML Modern (Bagian V):** Memanfaatkan representasi yang dipelajari mesin (*learned representation*) dan otomasi untuk ruang pencarian fitur yang luas.
+5. **Sintesis (Bagian VI):** Memastikan integritas *pipeline* dari *training* hingga *inference* untuk menghindari *training-serving skew*.
 
-Dengan jangkar waktu prediksi yang kokoh, kita memadatkan sejarah setiap pengguna. Puluhan baris log mentah diringkas menjadi hanya satu baris representasi per unit. Proses ini menciptakan nilai-nilai fitur baru melalui teknik agregasi:
-- **Frekuensi**: Menghitung jumlah total transaksi unik selama 30 hari sebelum waktu prediksi untuk menangkap momentum belanja.
-- **Moneter**: Menjumlahkan keseluruhan nominal pengeluaran pelanggan di rentang waktu yang sama sebagai indikator daya beli.
-- **Perilaku**: Menghitung persentase porsi belanja elektronik dibandingkan pengeluaran keseluruhan, untuk menangkap pola preferensi spesifik.
+[GAMBAR 1.8: diagram konseptual - Peta jalan struktur buku yang menggambarkan transformasi log transaksi mentah, melewati tahap transformasi tabular, seleksi, hingga representasi akhir pada pipeline machine learning]
 
-Tujuan akhir dari rangkaian transformasi ini adalah terwujudnya sebuah matriks fitur tabular yang rapi. Setiap baris kini mewakili observasi tunggal seorang pengguna, dengan rangkaian fitur terhitung yang siap memberikan informasi kuantitatif, dan satu target yang menanti untuk diprediksi. Algoritma tak perlu lagi menelusuri atau mengurai jejak panjang log mentah yang kompleks. Data yang diolah kini telah menjadi representasi terstruktur, sehingga model *machine learning* dapat langsung mengenali pola dan memisahkan kelas target.
+Untuk mengilustrasikan agregasi secara presisi, total pengeluaran bulanan seorang pengguna (fitur moneter) sebelum waktu prediksi $t_p$ dapat diformulasikan sebagai:
+
+$$
+x_{i, \text{moneter}} = \sum_{t \in T_i, t < t_p} v_{i,t}
+$$
+
+di mana $T_i$ adalah himpunan transaksi pengguna $i$ dan $v_{i,t}$ mewakili nilai transaksi pada waktu kejadian $t$.
+
+Melalui proses ini, puluhan baris log per pengguna diringkas menjadi satu baris observasi tunggal. Matriks akhir ini berisi representasi terstruktur dengan berbagai fitur kuantitatif dan target klasifikasi yang siap diproses oleh algoritma.
