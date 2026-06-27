@@ -5,18 +5,20 @@
 Data citra digital pada dasarnya merupakan matriks numerik spasial berdimensi tinggi. Sebuah gambar berwarna tersusun atas kisi dua dimensi yang merekam tiga kanal warna (RGB), di mana setiap titik piksel menyimpan nilai intensitas dari 0 hingga 255. Sebelum arsitektur *computer vision* dapat mengekstraksi representasi polanya, data mentah ini harus distandarkan melalui dua mekanisme utama: normalisasi dan augmentasi.
 
 **Normalisasi Citra**
-Normalisasi menstandarkan rentang nilai piksel untuk memastikan gradien algoritma *machine learning* tidak meledak atau lambat saat konvergensi. Proses ini lebih dari sekadar membagi matriks dengan nilai 255. Praktik industri modern umumnya menerapkan standardisasi *Z-score* per kanal warna. Pada fase ini, integritas *pipeline* sangat ditekankan:
-*   Parameter rata-rata (*mean*) dan simpangan baku (*standard deviation*) wajib dihitung secara eksklusif dari himpunan data latih.
-*   Konstanta tersebut lalu dikunci dan diaplikasikan mentah-mentah ke data pengujian (*inference*). 
-*   Apabila menggunakan *pretrained model*, praktisi harus menormalisasi citra mengikuti distribusi statistik asal model tersebut (contohnya konstanta *mean* standar ImageNet `[0.485, 0.456, 0.406]`).
+Normalisasi menstandarkan rentang nilai piksel untuk memastikan gradien algoritma *machine learning* tidak meledak atau lambat saat konvergensi. Proses ini lebih dari sekadar membagi matriks dengan nilai 255. Praktik industri modern umumnya menerapkan standardisasi *Z-score* per kanal warna yang diformulasikan sebagai:
+$$ x_{c}^{\text{norm}} = \frac{x_c - \mu_c}{\sigma_c} $$
+Di mana $x_c$ adalah intensitas piksel asli pada kanal warna spasial $c$ (misalnya Red, Green, atau Blue), $\mu_c$ adalah rata-rata intensitas piksel, dan $\sigma_c$ adalah simpangan bakunya pada kanal tersebut. Pada fase ini, integritas *pipeline* sangat ditekankan:
+* Parameter rata-rata (*mean*) dan simpangan baku (*standard deviation*) wajib dihitung secara eksklusif dari himpunan data latih.
+* Konstanta tersebut lalu dikunci dan diaplikasikan mentah-mentah ke data pengujian (*inference*). 
+* Apabila menggunakan *pretrained model*, praktisi harus menormalisasi citra mengikuti distribusi statistik asal model tersebut (contohnya konstanta *mean* standar ImageNet `[0.485, 0.456, 0.406]`).
 
 **Augmentasi Data**
 Augmentasi merupakan injeksi instruksi sintesis di dalam *pipeline* untuk mencegah model sekadar menghafal tata letak piksel kaku (*overfitting*). Transformasi ini secara ketat hanya dijalankan selama fase pelatihan. Ekosistem augmentasi saat ini telah berkembang melampaui rotasi sederhana:
-*   **Geometris dan Visual Dasar:** Transformasi deterministik seperti pemotongan acak (*random crop*), pembalikan horizontal, distorsi prespektif, hingga injeksi *noise* warna.
-*   **Kebijakan Otomatis (*AutoAugment/RandAugment*):** Alih-alih meracik urutan pemotongan secara manual, kerangka kerja modern secara acak mengundi kombinasi transformasi dari kumpulan prosedur operasi standar, yang secara empiris terbukti lebih tangguh dan serbaguna.
-*   **Augmentasi Lintas Sampel (*Mixup/CutMix*):** Metode mutakhir yang secara harafiah menempelkan (*patch*) potongan citra anjing ke dalam citra kucing, lalu melatih model memprediksi rasio probabilitas gabungan. Pendekatan ini memaksa model berfokus pada morfologi lokal alih-alih latar belakang global.
+* **Geometris dan Visual Dasar:** Transformasi deterministik seperti pemotongan acak (*random crop*), pembalikan horizontal, distorsi prespektif, hingga injeksi *noise* warna.
+* **Kebijakan Otomatis (*AutoAugment/RandAugment*):** Alih-alih meracik urutan pemotongan secara manual, kerangka kerja modern secara acak mengundi kombinasi transformasi dari kumpulan prosedur operasi standar, yang secara empiris terbukti lebih tangguh dan serbaguna.
+* **Augmentasi Lintas Sampel (*Mixup/CutMix*):** Metode mutakhir yang secara harafiah menempelkan (*patch*) potongan citra anjing ke dalam citra kucing, lalu melatih model memprediksi rasio probabilitas gabungan. Pendekatan ini memaksa model berfokus pada morfologi lokal alih-alih latar belakang global.
 
-Kedua tahapan prapemrosesan di atas merupakan prasyarat wajib yang menentukan apakah sebuah ekstraktor—baik yang dirancang manusia secara klasik maupun arsitektur neural—akan mengenali objek, atau sekadar terjebak pada perbedaan pencahayaan.
+Kedua tahapan prapemrosesan di atas merupakan prasyarat wajib yang menentukan apakah sebuah ekstraktor - baik yang dirancang manusia secara klasik maupun arsitektur neural - akan mengenali objek, atau sekadar terjebak pada perbedaan pencahayaan.
 
 
 ## Fitur Rancangan Tangan (HOG) dan Keterbatasannya
@@ -24,9 +26,9 @@ Kedua tahapan prapemrosesan di atas merupakan prasyarat wajib yang menentukan ap
 Sebelum *deep learning* mendominasi *computer vision*, pemahaman citra bertumpu pada representasi rancangan manusia. Insinyur menghindari pemrosesan nilai piksel mentah secara langsung karena rentan terhadap variasi lingkungan. Pergeseran pencahayaan kecil saja dapat merombak susunan angka piksel secara drastis, meskipun objek yang ditangkap tidak berubah sama sekali. Praktisi mengatasi kerentanan ini dengan mengekstraksi struktur gambar yang lebih stabil.
 
 Representasi citra pada era klasik memiliki beberapa karakteristik utama:
-*   **Menghindari piksel mentah:** Angka intensitas asli terlalu sensitif terhadap perubahan cahaya atau pergeseran posisi objek.
-*   **Berbasis perhitungan lokal:** Ekstraksi fitur menggunakan operasi matematika untuk mendeteksi keberadaan tepian atau sudut pada bagian-bagian kecil gambar.
-*   **Mengutamakan stabilitas bentuk:** Matriks piksel diubah menjadi vektor fitur yang jauh lebih kebal terhadap gangguan visual.
+* **Menghindari piksel mentah:** Angka intensitas asli terlalu sensitif terhadap perubahan cahaya atau pergeseran posisi objek.
+* **Berbasis perhitungan lokal:** Ekstraksi fitur menggunakan operasi matematika untuk mendeteksi keberadaan tepian atau sudut pada bagian-bagian kecil gambar.
+* **Mengutamakan stabilitas bentuk:** Matriks piksel diubah menjadi vektor fitur yang jauh lebih kebal terhadap gangguan visual.
 
 Contoh paling menonjol dari pendekatan ini adalah algoritma *Histogram of Oriented Gradients* (HOG). Algoritma ini bekerja dengan membagi citra ke dalam kisi-kisi blok berukuran kecil dan menghitung arah perubahan intensitas warna (*gradient*).
 
@@ -44,16 +46,16 @@ Di mana $I$ adalah fungsi intensitas piksel, $G_x$ mengukur perubahan intensitas
 [GAMBAR 12.1: Diagram Konseptual - Ekstraksi fitur Histogram of Oriented Gradients (HOG) pada citra, menampilkan gambar asli, panah gradien, dan representasi blok HOG]
 
 Pada kasus pendeteksi pejalan kaki, model tidak berupaya menghafal warna pakaian yang selalu berganti. Ekstraktor HOG memetakan siluet pejalan kaki melalui serangkaian proses:
-1.  **Mendeteksi tepi fisik:** Mengidentifikasi garis vertikal tubuh serta lengkungan kepala dan bahu melalui nilai gradien.
-2.  **Membagi area gambar:** Mengelompokkan perhitungan ke dalam blok-blok spasial berukuran tetap.
-3.  **Menyusun histogram:** Merangkum dominasi arah garis-garis tersebut ke dalam sebuah histogram distribusi orientasi lokal.
+1. **Mendeteksi tepi fisik:** Mengidentifikasi garis vertikal tubuh serta lengkungan kepala dan bahu melalui nilai gradien.
+2. **Membagi area gambar:** Mengelompokkan perhitungan ke dalam blok-blok spasial berukuran tetap.
+3. **Menyusun histogram:** Merangkum dominasi arah garis-garis tersebut ke dalam sebuah histogram distribusi orientasi lokal.
 
 Representasi spasial inilah yang bertindak sebagai fitur akhir. Pejalan kaki tetap dapat terdeteksi terlepas dari warna baju karena batas fisiknya terekam secara konsisten di dalam ruang gradien HOG.
 
 Pendekatan ekstraksi manual ini memiliki beberapa keterbatasan bawaan:
-*   **Membutuhkan keahlian domain spesifik:** Pembuatan algoritma menuntut pemahaman mendalam mengenai manipulasi citra dan proses rekayasa berulang yang memakan waktu.
-*   **Konfigurasi yang kaku:** Parameter seperti dimensi sel, ukuran blok, dan ambang batas intensitas harus disetel ulang secara manual untuk setiap kasus target deteksi yang berbeda.
-*   **Kelemahan pada konteks tingkat tinggi:** HOG unggul dalam memetakan batas siluet objek, tetapi gagal memahami konteks semantik. Representasi ini sanggup mendeteksi siluet mobil, tetapi kesulitan membedakan mobil fisik yang melaju di jalan raya dari sekadar gambar mobil yang tercetak di papan reklame.
+* **Membutuhkan keahlian domain spesifik:** Pembuatan algoritma menuntut pemahaman mendalam mengenai manipulasi citra dan proses rekayasa berulang yang memakan waktu.
+* **Konfigurasi yang kaku:** Parameter seperti dimensi sel, ukuran blok, dan ambang batas intensitas harus disetel ulang secara manual untuk setiap kasus target deteksi yang berbeda.
+* **Kelemahan pada konteks tingkat tinggi:** HOG unggul dalam memetakan batas siluet objek, tetapi gagal memahami konteks semantik. Representasi ini sanggup mendeteksi siluet mobil, tetapi kesulitan membedakan mobil fisik yang melaju di jalan raya dari sekadar gambar mobil yang tercetak di papan reklame.
 
 Kekakuan representasi ini menjadi batas akhir kemampuan fitur yang dirancang manusia. Keterbatasan struktural tersebut mendorong praktisi untuk beralih menggunakan representasi yang dipelajari mesin, di mana keseluruhan hierarki visual dapat diekstraksi secara otomatis melalui pelatihan data.
 
@@ -69,11 +71,11 @@ $$ \mathbf{Y}_{i,j} = \sum_{m} \sum_{n} \mathbf{W}_{m,n} \cdot \mathbf{X}_{i+m, 
 Di mana $\mathbf{Y}$ adalah *feature map* keluaran, $\mathbf{W}$ merupakan matriks filter pembawa bobot yang dipelajari selama pelatihan, dan $\mathbf{X}$ merepresentasikan area piksel citra masukan.
 
 Melalui operasi yang diulang pada banyak lapisan, CNN membangun pemahaman visual secara hierarkis. Ekstraksi fitur ini terbagi ke dalam beberapa tingkat:
-*   **Lapisan awal:** Filter merespons bentuk paling sederhana. Jaringan mengenali garis vertikal, sudut, lengkungan, dan gradasi warna.
-*   **Lapisan menengah:** Jaringan merangkai garis dan sudut menjadi struktur yang lebih kompleks. Model mulai mendeteksi tekstur atau bagian spesifik dari objek, seperti roda kendaraan atau bingkai jendela.
-*   **Lapisan dalam:** Fitur parsial disatukan menjadi representasi semantik tingkat tinggi. Jaringan kini memahami konsep utuh untuk membedakan mobil, wajah, atau bentuk bangunan.
+* **Lapisan awal:** Filter merespons bentuk paling sederhana. Jaringan mengenali garis vertikal, sudut, lengkungan, dan gradasi warna.
+* **Lapisan menengah:** Jaringan merangkai garis dan sudut menjadi struktur yang lebih kompleks. Model mulai mendeteksi tekstur atau bagian spesifik dari objek, seperti roda kendaraan atau bingkai jendela.
+* **Lapisan dalam:** Fitur parsial disatukan menjadi representasi semantik tingkat tinggi. Jaringan kini memahami konsep utuh untuk membedakan mobil, wajah, atau bentuk bangunan.
 
-Kemampuan belajar berjenjang ini memungkinkan kita menerapkan *transfer learning*. Sebuah CNN besar yang telah dilatih dengan jutaan citra dari *dataset* raksasa (seperti ImageNet) memiliki fondasi pemahaman visual yang sangat universal. Model seperti ini disebut *pretrained model*. Elemen visual dasar cenderung sama di berbagai foto, sehingga kemampuan ekstraksi jaringan tersebut dapat didaur ulang untuk menyelesaikan masalah klasifikasi pada data yang benar-benar baru.
+Kemampuan belajar berjenjang ini memungkinkan kita menerapkan *transfer learning*. Sebuah CNN besar yang telah dilatih dengan jutaan citra dari *dataset* raksasa (seperti ImageNet) memiliki fondasi pemahaman visual yang sangat universal. Model seperti ini disebut *pretrained model*. Elemen visual dasar cenderung sama di berbagai foto, sehingga kemampuan ekstraksi jaringan tersebut dapat didaur ulang untuk menyelesaikan masalah klasifikasi pada data yang baru.
 
 [GAMBAR 12.3: Skema - Arsitektur CNN membuang lapisan klasifikasi akhir untuk menjadi feature extractor]
 
@@ -100,9 +102,9 @@ Pemrosesan relasi antarkepingan ini mengompresi makna semantik visual ke dalam r
 
 Dalam praktik rekayasa fitur modern, beberapa keluarga *pretrained model* menjadi standar utama untuk mengekstraksi representasi citra:
 
-*   **Keluarga CLIP dan SigLIP:** Model ini dilatih menggunakan ratusan juta pasangan citra dan teks. Bagian *encoder* visi dari model seperti SigLIP sering dipisahkan dan digunakan sebagai *extractor* fitur serbaguna, memberikan hasil yang jauh lebih kuat untuk representasi umum dibandingkan CNN konvensional yang hanya dilatih pada ImageNet.
-*   **DINOv2:** Arsitektur berbasis *self-supervised learning* yang secara khusus dioptimalkan untuk membedakan struktur spasial. DINOv2 memproduksi dua tipe keluaran representasi sekaligus: *token* CLS yang merangkum *image embedding* global, dan fitur tingkat *patch* (beresolusi 14×14 piksel) yang sangat presisi untuk mengeksekusi tugas prediksi padat seperti segmentasi dan estimasi kedalaman.
-*   **Ekstraksi Fitur Multi-Skala dan Hibrida:** Untuk tugas visual tingkat lanjut, representasi ditarik dari beberapa lapisan menengah (*intermediate*) ViT secara bersamaan, tidak hanya dari lapisan akhir. Arsitektur hibrida modern seperti ConvNeXt v2 juga mengadopsi kembali struktur hierarkis ala CNN yang dipadukan dengan resep pelatihan transformer, menghasilkan piramida fitur yang menangkap detail lokal sekaligus konteks global.
+* **Keluarga CLIP dan SigLIP:** Model ini dilatih menggunakan ratusan juta pasangan citra dan teks. Bagian *encoder* visi dari model seperti SigLIP sering dipisahkan dan digunakan sebagai *extractor* fitur serbaguna, memberikan hasil yang jauh lebih kuat untuk representasi umum dibandingkan CNN konvensional yang hanya dilatih pada ImageNet.
+* **DINOv2:** Arsitektur berbasis *self-supervised learning* yang secara khusus dioptimalkan untuk membedakan struktur spasial. DINOv2 memproduksi dua tipe keluaran representasi sekaligus: *token* CLS yang merangkum *image embedding* global, dan fitur tingkat *patch* (beresolusi 14×14 piksel) yang sangat presisi untuk mengeksekusi tugas prediksi padat seperti segmentasi dan estimasi kedalaman.
+* **Ekstraksi Fitur Multi-Skala dan Hibrida:** Untuk tugas visual tingkat lanjut, representasi ditarik dari beberapa lapisan menengah (*intermediate*) ViT secara bersamaan, tidak hanya dari lapisan akhir. Arsitektur hibrida modern seperti ConvNeXt v2 juga mengadopsi kembali struktur hierarkis ala CNN yang dipadukan dengan resep pelatihan transformer, menghasilkan piramida fitur yang menangkap detail lokal sekaligus konteks global.
 
 Pendekatan sekuensial ini menyederhanakan arsitektur pengolahan visual sekaligus menyatukan format data lintas modalitas. Perlakuan citra yang serupa dengan rentetan teks membuka jalan ke arah desain ruang representasi multimodal, di mana vektor visual dan tekstual diselaraskan menggunakan landasan komputasi yang seragam.
 
@@ -123,9 +125,9 @@ $$ m = 2595 \log_{10} \left( 1 + \frac{f}{700} \right) $$
 
 Di mana $m$ adalah frekuensi dalam skala Mel, dan $f$ adalah frekuensi aktual dalam satuan Hertz. Berdasarkan konversi persepsi tersebut, insinyur merumuskan beberapa ekstraksi fitur spesifik yang penggunaannya disesuaikan dengan volume data dan arsitektur model:
 
-*   **Mel-spektrogram:** Spektrogram yang sumbu frekuensinya telah dipetakan ke skala Mel. Format ini mempertahankan tata letak spasial dari komponen suara dan menjadi input standar untuk arsitektur pengklasifikasi audio berbasis CNN.
-*   ***Mel-Frequency Cepstral Coefficients* (MFCC):** Representasi ringkas yang mengekstraksi selubung spektrum suara dari Mel-spektrogram. Walaupun secara historis menjadi standar utama sistem pengenalan wicara, pada praktik modern MFCC utamanya diterapkan ketika volume data latih sangat kecil (kurang dari seribu sampel) untuk dihubungkan dengan model klasik seperti SVM, atau ketika sistem menuntut *edge deployment* dengan memori terbatas.
-*   ***Chroma feature*:** Representasi khusus untuk analisis musik yang meringkas seluruh energi frekuensi ke dalam dua belas kelas nada dasar. Mekanisme ini membuang informasi oktaf untuk memusatkan informasi pada identitas harmoni. Berbekal matriks *chroma*, model dapat secara tangkas melacak progresi kord dan mengklasifikasikan genre lagu.
+* **Mel-spektrogram:** Spektrogram yang sumbu frekuensinya telah dipetakan ke skala Mel. Format ini mempertahankan tata letak spasial dari komponen suara dan menjadi input standar untuk arsitektur pengklasifikasi audio berbasis CNN.
+* ***Mel-Frequency Cepstral Coefficients* (MFCC):** Representasi ringkas yang mengekstraksi selubung spektrum suara dari Mel-spektrogram. Walaupun secara historis menjadi standar utama sistem pengenalan wicara, pada praktik modern MFCC utamanya diterapkan ketika volume data latih sangat kecil (kurang dari seribu sampel) untuk dihubungkan dengan model klasik seperti SVM, atau ketika sistem menuntut *edge deployment* dengan memori terbatas.
+* ***Chroma feature*:** Representasi khusus untuk analisis musik yang meringkas seluruh energi frekuensi ke dalam dua belas kelas nada dasar. Mekanisme ini membuang informasi oktaf untuk memusatkan informasi pada identitas harmoni. Berbekal matriks *chroma*, model dapat secara tangkas melacak progresi kord dan mengklasifikasikan genre lagu.
 
 Rentetan metode ekstraksi ini merupakan contoh utama dari representasi yang dirancang manusia untuk menyederhanakan data audio. Teknik-teknik ini mereduksi dimensi sekaligus menonjolkan pola sinyal penting sebelum akhirnya diproses oleh algoritma pembelajaran mesin.
 
@@ -152,10 +154,10 @@ Pencapaian arsitektur ini amat bergantung pada metode *self-supervised learning*
 
 Praktisi saat ini jarang mengandalkan algoritma ekstraksi fitur tradisional untuk tugas kompleks. Alur kerjanya bergeser menjadi meneruskan *waveform* ke *pretrained model* guna mendapatkan vektor fitur representatif. Berikut adalah beberapa arsitektur utama:
 
-*   **Keluarga wav2vec 2.0 dan HuBERT:** Standar baku untuk ekstraksi fitur wicara berbasis *raw waveform*. Pendekatan ini andal untuk tugas berbasis konten wicara, seperti pengenalan ucapan (*speech recognition*). Iterasi berskala raksasa seperti **Wav2Vec2-BERT 2.0** dilatih menggunakan basis data hingga 4,5 juta jam audio.
-*   **WavLM:** Arsitektur yang dibangun di atas kerangka dasar HuBERT dengan fitur tambahan mekanisme pencampuran ucapan (*utterance mixing*). WavLM memiliki tingkat retensi identitas pembicara yang jauh lebih tinggi, menjadikannya opsi utama untuk keperluan *speaker verification* dan *diarization*.
-*   **Whisper Encoder:** Secara teknis, sistem masukan Whisper menggunakan log-mel spektrogram, bukan *raw waveform* murni. Walau demikian, status tersembunyi (*hidden state*) dari blok akhir sisi encoder-nya sering dibajak menjadi *feature extractor* serbaguna. Encodernya mengemas representasi semantik kelas kakap yang terbentuk dari pelatihan 680 ribu jam rekaman suara.
-*   **Model Spesifik-Domain:** Terdapat **AudioMAE** dan **BEATs** yang lebih dioptimalkan untuk pengenalan kejadian audio lingkungan (*sound event detection*), serta **MERT** yang dikembangkan khusus untuk ekstraksi pola lagu dan fitur kemusikan.
+* **Keluarga wav2vec 2.0 dan HuBERT:** Standar baku untuk ekstraksi fitur wicara berbasis *raw waveform*. Pendekatan ini andal untuk tugas berbasis konten wicara, seperti pengenalan ucapan (*speech recognition*). Iterasi berskala raksasa seperti **Wav2Vec2-BERT 2.0** dilatih menggunakan basis data hingga 4,5 juta jam audio.
+* **WavLM:** Arsitektur yang dibangun di atas kerangka dasar HuBERT dengan fitur tambahan mekanisme pencampuran ucapan (*utterance mixing*). WavLM memiliki tingkat retensi identitas pembicara yang jauh lebih tinggi, menjadikannya opsi utama untuk keperluan *speaker verification* dan *diarization*.
+* **Whisper Encoder:** Secara teknis, sistem masukan Whisper menggunakan log-mel spektrogram, bukan *raw waveform* murni. Walau demikian, status tersembunyi (*hidden state*) dari blok akhir sisi encoder-nya sering dibajak menjadi *feature extractor* serbaguna. Encodernya mengemas representasi semantik kelas kakap yang terbentuk dari pelatihan 680 ribu jam rekaman suara.
+* **Model Spesifik-Domain:** Terdapat **AudioMAE** dan **BEATs** yang lebih dioptimalkan untuk pengenalan kejadian audio lingkungan (*sound event detection*), serta **MERT** yang dikembangkan khusus untuk ekstraksi pola lagu dan fitur kemusikan.
 
 Dalam implementasi *pipeline*, panjang sampel *waveform* dipotong atau diisi bantalan nol (*padding*), dan *sampling rate*-nya diseragamkan ke batas standar model (umumnya 16 kHz) sebelum dilewatkan ke tahap encoder. Vektor keluaran hasil operasi encoder tersebut akhirnya dialirkan sebagai masukan bagi lapisan fungsi prediktif di tahap akhir aplikasi *machine learning*.
 
@@ -164,12 +166,12 @@ Dalam implementasi *pipeline*, panjang sampel *waveform* dipotong atau diisi ban
 
 Karakteristik fundamental dari data audio adalah wujud informasinya yang membentang melintasi dimensi waktu. Ketika rekaman suara berdurasi sepuluh detik diproses melalui ekstraktor fitur, sistem tidak memproduksi satu matriks statis tunggal. Ekstraktor membelah audio ke dalam ratusan irisan *frame* waktu yang sangat pendek (orde milidetik), sehingga mendikte sistem untuk menghasilkan rentetan matriks vektor fitur yang panjang. 
 
-Sifat temporal ini menciptakan tantangan arsitektur karena sebagian besar algoritma klasifikasi hilir (*downstream classifier*)—yang bertugas memproduksi satu label akhir seperti deteksi tangisan bayi—mewajibkan input berdimensi tetap. Mengingat durasi tiap rekaman audio di dunia nyata sangat bervariasi, deretan fitur tingkat *frame* yang terpisah-pisah ini wajib diagregasi dan dikompresi menjadi satu vektor representatif tunggal berukuran konstan, yang dikenal sebagai *audio embedding*. 
+Sifat temporal ini menciptakan tantangan arsitektur karena sebagian besar algoritma klasifikasi hilir (*downstream classifier*) - yang bertugas memproduksi satu label akhir seperti deteksi tangisan bayi - mewajibkan input berdimensi tetap. Mengingat durasi tiap rekaman audio di dunia nyata sangat bervariasi, deretan fitur tingkat *frame* yang terpisah-pisah ini wajib diagregasi dan dikompresi menjadi satu vektor representatif tunggal berukuran konstan, yang dikenal sebagai *audio embedding*. 
 
 Strategi pemadatan (*pooling*) fitur melintasi poros waktu umumnya dieksekusi melalui beberapa metode operasi:
-*   ***Average Pooling*:** Algoritma menghitung rata-rata nilai fitur dari seluruh himpunan *frame*. Teknik ini paling efektif diterapkan untuk mendeteksi sinyal dengan profil yang kontinu dan relatif stabil di sepanjang rekaman, seperti genre musik statis atau pola dengung mesin konstan. 
-*   ***Max Pooling*:** Algoritma hanya menyeleksi nilai aktivasi matriks tertinggi dari seluruh kumpulan *frame*. Mekanisme ini krusial untuk mencegah pengenceran sinyal akustik impulsif yang durasinya sangat singkat dan mendadak (seperti suara pecahan kaca atau tembakan) di tengah dominasi *frame* keheningan.
-*   **Mekanisme Perhatian Dinamis (*Attention*):** Pada kerangka kerja representasi *deep learning* yang mutakhir, agregasi statis telah digantikan oleh mekanisme dinamis. Lapisan ini memindai rentetan sekuensial dan menghitung probabilitas signifikansi setiap *frame*. Jaringan ini secara adaptif memusatkan bobot fitur yang tinggi hanya pada kepingan momen yang memuat beban semantik.
+* ***Average Pooling*:** Algoritma menghitung rata-rata nilai fitur dari seluruh himpunan *frame*. Teknik ini paling efektif diterapkan untuk mendeteksi sinyal dengan profil yang kontinu dan relatif stabil di sepanjang rekaman, seperti genre musik statis atau pola dengung mesin konstan. 
+* ***Max Pooling*:** Algoritma hanya menyeleksi nilai aktivasi matriks tertinggi dari seluruh kumpulan *frame*. Mekanisme ini penting untuk mencegah pengenceran sinyal akustik impulsif yang durasinya sangat singkat dan mendadak (seperti suara pecahan kaca atau tembakan) di tengah dominasi *frame* keheningan.
+* **Mekanisme Perhatian Dinamis (*Attention*):** Pada kerangka kerja representasi *deep learning* yang mutakhir, agregasi statis telah digantikan oleh mekanisme dinamis. Lapisan ini memindai rentetan sekuensial dan menghitung probabilitas signifikansi setiap *frame*. Jaringan ini secara adaptif memusatkan bobot fitur yang tinggi hanya pada kepingan momen yang memuat beban semantik.
 
 Aktivitas pemadatan dimensi waktu ini bermuara pada satu format *embedding* seragam. Representasi tunggal yang sangat padat ini mengunci esensi variasi durasi dan sekuensi ke dalam koordinat geometri matriks tetap. Selain memastikan validitas format input bagi pengklasifikasi standar, wujud seragam ini akan bertindak sebagai landasan kompatibilitas saat kita mengawinkan representasi audio dengan fitur modalitas teks maupun citra di dalam arsitektur pembelajaran multimodal.
 
@@ -180,8 +182,8 @@ Notebook bab ini mengimplementasikan dua skenario perbandingan antara representa
 
 Kinerja kedua pendekatan dievaluasi pada dua domain berbeda:
 
-*   **Domain Visual (Pengenalan Kendaraan):** Eksperimen menggunakan algoritma HOG sebagai garis dasar (*baseline*). HOG menghitung distribusi kemiringan tepi pada blok observasi yang kaku untuk merangkum siluet mobil. Saat mobil tertutup sebagian oleh pohon atau dipotret dari sudut miring, bentuk siluet utuh menjadi rusak sehingga akurasi HOG turun tajam. Sebaliknya, *pretrained model* CNN mengekstraksi vektor fitur semantik secara hierarkis. Model dapat mendeteksi mobil hanya dari pola lokal seperti lampu atau velg, tanpa bergantung pada siluet utuh. Hal ini menjadikan representasi mendalam lebih tangguh terhadap oklusi maupun rotasi.
-*   **Domain Akustik (Klasifikasi Suara):** Pada tugas membedakan jenis kejadian suara di lingkungan ramai, fitur klasik MFCC sering gagal mengisolasi suara target. MFCC memampatkan seluruh spektrum frekuensi ke dalam satu representasi yang padat, menyebabkan pantulan gema dan derau sekitar menyatu dengan suara target. Sebagai perbandingan, *audio embedding* yang diekstraksi langsung dari *raw-waveform* modern mampu memisahkan tumpukan suara yang tumpang tindih serta menarik makna semantik langsung dari sinyal aslinya.
+* **Domain Visual (Pengenalan Kendaraan):** Eksperimen menggunakan algoritma HOG sebagai garis dasar (*baseline*). HOG menghitung distribusi kemiringan tepi pada blok observasi yang kaku untuk merangkum siluet mobil. Saat mobil tertutup sebagian oleh pohon atau dipotret dari sudut miring, bentuk siluet utuh menjadi rusak sehingga akurasi HOG turun tajam. Sebaliknya, *pretrained model* CNN mengekstraksi vektor fitur semantik secara hierarkis. Model dapat mendeteksi mobil hanya dari pola lokal seperti lampu atau velg, tanpa bergantung pada siluet utuh. Hal ini menjadikan representasi mendalam lebih tangguh terhadap oklusi maupun rotasi.
+* **Domain Akustik (Klasifikasi Suara):** Pada tugas membedakan jenis kejadian suara di lingkungan ramai, fitur klasik MFCC sering gagal mengisolasi suara target. MFCC memampatkan seluruh spektrum frekuensi ke dalam satu representasi yang padat, menyebabkan pantulan gema dan derau sekitar menyatu dengan suara target. Sebagai perbandingan, *audio embedding* yang diekstraksi langsung dari *raw-waveform* modern mampu memisahkan tumpukan suara yang tumpang tindih serta menarik makna semantik langsung dari sinyal aslinya.
 
 [GAMBAR 12.4: Heatmap - Visualisasi MFCC yang memampatkan rentang frekuensi suara, menunjukkan bagaimana derau lingkungan dapat melebur dengan sinyal target]
 
@@ -193,5 +195,5 @@ Di mana $m$ mewakili *pitch* dalam skala Mel dan $f$ adalah frekuensi asli dalam
 
 Selain arsitektur ekstraksi, eksperimen dengan data kontinu (video atau audio) sangat rawan terhadap kebocoran data (*data leakage*). Strategi partisi (*split*) data yang keliru dapat merusak validitas evaluasi. Praktik *pipeline* yang benar mengharuskan partisi dilakukan secara hati-hati:
 
-*   **Hindari Partisi Tingkat Klip:** Memotong satu rekaman utuh menjadi beberapa klip pendek, lalu membaginya secara acak ke dalam set latih dan uji akan menimbulkan kebocoran. Klip detik ke-20 dan detik ke-30 dari rekaman persimpangan yang sama berbagi akustik latar dan dengung mikrofon yang persis sama. Model akan mengandalkan jalan pintas dengan menghafal pola lingkungan tersebut, bukan menggeneralisasi kejadian lalu lintas.
-*   **Gunakan Partisi Tingkat Sumber Rekaman:** Alokasi set data harus dikunci pada tingkat sumber rekaman awal. Seluruh *frame* atau klip dari satu sesi fisik yang sama wajib ditempatkan secara utuh dan serentak ke dalam set pelatihan atau set pengujian.
+* **Hindari Partisi Tingkat Klip:** Memotong satu rekaman utuh menjadi beberapa klip pendek, lalu membaginya secara acak ke dalam set latih dan uji akan menimbulkan kebocoran. Klip detik ke-20 dan detik ke-30 dari rekaman persimpangan yang sama berbagi akustik latar dan dengung mikrofon yang persis sama. Model akan mengandalkan jalan pintas dengan menghafal pola lingkungan tersebut, bukan menggeneralisasi kejadian lalu lintas.
+* **Gunakan Partisi Tingkat Sumber Rekaman:** Alokasi set data harus dikunci pada tingkat sumber rekaman awal. Seluruh *frame* atau klip dari satu sesi fisik yang sama wajib ditempatkan secara utuh dan serentak ke dalam set pelatihan atau set pengujian.

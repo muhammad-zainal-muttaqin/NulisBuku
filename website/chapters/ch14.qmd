@@ -7,8 +7,8 @@ Data multimodal mengombinasikan dua atau lebih modalitas berbeda untuk mendeskri
 Tantangan sebelum melakukan ekstraksi fitur pada kombinasi data ini adalah penyelarasan (*alignment*). Penyelarasan mencocokkan titik data dari berbagai modalitas agar merujuk pada unit observasi yang sama persis. Pada dataset tabular, struktur baris data secara otomatis menjamin keselarasan antarkolom. Pada data multimodal, "baris" tersebut tidak tersedia secara utuh dan harus dikonstruksi secara manual. Ulasan teks suatu produk harus terhubung secara akurat dengan gambar produk spesifik yang relevan. Tanpa penyelarasan yang ketat, model menerima fitur dari target yang salah sasaran dan langsung kehilangan kemampuan prediktifnya.
 
 Masalah penyelarasan makin kompleks ketika berhadapan dengan aliran data sekuensial akibat perbedaan tingkat sampling (*sampling rate*). Pada sistem mobil otonom, komputer memproses awan titik spasial dari sensor LIDAR sekaligus menyelaraskannya dengan rekaman dari sumber lain:
-*   **Kamera video** menangkap citra pada kecepatan 30 *frame* per detik.
-*   **Mikrofon** merekam data audio pada frekuensi 44.1 kHz.
+* **Kamera video** menangkap citra pada kecepatan 30 *frame* per detik.
+* **Mikrofon** merekam data audio pada frekuensi 44.1 kHz.
 
 [GAMBAR 14.1]
 Judul: Penyelarasan Waktu pada Data Multimodal
@@ -23,8 +23,8 @@ $$ W_{\tau} = \{ (x_k^{(m)}, t_k) \mid \tau \le t_k < \tau + \Delta t \} $$
 Di mana $W_{\tau}$ adalah satu unit observasi (baris fitur) yang dimulai pada stempel waktu $\tau$. Komponen $x_k^{(m)}$ merupakan titik data dari modalitas $m$, $t_k$ adalah waktu perekaman data tersebut secara persis, dan $\Delta t$ menyatakan lebar jendela pembagian. Berdasarkan fungsi dasar ini, Gambar 14.1 memperlihatkan bagaimana potongan selebar satu detik merangkum 30 *frame* citra beserta 44.100 sampel audio menjadi satu blok unit yang siap digabungkan.
 
 Seiring munculnya generasi model bahasa visual (VLM), mekanisme penyelarasan temporal mulai bergeser dari prapemrosesan manual di awal *pipeline* menjadi kapabilitas bawaan arsitektur model. Pendekatan modern meniadakan keharusan sinkronisasi kaku:
-*   **Pemrosesan waktu absolut:** Model seperti Qwen2.5-VL memanfaatkan perluasan *multimodal RoPE* (Rotary Position Embedding) untuk memahami posisi waktu asli dari *frame* video. Algoritma ini langsung mengolah aliran data dengan laju *frame* dinamis tanpa memerlukan *resampling* paksa ke tingkat yang seragam.
-*   **Penyelarasan berbasis konteks:** Model generatif terbaru memadukan penanda waktu atau referensi visual langsung di dalam masukan. Citra dan teks direpresentasikan berdampingan di dalam untaian *prompt* yang saling mengacu secara eksplisit.
+* **Pemrosesan waktu absolut:** Model seperti Qwen2.5-VL memanfaatkan perluasan *multimodal RoPE* (Rotary Position Embedding) untuk memahami posisi waktu asli dari *frame* video. Algoritma ini langsung mengolah aliran data dengan laju *frame* dinamis tanpa memerlukan *resampling* paksa ke tingkat yang seragam.
+* **Penyelarasan berbasis konteks:** Model generatif terbaru memadukan penanda waktu atau referensi visual langsung di dalam masukan. Citra dan teks direpresentasikan berdampingan di dalam untaian *prompt* yang saling mengacu secara eksplisit.
 
 Evolusi ini menyederhanakan tahap penyusunan matriks data dan memastikan variasi kecepatan rekaman asli tetap dipertahankan pada saat model mempelajari interaksi antarmodalitas.
 
@@ -33,15 +33,15 @@ Evolusi ini menyederhanakan tahap penyusunan matriks data dan memastikan variasi
 
 Setelah berbagai modalitas diselaraskan, rekayasawan harus menentukan titik persimpangan (*fusion*) data di dalam *pipeline* prediktif. Keputusan ini mendikte apakah informasi lintas modalitas berpadu sejak awal sebagai set fitur, di tengah arsitektur sebagai representasi laten, atau di akhir perhitungan murni sebagai probabilitas keputusan.
 
-1.  ***Early Fusion* (Tingkat Fitur):** Penyatuan dilakukan sebelum algoritma prediktif bekerja. Vektor ekstraksi dari setiap modalitas digabungkan (*concatenated*) secara horizontal untuk membentuk satu matriks masukan berdimensi besar. Misalnya, vektor teks TF-IDF disambungkan secara langsung dengan kolom gaji dari data tabular. Keunggulan utama pendekatan ini adalah model dapat langsung mempelajari korelasi lintas tipe data. Kelemahannya terletak pada kerentanan terhadap ketimpangan dimensi: vektor gambar berukuran sangat besar sangat berpotensi mendominasi kalkulasi gradien dan mengabaikan kontribusi atribut tabular yang berdimensi sempit.
-2.  ***Late Fusion* (Tingkat Keputusan):** Strategi yang sangat modular ini mendelegasikan satu model mandiri untuk mengelola setiap tipe data. Representasi dari modalitas yang berbeda tidak pernah saling bertemu di dalam ruang matriks kalkulasi. Sebagai contoh, model A memproses gambar dengan probabilitas 0,8, sementara model B memproses atribut tabular dan menghasilkan probabilitas 0,9. Eksekusi final diambil di ujung *pipeline* dengan merata-ratakan (*ensembling*) kedua probabilitas tersebut. Arsitektur terisolasi ini memastikan sistem tetap beroperasi meski salah satu sumber data gagal dimuat, namun sistem tidak akan mampu menangkap fitur interaksi rumit yang melibatkan kombinasi lintas modalitas.
-3.  ***Intermediate Fusion* (Tingkat Representasi Laten):** Integrasi dilaksanakan secara organik di dalam arsitektur *deep learning*. Setiap modalitas diproses oleh pengekstraksi spesifik secara paralel hingga memproduksi *embedding* yang padat. Seluruh *embedding* ini lalu dilebur di persimpangan lapisan tersembunyi (*hidden layer*) untuk dianalisis bersama secara konseptual.
+1. ***Early Fusion* (Tingkat Fitur):** Penyatuan dilakukan sebelum algoritma prediktif bekerja. Vektor ekstraksi dari setiap modalitas digabungkan (*concatenated*) secara horizontal untuk membentuk satu matriks masukan berdimensi besar. Misalnya, vektor teks TF-IDF disambungkan secara langsung dengan kolom gaji dari data tabular. Keunggulan utama pendekatan ini adalah model dapat langsung mempelajari korelasi lintas tipe data. Kelemahannya terletak pada kerentanan terhadap ketimpangan dimensi: vektor gambar berukuran sangat besar sangat berpotensi mendominasi kalkulasi gradien dan mengabaikan kontribusi atribut tabular yang berdimensi sempit.
+2. ***Late Fusion* (Tingkat Keputusan):** Strategi yang sangat modular ini mendelegasikan satu model mandiri untuk mengelola setiap tipe data. Representasi dari modalitas yang berbeda tidak pernah saling bertemu di dalam ruang matriks kalkulasi. Sebagai contoh, model A memproses gambar dengan probabilitas 0,8, sementara model B memproses atribut tabular dan menghasilkan probabilitas 0,9. Eksekusi final diambil di ujung *pipeline* dengan merata-ratakan (*ensembling*) kedua probabilitas tersebut. Arsitektur terisolasi ini memastikan sistem tetap beroperasi meski salah satu sumber data gagal dimuat, namun sistem tidak akan mampu menangkap fitur interaksi rumit yang melibatkan kombinasi lintas modalitas.
+3. ***Intermediate Fusion* (Tingkat Representasi Laten):** Integrasi dilaksanakan secara organik di dalam arsitektur *deep learning*. Setiap modalitas diproses oleh pengekstraksi spesifik secara paralel hingga memproduksi *embedding* yang padat. Seluruh *embedding* ini lalu dilebur di persimpangan lapisan tersembunyi (*hidden layer*) untuk dianalisis bersama secara konseptual.
 
 [GAMBAR 14.2: Diagram - Skema spektrum fusi multimodal dari tingkat awal, menengah, hingga perutean dinamis]
 
-Lanskap komputasi model bahasa dan visi (*Vision-Language Models*) mutakhir saat ini telah memperluas definisi fusi secara signifikan:
-*   ***Attention Bottleneck*:** Arsitektur terobosan seperti *Perceiver IO* mendobrak tradisi penggabungan matriks mentah. Model ini memakai sejumlah vektor laten dengan ukuran tetap sebagai jembatan kemacetan (*bottleneck*). Model kemudian melakukan kueri (*cross-attend*) ke berbagai rentetan input—seperti teks, audio, maupun *point clouds*—tanpa memedulikan perbedaan resolusi asalnya. Skema ini sukses membebaskan kedalaman pemrosesan dari tekanan dimensi input.
-*   **Perutean Dinamis (*Mixture-of-Experts*):** Sistem seperti DeepSeek-VL2 dan MoE-LLaVA tidak lagi memaksa fitur dilebur secara kaku ke dalam satu blok kalkulasi yang sama. Arsitektur memecah jaringan menjadi berbagai himpunan modul ahli (*experts*). Rute komputasi diaktifkan secara dinamis dan adaptif menyesuaikan dengan bobot signifikansi fitur pada waktu penarikan kesimpulan. Pola ini memfasilitasi pencampuran miliaran parameter analisis secara instan dengan jejak memori yang sangat efisien.
+ekosistem komputasi model bahasa dan visi (*Vision-Language Models*) mutakhir saat ini telah memperluas definisi fusi secara signifikan:
+* ***Attention Bottleneck*:** Arsitektur terobosan seperti *Perceiver IO* mendobrak tradisi penggabungan matriks mentah. Model ini memakai sejumlah vektor laten dengan ukuran tetap sebagai jembatan kemacetan (*bottleneck*). Model kemudian melakukan kueri (*cross-attend*) ke berbagai rentetan input - seperti teks, audio, maupun *point clouds* - tanpa memedulikan perbedaan resolusi asalnya. Skema ini sukses membebaskan kedalaman pemrosesan dari tekanan dimensi input.
+* **Perutean Dinamis (*Mixture-of-Experts*):** Sistem seperti DeepSeek-VL2 dan MoE-LLaVA tidak lagi memaksa fitur dilebur secara kaku ke dalam satu blok kalkulasi yang sama. Arsitektur memecah jaringan menjadi berbagai himpunan modul ahli (*experts*). Rute komputasi diaktifkan secara dinamis dan adaptif menyesuaikan dengan bobot signifikansi fitur pada waktu penarikan kesimpulan. Pola ini memfasilitasi pencampuran miliaran parameter analisis secara instan dengan jejak memori yang sangat efisien.
 
 
 ## Konkatenasi Fitur dan Penyeimbangan Dimensi
@@ -56,14 +56,14 @@ Gambar 14.4 memperlihatkan bagaimana sebuah model *deep learning* meratakan (*fl
 
 Ketimpangan jumlah dimensi merusak keseimbangan proses pembelajaran model. Terdapat tiga dampak langsung jika kita membiarkan kondisi ini:
 
-*   **Dominasi pada kalkulasi jarak:** Algoritma *machine learning* berbasis jarak (seperti k-NN) menghitung kedekatan antar-sampel dengan menjumlahkan selisih nilai pada seluruh dimensi. Jika 2048 dimensi berasal dari piksel, hasil perhitungan jarak sepenuhnya dikendalikan oleh perubahan kecil pada informasi visual, sementara sinyal dari luasan tanah menjadi tidak berarti.
-*   **Ketidakseimbangan pembaruan gradien:** Model berbasis gradien cenderung memperbarui bobot secara lebih dominan pada kelompok dimensi mayoritas. Akibatnya, fitur tabular terabaikan selama proses pelatihan.
-*   **Pembajakan rentang nilai:** Fitur dari modalitas berbeda lahir dengan skala asal yang timpang (frekuensi kata mungkin bernilai pecahan, sedangkan harga properti bernilai jutaan). Tanpa standardisasi dan normalisasi, fitur dengan rentang nilai terbesar akan membajak arah prediksi.
+* **Dominasi pada kalkulasi jarak:** Algoritma *machine learning* berbasis jarak (seperti k-NN) menghitung kedekatan antar-sampel dengan menjumlahkan selisih nilai pada seluruh dimensi. Jika 2048 dimensi berasal dari piksel, hasil perhitungan jarak sepenuhnya dikendalikan oleh perubahan kecil pada informasi visual, sementara sinyal dari luasan tanah menjadi tidak berarti.
+* **Ketidakseimbangan pembaruan gradien:** Model berbasis gradien cenderung memperbarui bobot secara lebih dominan pada kelompok dimensi mayoritas. Akibatnya, fitur tabular terabaikan selama proses pelatihan.
+* **Pembajakan rentang nilai:** Fitur dari modalitas berbeda lahir dengan skala asal yang timpang (frekuensi kata mungkin bernilai pecahan, sedangkan harga properti bernilai jutaan). Tanpa standardisasi dan normalisasi, fitur dengan rentang nilai terbesar akan membajak arah prediksi.
 
 Untuk memastikan semua modalitas menyumbang sinyal yang wajar, kita harus menyeimbangkan dimensi. Pendekatan klasik menawarkan dua jalan utama:
 
-1.  **Reduksi dimensi:** Memangkas ukuran modalitas mayoritas. Alih-alih memasukkan *embedding* teks berukuran 768 dimensi bersama 5 variabel tabular, kita memadatkan fitur teks menggunakan Truncated SVD. Pemadatan hingga menyisakan 20 komponen utama memaksa sinyal teks bersaing secara lebih imbang.
-2.  **Proyeksi *bottleneck*:** Memproyeksikan modalitas minoritas ke dimensi yang lebih luas melalui lapisan *embedding* neural tersendiri. Fitur tabular diangkat ke dalam ruang representasi baru agar sepadan dengan dimensi citra sebelum disatukan.
+1. **Reduksi dimensi:** Memangkas ukuran modalitas mayoritas. Alih-alih memasukkan *embedding* teks berukuran 768 dimensi bersama 5 variabel tabular, kita memadatkan fitur teks menggunakan Truncated SVD. Pemadatan hingga menyisakan 20 komponen utama memaksa sinyal teks bersaing secara lebih imbang.
+2. **Proyeksi *bottleneck*:** Memproyeksikan modalitas minoritas ke dimensi yang lebih luas melalui lapisan *embedding* neural tersendiri. Fitur tabular diangkat ke dalam ruang representasi baru agar sepadan dengan dimensi citra sebelum disatukan.
 
 Dalam sistem *deep learning* modern, penyatuan modalitas mulai meninggalkan konkatenasi mentah. Arsitektur mutakhir (seperti Q-Former pada BLIP-2) menggantikan konkatenasi dengan mekanisme penjembatan yang dipelajari (*learned bridging*). Model menggunakan mekanisme *attention* untuk menarik hanya fitur visual yang relevan, alih-alih menumpuk seluruh dimensi secara buta. 
 
@@ -82,21 +82,21 @@ Pendekatan imputasi klasik gagal menangani ketiadaan format utuh ini. Mengisi ke
 
 Berikut adalah pendekatan teknis untuk menangani modalitas yang hilang tanpa mengorbankan integritas *pipeline*:
 
-*   **Tangguh Secara Bawaan: Arsitektur *Late Fusion***
-    Arsitektur *late fusion* aman terhadap *missing modality* karena mengekstraksi dan memproses data secara mandiri sebelum menyatukannya di tingkat prediksi akhir. Jika citra suatu produk tidak ada, proses komputasi pada cabang visual dilewati. Keputusan probabilitas tetap diproduksi menggunakan cabang teks dan tabular murni. Model arsitektur modern seperti Molmo (2024) mengimplementasikan desain modular ini, yang memastikan *backbone* LLM teks tetap merespons walaupun input visual kosong.
+* **Tangguh Secara Bawaan: Arsitektur *Late Fusion***
+ Arsitektur *late fusion* aman terhadap *missing modality* karena mengekstraksi dan memproses data secara mandiri sebelum menyatukannya di tingkat prediksi akhir. Jika citra suatu produk tidak ada, proses komputasi pada cabang visual dilewati. Keputusan probabilitas tetap diproduksi menggunakan cabang teks dan tabular murni. Model arsitektur modern seperti Molmo (2024) mengimplementasikan desain modular ini, yang memastikan *backbone* LLM teks tetap merespons walaupun input visual kosong.
 
-*   **Vektor Nol dan Variabel Indikator pada *Early Fusion***
-    Kombinasi data pada *early fusion* rapuh karena dimensi vektor input wajib konstan. Fitur yang absen biasanya dipertahankan lebarnya namun diisi dengan representasi vektor bernilai nol, lalu sebuah variabel indikator (*indicator variable*) ditambahkan. Variabel biner (`has_image`) ini berfungsi menginformasikan model bahwa deretan angka nol tersebut mengindikasikan kekosongan struktural, bukan data nyata dengan piksel warna hitam pekat.
+* **Vektor Nol dan Variabel Indikator pada *Early Fusion***
+ Kombinasi data pada *early fusion* rapuh karena dimensi vektor input wajib konstan. Fitur yang absen biasanya dipertahankan lebarnya namun diisi dengan representasi vektor bernilai nol, lalu sebuah variabel indikator (*indicator variable*) ditambahkan. Variabel biner (`has_image`) ini berfungsi menginformasikan model bahwa deretan angka nol tersebut mengindikasikan kekosongan struktural, bukan data nyata dengan piksel warna hitam pekat.
 
-*   **Proyeksi Ruang Bersama melalui *Contrastive Learning***
-    Modalitas yang berbeda diproyeksikan ke subruang laten yang sama menggunakan model yang dilatih dengan fungsi *contrastive loss* (seperti model keluarga CLIP). Pelatihan ini merapatkan vektor dari pasangan data agar saling sejajar secara geometris. Akibatnya, saat satu jenis data menghilang, vektor dari modalitas yang tersisa berfungsi langsung sebagai aproksimasi terbaik untuk merepresentasikan observasi tersebut.
+* **Proyeksi Ruang Bersama melalui *Contrastive Learning***
+ Modalitas yang berbeda diproyeksikan ke subruang laten yang sama menggunakan model yang dilatih dengan fungsi *contrastive loss* (seperti model keluarga CLIP). Pelatihan ini merapatkan vektor dari pasangan data agar saling sejajar secara geometris. Akibatnya, saat satu jenis data menghilang, vektor dari modalitas yang tersisa berfungsi langsung sebagai aproksimasi terbaik untuk merepresentasikan observasi tersebut.
 
-    $$ \mathcal{L}_{contrastive} = -\frac{1}{N} \sum_{i=1}^{N} \log \frac{\exp(\mathbf{v}_{text}^{(i)} \cdot \mathbf{v}_{image}^{(i)} / \tau)}{\sum_{j=1}^{N} \exp(\mathbf{v}_{text}^{(i)} \cdot \mathbf{v}_{image}^{(j)} / \tau)} $$
+ $$ \mathcal{L}_{contrastive} = -\frac{1}{N} \sum_{i=1}^{N} \log \frac{\exp(\mathbf{v}_{text}^{(i)} \cdot \mathbf{v}_{image}^{(i)} / \tau)}{\sum_{j=1}^{N} \exp(\mathbf{v}_{text}^{(i)} \cdot \mathbf{v}_{image}^{(j)} / \tau)} $$
 
-    Di mana $\mathbf{v}_{text}^{(i)}$ dan $\mathbf{v}_{image}^{(i)}$ adalah vektor representasi teks dan gambar dalam ukuran yang dinormalisasi untuk observasi ke-$i$, $N$ mewakili total sampel berpasangan dalam suatu *batch*, dan $\tau$ (*temperature*) mengatur skala ketajaman pemisahan antarsampel.
+ Di mana $\mathbf{v}_{text}^{(i)}$ dan $\mathbf{v}_{image}^{(i)}$ adalah vektor representasi teks dan gambar dalam ukuran yang dinormalisasi untuk observasi ke-$i$, $N$ mewakili total sampel berpasangan dalam suatu *batch*, dan $\tau$ (*temperature*) mengatur skala ketajaman pemisahan antarsampel.
 
-*   ***Modality Dropout* saat Pelatihan**
-    Ketahanan model inferensi dilatih secara proaktif dengan cara menghapus (melakukan *dropout*) sebuah modalitas secara acak di tengah siklus pelatihan. Metode yang lazim digunakan pada sistem *cross-modal autoencoder* ini memaksa jaringan membangun dan merekonstruksi representasi informasi menggunakan sisa sinyal yang ada, mencegah model menjadi terlalu bergantung pada kondisi formasi data yang utuh.
+* ***Modality Dropout* saat Pelatihan**
+ Ketahanan model inferensi dilatih secara proaktif dengan cara menghapus (melakukan *dropout*) sebuah modalitas secara acak di tengah siklus pelatihan. Metode yang lazim digunakan pada sistem *cross-modal autoencoder* ini memaksa jaringan membangun dan merekonstruksi representasi informasi menggunakan sisa sinyal yang ada, mencegah model menjadi terlalu bergantung pada kondisi formasi data yang utuh.
 
 [GAMBAR 14.4: Skema - Perbandingan alur penanganan missing modality antara early fusion dengan late fusion]
 
@@ -111,9 +111,9 @@ $$ \mathbf{z}_{img} = f_{\theta}(\mathbf{x}_{img}) $$
 $$ \mathbf{z}_{text} = g_{\phi}(\mathbf{x}_{text}) $$
 
 Di mana:
-*   $f_{\theta}$ adalah *encoder* citra (misalnya ViT atau CNN).
-*   $g_{\phi}$ adalah *encoder* teks (misalnya arsitektur berbasis Transformer).
-*   $\mathbf{z}_{img}$ dan $\mathbf{z}_{text}$ adalah vektor representasi keluaran yang keduanya berada di ruang laten berdimensi $d$ yang identik ($\mathbb{R}^d$).
+* $f_{\theta}$ adalah *encoder* citra (misalnya ViT atau CNN).
+* $g_{\phi}$ adalah *encoder* teks (misalnya arsitektur berbasis Transformer).
+* $\mathbf{z}_{img}$ dan $\mathbf{z}_{text}$ adalah vektor representasi keluaran yang keduanya berada di ruang laten berdimensi $d$ yang identik ($\mathbb{R}^d$).
 
 [GAMBAR 14.5: Diagram Konseptual - Dua encoder terpisah yang memproyeksikan data citra (foto anjing) dan data teks ("seekor anjing") ke dalam satu ruang semantik 3D bersilang, di mana keduanya bertemu pada titik koordinat yang berdekatan]
 
@@ -121,14 +121,14 @@ Proses pelatihan ruang bersama ini umumnya dikemudikan oleh *contrastive loss*. 
 
 $$ \text{sim}(\mathbf{z}_{img}, \mathbf{z}_{text}) = \frac{\mathbf{z}_{img} \cdot \mathbf{z}_{text}}{\|\mathbf{z}_{img}\| \|\mathbf{z}_{text}\|} $$
 
-Nilai kesamaan didorong mendekati $1$ apabila gambar dan teks benar-benar berpasangan secara semantik, serta didorong menuju nilai yang lebih rendah (atau negatif) untuk pasangan yang salah.
+Nilai kesamaan didorong mendekati $1$ apabila gambar dan teks berpasangan secara semantik, serta didorong menuju nilai yang lebih rendah (atau negatif) untuk pasangan yang salah.
 
 Dalam praktik perkembangannya, ruang *embedding* lintas-modal ini tidak lagi sekadar pemetaan statis satu-ke-satu. Implementasi modern memiliki karakteristik tambahan:
-*   **Ruang yang bergantung pada instruksi (*Task-dependent space*):** Model yang lebih baru seperti InstructBLIP menggunakan mekanisme penghubung dinamis (seperti *Q-Former*) yang menyelaraskan ekstraksi fitur visual berdasarkan instruksi teks spesifik. Proyeksi vektor sebuah gambar bisa bergeser bergantung pada apakah tugas model adalah mendeskripsikan keseluruhan gambar atau sekadar menjawab pertanyaan spesifik tentangnya.
-*   **Pencarian lintas-modal (*Cross-modal retrieval*):** Kedekatan vektor murni dalam satu dimensi matematis memungkinkan arsitektur untuk mencari objek visual dalam skala besar hanya menggunakan kueri teks, tanpa perlu anotasi manual pada gambar tersebut.
-*   **Standar evaluasi spesifik:** Karena tidak melayani kelas prediksi tunggal, kualitas dari ruang vektor lintas-modal ini diukur lewat metrik temu-kembali (*retrieval*) seperti *recall@k* (mengukur seberapa sering padanan yang tepat muncul dalam daftar kandidat teratas) dan *nDCG* (mengukur akurasi perankingan keseluruhan).
+* **Ruang yang bergantung pada instruksi (*Task-dependent space*):** Model yang lebih baru seperti InstructBLIP menggunakan mekanisme penghubung dinamis (seperti *Q-Former*) yang menyelaraskan ekstraksi fitur visual berdasarkan instruksi teks spesifik. Proyeksi vektor sebuah gambar bisa bergeser bergantung pada apakah tugas model adalah mendeskripsikan keseluruhan gambar atau sekadar menjawab pertanyaan spesifik tentangnya.
+* **Pencarian lintas-modal (*Cross-modal retrieval*):** Kedekatan vektor murni dalam satu dimensi matematis memungkinkan arsitektur untuk mencari objek visual dalam skala besar hanya menggunakan kueri teks, tanpa perlu anotasi manual pada gambar tersebut.
+* **Standar evaluasi spesifik:** Karena tidak melayani kelas prediksi tunggal, kualitas dari ruang vektor lintas-modal ini diukur lewat metrik temu-kembali (*retrieval*) seperti *recall@k* (mengukur seberapa sering padanan yang tepat muncul dalam daftar kandidat teratas) dan *nDCG* (mengukur akurasi perankingan keseluruhan).
 
-Evolusi ini menandai titik ekstrem pergeseran menuju representasi yang dipelajari mesin. Transformasi dan penyesuaian tidak lagi bergantung pada rekayasa fitur oleh manusia yang memadukan dua struktur data berbeda secara paksa. Model menemukan secara otonom lanskap metrik yang menjahit kesamaan makna antar-modalitas.
+Evolusi ini menandai titik ekstrem pergeseran menuju representasi yang dipelajari mesin. Transformasi dan penyesuaian tidak lagi bergantung pada rekayasa fitur oleh manusia yang memadukan dua struktur data berbeda secara paksa. Model menemukan secara otonom ekosistem metrik yang menjahit kesamaan makna antar-modalitas.
 
 
 ## Model Multimodal Pretrained
@@ -149,14 +149,14 @@ Di mana $\mathbf{v}_i$ adalah vektor *embedding* citra, $\mathbf{t}_i$ adalah ve
 
 Ruang *embedding* yang matang memungkinkan praktisi menggunakan model sebagai *feature extractor*. Bobot jaringan model dibiarkan beku (*frozen*). Saat memproses himpunan data baru, gambar cukup diumpankan ke *encoder* visual untuk menghasilkan vektor berdimensi padat (misalnya 512 dimensi). Penggunaan model *pretrained* menawarkan tiga karakteristik operasional utama:
 
-*   **Efisiensi komputasi lokal:** Representasi visual tingkat tinggi dapat diekstraksi tanpa perlu melatih arsitektur *deep learning* raksasa dari awal. Vektor hasil ekstraksi cukup diproses menggunakan algoritma sederhana seperti regresi logistik.
-*   **Klasifikasi *zero-shot*:** Model mampu mengenali kategori baru tanpa instruksi eksplisit saat pelatihan. Sistem membandingkan jarak metrik antara vektor citra masukan dengan beberapa kandidat vektor teks (misalnya, mengukur jarak koordinat ke frasa "foto sepatu" melawan "foto tas").
-*   **Generalisasi lintas domain:** Representasi yang dipelajari mesin dari tangkapan data internet skala besar umumnya tangguh saat menghadapi jenis gambar yang tidak biasa atau dipenuhi *noise*.
+* **Efisiensi komputasi lokal:** Representasi visual tingkat tinggi dapat diekstraksi tanpa perlu melatih arsitektur *deep learning* raksasa dari awal. Vektor hasil ekstraksi cukup diproses menggunakan algoritma sederhana seperti regresi logistik.
+* **Klasifikasi *zero-shot*:** Model mampu mengenali kategori baru tanpa instruksi eksplisit saat pelatihan. Sistem membandingkan jarak metrik antara vektor citra masukan dengan beberapa kandidat vektor teks (misalnya, mengukur jarak koordinat ke frasa "foto sepatu" melawan "foto tas").
+* **Generalisasi lintas domain:** Representasi yang dipelajari mesin dari tangkapan data internet skala besar umumnya tangguh saat menghadapi jenis gambar yang tidak biasa atau dipenuhi *noise*.
 
 Fungsi model multimodal sebagai pengekstraksi fitur terus berevolusi menuju arsitektur *Vision-Language Model* (VLM) yang lebih dinamis. Pola rekayasa fitur masa kini bergeser dari ekstraksi pasif menuju adaptasi yang lebih kompleks:
 
-*   **Penyelarasan lewat *Q-Former*:** Arsitektur seperti BLIP-2 menempatkan mekanisme *querying transformer* yang ringkas di antara *encoder* citra dan *Large Language Model* (LLM). Kedua model utama dibiarkan beku, sementara *Q-Former* secara khusus dilatih untuk mengekstraksi fitur visual yang paling selaras dengan instruksi teks pemandu.
-*   **Ekstraksi representasi berbasis tugas:** VLM modern (seperti LLaVA, Qwen-VL, atau PaliGemma) tidak lagi memadatkan informasi gambar menjadi satu nilai skalar jarak. Model ini dapat mengisolasi area spesifik atau membaca elemen teks visual, lalu menghasilkan representasi fitur terstruktur yang menyatu langsung dengan *prompt* teks hilir.
+* **Penyelarasan lewat *Q-Former*:** Arsitektur seperti BLIP-2 menempatkan mekanisme *querying transformer* yang ringkas di antara *encoder* citra dan *Large Language Model* (LLM). Kedua model utama dibiarkan beku, sementara *Q-Former* secara khusus dilatih untuk mengekstraksi fitur visual yang paling selaras dengan instruksi teks pemandu.
+* **Ekstraksi representasi berbasis tugas:** VLM modern (seperti LLaVA, Qwen-VL, atau PaliGemma) tidak lagi memadatkan informasi gambar menjadi satu nilai skalar jarak. Model ini dapat mengisolasi area spesifik atau membaca elemen teks visual, lalu menghasilkan representasi fitur terstruktur yang menyatu langsung dengan *prompt* teks hilir.
 
 
 ### Studi Kasus: Menggabungkan Tabular, Citra, dan Teks dalam Satu *Pipeline*
@@ -164,9 +164,9 @@ Fungsi model multimodal sebagai pengekstraksi fitur terus berevolusi menuju arsi
 Sistem prediksi harga properti mengekstraksi informasi dari tiga sumber berlainan untuk observasi yang sama: data tabular (luas bangunan, jumlah kamar), teks (deskripsi agen properti), dan citra (foto bangunan). Pendekatan *early fusion* menyatukan aliran data terpisah ini ke dalam matriks fitur tunggal sebelum tahap estimasi prediktif.
 
 Ekstraksi representasi dijalankan secara spesifik untuk setiap tipe data:
-*   **Data Tabular**: Atribut kategorikal dan numerik diproses melalui *one-hot encoding* dan normalisasi standar.
-*   **Data Teks**: Kalimat deskripsi dipetakan melalui vektorisasi TF-IDF. Karena matriks yang dihasilkan sangat renggang (*sparse*), *Principal Component Analysis* (PCA) memampatkan informasi teks menjadi 50 komponen numerik utama.
-*   **Data Citra**: Piksel foto dilewatkan pada *pretrained model* (seperti CLIP atau ResNet) yang berfungsi sebagai *feature extractor*. Proses ini menghasilkan representasi visual padat (misalnya berdimensi 512) tanpa pelatihan ulang jaringan saraf.
+* **Data Tabular**: Atribut kategorikal dan numerik diproses melalui *one-hot encoding* dan normalisasi standar.
+* **Data Teks**: Kalimat deskripsi dipetakan melalui vektorisasi TF-IDF. Karena matriks yang dihasilkan sangat renggang (*sparse*), *Principal Component Analysis* (PCA) memampatkan informasi teks menjadi 50 komponen numerik utama.
+* **Data Citra**: Piksel foto dilewatkan pada *pretrained model* (seperti CLIP atau ResNet) yang berfungsi sebagai *feature extractor*. Proses ini menghasilkan representasi visual padat (misalnya berdimensi 512) tanpa pelatihan ulang jaringan saraf.
 
 [GAMBAR 14.7: Skema Pipeline - Arsitektur *early fusion* yang mengekstraksi dan menggabungkan fitur tabular, teks, dan citra menjadi representasi tunggal untuk prediksi harga properti]
 
@@ -182,4 +182,4 @@ Konkatenasi ini menghasilkan satu vektor dengan dimensi total 572 per properti. 
 
 Penggabungan data multimodal memunculkan risiko *leakage* spesifik-modalitas. Pemisahan data latih dan uji (*train-test split*) wajib dilakukan di tingkat entitas observasi untuk mencegah tersebarnya data referensi. Seluruh modalitas dari satu properti harus dialokasikan secara utuh bersama-sama ke dalam set pelatihan atau set pengujian.
 
-Bila keutuhan entitas terpecah, model menerima bocoran informasi secara tersirat. Sebagai contoh, jika deskripsi teks sebuah rumah dialokasikan ke set pelatihan namun foto rumah yang sama masuk ke set pengujian, model mendapatkan petunjuk mengenai target evaluasi melalui identitas observasi yang sama. Pemisahan data yang benar memastikan bahwa seluruh parameter transformasi *pipeline*—kosakata TF-IDF, komponen matriks PCA, hingga nilai rata-rata *scaling* vektor akhir—hanya dihitung (*fit*) menggunakan set data pelatihan.
+Bila keutuhan entitas terpecah, model menerima bocoran informasi secara tersirat. Sebagai contoh, jika deskripsi teks sebuah rumah dialokasikan ke set pelatihan namun foto rumah yang sama masuk ke set pengujian, model mendapatkan petunjuk mengenai target evaluasi melalui identitas observasi yang sama. Pemisahan data yang benar memastikan bahwa seluruh parameter transformasi *pipeline* - kosakata TF-IDF, komponen matriks PCA, hingga nilai rata-rata *scaling* vektor akhir - hanya dihitung (*fit*) menggunakan set data pelatihan.

@@ -6,18 +6,18 @@ Model *machine learning* sering kali membutuhkan representasi data yang secara e
 
 Fitur turunan diciptakan melalui operasi matematika pada atribut mentah yang sudah ada. Tiga operasi aritmatika dasar yang paling sering diimplementasikan meliputi:
 
-*   **Selisih (Pengurangan):** Mengukur defisit, sisa, atau perubahan absolut. Algoritma dasar tidak memodelkan selisih dua fitur secara otomatis. Sebagai contoh, memberikan angka pengeluaran bulanan dan pendapatan bulanan secara terpisah kurang informatif dibandingkan membangun fitur tunggal "pendapatan bersih". Fitur ini secara langsung mendeskripsikan kapasitas finansial riil sebuah entitas.
-*   **Rasio (Pembagian):** Menangkap proporsi relatif dan menormalkan skala metrik. Dalam analisis kelayakan kredit, nilai utang absolut sulit diinterpretasikan tanpa konteks yang menyertainya. Membagi nilai utang terhadap total aset menghasilkan rasio proporsional yang memetakan perusahaan rintisan kecil dan korporasi berskala global pada rentang metrik risiko yang terstandardisasi.
+* **Selisih (Pengurangan):** Mengukur defisit, sisa, atau perubahan absolut. Algoritma dasar tidak memodelkan selisih dua fitur secara otomatis. Sebagai contoh, memberikan angka pengeluaran bulanan dan pendapatan bulanan secara terpisah kurang informatif dibandingkan membangun fitur tunggal "pendapatan bersih". Fitur ini secara langsung mendeskripsikan kapasitas finansial riil sebuah entitas.
+* **Rasio (Pembagian):** Menangkap proporsi relatif dan menormalkan skala metrik. Dalam analisis kelayakan kredit, nilai utang absolut sulit diinterpretasikan tanpa konteks yang menyertainya. Membagi nilai utang terhadap total aset menghasilkan rasio proporsional yang memetakan perusahaan rintisan kecil dan korporasi berskala global pada rentang metrik risiko yang terstandardisasi.
 
 [GAMBAR 6.1: Skema - Representasi rasio finansial untuk menormalkan metrik entitas berskala absolut berbeda ke dalam dimensi risiko yang sama]
 
-*   **Interaksi (Perkalian):** Menangkap efek gabungan dua atribut yang memiliki dampak di luar penjumlahan linier biasa. Efek perkalian ini direpresentasikan secara matematis sebagai:
+* **Interaksi (Perkalian):** Menangkap efek gabungan dua atribut yang memiliki dampak di luar penjumlahan linier biasa. Efek perkalian ini direpresentasikan secara matematis sebagai:
 
 $$ x_{interaksi} = x_i \times x_j $$
 
-Di mana $x_{interaksi}$ adalah turunan fitur baru, sedangkan $x_i$ dan $x_j$ merupakan fitur asal. Pada kasus prediksi harga properti, fitur "usia bangunan" ($x_i$) dapat dikalikan dengan penanda biner "butuh perbaikan struktural" ($x_j$). Hasilnya membentuk penalti harga eksponensial bagi rumah tua yang sekaligus memiliki struktur rusak—sebuah pola yang menjadi dasar bagi pembentukan turunan polinomial pada derajat yang lebih tinggi.
+Di mana $x_{interaksi}$ adalah turunan fitur baru, sedangkan $x_i$ dan $x_j$ merupakan fitur asal. Pada kasus prediksi harga properti, fitur "usia bangunan" ($x_i$) dapat dikalikan dengan penanda biner "butuh perbaikan struktural" ($x_j$). Hasilnya membentuk penalti harga eksponensial bagi rumah tua yang sekaligus memiliki struktur rusak - sebuah pola yang menjadi dasar bagi pembentukan turunan polinomial pada derajat yang lebih tinggi.
 
-Pada tingkat produksi, transformasi ini jarang ditulis secara manual secara per-kolom. Pustaka transformasi modern menyertakan modul khusus—seperti `RelativeFeatures` atau `MathFeatures` pada Feature-engine—untuk mengeksekusi operasi selisih, rasio, dan interaksi secara terintegrasi di dalam sebuah *pipeline*. Pendekatan yang lebih mutakhir (seperti CAAFE) bahkan menggunakan *Large Language Models* guna mengusulkan rasio dan interaksi berdasarkan pemahaman semantik nama kolom. Kendati otomatisasi ini mempercepat eksplorasi fitur, pembangkitan turunan yang agresif rentan menimbulkan masalah redundansi, sehingga metode seleksi ketat wajib disertakan setelahnya.
+Pada tingkat produksi, transformasi ini jarang ditulis secara manual secara per-kolom. Pustaka transformasi modern menyertakan modul khusus - seperti `RelativeFeatures` atau `MathFeatures` pada Feature-engine - untuk mengeksekusi operasi selisih, rasio, dan interaksi secara terintegrasi di dalam sebuah *pipeline*. Pendekatan yang lebih mutakhir (seperti CAAFE) bahkan menggunakan *Large Language Models* guna mengusulkan rasio dan interaksi berdasarkan pemahaman semantik nama kolom. Kendati otomatisasi ini mempercepat eksplorasi fitur, pembangkitan turunan yang agresif rentan menimbulkan masalah redundansi, sehingga metode seleksi ketat wajib disertakan setelahnya.
 
 
 ## Fitur Polinomial: Ekspresivitas versus Ledakan Fitur
@@ -64,12 +64,12 @@ Sebagian besar data mentah hanya merekam informasi pada tingkat observasi tungga
 
 Dalam praktiknya, proses agregasi tidak lagi sekadar menghitung rata-rata atau jumlah absolut. Terdapat beberapa pola agregasi mutakhir yang memanfaatkan struktur kelompok, terutama ketika data memiliki dimensi pengurutan atau waktu (*temporal*):
 
-*   ***Sliding Window*:** Agregasi berbasis jendela mundur berukuran tetap (misalnya, total transaksi dalam "7 hari terakhir").
-*   ***Expanding Window*:** Agregasi kumulatif dari titik observasi pertama hingga baris saat ini. Pustaka seperti *Feature-engine* menyediakan transformer `ExpandingWindowFeatures` untuk mengeksekusi ini di dalam *pipeline* produksi secara aman.
-*   **Pembobotan Kebaruan (*Recency-Weighted Aggregation*):** Tidak semua data historis memiliki bobot relevansi yang setara. Pada agregasi ini, observasi yang lebih baru diberi bobot lebih besar menggunakan fungsi peluruhan eksponensial (*exponential decay*), di mana $\lambda$ mengontrol tingkat peluruhan berdasarkan jarak waktu (*age*):
-    $$ w_i = e^{-\lambda \cdot \text{age}_i} $$
-    Rata-rata tertimbang (*weighted mean*) kemudian dihitung dari observasi kelompok tersebut, memungkinkan model bereaksi lebih cepat terhadap perubahan perilaku terbaru.
-*   **Reset Berbasis Sesi (*Session-Based Reset*):** Agregasi kumulatif diatur ulang menjadi nol saat terdeteksi periode inaktivitas yang melampaui batas ambang tertentu, memastikan akumulasi metrik hanya mencerminkan sesi aktivitas kontinu.
+* ***Sliding Window*:** Agregasi berbasis jendela mundur berukuran tetap (misalnya, total transaksi dalam "7 hari terakhir").
+* ***Expanding Window*:** Agregasi kumulatif dari titik observasi pertama hingga baris saat ini. Pustaka seperti *Feature-engine* menyediakan transformer `ExpandingWindowFeatures` untuk mengeksekusi ini di dalam *pipeline* produksi secara aman.
+* **Pembobotan Kebaruan (*Recency-Weighted Aggregation*):** Tidak semua data historis memiliki bobot relevansi yang setara. Pada agregasi ini, observasi yang lebih baru diberi bobot lebih besar menggunakan fungsi peluruhan eksponensial (*exponential decay*), di mana $\lambda$ mengontrol tingkat peluruhan berdasarkan jarak waktu (*age*):
+ $$ w_i = e^{-\lambda \cdot \text{age}_i} $$
+ Rata-rata tertimbang (*weighted mean*) kemudian dihitung dari observasi kelompok tersebut, memungkinkan model bereaksi lebih cepat terhadap perubahan perilaku terbaru.
+* **Reset Berbasis Sesi (*Session-Based Reset*):** Agregasi kumulatif diatur ulang menjadi nol saat terdeteksi periode inaktivitas yang melampaui batas ambang tertentu, memastikan akumulasi metrik hanya mencerminkan sesi aktivitas kontinu.
 
 Ekstraksi fitur agregat dapat dilakukan secara masif dan otomatis. Alat khusus seperti *tsfresh* mampu mengekstraksi ratusan fitur ringkasan per kelompok deret waktu (termasuk fitur entropi dan spektral) melalui antarmuka `roll_time_series()`, yang juga dilengkapi penyaring signifikansi statistik bawaan untuk memangkas *noise*.
 
@@ -84,7 +84,7 @@ Berhadapan dengan data relasional menghadirkan tiga tantangan mekanis:
 
 1. **Efek *Fan-Out*:** Penggabungan mentah tabel entitas dengan tabel kejadian (relasi satu-ke-banyak) akan menduplikasi profil entitas sebanyak jumlah kejadiannya. Duplikasi ini merusak struktur matriks fitur karena target prediksi berada pada tingkat entitas, bukan tingkat kejadian.
 2. **Agregasi Kejadian:** Untuk menghindari duplikasi, log kejadian wajib diagregasi menjadi fitur ringkasan tunggal, seperti total pengeluaran atau frekuensi login, sebelum digabungkan kembali ke tabel utama.
-3. **Kebenaran *Point-in-Time*:** Proses agregasi harus memastikan bahwa perhitungan pada batas waktu tertentu hanya memakai informasi yang benar-benar terjadi sebelum batas waktu tersebut tiba.
+3. **Kebenaran *Point-in-Time*:** Proses agregasi harus memastikan bahwa perhitungan pada batas waktu tertentu hanya memakai informasi yang terjadi sebelum batas waktu tersebut tiba.
 
 Dalam membangun agregasi modern, sistem tidak hanya menghitung rata-rata sederhana. Sering kali diterapkan pembobotan lebih besar pada interaksi yang baru terjadi melalui metode peluruhan eksponensial (*exponential decay*).
 
@@ -106,9 +106,9 @@ Pemenuhan kebenaran *point-in-time* mengubah kumpulan log mentah menjadi represe
 Sinyal prediktif yang kuat sering kali bersumber dari pemahaman spesifik terhadap masalah yang diselesaikan. Fitur berbasis domain adalah terjemahan langsung dari aturan bisnis, standar klinis, atau formula industri ke dalam variabel matematis. 
 
 Representasi yang dirancang manusia ini membebaskan model dari beban untuk memetakan logika dasar melalui proses coba-coba. Menyuntikkan pengetahuan pakar secara eksplisit ke dalam *dataset* memberikan beberapa keuntungan operasional:
-*   **Mempercepat konvergensi:** Model langsung menerima sinyal matang, memangkas waktu komputasi untuk mencari hubungan antarvariabel dari nol.
-*   **Mengurangi korelasi semu:** Rumus yang teruji oleh pakar lebih kebal terhadap *noise* dibandingkan pola yang ditemukan secara acak oleh algoritma.
-*   **Menjaga validitas:** Keputusan model tetap sejalan dengan pedoman keilmuan atau praktik komersial yang berlaku di dunia nyata.
+* **Mempercepat konvergensi:** Model langsung menerima sinyal matang, memangkas waktu komputasi untuk mencari hubungan antarvariabel dari nol.
+* **Mengurangi korelasi semu:** Rumus yang teruji oleh pakar lebih kebal terhadap *noise* dibandingkan pola yang ditemukan secara acak oleh algoritma.
+* **Menjaga validitas:** Keputusan model tetap sejalan dengan pedoman keilmuan atau praktik komersial yang berlaku di dunia nyata.
 
 Penerapan fitur berbasis domain sangat bervariasi bergantung pada sektor industri yang ditangani.
 
@@ -125,9 +125,9 @@ Analis kredit tidak mengevaluasi pinjaman hanya dengan melihat total pendapatan 
 [GAMBAR 6.5: Diagram Konseptual - Alur transformasi variabel mentah neraca keuangan menjadi fitur risiko komposit seperti Altman Z-score]
 
 Praktik rekayasa fitur di domain keuangan meliputi:
-*   **Rasio profil risiko:** *Loan-to-value* (LTV) atau *debt-service coverage ratio* (DSCR) untuk mengukur kapasitas bayar pelanggan secara proporsional.
-*   **Indikator teknikal:** RSI (*Relative Strength Index*) dan MACD (*Moving Average Convergence Divergence*) yang diturunkan dari data pasar historis seperti pembukaan, penutupan, dan volume (OHLCV).
-*   **Indeks prediktif:** Altman Z-score, yakni kombinasi linier dari lima rasio neraca keuangan berbeda untuk mengestimasi risiko kebangkrutan suatu entitas bisnis.
+* **Rasio profil risiko:** *Loan-to-value* (LTV) atau *debt-service coverage ratio* (DSCR) untuk mengukur kapasitas bayar pelanggan secara proporsional.
+* **Indikator teknikal:** RSI (*Relative Strength Index*) dan MACD (*Moving Average Convergence Divergence*) yang diturunkan dari data pasar historis seperti pembukaan, penutupan, dan volume (OHLCV).
+* **Indeks prediktif:** Altman Z-score, yakni kombinasi linier dari lima rasio neraca keuangan berbeda untuk mengestimasi risiko kebangkrutan suatu entitas bisnis.
 
 **Analitik Edukasi (*Learning Analytics*)**
 Pada sistem pembelajaran digital, log aktivitas mahasiswa diubah menjadi metrik yang mencerminkan pola belajar. Fitur turunan ini mencakup total waktu pengerjaan modul (*time-on-task*), jumlah percobaan sebelum memberikan jawaban benar, hingga jeda waktu antar-sesi. Kompilasi fitur ini menghasilkan metrik keterlibatan yang jauh lebih representatif dibandingkan sekadar menghitung frekuensi *login*.
@@ -140,17 +140,17 @@ Data stempel waktu (*timestamp*) mentah biasanya direkam sebagai deretan angka y
 ### Ekstraksi Komponen Kalender
 
 Langkah pertama yang umum dilakukan adalah memecah waktu menjadi atribut kalender. Dari satu nilai stempel waktu, kita dapat menurunkan berbagai fitur turunan melalui beberapa kategori:
-*   **Unit waktu:** Jam kejadian, hari dalam satu minggu, bulan, atau kuartal.
-*   **Penanda biner:** Indikator hari libur nasional, akhir pekan, atau jam operasional kerja.
-*   **Jarak temporal:** Jumlah hari sejak peristiwa terakhir, atau selisih hari menjelang tenggat waktu.
+* **Unit waktu:** Jam kejadian, hari dalam satu minggu, bulan, atau kuartal.
+* **Penanda biner:** Indikator hari libur nasional, akhir pekan, atau jam operasional kerja.
+* **Jarak temporal:** Jumlah hari sejak peristiwa terakhir, atau selisih hari menjelang tenggat waktu.
 
 Pustaka modern seperti `Feature-engine` (melalui modul `DatetimeFeatures`) mampu mengekstrak komponen-komponen ini secara otomatis di dalam *pipeline*. Pembentukan atribut kalender membantu model memetakan rutinitas harian atau mingguan yang memengaruhi data secara langsung, seperti lonjakan kemacetan pada hari kerja atau tren ritel pada akhir pekan.
 
 ### Masalah Jarak pada Waktu Linier
 
 Pemisahan komponen kalender memunculkan isu matematis baru terkait perhitungan jarak. Waktu memiliki sifat siklik atau berputar:
-*   Bulan Desember (12) berdekatan langsung dengan bulan Januari (1).
-*   Pukul 23.00 malam hanya berjarak satu jam dari pukul 00.00 dini hari.
+* Bulan Desember (12) berdekatan langsung dengan bulan Januari (1).
+* Pukul 23.00 malam hanya berjarak satu jam dari pukul 00.00 dini hari.
 
 Jika waktu dibiarkan tersaji sebagai bilangan bulat linear dari 0 hingga 23, model yang bekerja berdasarkan metrik jarak (seperti K-NN atau regresi) akan mengira bahwa angka 0 dan 23 saling berjauhan. Kesalahan evaluasi ini merusak pemahaman algoritma terhadap peristiwa yang terjadi melintasi pergantian siklus.
 
@@ -166,7 +166,7 @@ Pada persamaan tersebut, $x$ mewakili nilai waktu asli (misalnya, pukul 23), sed
 
 [GAMBAR 6.6: Diagram konseptual - Transformasi siklik yang memetakan nilai jam dari 0 hingga 23 ke dalam ruang melingkar dua dimensi]
 
-Gambar 6.6 mengilustrasikan bagaimana *encoding* siklik memetakan waktu ke ruang dua dimensi. Nilai jam kini direpresentasikan sebagai pasangan koordinat $(x_{\text{sin}}, x_{\text{cos}})$. Transformasi ini menjamin bahwa jarak antara titik akhir siklus dan titik awal berikutnya tetap berdekatan. Secara praktis, konversi matematis ini sering kali difasilitasi oleh transformer seperti `CyclicalFeatures` (yang dapat menghapus kolom linear asalnya), memastikan ruang vektor fitur beroperasi dengan benar baik pada fase pelatihan maupun inferensi.
+Gambar 6.6 mengilustrasikan bagaimana *encoding* siklik memetakan waktu ke ruang dua dimensi. Nilai jam kini direpresentasikan sebagai pasangan koordinat $(x_{\text{sin}}, x_{\text{cos}})$. Transformasi ini menjamin bahwa jarak antara titik akhir siklus dan titik awal berikutnya tetap berdekatan. Dalam praktiknya, konversi matematis ini sering kali difasilitasi oleh transformer seperti `CyclicalFeatures` (yang dapat menghapus kolom linear asalnya), memastikan ruang vektor fitur beroperasi dengan benar baik pada fase pelatihan maupun inferensi.
 
 
 ## Risiko Ledakan Fitur
@@ -177,9 +177,9 @@ Rekayasa fitur sering dipahami secara keliru sebagai proses memperbanyak kolom d
 
 Membesarkan dimensi data secara kombinatorial tanpa landasan teori mendatangkan tiga masalah komputasi utama:
 
-*   **Dominasi *noise*:** Sebagai ilustrasi matematis, membangun seluruh rasio dari 100 fitur dasar secara langsung menghasilkan hampir 10.000 fitur baru. Mayoritas kolom tambahan ini hanya berupa *noise* murni dan gagal memberikan sinyal komputasi yang valid bagi model.
-*   **Kutukan dimensi:** Penambahan dimensi baru memperbesar volume ruang fitur secara eksponensial. Titik-titik observasi saling menjauh dan tersebar sangat renggang. Kondisi ini menyulitkan pemetaan batas pemisah. Model rentan mengalami *overfitting* karena algoritma cenderung menghafal *noise* dari data pelatihan.
-*   **Kelumpuhan komputasi:** Arsitektur prediktif berbasis pohon keputusan memang lebih kebal terhadap variabel acak. Walaupun demikian, struktur algoritmanya tetap harus menanggung beban berat saat memilah ribuan cabang tambahan. Fase pelatihan membutuhkan durasi yang lebih panjang dan memakan alokasi memori secara masif tanpa jaminan peningkatan akurasi.
+* **Dominasi *noise*:** Sebagai ilustrasi matematis, membangun seluruh rasio dari 100 fitur dasar secara langsung menghasilkan hampir 10.000 fitur baru. Mayoritas kolom tambahan ini hanya berupa *noise* murni dan gagal memberikan sinyal komputasi yang valid bagi model.
+* **Kutukan dimensi:** Penambahan dimensi baru memperbesar volume ruang fitur secara eksponensial. Titik-titik observasi saling menjauh dan tersebar sangat renggang. Kondisi ini menyulitkan pemetaan batas pemisah. Model rentan mengalami *overfitting* karena algoritma cenderung menghafal *noise* dari data pelatihan.
+* **Kelumpuhan komputasi:** Arsitektur prediktif berbasis pohon keputusan memang lebih kebal terhadap variabel acak. Walaupun demikian, struktur algoritmanya tetap harus menanggung beban berat saat memilah ribuan cabang tambahan. Fase pelatihan membutuhkan durasi yang lebih panjang dan memakan alokasi memori secara masif tanpa jaminan peningkatan akurasi.
 
 Penumpukan turunan variabel matematis juga berpotensi menciptakan multikolinearitas. Kondisi ini muncul ketika beberapa variabel prediktor saling memuat sinyal yang tumpang tindih. Redundansi observasi merusak cara kerja algoritma parametrik (seperti regresi linear) karena estimasi bobot koefisien kehilangan stabilitas.
 
@@ -191,9 +191,9 @@ Di mana $R_i^2$ merupakan koefisien determinasi saat fitur $x_i$ diregresikan te
 
 Kita harus mengombinasikan pembuatan turunan matematis dengan pemangkasan sistematis untuk memitigasi risiko ledakan fitur. Praktik rekayasa fitur modern menangani dimensi berlebih melalui pendekatan berikut:
 
-*   **Pemangkasan korelasi:** Membuang fitur turunan menggunakan penyaringan berbasis nilai VIF atau ambang batas korelasi berpasangan.
-*   **Regularisasi L1 (Lasso):** Menerapkan penalti saat proses pelatihan berlangsung untuk menekan bobot koefisien fitur yang redundan menjadi nol secara otomatis.
-*   **Penyaringan pra-kombinasi:** Mengukur signifikansi interaksi melalui metode statistik (seperti uji ANOVA) sebelum mengeksekusi ekspansi polinomial. Langkah ini mencegah penggabungan fitur-fitur yang sejak awal sudah lemah.
+* **Pemangkasan korelasi:** Membuang fitur turunan menggunakan penyaringan berbasis nilai VIF atau ambang batas korelasi berpasangan.
+* **Regularisasi L1 (Lasso):** Menerapkan penalti saat proses pelatihan berlangsung untuk menekan bobot koefisien fitur yang redundan menjadi nol secara otomatis.
+* **Penyaringan pra-kombinasi:** Mengukur signifikansi interaksi melalui metode statistik (seperti uji ANOVA) sebelum mengeksekusi ekspansi polinomial. Langkah ini mencegah penggabungan fitur-fitur yang sejak awal sudah lemah.
 
 Penciptaan atribut matematis yang baru mutlak memerlukan pijakan teori yang kuat. Kita mendefinisikan representasi baru semata-mata untuk memandu model mengenali pola faktual. Argumen komputasi dan praktik pembuktian empiris ini menjadi landasan saat mendalami metodologi seleksi fitur di Bab 7 dan mekanisme evaluasi model di Bab 9.
 
@@ -220,9 +220,9 @@ Di mana $K$ merupakan jumlah lipatan (*fold*) pengujian, $y_{\text{val}}^{(k)}$ 
 
 Selain mengandalkan akurasi metrik agregat, arsitektur representasi dapat dievaluasi memakai metode diagnostik lanjutan untuk memahami kontribusi fitur secara spesifik:
 
-*   **Studi Ablasio Kelompok (*Group Ablation Study*):** Teknik ini mengelompokkan atribut turunan berdasarkan jenisnya, misalnya kelompok rasio matematis atau agregasi temporal. Evaluasi performa dilakukan dengan menghapus kelompok-kelompok tersebut satu per satu. Pendekatan ini memperlihatkan kategori transformasi mana yang menyumbang sinyal murni.
-*   **Seleksi Fitur *Probe* (*Probe Feature Selection*):** Analis menyisipkan satu kolom derau acak ke dalam matriks data latih. Semua fitur turunan yang menghasilkan skor *feature importance* lebih rendah dari atribut *probe* ini terbukti beroperasi pada level acak dan otomatis dibuang.
-*   **Diagnosis Kontribusi SHAP:** Metode analisis prediksi ini mendekomposisi bobot utilitas tiap dimensi matriks. Jika suatu atribut turunan sekadar mengambil alih porsi nilai SHAP dari fitur mentah pembentuknya tanpa mendongkrak skor metrik keseluruhan, fitur turunan tersebut tergolong berlebih.
+* **Studi Ablasio Kelompok (*Group Ablation Study*):** Teknik ini mengelompokkan atribut turunan berdasarkan jenisnya, misalnya kelompok rasio matematis atau agregasi temporal. Evaluasi performa dilakukan dengan menghapus kelompok-kelompok tersebut satu per satu. Pendekatan ini memperlihatkan kategori transformasi mana yang menyumbang sinyal murni.
+* **Seleksi Fitur *Probe* (*Probe Feature Selection*):** Analis menyisipkan satu kolom derau acak ke dalam matriks data latih. Semua fitur turunan yang menghasilkan skor *feature importance* lebih rendah dari atribut *probe* ini terbukti beroperasi pada level acak dan otomatis dibuang.
+* **Diagnosis Kontribusi SHAP:** Metode analisis prediksi ini mendekomposisi bobot utilitas tiap dimensi matriks. Jika suatu atribut turunan sekadar mengambil alih porsi nilai SHAP dari fitur mentah pembentuknya tanpa mendongkrak skor metrik keseluruhan, fitur turunan tersebut tergolong berlebih.
 
 Bab 9 membahas metode evaluasi fitur secara menyeluruh. Pada tahap awal rekayasa data, prinsip dasarnya harus ditaati: fungsi turunan memperbesar ukuran matriks komputasi, dan eksistensinya hanya valid setelah lulus pengujian empiris.
 
@@ -238,12 +238,14 @@ Tabel data asal biasanya berwujud log peristiwa (*event log*) berupa angka nomin
 
 **2. Rekam Medis dan Kesehatan**
 Formulir rekam medis sering kali mencatat variabel biologis secara terpisah. Pengetahuan klinis dapat diterjemahkan menjadi interaksi matematis yang bermakna bagi algoritma *machine learning*:
-*   **Sintesis Domain:** Mentransformasikan parameter dasar tinggi dan berat badan menjadi satu fitur komposisi terpusat, yaitu Indeks Massa Tubuh (BMI).
-*   **Delta Pergeseran Historis:** Fitur komparatif yang menyoroti pergeseran nilai kesehatan di antara jadwal observasi sering menyimpan sinyal prediktif tinggi. Menghitung nilai selisih tekanan darah kunjungan saat ini dengan kunjungan sebelumnya akan menghasilkan fitur lintasan medis (progres kondisi pasien) yang lebih kaya informasi ketimbang status absolut.
+* **Sintesis Domain:** Mentransformasikan parameter dasar tinggi dan berat badan menjadi satu fitur komposisi terpusat, yaitu Indeks Massa Tubuh (BMI). Representasi ini dihitung secara matematis menggunakan rumus:
+ $$ \text{BMI} = \frac{\text{Berat Badan (kg)}}{(\text{Tinggi Badan (m)})^2} $$
+ Di mana hasil perhitungan ini (BMI) memiliki korelasi klinis yang jauh lebih kuat terhadap risiko penyakit kardiovaskular dibandingkan jika model hanya mempelajari fitur bobot atau tinggi secara individual.
+* **Delta Pergeseran Historis:** Fitur komparatif yang menyoroti pergeseran nilai kesehatan di antara jadwal observasi sering menyimpan sinyal prediktif tinggi. Menghitung nilai selisih tekanan darah kunjungan saat ini dengan kunjungan sebelumnya akan menghasilkan fitur lintasan medis (progres kondisi pasien) yang lebih kaya informasi ketimbang status absolut.
 
 **3. Sistem Manajemen Pendidikan Digital**
 Sistem pendidikan menghasilkan ribuan log aktivitas masuk (*login*) dan statistik ujian. Namun, teori pedagogi menetapkan bahwa keteraturan belajar mencerminkan komitmen siswa dengan lebih konsisten dibandingkan sekadar menjumlahkan frekuensi klik. Oleh karena itu, fitur dikembangkan melalui:
-*   **Sintesis Keteraturan:** Menghitung jumlah hari *login* beruntun tanpa jeda (*streak*) sebagai indikator motivasi belajar.
-*   **Rasio Penyelesaian:** Perbandingan proporsional antara tugas yang dirampungkan dengan akumulasi sisa kuota penugasan.
+* **Sintesis Keteraturan:** Menghitung jumlah hari *login* beruntun tanpa jeda (*streak*) sebagai indikator motivasi belajar.
+* **Rasio Penyelesaian:** Perbandingan proporsional antara tugas yang dirampungkan dengan akumulasi sisa kuota penugasan.
 
 Melalui intervensi yang dituntun oleh wawasan teori, rekayasa fitur bertugas menerjemahkan volume catatan log yang masif menjadi sekumpulan sinyal perilaku yang terstruktur, padat, dan langsung relevan bagi algoritma pemodelan sasaran.

@@ -11,30 +11,30 @@ Secara matematis, mekanisme hilangnya data ( *missingness mechanism* ) didefinis
 $$ P(R \mid Y_{obs}, Y_{miss}, \phi) $$
 
 Di mana:
-*   $R$ merepresentasikan matriks indikator ketiadaan data.
-*   $Y_{obs}$ adalah nilai atribut yang berhasil terekam.
-*   $Y_{miss}$ adalah nilai atribut yang kosong di dalam *dataset*.
-*   $\phi$ merupakan parameter tidak diketahui yang menentukan proses hilangnya data.
+* $R$ merepresentasikan matriks indikator ketiadaan data.
+* $Y_{obs}$ adalah nilai atribut yang berhasil terekam.
+* $Y_{miss}$ adalah nilai atribut yang kosong di dalam *dataset*.
+* $\phi$ merupakan parameter tidak diketahui yang menentukan proses hilangnya data.
 
 Berdasarkan hubungan ketergantungan ini, statistika membagi hilangnya data ke dalam tiga kategori utama:
 
-1.  **Missing Completely At Random (MCAR)**
-    Kekosongan terjadi murni secara kebetulan. Peluang hilangnya data tidak dipengaruhi oleh variabel lain, baik yang teramati maupun tidak teramati. Bentuk distribusinya disederhanakan menjadi $P(R \mid Y_{obs}, Y_{miss}, \phi) = P(R \mid \phi)$. Contohnya, sensor pengukur angin gagal mengirimkan data sesaat akibat pemadaman listrik acak. Pada skenario MCAR, porsi data yang utuh tetap menjadi sampel representatif dari populasi awal.
+1. **Missing Completely At Random (MCAR)**
+ Kekosongan terjadi murni secara kebetulan. Peluang hilangnya data tidak dipengaruhi oleh variabel lain, baik yang teramati maupun tidak teramati. Bentuk distribusinya disederhanakan menjadi $P(R \mid Y_{obs}, Y_{miss}, \phi) = P(R \mid \phi)$. Contohnya, sensor pengukur angin gagal mengirimkan data sesaat akibat pemadaman listrik acak. Pada skenario MCAR, porsi data yang utuh tetap menjadi sampel representatif dari populasi awal.
 
-2.  **Missing At Random (MAR)**
-    Peluang terjadinya nilai kosong bergantung pada variabel lain di dalam *dataset*, tetapi tidak dipengaruhi oleh nilai yang hilang itu sendiri. Persamaannya menjadi $P(R \mid Y_{obs}, Y_{miss}, \phi) = P(R \mid Y_{obs}, \phi)$. Sebagai contoh, dalam survei medis, pasien berusia lanjut lebih sering mengosongkan riwayat olahraga. Pola kekosongan pada riwayat olahraga dapat dijelaskan menggunakan rentang usia. Memisahkan data berdasarkan usia akan menghasilkan sebaran kekosongan yang tampak acak pada masing-masing kelompok umur.
+2. **Missing At Random (MAR)**
+ Peluang terjadinya nilai kosong bergantung pada variabel lain di dalam *dataset*, tetapi tidak dipengaruhi oleh nilai yang hilang itu sendiri. Persamaannya menjadi $P(R \mid Y_{obs}, Y_{miss}, \phi) = P(R \mid Y_{obs}, \phi)$. Sebagai contoh, dalam survei medis, pasien berusia lanjut lebih sering mengosongkan riwayat olahraga. Pola kekosongan pada riwayat olahraga dapat dijelaskan menggunakan rentang usia. Memisahkan data berdasarkan usia akan menghasilkan sebaran kekosongan yang tampak acak pada masing-masing kelompok umur.
 
-3.  **Missing Not At Random (MNAR)**
-    Probabilitas hilangnya suatu nilai terikat langsung dengan isi nilai tidak teramati tersebut ($Y_{miss}$). Ketergantungan ini membuat persamaan probabilitas tidak dapat disederhanakan. Kasus klasiknya adalah data survei pendapatan, di mana responden dengan angka kekayaan ekstrem sering kali menolak melapor demi privasi. Absennya data merupakan dampak langsung dari nominal kekayaan itu sendiri. Pada kondisi MNAR, lokasi kekosongan mengandung sinyal pemodelan.
+3. **Missing Not At Random (MNAR)**
+ Probabilitas hilangnya suatu nilai terikat langsung dengan isi nilai tidak teramati tersebut ($Y_{miss}$). Ketergantungan ini membuat persamaan probabilitas tidak dapat disederhanakan. Kasus klasiknya adalah data survei pendapatan, di mana responden dengan angka kekayaan ekstrem sering kali menolak melapor demi privasi. Absennya data merupakan dampak langsung dari nominal kekayaan itu sendiri. Pada kondisi MNAR, lokasi kekosongan mengandung sinyal pemodelan.
 
 [GAMBAR 5.1: Diagram Konseptual - Perbandingan pola hilangnya data pada mekanisme MCAR, MAR, dan MNAR]
 
 Membedakan ketiga profil mekanisme di atas mencegah injeksi bias pada fase pelatihan. Jika kita mengisi data yang tergolong MNAR menggunakan nilai rata-rata, kita akan merusak batas distribusi asli dan menyamarkan keberadaan kelompok ekstrem dalam sampel.
 
 Praktisi menggunakan sejumlah pustaka perangkat lunak dan uji statistik untuk memfasilitasi proses inspeksi:
-*   **Visualisasi matriks:** Pustaka ekosistem Python seperti `missingno` dan `MissMecha` menyediakan visualisasi matriks korelasi *nullity*. Korelasi tinggi pada matriks indikator antar-kolom kerap menandai adanya probabilitas kondisional berjenis MAR atau MNAR.
-*   **Uji MCAR Little:** Uji statistik ini mengevaluasi deviasi observasi untuk memeriksa asumsi MCAR, yang salah satunya diimplementasikan melalui pustaka `missdat`. Karena mempertahankan hipotesis awal MCAR adalah bukti lemah, praktisi tetap memerlukan penilaian konteks domain.
-*   **Pemodelan eksplisit:** Pada kasus berkarakteristik MNAR, nilai kosong justru wajib dipertahankan sinyalnya sebagai indikator eksplisit. Pendekatan *deep learning* modern seperti *not-MIWAE* juga secara fungsional memodelkan mekanisme sensor mandiri agar menghasilkan estimasi bebas bias.
+* **Visualisasi matriks:** Pustaka ekosistem Python seperti `missingno` dan `MissMecha` menyediakan visualisasi matriks korelasi *nullity*. Korelasi tinggi pada matriks indikator antar-kolom kerap menandai adanya probabilitas kondisional berjenis MAR atau MNAR.
+* **Uji MCAR Little:** Uji statistik ini mengevaluasi deviasi observasi untuk memeriksa asumsi MCAR, yang salah satunya diimplementasikan melalui pustaka `missdat`. Karena mempertahankan hipotesis awal MCAR adalah bukti lemah, praktisi tetap memerlukan penilaian konteks domain.
+* **Pemodelan eksplisit:** Pada kasus berkarakteristik MNAR, nilai kosong justru wajib dipertahankan sinyalnya sebagai indikator eksplisit. Pendekatan *deep learning* modern seperti *not-MIWAE* juga secara fungsional memodelkan mekanisme sensor mandiri agar menghasilkan estimasi bebas bias.
 
 Operasi imputasi *missing values* tidak berjalan serampangan. Pemahaman konseptual, inspeksi visual, serta pengetahuan konteks domain merupakan prasyarat mutlak sebelum mengubah teknik penanganan nilai kosong menjadi komponen *pipeline* permanen.
 
@@ -57,9 +57,9 @@ $$ \mu_{benar} = \frac{1}{|X_{train}|} \sum_{x \in X_{train}} x $$
 
 Nilai ini dikunci, lalu dipakai untuk mengisi baris kosong pada *split training* maupun *split test*. Menyatukan imputasi sebagai komponen dalam *pipeline* menjamin beberapa kondisi operasional:
 
-*   **Isolasi dalam validasi silang:** Saat model dievaluasi melalui *cross-validation*, kalkulasi parameter imputasi diulang pada setiap lipatan pelatihan (*fold*). Lipatan validasi tetap steril dan tidak menyumbang nilai perhitungan.
-*   **Konsistensi inferensi:** Saat model beroperasi, baris data baru otomatis menerima perlakuan imputasi berdasarkan parameter statistik data latih lama. Praktisi tidak perlu memprogram ulang logika imputasi pada peladen produksi.
-*   **Integritas metode iteratif:** Pada metode kompleks seperti imputasi berbasis *machine learning*, mengkalkulasi estimasi sebelum pembagian data akan mendistorsi varians. Seluruh kalkulasi wajib beroperasi murni di atas *split training*.
+* **Isolasi dalam validasi silang:** Saat model dievaluasi melalui *cross-validation*, kalkulasi parameter imputasi diulang pada setiap lipatan pelatihan (*fold*). Lipatan validasi tetap steril dan tidak menyumbang nilai perhitungan.
+* **Konsistensi inferensi:** Saat model beroperasi, baris data baru otomatis menerima perlakuan imputasi berdasarkan parameter statistik data latih lama. Praktisi tidak perlu memprogram ulang logika imputasi pada peladen produksi.
+* **Integritas metode iteratif:** Pada metode kompleks seperti imputasi berbasis *machine learning*, mengkalkulasi estimasi sebelum pembagian data akan mendistorsi varians. Seluruh kalkulasi wajib beroperasi murni di atas *split training*.
 
 Meskipun riset menunjukkan bahwa imputasi median sederhana yang dilakukan di luar validasi silang terkadang dapat menawarkan sedikit keuntungan varians dengan mengorbankan bias (Jaeger dkk., 2020), aturan bakunya tetap ketat: seluruh perhitungan statistik pengganti harus diposisikan sebagai *transformer* setelah pemisahan data dilakukan.
 
@@ -128,16 +128,16 @@ Di mana $m_i^{(j)}$ adalah elemen indikator biner untuk observasi ke-$i$ pada fi
 Pendekatan ini sangat relevan saat menangani mekanisme data *Missing Not At Random* (MNAR), di mana pola kekosongan memiliki korelasi dengan variabel target. Sebagai contoh, pada model penilaian risiko kredit, ketiadaan data "nomor telepon tempat kerja" sering kali bukan akibat kegagalan pencatatan sistem. Kekosongan tersebut dapat mengindikasikan riwayat pekerjaan yang tidak stabil, yang secara empiris merupakan sinyal probabilitas gagal bayar yang tinggi.
 
 Keberadaan *missing indicator* mengubah cara model membaca dataset yang telah diimputasi:
-*   **Pemisahan konteks nilai:** Algoritma menggunakan fitur hasil imputasi untuk mengidentifikasi pola pada populasi umum, sekaligus menggunakan matriks indikator untuk menyesuaikan probabilitas prediksi berdasarkan fenomena ketiadaan informasi.
-*   **Percabangan asimetris:** Model berbasis pohon (seperti *Random Forest* atau *Gradient Boosting*) dapat membuat partisi logika (*split*) spesifik yang membedakan observasi dengan nilai asli dari observasi dengan nilai hasil perkiraan.
+* **Pemisahan konteks nilai:** Algoritma menggunakan fitur hasil imputasi untuk mengidentifikasi pola pada populasi umum, sekaligus menggunakan matriks indikator untuk menyesuaikan probabilitas prediksi berdasarkan fenomena ketiadaan informasi.
+* **Percabangan asimetris:** Model berbasis pohon (seperti *Random Forest* atau *Gradient Boosting*) dapat membuat partisi logika (*split*) spesifik yang membedakan observasi dengan nilai asli dari observasi dengan nilai hasil perkiraan.
 
 Secara teknis, komputasi indikator ini umumnya dirangkai dalam satu paket dengan objek imputasi di dalam *pipeline* (seperti parameter `add_indicator=True` pada `SimpleImputer` atau `IterativeImputer` di pustaka scikit-learn). Pembentukan indikator tunduk pada batasan fiksasi *fit-transform* untuk mencegah kebocoran data (*data leakage*):
-1.  **Fiksasi saat pelatihan:** Fitur indikator hanya diregistrasi untuk kolom-kolom yang secara aktual memiliki nilai kosong di dalam set pelatihan (*training set*).
-2.  **Kekakuan inferensi:** Jika sebuah kolom terisi penuh di data pelatihan namun tiba-tiba memiliki observasi bernilai kosong pada data baru (*test set*), *pipeline* tidak akan membentuk kolom indikator baru, melainkan hanya mengimputasi nilai tersebut.
+1. **Fiksasi saat pelatihan:** Fitur indikator hanya diregistrasi untuk kolom-kolom yang secara aktual memiliki nilai kosong di dalam set pelatihan (*training set*).
+2. **Kekakuan inferensi:** Jika sebuah kolom terisi penuh di data pelatihan namun tiba-tiba memiliki observasi bernilai kosong pada data baru (*test set*), *pipeline* tidak akan membentuk kolom indikator baru, melainkan hanya mengimputasi nilai tersebut.
 
 Penggunaan *missing indicator* memiliki konsekuensi komputasional dan arsitektural. Praktik ini harus dilakukan secara selektif dengan mempertimbangkan dua efek samping struktural:
-*   **Inflasi dimensi:** Penambahan indikator untuk kolom yang kehilangan data murni secara acak (MCAR) akan mengekspansi ruang dimensi (*dimensionality*) secara redundan tanpa memberikan sinyal tambahan yang menguntungkan model.
-*   **Multikolinearitas struktural:** Jika beberapa kolom memiliki pola kekosongan yang identik (*co-missing patterns*)—misalnya, tanggal awal dan tanggal akhir kontrak kosong secara bersamaan—indikator yang dihasilkan akan berkorelasi linear absolut. Hal ini mereduksi stabilitas komputasi pada pemodelan parametrik seperti regresi linier.
+* **Inflasi dimensi:** Penambahan indikator untuk kolom yang kehilangan data murni secara acak (MCAR) akan mengekspansi ruang dimensi (*dimensionality*) secara redundan tanpa memberikan sinyal tambahan yang menguntungkan model.
+* **Multikolinearitas struktural:** Jika beberapa kolom memiliki pola kekosongan yang identik (*co-missing patterns*) - misalnya, tanggal awal dan tanggal akhir kontrak kosong secara bersamaan - indikator yang dihasilkan akan berkorelasi linear absolut. Hal ini mereduksi stabilitas komputasi pada pemodelan parametrik seperti regresi linier.
 
 
 ## *Outlier*: Deteksi vs. Penanganan
@@ -149,9 +149,9 @@ Selain penanganan *missing values*, nilai ekstrem atau *outlier* merupakan tanta
 Tahap deteksi murni bertujuan menetapkan batas kenormalan suatu fitur. Algoritma hanya melabeli atau memberikan skor pada nilai yang secara matematis berada di luar distribusi mayoritas, tanpa melakukan modifikasi nilai.
 
 Ekosistem analitik data, termasuk pustaka PyOD dan *scikit-learn*, mengelompokkan pendekatan deteksi ke dalam beberapa tingkatan:
-*   **Metode Univariat:** Mengukur jarak dari pusat distribusi, seperti penggunaan ambang batas rentang antarkuartil (IQR).
-*   **Pendekatan Multivariat:** Algoritma proksimitas seperti *Isolation Forest* dan *Local Outlier Factor* (LOF) mengukur keterasingan observasi di dalam ruang berdimensi banyak.
-*   **Deteksi Probabilistik Tanpa Parameter:** Algoritma ECOD (*Empirical-CDF-based Outlier Detection*) mengestimasi fungsi distribusi kumulatif empiris pada setiap dimensi untuk menghasilkan probabilitas anomali gabungan, menghilangkan kebutuhan penyetelan ambang batas secara manual.
+* **Metode Univariat:** Mengukur jarak dari pusat distribusi, seperti penggunaan ambang batas rentang antarkuartil (IQR).
+* **Pendekatan Multivariat:** Algoritma proksimitas seperti *Isolation Forest* dan *Local Outlier Factor* (LOF) mengukur keterasingan observasi di dalam ruang berdimensi banyak.
+* **Deteksi Probabilistik Tanpa Parameter:** Algoritma ECOD (*Empirical-CDF-based Outlier Detection*) mengestimasi fungsi distribusi kumulatif empiris pada setiap dimensi untuk menghasilkan probabilitas anomali gabungan, menghilangkan kebutuhan penyetelan ambang batas secara manual.
 
 Implementasi antarmuka dalam *scikit-learn* juga membedakan skenario analisis ke dalam dua metode. *Outlier detection* melabeli data pelatihan yang sudah terkontaminasi anomali sejak awal (menggunakan `fit_predict`). *Novelty detection* membangun profil normal dari data bersih, lalu menggunakannya untuk mendeteksi penyimpangan hanya pada observasi baru (misalnya dengan parameter `novelty=True` pada LOF).
 
@@ -162,10 +162,10 @@ $$ MAD = \text{median}(|x_i - \text{median}(X)|) $$
 $$ M_i = \frac{0.6745 \cdot (x_i - \text{median}(X))}{MAD} $$
 
 Di mana:
-*   $x_i$ merepresentasikan nilai observasi fitur ke-$i$.
-*   $\text{median}(X)$ merupakan nilai tengah dari seluruh observasi fitur $X$.
-*   $MAD$ mengukur variabilitas dari penyebaran data di sekitar median, yang kebal terhadap tarikan *outlier*.
-*   $M_i$ adalah metrik anomali observasi. Konstanta $0.6745$ menyelaraskan metrik ini agar sepadan dengan estimasi deviasi standar pada distribusi normal. Observasi dengan nilai $|M_i| > 3.5$ umumnya dilabeli anomali.
+* $x_i$ merepresentasikan nilai observasi fitur ke-$i$.
+* $\text{median}(X)$ merupakan nilai tengah dari seluruh observasi fitur $X$.
+* $MAD$ mengukur variabilitas dari penyebaran data di sekitar median, yang kebal terhadap tarikan *outlier*.
+* $M_i$ adalah metrik anomali observasi. Konstanta $0.6745$ menyelaraskan metrik ini agar sepadan dengan estimasi deviasi standar pada distribusi normal. Observasi dengan nilai $|M_i| > 3.5$ umumnya dilabeli anomali.
 
 [GAMBAR 5.1: Diagram Distribusi - Perbandingan batas deteksi menggunakan deviasi standar klasik versus skor Z berbasis MAD pada data asimetris]
 
@@ -173,8 +173,8 @@ Di mana:
 
 Setelah algoritma menandai nilai-nilai ekstrem, tahap penanganan menentukan bentuk intervensi data. Keputusan ini bertumpu sepenuhnya pada konteks domain permasalahan, bukan metrik matematis. Anomali umumnya terbentuk oleh dua skenario berbeda:
 
-1.  **Galat Perekaman Data:** Nilai yang menyalahi hukum realitas, seperti umur manusia 150 tahun atau sensor suhu berbunyi angka absolut negatif. Kesalahan perekaman atau instrumen ini sah untuk diperlakukan layaknya *missing value*, yang ditangani dengan memotong (*capping*) nilainya ke batas maksimum logis atau diimputasi ulang.
-2.  **Sinyal Nyata:** Anomali yang merepresentasikan kejadian ekstrem valid di dunia nyata, seperti pembelanjaan harian bernilai ratusan juta rupiah. Nilai ini bisa menandakan pelanggan korporat besar atau deteksi dini aktivitas penipuan transaksi. Menghapus transaksi ini secara otomatis justru menghilangkan sinyal fitur yang paling diperlukan untuk mengenali pola *fraud*.
+1. **Galat Perekaman Data:** Nilai yang menyalahi hukum realitas, seperti umur manusia 150 tahun atau sensor suhu berbunyi angka absolut negatif. Kesalahan perekaman atau instrumen ini sah untuk diperlakukan layaknya *missing value*, yang ditangani dengan memotong (*capping*) nilainya ke batas maksimum logis atau diimputasi ulang.
+2. **Sinyal Nyata:** Anomali yang merepresentasikan kejadian ekstrem valid di dunia nyata, seperti pembelanjaan harian bernilai ratusan juta rupiah. Nilai ini bisa menandakan pelanggan korporat besar atau deteksi dini aktivitas penipuan transaksi. Menghapus transaksi ini secara otomatis justru menghilangkan sinyal fitur yang paling diperlukan untuk mengenali pola *fraud*.
 
 Pemisahan operasional antara deteksi dan penanganan memastikan bahwa praktisi data selalu mengevaluasi asal usul nilai ekstrem sebelum mengonversinya. Otomatisasi pembuangan *outlier* tanpa analisis diagnostik membuang informasi berharga secara permanen dari dataset.
 
@@ -185,24 +185,24 @@ Pemisahan operasional antara deteksi dan penanganan memastikan bahwa praktisi da
 
 Terdapat beberapa metode utama untuk menangani nilai ekstrem:
 
-*   **Pemangkasan (*Capping* atau *Winsorizing*)**
-    Daripada membuang baris data, kita menetapkan ambang batas atas dan batas bawah. Setiap nilai yang melampaui batas tersebut dipangkas dan disamakan dengan batasnya. Sebagai contoh, jika batas ditetapkan pada persentil ke-99, observasi pendapatan yang melebihi titik tersebut diubah menjadi sama persis dengan nilai persentil itu. Individu terkait tetap berada di kelompok teratas, tetapi magnitudo absolutnya terkendali. Implementasi yang sejalan dengan praktik pipeline yang benar, seperti kelas `Winsorizer` pada pustaka `Feature-engine`, mempelajari batas pemangkasan ini dari data *train* dan menerapkannya kembali secara persis pada saat pemrosesan data uji.
+* **Pemangkasan (*Capping* atau *Winsorizing*)**
+ Daripada membuang baris data, kita menetapkan ambang batas atas dan batas bawah. Setiap nilai yang melampaui batas tersebut dipangkas dan disamakan dengan batasnya. Sebagai contoh, jika batas ditetapkan pada persentil ke-99, observasi pendapatan yang melebihi titik tersebut diubah menjadi sama persis dengan nilai persentil itu. Individu terkait tetap berada di kelompok teratas, tetapi magnitudo absolutnya terkendali. Implementasi yang sejalan dengan praktik pipeline yang benar, seperti kelas `Winsorizer` pada pustaka `Feature-engine`, mempelajari batas pemangkasan ini dari data *train* dan menerapkannya kembali secara persis pada saat pemrosesan data uji.
 
 Ambang batas *capping* dapat dihitung menggunakan pendekatan berikut:
-1.  **Kuantil:** Berdasarkan proporsi data, misalnya memangkas 1% data terendah dan tertinggi.
-2.  **Rentang Antarkuartil (IQR):** Menggunakan rentang antara persentil ke-25 hingga ke-75 sebagai basis penghitungan pagar Tukey.
-3.  **Deviasi Absolut Median (MAD):** Pengganti *robust* untuk standar deviasi. Standar deviasi biasa rusak saat dihadapkan pada *outlier* raksasa karena nilai ekstrem ikut membesarkan kalkulasi rata-rata dan varians. Metode *modified z-score* (diperkenalkan oleh Hampel, 1974) mengatasi masalah ini dengan bersandar pada pengukuran median.
+1. **Kuantil:** Berdasarkan proporsi data, misalnya memangkas 1% data terendah dan tertinggi.
+2. **Rentang Antarkuartil (IQR):** Menggunakan rentang antara persentil ke-25 hingga ke-75 sebagai basis penghitungan pagar Tukey.
+3. **Deviasi Absolut Median (MAD):** Pengganti *robust* untuk standar deviasi. Standar deviasi biasa rusak saat dihadapkan pada *outlier* raksasa karena nilai ekstrem ikut membesarkan kalkulasi rata-rata dan varians. Metode *modified z-score* (diperkenalkan oleh Hampel, 1974) mengatasi masalah ini dengan bersandar pada pengukuran median.
 
 Persamaan *modified z-score* menggunakan rumusan:
 
 $$ M_i = \frac{0.6745 \cdot (x_i - \tilde{x})}{\text{MAD}} $$
 
 Di mana:
-*   $M_i$ mewakili skor modifikasi untuk observasi ke-$i$.
-*   $x_i$ adalah nilai titik data.
-*   $\tilde{x}$ adalah median dari distribusi fitur.
-*   $\text{MAD}$ merupakan deviasi absolut median, yaitu median dari selisih absolut setiap observasi terhadap $\tilde{x}$.
-*   Faktor $0.6745$ digunakan untuk menyejajarkan skor dengan rentang distribusi normal baku.
+* $M_i$ mewakili skor modifikasi untuk observasi ke-$i$.
+* $x_i$ adalah nilai titik data.
+* $\tilde{x}$ adalah median dari distribusi fitur.
+* $\text{MAD}$ merupakan deviasi absolut median, yaitu median dari selisih absolut setiap observasi terhadap $\tilde{x}$.
+* Faktor $0.6745$ digunakan untuk menyejajarkan skor dengan rentang distribusi normal baku.
 
 Titik data yang melewati rentang absolut $|M_i| > 3.5$ biasanya dipangkas atau ditandai sebagai *outlier*.
 
@@ -210,11 +210,11 @@ Titik data yang melewati rentang absolut $|M_i| > 3.5$ biasanya dipangkas atau d
 
 Selain *capping*, penyesuaian distribusi fitur melalui penskalaan merupakan metode penanganan *outlier* yang lazim digunakan:
 
-*   **Penskalaan *Robust* (*Robust Scaling*)**
-    Penskalaan standar berbasis *z-score* (`StandardScaler`) menjadi sangat rentan karena rata-rata dan standar deviasinya terseret oleh *outlier*. Penskalaan *robust* (seperti `RobustScaler` di `scikit-learn`) memusatkan data dengan median dan menskalakannya menggunakan IQR. Pengukuran ini murni memakai titik data di pusat distribusi (persentil ke-25 sampai ke-75). Karakteristik ini membuat skala fitur tetap stabil meskipun terdapat deretan nilai raksasa di ujung rentang distribusi.
+* **Penskalaan *Robust* (*Robust Scaling*)**
+ Penskalaan standar berbasis *z-score* (`StandardScaler`) menjadi sangat rentan karena rata-rata dan standar deviasinya terseret oleh *outlier*. Penskalaan *robust* (seperti `RobustScaler` di `scikit-learn`) memusatkan data dengan median dan menskalakannya menggunakan IQR. Pengukuran ini murni memakai titik data di pusat distribusi (persentil ke-25 sampai ke-75). Karakteristik ini membuat skala fitur tetap stabil meskipun terdapat deretan nilai raksasa di ujung rentang distribusi.
 
-*   **Pemampatan Distribusi (*Log / Power Transform*)**
-    Memampatkan skala terbukti efektif memfasilitasi data yang didominasi nilai kecil namun memiliki ekor panjang ke sisi kanan. Transformasi logaritmik atau penerapan *power transform* menekan nilai-nilai dominan ekstrem agar rentang magnitudonya bergeser mendekati sisa distribusi mayoritas. Operasi ini tidak mendisrupsi urutan ordinal; nilai maksimal tetap di puncak, tetapi jarak absolut antar observasi menjadi lebih sempit, sehingga model tidak terdistorsi akibat besaran asimetris saat pelatihan.
+* **Pemampatan Distribusi (*Log / Power Transform*)**
+ Memampatkan skala terbukti efektif memfasilitasi data yang didominasi nilai kecil namun memiliki ekor panjang ke sisi kanan. Transformasi logaritmik atau penerapan *power transform* menekan nilai-nilai dominan ekstrem agar rentang magnitudonya bergeser mendekati sisa distribusi mayoritas. Operasi ini tidak mendisrupsi urutan ordinal; nilai maksimal tetap di puncak, tetapi jarak absolut antar observasi menjadi lebih sempit, sehingga model tidak terdistorsi akibat besaran asimetris saat pelatihan.
 
 
 ## Batas Antara *Data Cleaning* dan Rekayasa Fitur
@@ -223,21 +223,21 @@ Dalam alur kerja ilmu data, batasan antara *data cleaning* dan rekayasa fitur ke
 
 *Data cleaning* berfokus pada koreksi fakta. Proses ini memastikan sebuah *dataset* merepresentasikan keadaan dunia nyata secara akurat. Validitas dari pembersihan data bersifat mutlak dan tidak akan berubah meskipun kita mengganti algoritma pemodelan. Karakteristik utama *data cleaning* meliputi:
 
-*   **Fokus perbaikan:** Memperbaiki fakta yang salah, format yang tidak konsisten, atau duplikasi entitas.
-*   **Titik eksekusi:** Bersifat statis dan global, dieksekusi satu kali pada keseluruhan data sebelum proses pemodelan atau pembagian data dimulai.
-*   **Contoh tindakan:**
-    *   Mengurai teks *string* "1,200.50" agar terbaca secara benar sebagai nilai numerik *float* `1200.50`.
-    *   Menghapus baris dengan nilai usia 150 tahun karena mustahil secara biologis.
-    *   Melakukan deduplikasi terhadap baris data yang tercatat berulang akibat kesalahan sistem pencatatan.
+* **Fokus perbaikan:** Memperbaiki fakta yang salah, format yang tidak konsisten, atau duplikasi entitas.
+* **Titik eksekusi:** Bersifat statis dan global, dieksekusi satu kali pada keseluruhan data sebelum proses pemodelan atau pembagian data dimulai.
+* **Contoh tindakan:**
+ * Mengurai teks *string* "1,200.50" agar terbaca secara benar sebagai nilai numerik *float* `1200.50`.
+ * Menghapus baris dengan nilai usia 150 tahun karena mustahil secara biologis.
+ * Melakukan deduplikasi terhadap baris data yang tercatat berulang akibat kesalahan sistem pencatatan.
 
 Rekayasa fitur beroperasi di ranah representasi. Fokus utamanya bukan lagi menguji kebenaran fakta dasar, melainkan memanipulasi bentuk data agar model dapat mengekstrak sinyal darinya dengan efisien. Karakteristik operasional dari rekayasa fitur meliputi:
 
-*   **Fokus manipulasi:** Mengubah distribusi, skala, atau format representasi sebagai keputusan desain yang disesuaikan dengan kebutuhan algoritma tertentu.
-*   **Titik eksekusi:** Bersifat dinamis dan harus diikat kuat di dalam *pipeline* pembelajaran untuk menjaga batasan isolasi data latih.
-*   **Contoh tindakan:**
-    *   Mengaplikasikan *robust scaler* pada nilai `1200.50` agar metrik jarak pada algoritma *Support Vector Machine* (SVM) dapat konvergen.
-    *   Mencetak fitur *missing indicator* baru untuk menampung sinyal informasi dari kolom usia yang kosong.
-    *   Mengisi atau melakukan imputasi nilai yang hilang berdasarkan pola distribusi dari observasi data lainnya.
+* **Fokus manipulasi:** Mengubah distribusi, skala, atau format representasi sebagai keputusan desain yang disesuaikan dengan kebutuhan algoritma tertentu.
+* **Titik eksekusi:** Bersifat dinamis dan harus diikat kuat di dalam *pipeline* pembelajaran untuk menjaga batasan isolasi data latih.
+* **Contoh tindakan:**
+ * Mengaplikasikan *robust scaler* pada nilai `1200.50` agar metrik jarak pada algoritma *Support Vector Machine* (SVM) dapat konvergen.
+ * Mencetak fitur *missing indicator* baru untuk menampung sinyal informasi dari kolom usia yang kosong.
+ * Mengisi atau melakukan imputasi nilai yang hilang berdasarkan pola distribusi dari observasi data lainnya.
 
 Kriteria pembatas operasional paling tegas antara kedua proses ini bersandar pada literatur kebocoran data (IBM, 2024), yakni dengan mengajukan satu pengujian: apakah transformasi tersebut bergantung pada pembagian *train/test split*? 
 
@@ -259,14 +259,14 @@ Batas operasional ini juga membatasi cakupan materi yang dieksplorasi di dalam b
 Penerapan taktik penanganan *missing values* dan *outlier* secara terpisah pada tahap prapemrosesan rentan memicu kebocoran data (*data leakage*). Jika kalkulasi batas *outlier* atau rata-rata imputasi dilakukan sebelum membagi set pelatihan dan pengujian, informasi dari set pengujian akan ikut merembes dan memengaruhi model. Untuk mencegah kontaminasi ini, seluruh komponen transformasi harus disatukan ke dalam arsitektur *pipeline*.
 
 Sebagai contoh, tinjau sebuah dataset medis untuk prediksi risiko penyakit yang memiliki dua anomali struktural:
-*   **Ketiadaan data yang tidak acak:** Fitur "jumlah tes darah" mengandung *missing values* bertipe *Missing Not At Random* (MNAR). Pasien berisiko tinggi lebih sering menjalani observasi laboratorium. Kekosongan data di kolom ini merepresentasikan ketiadaan tes karena pasien relatif sehat.
-*   **Ekor distribusi yang panjang:** Fitur "kadar protein" memiliki nilai ekstrem yang valid secara biologis, bukan akibat kesalahan sensor. Jika tidak dibatasi, magnitudo ekstrem ini akan merusak konvergensi dan stabilitas skala model linier.
+* **Ketiadaan data yang tidak acak:** Fitur "jumlah tes darah" mengandung *missing values* bertipe *Missing Not At Random* (MNAR). Pasien berisiko tinggi lebih sering menjalani observasi laboratorium. Kekosongan data di kolom ini merepresentasikan ketiadaan tes karena pasien relatif sehat.
+* **Ekor distribusi yang panjang:** Fitur "kadar protein" memiliki nilai ekstrem yang valid secara biologis, bukan akibat kesalahan sensor. Jika tidak dibatasi, magnitudo ekstrem ini akan merusak konvergensi dan stabilitas skala model linier.
 
 Berdasarkan diagnosis di atas, kita merancang spesifikasi *pipeline* berurutan:
-1.  **Ekstraksi indikator:** Menambahkan `MissingIndicator` (atau mengaktifkan argumen `add_indicator=True` pada objek imputer) untuk menyalin lokasi sel yang kosong menjadi sebuah fitur biner baru.
-2.  **Imputasi berbasis model:** Menjalankan algoritma `IterativeImputer` atau `KNNImputer` untuk menaksir nilai numerik pada sel yang kosong dengan memetakan korelasi antar-atribut medis.
-3.  **Pembatasan ekstrem (*capping*):** Menerapkan objek `Winsorizer` untuk memangkas magnitudo nilai di atas batas persentil ke-95.
-4.  **Penyesuaian skala (*scaling*):** Melakukan standardisasi dengan `RobustScaler` menggunakan perhitungan median dan *Interquartile Range* (IQR), sehingga skala fitur akhir tetap stabil terhadap sisa residu *outlier*.
+1. **Ekstraksi indikator:** Menambahkan `MissingIndicator` (atau mengaktifkan argumen `add_indicator=True` pada objek imputer) untuk menyalin lokasi sel yang kosong menjadi sebuah fitur biner baru.
+2. **Imputasi berbasis model:** Menjalankan algoritma `IterativeImputer` atau `KNNImputer` untuk menaksir nilai numerik pada sel yang kosong dengan memetakan korelasi antar-atribut medis.
+3. **Pembatasan ekstrem (*capping*):** Menerapkan objek `Winsorizer` untuk memangkas magnitudo nilai di atas batas persentil ke-95.
+4. **Penyesuaian skala (*scaling*):** Melakukan standardisasi dengan `RobustScaler` menggunakan perhitungan median dan *Interquartile Range* (IQR), sehingga skala fitur akhir tetap stabil terhadap sisa residu *outlier*.
 
 [GAMBAR 5.5: Diagram Blok - Arsitektur pipeline pemrosesan data yang menunjukkan aliran X_train menuju fungsi fit, dan X_test menuju fungsi transform dengan parameter terkunci]
 
@@ -275,8 +275,8 @@ Secara matematis, *pipeline* mengeksekusi komposisi fungsi transformasi secara b
 $$ X_{\text{out}} = T_n(T_{n-1}( \dots T_1(X_{\text{in}} \mid \theta_1) \dots \mid \theta_{n-1}) \mid \theta_n) $$
 
 Di mana:
-*   $T_i$ adalah representasi matematis dari fungsi transformasi pada tahap ke-$i$ (misalnya, fungsi pemotongan distribusi dari `Winsorizer` atau fungsi pergeseran skala dari `RobustScaler`).
-*   $\theta_i$ mewakili parameter statistik spesifik (seperti batas kuantil, median, atau bobot matriks imputasi) yang dikalkulasi secara eksklusif saat algoritma memproses *split* pelatihan.
+* $T_i$ adalah representasi matematis dari fungsi transformasi pada tahap ke-$i$ (misalnya, fungsi pemotongan distribusi dari `Winsorizer` atau fungsi pergeseran skala dari `RobustScaler`).
+* $\theta_i$ mewakili parameter statistik spesifik (seperti batas kuantil, median, atau bobot matriks imputasi) yang dikalkulasi secara eksklusif saat algoritma memproses *split* pelatihan.
 
 Dalam implementasi menggunakan Python (melalui pustaka `scikit-learn` dan `feature-engine`), perakitan komponen ini direalisasikan dengan kelas `Pipeline`:
 
@@ -288,9 +288,9 @@ from sklearn.preprocessing import RobustScaler
 from feature_engine.outliers import Winsorizer
 
 pipeline_medis = Pipeline([
-    ('imputer', IterativeImputer(add_indicator=True, random_state=42)),
-    ('capping', Winsorizer(capping_method='quantiles', tail='right', fold=0.95)),
-    ('scaler', RobustScaler())
+ ('imputer', IterativeImputer(add_indicator=True, random_state=42)),
+ ('capping', Winsorizer(capping_method='quantiles', tail='right', fold=0.95)),
+ ('scaler', RobustScaler())
 ])
 
 ## Parameter statistik HANYA dikalkulasi pada set pelatihan
