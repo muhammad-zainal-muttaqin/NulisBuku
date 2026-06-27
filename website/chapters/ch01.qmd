@@ -126,9 +126,9 @@ Sebagian besar proyek *machine learning* berawal dari pertanyaan bisnis praktis,
 
 Penyusunan tabel pembelajaran mensyaratkan tiga penetapan operasional:
 
-* **Unit observasi**: Mendefinisikan wujud pasti dari satu baris data. Satu baris tidak selalu merepresentasikan satu entitas statis. Unit observasi dapat berupa entitas (pengguna), kejadian (transaksi), atau kombinasi entitas dan rentang waktu (pengguna pada bulan tertentu). Untuk kasus prediksi pembatalan langganan, unit observasi yang paling tepat adalah kombinasi spesifik antara pelanggan dan bulan kalender.
-* **Target dan horizon prediksi**: Target merupakan label terukur yang dioptimasi oleh model, sedangkan horizon prediksi menentukan rentang waktu masa depan saat target tersebut divalidasi. Masalah "siapa pelanggan yang akan berhenti" diturunkan menjadi target kuantitatif berupa probabilitas pengguna menutup akun mereka dalam jendela 30 hari ke depan.
-* **Waktu prediksi (*index time*)**: Titik acuan temporal pasti ketika model dipanggil untuk memberikan prediksi di lingkungan produksi. Titik ini beroperasi sebagai batas mutlak ketersediaan fitur. Seluruh kalkulasi representasi fitur historis hanya sah dieksekusi menggunakan rekaman data yang telah terakumulasi sebelum batas waktu ini.
+1. **Unit observasi**: Mendefinisikan wujud pasti dari satu baris data. Satu baris tidak selalu merepresentasikan satu entitas statis. Unit observasi dapat berupa entitas (pengguna), kejadian (transaksi), atau kombinasi entitas dan rentang waktu (pengguna pada bulan tertentu). Untuk kasus prediksi pembatalan langganan, unit observasi yang paling tepat adalah kombinasi spesifik antara pelanggan dan bulan kalender.
+2. **Target dan horizon prediksi**: Target merupakan label terukur yang dioptimasi oleh model, sedangkan horizon prediksi menentukan rentang waktu masa depan saat target tersebut divalidasi. Masalah "siapa pelanggan yang akan berhenti" diturunkan menjadi target kuantitatif berupa probabilitas pengguna menutup akun mereka dalam jendela 30 hari ke depan.
+3. **Waktu prediksi (*index time*)**: Titik acuan temporal pasti ketika model dipanggil untuk memberikan prediksi di lingkungan produksi. Titik ini beroperasi sebagai batas mutlak ketersediaan fitur. Seluruh kalkulasi representasi fitur historis hanya sah dieksekusi menggunakan rekaman data yang telah terakumulasi sebelum batas waktu ini.
 
 [GAMBAR 1.5: Skema - Linimasa pembentukan sampel yang membagi rentang data historis untuk perhitungan fitur, titik waktu prediksi (index time) sebagai batas ketersediaan, dan horizon prediksi di masa depan untuk evaluasi target.]
 
@@ -199,16 +199,17 @@ Konstruksi *pipeline* ini bertindak sebagai peta jalan materi di dalam buku:
 * **Rekayasa Fitur Berdasarkan Jenis Data (Bagian IV):** Data non-tabular membawa struktur alami. Deret waktu mengandalkan urutan historis, citra bertumpu pada kedekatan piksel, dan teks berbasis pada urutan token. Setiap modalitas menuntut teknik ekstraksi spesifik.
 * **Rekayasa Fitur dalam ML Modern (Bagian V):** Praktik terkini memanfaatkan arsitektur *deep learning* dan ekstraksi informasi melalui *pretrained model*, serta mengeksplorasi sistem otomasi representasi.
 
-Sepanjang perjalanan merancang *pipeline*, Anda akan mengambil keputusan yang berada pada spektrum antara representasi yang **dirancang manusia** dan representasi yang **dipelajari mesin**. Berikut adalah perbandingan kapan sebaiknya menggunakan masing-masing ujung spektrum:
+Sepanjang perjalanan merancang *pipeline*, praktisi akan mengambil keputusan yang berada pada spektrum antara representasi yang dirancang manusia dan representasi yang dipelajari mesin. Keputusan ini mempertimbangkan beberapa skenario operasional:
 
-* **Representasi yang dirancang manusia** (*designed representation*):
- * Paling tepat ketika data berukuran kecil atau domain masalah membutuhkan pengetahuan pakar yang kuat (misalnya, penyusunan rasio finansial spesifik).
- * Menjadi pilihan utama saat interpretabilitas menjadi syarat mutlak, sehingga setiap fitur dapat dilacak kembali ke sumber operasional aslinya.
- * Digunakan saat memakai keluarga model klasik seperti regresi logistik atau *random forest* yang tidak memetakan hierarki non-linier secara otomatis.
-* **Representasi yang dipelajari mesin** (*learned representation*):
- * Lebih unggul saat menangani volume data tak terstruktur yang masif, seperti korpus teks raksasa atau jutaan citra resolusi tinggi.
- * Cocok ketika pola fitur terlalu kompleks untuk dirumuskan melalui aturan matematis manual.
- * Diimplementasikan menggunakan *deep learning* atau dengan mengekstraksi *embedding* padat dari *pretrained model*.
+**Kondisi untuk Representasi Dirancang Manusia (*Designed Representation*):**
+1. Data berukuran kecil atau domain masalah membutuhkan pengetahuan pakar yang kuat (misalnya, penyusunan rasio finansial spesifik).
+2. Tuntutan interpretabilitas menjadi syarat mutlak, sehingga setiap fitur dapat dilacak dan diaudit secara operasional.
+3. Arsitektur pemodelan bergantung pada keluarga model klasik (seperti regresi linier atau *random forest*) yang tidak memetakan hierarki non-linier fitur secara otomatis.
+
+**Kondisi untuk Representasi Dipelajari Mesin (*Learned Representation*):**
+1. Penanganan volume data tak terstruktur yang masif, seperti korpus teks raksasa atau jutaan citra resolusi tinggi.
+2. Identifikasi pola fitur terlalu abstrak dan kompleks untuk dirumuskan melalui persaman matematis manual.
+3. Implementasi difasilitasi oleh arsitektur *deep learning* atau melalui ekstraksi vektor laten dari *pretrained model*.
 
 Sebuah *pipeline* dalam skenario nyata sering kali merupakan bentuk hibrida yang memadukan kedua pendekatan ini. Bagian Penutup (Bagian VI) akan menyintesiskan seluruh komponen tersebut menjadi satu kerangka kerja desain yang utuh.
 

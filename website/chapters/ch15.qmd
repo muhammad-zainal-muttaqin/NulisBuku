@@ -126,8 +126,8 @@ Di mana:
 Bobot jaringan yang telah mengoptimalkan $\mathcal{L}_{CE}$ pada distribusi eksternal tersebut kemudian dibekukan (*frozen*) dan digunakan sebagai ekstraktor fitur tetap untuk masalah lokal. Konsep ini berbeda dengan kompresi internal yang meminimalkan fungsi kerugian rekonstruksi (seperti *mean squared error* pada *autoencoder*) tanpa mengandalkan label klasifikasi dari luar *pipeline*.
 
 Pemisahan kompresi dan transfer membawa konsekuensi teknis pada perancangan *pipeline*:
-* **Kapasitas Pembelajaran:** Ekstraksi fitur dari luar menjadi solusi utama ketika dataset pelatihan terlalu kecil untuk membentuk matriks representasi sendiri.
-* **Risiko *Domain Shift*:** *Pre-trained model* berisiko mengalami pergeseran domain jika distribusi asli pelatihannya jauh meleset dari konteks prediksi akhir (misalnya *embedding* bahasa umum diterapkan pada dokumen legal). Kompresi internal terhindar dari risiko ini karena fondasinya dibangun langsung di atas distribusi target.
+1. **Kapasitas Pembelajaran:** Ekstraksi fitur dari luar menjadi solusi utama ketika dataset pelatihan terlalu kecil untuk membentuk matriks representasi sendiri.
+2. **Risiko *Domain Shift*:** *Pre-trained model* berisiko mengalami pergeseran domain jika distribusi asli pelatihannya jauh meleset dari konteks prediksi akhir (misalnya *embedding* bahasa umum diterapkan pada dokumen legal). Kompresi internal terhindar dari risiko ini karena fondasinya dibangun langsung di atas distribusi target.
 
 
 ## Apakah Deep Learning Menghapus Kebutuhan Rekayasa Fitur?

@@ -251,10 +251,10 @@ Di mana $\mathbf{x}_i$ adalah vektor fitur asli, $E(\cdot)$ merupakan fungsi *en
 
 Draf awal studi kasus sering berasumsi *autoencoder* selalu mengalahkan PCA. Namun, performa keduanya bergantung pada karakteristik set data. Berikut perbandingan dan kondisi optimal bagi masing-masing pendekatan:
 
-* **Ukuran data:** PCA unggul atau setara pada set data yang kecil. Karena *autoencoder* mensyaratkan pelatihan jaringan saraf berparameter besar, metode ini mudah mengalami *overfitting* jika volume data terbatas.
-* **Struktur geometris:** PCA bekerja efisien untuk menangkap pola yang mendekati linier. *Autoencoder* baru mendominasi saat sebaran data membentuk struktur *manifold* melengkung atau memuat interaksi fitur non-linier yang rumit.
-* **Komputasi dan interpretabilitas:** Proses proyeksi PCA berjalan sangat cepat dan matematis transparan. Pelatihan *autoencoder* memakan siklus komputasi yang jauh lebih besar dan sulit diinterpretasikan.
-* **Pendekatan hibrida:** Pada rezim data minim yang berstruktur kompleks, praktisi sering menggunakan *PCA-boosted autoencoders*. Pendekatan ini memakai komponen PCA untuk menginisialisasi bobot *autoencoder*, mengatasi kelemahan inisialisasi acak, dan mempercepat konvergensi.
+1. **Ukuran data:** PCA unggul atau setara pada set data yang kecil. Karena *autoencoder* mensyaratkan pelatihan jaringan saraf berparameter besar, metode ini mudah mengalami *overfitting* jika volume data terbatas.
+2. **Struktur geometris:** PCA bekerja efisien untuk menangkap pola yang mendekati linier. *Autoencoder* mendominasi saat sebaran data membentuk struktur *manifold* melengkung atau memuat interaksi fitur non-linier yang rumit.
+3. **Komputasi dan interpretabilitas:** Proses proyeksi PCA berjalan sangat cepat dan koefisiennya dapat diukur kepentingannya. Sebaliknya, pelatihan *autoencoder* memakan siklus komputasi besar dan merepresentasikan ruang hitam yang sulit diinterpretasikan.
+4. **Pendekatan hibrida:** Pada rezim data minim namun berstruktur kompleks, praktisi sering menggunakan kombinasi. Pendekatan ini memakai komponen PCA berdimensi lebih kecil untuk menginisialisasi bobot *autoencoder*, mengatasi kelemahan inisialisasi acak, dan mempercepat konvergensi pemadatan.
 
 Perbedaan kapasitas pemisahan ini terlihat saat representasi tingkat tinggi ditekan menjadi bidang pandang.
 

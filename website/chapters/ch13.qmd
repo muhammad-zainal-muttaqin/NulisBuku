@@ -250,10 +250,9 @@ Desain pemisahan pada graf membedakan dua skenario evaluasi untuk mengelola masa
 Dampak buruk kebocoran ini sangat nyata pada kasus seperti deteksi penipuan keuangan. Jika pemisahan dilakukan secara acak, akun penipu di set pelatihan bisa memiliki riwayat transfer langsung ke akun di set uji. Sinyal penipuan tersebut akan ditarik melintasi sisi penghubung selama agregasi. Di lingkungan produksi, koneksi langsung seperti itu belum tentu tersedia, sehingga kinerja model akan anjlok.
 
 Menerapkan *praktik pipeline yang benar* menuntut perlindungan dan isolasi yang kaku. Strategi mitigasi standar yang lazim diadopsi meliputi:
-
-* **Pemutusan Sisi Penghubung:** Menghapus seluruh sisi yang melintasi subgraf pelatihan dan pengujian sebelum proses pembentukan fitur dimulai, sehingga isolasi fisik pada evaluasi *inductive* dapat dijamin keamanannya.
-* **Pemisahan Temporal:** Pada jejaring dinamis yang terus bertumbuh, model dilatih menggunakan struktur graf hingga batas waktu tertentu, kemudian dievaluasi murni pada simpul atau interaksi yang baru terbentuk setelah batas waktu tersebut.
-* **Isolasi *Negative Sampling*:** Pada tugas prediksi tautan (*link prediction*), pembangkitan pasangan simpul negatif harus dilakukan secara terpisah di masing-masing partisi agar model tidak menghafal ketidakhadiran sisi dari set pengujian.
+1. **Pemutusan Sisi Penghubung:** Menghapus seluruh sisi yang melintasi subgraf pelatihan dan pengujian sebelum proses pembentukan fitur dimulai, sehingga isolasi fisik pada evaluasi *inductive* dapat dijamin keamanannya.
+2. **Pemisahan Temporal:** Pada jejaring dinamis yang terus bertumbuh, model dilatih menggunakan struktur graf hingga batas waktu tertentu, kemudian dievaluasi murni pada simpul atau interaksi yang baru terbentuk setelah batas waktu tersebut.
+3. **Isolasi *Negative Sampling*:** Pada tugas prediksi tautan (*link prediction*), pembangkitan pasangan simpul negatif harus dilakukan secara terpisah di masing-masing partisi agar model tidak menghafal ketidakhadiran sisi dari set pengujian.
 
 
 ## Studi Kasus: Prediksi Berbasis Lokasi dan Klasifikasi Simpul

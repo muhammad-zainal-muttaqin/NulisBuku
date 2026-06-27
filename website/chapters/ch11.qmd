@@ -72,8 +72,8 @@ Operasi ini meredam sinyal dari kosakata yang tidak diskriminatif secara otomati
 [GAMBAR 11.2: Skema Matriks - Pembobotan TF-IDF matriks term-dokumen dengan penyorotan pada bobot kata spesifik vs kata umum]
 
 Meskipun TF-IDF adalah representasi yang dirancang manusia secara klasik, praktisi sering menggunakan variasi operasional dalam implementasi modern:
-* **Sublinear TF:** Menerapkan transformasi logaritma pada frekuensi mentah (misalnya $1 + \log(\text{TF})$) untuk mencegah kata yang muncul ratusan kali mendominasi bobot secara berlebihan.
-* **Okapi BM25:** Evolusi TF-IDF yang memasukkan normalisasi panjang dokumen dan memberikan batas atas pada efek frekuensi kata. BM25 tetap menjadi standar acuan yang relevan dalam sistem pencarian teks (*retrieval*) hingga hari ini.
+1. **Sublinear TF:** Menerapkan transformasi logaritma pada frekuensi mentah (misalnya $1 + \log(\text{TF})$) untuk mencegah kata yang muncul ratusan kali mendominasi bobot secara berlebihan.
+2. **Okapi BM25:** Evolusi TF-IDF yang memasukkan normalisasi panjang dokumen dan memberikan batas atas pada efek frekuensi kata. BM25 tetap menjadi standar acuan yang relevan dalam sistem pencarian teks (*retrieval*) hingga hari ini.
 
 Pembobotan TF-IDF mereduksi teks menjadi matriks *sparse* berdimensi tinggi yang menonjolkan kata kunci penting secara otomatis tanpa aturan manual. Karakteristik ini menjadikannya sangat efektif untuk algoritma linier, dan akan kita posisikan sebagai *baseline* perbandingan saat membahas representasi teks yang dipelajari mesin.
 
@@ -99,8 +99,8 @@ Di mana $\mathbf{a}$ dan $\mathbf{b}$ mewakili vektor *embedding* dari dua kata,
 
 Metode *embedding* klasik berbasis kata memiliki batas saat memproses kata di luar kosakata pelatihan (*out-of-vocabulary*) dan bahasa dengan variasi imbuhan ekstrem seperti bahasa Indonesia. Dua adaptasi utama diterapkan dalam rekayasa fitur teks modern:
 
-- **Representasi subkata:** Algoritma seperti *fastText* merepresentasikan kata sebagai kumpulan *n-gram* karakter. Vektor fitur sebuah kata dibentuk dari gabungan vektor potongan subkatanya. Hal ini memungkinkan kata berimbuhan yang tidak lazim tetap mendapatkan representasi fitur turunan dari kata dasarnya.
-- **Fleksibilitas dimensi:** Vektor padat memakan ruang memori yang besar dalam skala produksi. Pendekatan *Matryoshka representation learning* melatih *embedding* dengan struktur bersarang. Vektor berukuran 1024 dimensi dapat dipangkas menjadi 256 dimensi saat inferensi tanpa merusak kualitas representasi secara drastis, memberikan kompromi yang aman antara biaya komputasi dan akurasi.
+1. **Representasi subkata:** Algoritma seperti *fastText* merepresentasikan kata sebagai kumpulan *n-gram* karakter. Vektor fitur sebuah kata dibentuk dari gabungan vektor potongan subkatanya. Hal ini memungkinkan kata berimbuhan yang tidak lazim tetap mendapatkan representasi fitur turunan dari kata dasarnya.
+2. **Fleksibilitas dimensi:** Vektor padat memakan ruang memori yang besar dalam skala produksi. Pendekatan *Matryoshka representation learning* melatih *embedding* dengan struktur bersarang. Vektor berukuran 1024 dimensi dapat dipangkas menjadi 256 dimensi saat inferensi tanpa merusak kualitas representasi secara drastis, memberikan kompromi yang aman antara biaya komputasi dan akurasi.
 
 
 ## Contextual, Sentence, dan Document Embedding
@@ -115,9 +115,9 @@ Di mana $u$ dan $v$ merupakan vektor *embedding* dari dua kalimat, operator $\cd
 
 Perkembangan *embedding* tingkat kalimat ini telah berevolusi pesat melampaui arsitektur statis standar:
 
-* ***Instruction-Aware Embeddings*:** Model seperti INSTRUCTOR atau GRIT menghasilkan nilai vektor yang dapat dikondisikan sesuai niat (*intent*) tugas. Sebuah teks dapat menghasilkan vektor yang berbeda jika diinstruksikan untuk "representasikan teks ini untuk pencarian semantik" dibandingkan instruksi "representasikan untuk klasifikasi sentimen".
-* **Representasi *Matryoshka*:** Didukung secara bawaan oleh *Sentence Transformers* v3+, metode ini melatih *embedding* sedemikian rupa sehingga dimensi terpenting dipadatkan di awal vektor. Praktisi dapat memotong (*truncate*) panjang dimensi fitur secara dinamis pada saat inferensi untuk menghemat biaya penyimpanan tanpa mengorbankan relevansi secara signifikan.
-* **Adaptasi Lintas Tugas (LoRA):** Pendekatan seperti pada Jina Embeddings v5 menggunakan adapter *Low-Rank Adaptation* (LoRA) untuk menyetel satu model dasar agar mampu menghasilkan vektor spesifik-domain (misalnya vektor medis vs hukum) secara sangat hemat parameter.
+1. ***Instruction-Aware Embeddings*:** Model seperti INSTRUCTOR atau GRIT menghasilkan nilai vektor yang dapat dikondisikan sesuai niat (*intent*) tugas. Sebuah teks dapat menghasilkan vektor yang berbeda jika diinstruksikan untuk "representasikan teks ini untuk pencarian semantik" dibandingkan instruksi "representasikan untuk klasifikasi sentimen".
+2. **Representasi *Matryoshka*:** Didukung secara bawaan oleh *Sentence Transformers* v3+, metode ini melatih *embedding* sedemikian rupa sehingga dimensi terpenting dipadatkan di awal vektor. Praktisi dapat memotong (*truncate*) panjang dimensi fitur secara dinamis pada saat inferensi untuk menghemat biaya penyimpanan tanpa mengorbankan relevansi secara signifikan.
+3. **Adaptasi Lintas Tugas (LoRA):** Pendekatan seperti pada Jina Embeddings v5 menggunakan adapter *Low-Rank Adaptation* (LoRA) untuk menyetel satu model dasar agar mampu menghasilkan vektor spesifik-domain (misalnya vektor medis vs hukum) secara sangat hemat parameter.
 
 [GAMBAR 11.4: Diagram - Evolusi arsitektur embedding kalimat mulai dari mean-pooling naif hingga representasi instruksional dan Matryoshka]
 
@@ -130,9 +130,9 @@ Membangun arsitektur *neural network* dari nol untuk setiap proyek teks merupaka
 
 Ekosistem ekstraksi fitur teks telah meluas secara radikal, tidak lagi sekadar bergantung pada arsitektur BERT generasi awal:
 
-* **Ekstraktor Berbasis LLM:** Saat ini, kerangka kerja *Large Language Models* (LLMs) dapat difungsikan murni sebagai mesin ekstraksi. Melalui aktivasi lapisan tersembunyi (*hidden states*), model *decoder-only* ini memproyeksikan makna teks ke ruang vektor dengan pemahaman semantik yang jauh lebih superior dibandingkan model generasi sebelumnya.
-* **Representasi *Hybrid Sparse-Dense*:** Kerangka seperti SPLADE mematahkan dikotomi klasik dengan menyintesis vektor padat (*dense*, yang unggul pada pemahaman sinonim) bersama vektor jarang (*sparse*, yang sangat presisi dalam pencocokan kata kunci eksak). Peleburan ini menciptakan profil fitur hibrida yang dominan pada tingkat akurasi pencocokan.
-* **Adaptabilitas Multibahasa dan Distilasi:** Ekstraktor multibahasa membebaskan rekayasawan dari beban merancang pemrosesan linguistik manual (seperti *stemmer* atau *lemmatizer* Bahasa Indonesia). Selain itu, varian distilasi (*distilled models*) mendemokratisasi akses komputasi dengan memampatkan model raksasa ke ukuran yang ramah latensi untuk tahap inferensi *real-time*.
+1. **Ekstraktor Berbasis LLM:** Saat ini, kerangka kerja *Large Language Models* (LLMs) dapat difungsikan murni sebagai mesin ekstraksi. Melalui aktivasi lapisan tersembunyi (*hidden states*), model *decoder-only* ini memproyeksikan makna teks ke ruang vektor dengan pemahaman semantik yang jauh lebih superior dibandingkan model generasi sebelumnya.
+2. **Representasi *Hybrid Sparse-Dense*:** Kerangka seperti SPLADE mematahkan dikotomi klasik dengan menyintesis vektor padat (*dense*, yang unggul pada pemahaman sinonim) bersama vektor jarang (*sparse*, yang sangat presisi dalam pencocokan kata kunci eksak). Peleburan ini menciptakan profil fitur hibrida yang dominan pada tingkat akurasi pencocokan.
+3. **Adaptabilitas Multibahasa dan Distilasi:** Ekstraktor multibahasa membebaskan rekayasawan dari beban merancang pemrosesan linguistik manual (seperti *stemmer* atau *lemmatizer* Bahasa Indonesia). Selain itu, varian distilasi (*distilled models*) mendemokratisasi akses komputasi dengan memampatkan model raksasa ke ukuran yang ramah latensi untuk tahap inferensi *real-time*.
 
 Industri saat ini menjadikan *Massive Text Embedding Benchmark* (MTEB) sebagai standar komprehensif untuk mengevaluasi kualitas ekstraktor. Papan peringkat MTEB mengkuantifikasi daya generalisasi representasi vektor terhadap berbagai tugas analitis, memastikan rekayasawan tidak perlu menebak model mana yang memiliki geometri fitur terbaik.
 

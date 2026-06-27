@@ -66,9 +66,7 @@ Dalam praktiknya, proses agregasi tidak lagi sekadar menghitung rata-rata atau j
 
 * ***Sliding Window*:** Agregasi berbasis jendela mundur berukuran tetap (misalnya, total transaksi dalam "7 hari terakhir").
 * ***Expanding Window*:** Agregasi kumulatif dari titik observasi pertama hingga baris saat ini. Pustaka seperti *Feature-engine* menyediakan transformer `ExpandingWindowFeatures` untuk mengeksekusi ini di dalam *pipeline* produksi secara aman.
-* **Pembobotan Kebaruan (*Recency-Weighted Aggregation*):** Tidak semua data historis memiliki bobot relevansi yang setara. Pada agregasi ini, observasi yang lebih baru diberi bobot lebih besar menggunakan fungsi peluruhan eksponensial (*exponential decay*), di mana $\lambda$ mengontrol tingkat peluruhan berdasarkan jarak waktu (*age*):
- $$ w_i = e^{-\lambda \cdot \text{age}_i} $$
- Rata-rata tertimbang (*weighted mean*) kemudian dihitung dari observasi kelompok tersebut, memungkinkan model bereaksi lebih cepat terhadap perubahan perilaku terbaru.
+* **Pembobotan Kebaruan (*Recency-Weighted Aggregation*):** Tidak semua data historis memiliki bobot relevansi yang setara. Observasi yang lebih baru diberi intervensi bobot lebih besar menggunakan fungsi peluruhan eksponensial (*exponential decay*).
 * **Reset Berbasis Sesi (*Session-Based Reset*):** Agregasi kumulatif diatur ulang menjadi nol saat terdeteksi periode inaktivitas yang melampaui batas ambang tertentu, memastikan akumulasi metrik hanya mencerminkan sesi aktivitas kontinu.
 
 Ekstraksi fitur agregat dapat dilakukan secara masif dan otomatis. Alat khusus seperti *tsfresh* mampu mengekstraksi ratusan fitur ringkasan per kelompok deret waktu (termasuk fitur entropi dan spektral) melalui antarmuka `roll_time_series()`, yang juga dilengkapi penyaring signifikansi statistik bawaan untuk memangkas *noise*.

@@ -23,8 +23,8 @@ $$ W_{\tau} = \{ (x_k^{(m)}, t_k) \mid \tau \le t_k < \tau + \Delta t \} $$
 Di mana $W_{\tau}$ adalah satu unit observasi (baris fitur) yang dimulai pada stempel waktu $\tau$. Komponen $x_k^{(m)}$ merupakan titik data dari modalitas $m$, $t_k$ adalah waktu perekaman data tersebut secara persis, dan $\Delta t$ menyatakan lebar jendela pembagian. Berdasarkan fungsi dasar ini, Gambar 14.1 memperlihatkan bagaimana potongan selebar satu detik merangkum 30 *frame* citra beserta 44.100 sampel audio menjadi satu blok unit yang siap digabungkan.
 
 Seiring munculnya generasi model bahasa visual (VLM), mekanisme penyelarasan temporal mulai bergeser dari prapemrosesan manual di awal *pipeline* menjadi kapabilitas bawaan arsitektur model. Pendekatan modern meniadakan keharusan sinkronisasi kaku:
-* **Pemrosesan waktu absolut:** Model seperti Qwen2.5-VL memanfaatkan perluasan *multimodal RoPE* (Rotary Position Embedding) untuk memahami posisi waktu asli dari *frame* video. Algoritma ini langsung mengolah aliran data dengan laju *frame* dinamis tanpa memerlukan *resampling* paksa ke tingkat yang seragam.
-* **Penyelarasan berbasis konteks:** Model generatif terbaru memadukan penanda waktu atau referensi visual langsung di dalam masukan. Citra dan teks direpresentasikan berdampingan di dalam untaian *prompt* yang saling mengacu secara eksplisit.
+1. **Pemrosesan waktu absolut:** Model seperti Qwen2.5-VL memanfaatkan perluasan *multimodal RoPE* (Rotary Position Embedding) untuk memahami posisi waktu asli dari *frame* video. Algoritma ini langsung mengolah aliran data dengan laju *frame* dinamis tanpa memerlukan *resampling* paksa ke tingkat yang seragam.
+2. **Penyelarasan berbasis konteks:** Model generatif terbaru memadukan penanda waktu atau referensi visual langsung di dalam masukan. Citra dan teks direpresentasikan berdampingan di dalam untaian *prompt* yang saling mengacu secara eksplisit.
 
 Evolusi ini menyederhanakan tahap penyusunan matriks data dan memastikan variasi kecepatan rekaman asli tetap dipertahankan pada saat model mempelajari interaksi antarmodalitas.
 
@@ -39,9 +39,9 @@ Setelah berbagai modalitas diselaraskan, rekayasawan harus menentukan titik pers
 
 [GAMBAR 14.2: Diagram - Skema spektrum fusi multimodal dari tingkat awal, menengah, hingga perutean dinamis]
 
-ekosistem komputasi model bahasa dan visi (*Vision-Language Models*) mutakhir saat ini telah memperluas definisi fusi secara signifikan:
-* ***Attention Bottleneck*:** Arsitektur terobosan seperti *Perceiver IO* mendobrak tradisi penggabungan matriks mentah. Model ini memakai sejumlah vektor laten dengan ukuran tetap sebagai jembatan kemacetan (*bottleneck*). Model kemudian melakukan kueri (*cross-attend*) ke berbagai rentetan input - seperti teks, audio, maupun *point clouds* - tanpa memedulikan perbedaan resolusi asalnya. Skema ini sukses membebaskan kedalaman pemrosesan dari tekanan dimensi input.
-* **Perutean Dinamis (*Mixture-of-Experts*):** Sistem seperti DeepSeek-VL2 dan MoE-LLaVA tidak lagi memaksa fitur dilebur secara kaku ke dalam satu blok kalkulasi yang sama. Arsitektur memecah jaringan menjadi berbagai himpunan modul ahli (*experts*). Rute komputasi diaktifkan secara dinamis dan adaptif menyesuaikan dengan bobot signifikansi fitur pada waktu penarikan kesimpulan. Pola ini memfasilitasi pencampuran miliaran parameter analisis secara instan dengan jejak memori yang sangat efisien.
+Ekosistem komputasi model bahasa dan visi (*Vision-Language Models*) mutakhir saat ini telah memperluas definisi fusi secara signifikan:
+1. ***Attention Bottleneck*:** Arsitektur terobosan seperti *Perceiver IO* mendobrak tradisi penggabungan matriks mentah. Model ini memakai sejumlah vektor laten dengan ukuran tetap sebagai jembatan kemacetan (*bottleneck*). Model kemudian melakukan kueri (*cross-attend*) ke berbagai rentetan input - seperti teks, audio, maupun *point clouds* - tanpa memedulikan perbedaan resolusi asalnya. Skema ini sukses membebaskan kedalaman pemrosesan dari tekanan dimensi input.
+2. **Perutean Dinamis (*Mixture-of-Experts*):** Sistem seperti DeepSeek-VL2 dan MoE-LLaVA tidak lagi memaksa fitur dilebur secara kaku ke dalam satu blok kalkulasi yang sama. Arsitektur memecah jaringan menjadi berbagai himpunan modul ahli (*experts*). Rute komputasi diaktifkan secara dinamis dan adaptif menyesuaikan dengan bobot signifikansi fitur pada waktu penarikan kesimpulan. Pola ini memfasilitasi pencampuran miliaran parameter analisis secara instan dengan jejak memori yang sangat efisien.
 
 
 ## Konkatenasi Fitur dan Penyeimbangan Dimensi
@@ -124,9 +124,9 @@ $$ \text{sim}(\mathbf{z}_{img}, \mathbf{z}_{text}) = \frac{\mathbf{z}_{img} \cdo
 Nilai kesamaan didorong mendekati $1$ apabila gambar dan teks berpasangan secara semantik, serta didorong menuju nilai yang lebih rendah (atau negatif) untuk pasangan yang salah.
 
 Dalam praktik perkembangannya, ruang *embedding* lintas-modal ini tidak lagi sekadar pemetaan statis satu-ke-satu. Implementasi modern memiliki karakteristik tambahan:
-* **Ruang yang bergantung pada instruksi (*Task-dependent space*):** Model yang lebih baru seperti InstructBLIP menggunakan mekanisme penghubung dinamis (seperti *Q-Former*) yang menyelaraskan ekstraksi fitur visual berdasarkan instruksi teks spesifik. Proyeksi vektor sebuah gambar bisa bergeser bergantung pada apakah tugas model adalah mendeskripsikan keseluruhan gambar atau sekadar menjawab pertanyaan spesifik tentangnya.
-* **Pencarian lintas-modal (*Cross-modal retrieval*):** Kedekatan vektor murni dalam satu dimensi matematis memungkinkan arsitektur untuk mencari objek visual dalam skala besar hanya menggunakan kueri teks, tanpa perlu anotasi manual pada gambar tersebut.
-* **Standar evaluasi spesifik:** Karena tidak melayani kelas prediksi tunggal, kualitas dari ruang vektor lintas-modal ini diukur lewat metrik temu-kembali (*retrieval*) seperti *recall@k* (mengukur seberapa sering padanan yang tepat muncul dalam daftar kandidat teratas) dan *nDCG* (mengukur akurasi perankingan keseluruhan).
+1. **Ruang yang bergantung pada instruksi (*Task-dependent space*):** Model yang lebih baru seperti InstructBLIP menggunakan mekanisme penghubung dinamis (seperti *Q-Former*) yang menyelaraskan ekstraksi fitur visual berdasarkan instruksi teks spesifik. Proyeksi vektor sebuah gambar bisa bergeser bergantung pada apakah tugas model adalah mendeskripsikan keseluruhan gambar atau sekadar menjawab pertanyaan spesifik tentangnya.
+2. **Pencarian lintas-modal (*Cross-modal retrieval*):** Kedekatan vektor murni dalam satu dimensi matematis memungkinkan arsitektur untuk mencari objek visual dalam skala besar hanya menggunakan kueri teks, tanpa perlu anotasi manual pada gambar tersebut.
+3. **Standar evaluasi spesifik:** Karena tidak melayani kelas prediksi tunggal, kualitas dari ruang vektor lintas-modal ini diukur lewat metrik temu-kembali (*retrieval*) seperti *recall@k* (mengukur seberapa sering padanan yang tepat muncul dalam daftar kandidat teratas) dan *nDCG* (mengukur akurasi perankingan keseluruhan).
 
 Evolusi ini menandai titik ekstrem pergeseran menuju representasi yang dipelajari mesin. Transformasi dan penyesuaian tidak lagi bergantung pada rekayasa fitur oleh manusia yang memadukan dua struktur data berbeda secara paksa. Model menemukan secara otonom ekosistem metrik yang menjahit kesamaan makna antar-modalitas.
 
@@ -148,15 +148,13 @@ $$
 Di mana $\mathbf{v}_i$ adalah vektor *embedding* citra, $\mathbf{t}_i$ adalah vektor *embedding* teks yang bersesuaian, $N$ adalah ukuran *batch* pelatihan, $\mathbf{v}_i \cdot \mathbf{t}_j$ mewakili perkalian titik (*dot product*) untuk mengukur kesamaan kedekatan, dan $\tau$ adalah parameter suhu (*temperature*) yang mengatur ketajaman distribusi probabilitas.
 
 Ruang *embedding* yang matang memungkinkan praktisi menggunakan model sebagai *feature extractor*. Bobot jaringan model dibiarkan beku (*frozen*). Saat memproses himpunan data baru, gambar cukup diumpankan ke *encoder* visual untuk menghasilkan vektor berdimensi padat (misalnya 512 dimensi). Penggunaan model *pretrained* menawarkan tiga karakteristik operasional utama:
-
-* **Efisiensi komputasi lokal:** Representasi visual tingkat tinggi dapat diekstraksi tanpa perlu melatih arsitektur *deep learning* raksasa dari awal. Vektor hasil ekstraksi cukup diproses menggunakan algoritma sederhana seperti regresi logistik.
-* **Klasifikasi *zero-shot*:** Model mampu mengenali kategori baru tanpa instruksi eksplisit saat pelatihan. Sistem membandingkan jarak metrik antara vektor citra masukan dengan beberapa kandidat vektor teks (misalnya, mengukur jarak koordinat ke frasa "foto sepatu" melawan "foto tas").
-* **Generalisasi lintas domain:** Representasi yang dipelajari mesin dari tangkapan data internet skala besar umumnya tangguh saat menghadapi jenis gambar yang tidak biasa atau dipenuhi *noise*.
+1. **Efisiensi komputasi lokal:** Representasi visual tingkat tinggi dapat diekstraksi tanpa perlu melatih arsitektur *deep learning* raksasa dari awal. Vektor hasil ekstraksi cukup diproses menggunakan algoritma sederhana seperti regresi logistik.
+2. **Klasifikasi *zero-shot*:** Model mampu mengenali kategori baru tanpa instruksi eksplisit saat pelatihan. Sistem membandingkan jarak metrik antara vektor citra masukan dengan beberapa kandidat vektor teks (misalnya, mengukur jarak koordinat ke frasa "foto sepatu" melawan "foto tas").
+3. **Generalisasi lintas domain:** Representasi yang dipelajari mesin dari tangkapan data internet skala besar umumnya tangguh saat menghadapi jenis gambar yang tidak biasa atau dipenuhi *noise*.
 
 Fungsi model multimodal sebagai pengekstraksi fitur terus berevolusi menuju arsitektur *Vision-Language Model* (VLM) yang lebih dinamis. Pola rekayasa fitur masa kini bergeser dari ekstraksi pasif menuju adaptasi yang lebih kompleks:
-
-* **Penyelarasan lewat *Q-Former*:** Arsitektur seperti BLIP-2 menempatkan mekanisme *querying transformer* yang ringkas di antara *encoder* citra dan *Large Language Model* (LLM). Kedua model utama dibiarkan beku, sementara *Q-Former* secara khusus dilatih untuk mengekstraksi fitur visual yang paling selaras dengan instruksi teks pemandu.
-* **Ekstraksi representasi berbasis tugas:** VLM modern (seperti LLaVA, Qwen-VL, atau PaliGemma) tidak lagi memadatkan informasi gambar menjadi satu nilai skalar jarak. Model ini dapat mengisolasi area spesifik atau membaca elemen teks visual, lalu menghasilkan representasi fitur terstruktur yang menyatu langsung dengan *prompt* teks hilir.
+1. **Penyelarasan lewat *Q-Former*:** Arsitektur seperti BLIP-2 menempatkan mekanisme *querying transformer* yang ringkas di antara *encoder* citra dan *Large Language Model* (LLM). Kedua model utama dibiarkan beku, sementara *Q-Former* secara khusus dilatih untuk mengekstraksi fitur visual yang paling selaras dengan instruksi teks pemandu.
+2. **Ekstraksi representasi berbasis tugas:** VLM modern (seperti LLaVA, Qwen-VL, atau PaliGemma) tidak lagi memadatkan informasi gambar menjadi satu nilai skalar jarak. Model ini dapat mengisolasi area spesifik atau membaca elemen teks visual, lalu menghasilkan representasi fitur terstruktur yang menyatu langsung dengan *prompt* teks hilir.
 
 
 ### Studi Kasus: Menggabungkan Tabular, Citra, dan Teks dalam Satu *Pipeline*

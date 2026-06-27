@@ -166,12 +166,10 @@ Skema ini membagi himpunan data menjadi kumpulan *fold* berukuran seimbang. Di s
 
 **Risiko Kebocoran Data dalam Validasi Silang**
 
-Kesalahan paling umum adalah menjalankan fungsi transformasi pada seluruh dataset sebelum fungsi *cross-validation* dipanggil. Jika perhitungan parameter standardisasi dilakukan secara global di awal, nilai statistik tersebut ikut menyerap informasi dari baris-baris data yang nantinya bertindak sebagai blok validasi.
-
-Dampaknya terhadap evaluasi metrik:
-* Skor validasi melonjak tinggi karena distribusi data validasi sudah terdeteksi di tahap pelatihan.
-* Model mempelajari pola observasi yang seharusnya tertutup rapat.
-* Performa model anjlok ketika dihadapkan pada data baru di lingkungan produksi.
+Kesalahan paling umum adalah menjalankan fungsi transformasi pada seluruh dataset sebelum fungsi *cross-validation* dipanggil. Jika perhitungan parameter standardisasi dilakukan secara global di awal, nilai statistik tersebut ikut menyerap informasi dari baris-baris data yang nantinya bertindak sebagai blok validasi. Dampak dari kontaminasi komputasi ini meliputi:
+* Lonjakan skor validasi palsu akibat distribusi data validasi yang sudah terdeteksi di tahap pelatihan.
+* Kegagalan mengisolasi pola observasi yang seharusnya tertutup rapat.
+* Penurunan drastis performa (*performance drop*) saat model menghadapi data baru di lingkungan produksi.
 
 [GAMBAR 2.5: Skema - Aliran data pada cross-validation: pendekatan keliru (transformasi global) vs pendekatan benar (transformasi terisolasi per fold)]
 

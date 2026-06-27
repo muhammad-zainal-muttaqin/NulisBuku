@@ -170,6 +170,6 @@ Pada persamaan tersebut, $n$ adalah jumlah sampel, $X$ mewakili matriks fitur, $
 - **Kelebihan:** Memberikan jalan tengah terbaik. LASSO membuang fitur *noise* dan fitur redundan seakurat RFE, tetapi menuntaskan komputasi hampir secepat metode *filter*.
 
 Ketiga profil ini memperlihatkan bahwa pemilihan metode seleksi bergantung pada prioritas alur kerja:
-- Jadikan metode *filter* sebagai saringan awal pada data berdimensi sangat tinggi untuk membuang *noise* dengan cepat.
-- Pilih metode *wrapper* jika tujuan utama proyek adalah mendapatkan *subset* sekecil mungkin (minimal-optimal) dan tersedia daya komputasi yang memadai.
-- Terapkan metode *embedded* untuk skenario produksi standar, karena menawarkan keseimbangan terbaik antara efisiensi komputasi dan kontrol terhadap redundansi.
+1. **Metode *filter***: Jadikan saringan awal pada data berdimensi sangat tinggi untuk membuang *noise* dengan cepat dan murah secara komputasi.
+2. **Metode *wrapper***: Pilih jika tujuan utama proyek adalah mendapatkan *subset* fitur sekecil mungkin (minimal-optimal) dan perangkat Anda memiliki daya komputasi paralel yang memadai.
+3. **Metode *embedded***: Terapkan untuk skenario produksi standar, karena menawarkan jalan tengah keseimbangan terbaik antara efisiensi komputasi algoritma dan kontrol kuat terhadap redundansi data.

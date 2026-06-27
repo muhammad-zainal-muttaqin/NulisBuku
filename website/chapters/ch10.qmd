@@ -89,11 +89,10 @@ Di mana:
 * $y_{t-1}$ adalah nilai observasi pada satu titik waktu sebelumnya.
 
 Praktik rekayasa fitur menyediakan beberapa varian transformasi untuk menangani tren dan musiman:
-
-* **Seasonal Differencing:** Menghilangkan efek periodik dengan mengurangkan nilai saat ini terhadap nilai pada posisi yang sama di siklus sebelumnya. Persamaannya adalah $y'_t = y_t - y_{t-m}$, dengan $m$ sebagai panjang periode musiman (contoh: $m=7$ untuk observasi harian dengan pola mingguan).
-* **Dekomposisi Deret Waktu:** Menggunakan metode analitik seperti STL (*Seasonal and Trend decomposition using Loess*) untuk memisahkan data menjadi tiga komponen: tren, musiman, dan residu. Model hanya dilatih pada komponen residu yang sifatnya stasioner.
-* **Fitur Tren Eksplisit:** Mengukur arah pergerakan data dengan menghitung kemiringan garis regresi (slope) atau rata-rata bergerak (*moving average*) di dalam satu jendela waktu, kemudian memasukkannya sebagai kolom fitur prediktif.
-* **Indikator Waktu Kategorikal:** Menangkap efek musiman dengan mengekstrak kategori elemen waktu, seperti jam dalam satu hari atau bulan dalam satu tahun. Pendekatan ini memungkinkan model mempelajari karakteristik tiap musim sebagai kondisi diskrit tanpa menghapus tren dasar.
+1. **Seasonal Differencing:** Menghilangkan efek periodik dengan mengurangkan nilai saat ini terhadap nilai pada posisi yang sama di siklus sebelumnya. Persamaannya adalah $y'_t = y_t - y_{t-m}$, dengan $m$ sebagai panjang periode musiman (contoh: $m=7$ untuk observasi harian dengan pola mingguan).
+2. **Dekomposisi Deret Waktu:** Menggunakan metode analitik seperti STL (*Seasonal and Trend decomposition using Loess*) untuk memisahkan data menjadi tiga komponen: tren, musiman, dan residu. Model hanya dilatih pada komponen residu yang sifatnya stasioner.
+3. **Fitur Tren Eksplisit:** Mengukur arah pergerakan data dengan menghitung kemiringan garis regresi (*slope*) atau rata-rata bergerak (*moving average*) di dalam satu jendela waktu, kemudian memasukkannya sebagai kolom fitur prediktif.
+4. **Indikator Waktu Kategorikal:** Menangkap efek musiman dengan mengekstrak kategori elemen waktu, seperti jam dalam satu hari atau bulan dalam satu tahun. Pendekatan ini memungkinkan model mempelajari karakteristik tiap musim sebagai kondisi diskrit tanpa menghapus tren dasar.
 
 
 ## Fitur Domain Frekuensi
@@ -166,17 +165,17 @@ Pustaka modern untuk analisis deret waktu, seperti `sktime`, otomatis menangani 
 Pendekatan rekayasa fitur temporal bergantung pada keluarga model yang akan memproses data. Cara menyiapkan data untuk algoritma klasik berbeda secara mendasar dari pemformatan input untuk arsitektur *deep learning* modern. Transisi ini menandai pergeseran utama dari representasi yang dirancang manusia menuju representasi yang dipelajari mesin.
 
 Persyaratan data untuk model tabular klasik (seperti *Random Forest* atau *Gradient Boosting*) meliputi:
-* **Vektor berdimensi tunggal:** Algoritma tradisional membutuhkan observasi yang diratakan. Jendela riwayat waktu tidak dapat dimasukkan dalam format asli beruntun.
-* **Absennya kesadaran kronologis:** Model memperlakukan setiap fitur secara terisolasi dan tidak memiliki konsep bawaan tentang urutan waktu antar kolom.
-* **Ekstraksi eksplisit:** Pengguna harus menyarikan makna waktu dengan membuat variabel turunan, seperti nilai lag, rata-rata bergulir, atau laju perubahan harian.
-* **Otomasi ekstraksi:** Penggunaan pustaka seperti `tsfresh` sering diterapkan untuk menghitung dan meratakan ribuan fitur statistik dari satu jendela waktu ke dalam matriks tabular.
+1. **Vektor berdimensi tunggal:** Algoritma tradisional membutuhkan observasi yang diratakan. Jendela riwayat waktu tidak dapat dimasukkan dalam format asli beruntun.
+2. **Absennya kesadaran kronologis:** Model memperlakukan setiap fitur secara terisolasi dan tidak memiliki konsep bawaan tentang urutan waktu antar kolom.
+3. **Ekstraksi eksplisit:** Pengguna harus menyarikan makna waktu dengan membuat variabel turunan, seperti nilai lag, rata-rata bergulir, atau laju perubahan harian.
+4. **Otomasi ekstraksi:** Penggunaan pustaka seperti `tsfresh` sering diterapkan untuk menghitung dan meratakan ribuan fitur statistik dari satu jendela waktu ke dalam matriks tabular.
 
 [GAMBAR 10.6: Skema - Ekstraksi fitur menggunakan tsfresh yang meratakan jendela deret waktu menjadi matriks fitur tabular]
 
 Pemrosesan data untuk model sekuensial pada *deep learning* (seperti RNN, LSTM, dan *Transformer*) menggunakan pendekatan yang berbeda:
-* **Struktur *tensor* dua dimensi:** Model menerima input berbentuk matriks berukuran jumlah langkah waktu dikali jumlah fitur.
-* **Retensi kronologis:** Urutan langkah waktu dipertahankan secara utuh. Model menangkap dinamika temporal melalui pembaruan *hidden state* atau mekanisme *attention*.
-* **Pergeseran beban ekstraksi:** Pemahaman tentang pola temporal bergeser sepenuhnya menjadi representasi yang dipelajari mesin selama proses *training*.
+1. **Struktur *tensor* dua dimensi:** Model menerima input berbentuk matriks berukuran jumlah langkah waktu dikali jumlah fitur.
+2. **Retensi kronologis:** Urutan langkah waktu dipertahankan secara utuh. Model menangkap dinamika temporal melalui pembaruan *hidden state* atau mekanisme *attention*.
+3. **Pergeseran beban ekstraksi:** Pemahaman tentang pola temporal bergeser sepenuhnya menjadi representasi yang dipelajari mesin selama proses *training*.
 
 Meskipun model sekuensial mampu menemukan pola urutan angka secara mandiri, arsitektur ini tetap membutuhkan penyesuaian bentuk data awal. Skala fitur harus dinormalisasi agar perhitungan *gradient* stabil. Selain itu, model membutuhkan panduan eksplisit untuk mengetahui posisi waktu absolut. Informasi waktu ini umumnya disuntikkan melalui *cyclical encoding* dengan menggunakan fungsi trigonometri:
 

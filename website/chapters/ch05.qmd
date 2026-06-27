@@ -149,11 +149,11 @@ Selain penanganan *missing values*, nilai ekstrem atau *outlier* merupakan tanta
 Tahap deteksi murni bertujuan menetapkan batas kenormalan suatu fitur. Algoritma hanya melabeli atau memberikan skor pada nilai yang secara matematis berada di luar distribusi mayoritas, tanpa melakukan modifikasi nilai.
 
 Ekosistem analitik data, termasuk pustaka PyOD dan *scikit-learn*, mengelompokkan pendekatan deteksi ke dalam beberapa tingkatan:
-* **Metode Univariat:** Mengukur jarak dari pusat distribusi, seperti penggunaan ambang batas rentang antarkuartil (IQR).
-* **Pendekatan Multivariat:** Algoritma proksimitas seperti *Isolation Forest* dan *Local Outlier Factor* (LOF) mengukur keterasingan observasi di dalam ruang berdimensi banyak.
-* **Deteksi Probabilistik Tanpa Parameter:** Algoritma ECOD (*Empirical-CDF-based Outlier Detection*) mengestimasi fungsi distribusi kumulatif empiris pada setiap dimensi untuk menghasilkan probabilitas anomali gabungan, menghilangkan kebutuhan penyetelan ambang batas secara manual.
+1. **Metode Univariat:** Mengukur jarak dari pusat distribusi individual, seperti penggunaan ambang batas rentang antarkuartil (IQR).
+2. **Pendekatan Multivariat:** Algoritma proksimitas seperti *Isolation Forest* dan *Local Outlier Factor* (LOF) mengukur keterasingan observasi secara serentak di dalam ruang berdimensi banyak.
+3. **Deteksi Probabilistik:** Algoritma ECOD (*Empirical-CDF-based Outlier Detection*) mengestimasi fungsi distribusi kumulatif empiris pada setiap dimensi untuk menghasilkan probabilitas anomali gabungan secara komprehensif, menghilangkan kebutuhan penyetelan ambang batas manual.
 
-Implementasi antarmuka dalam *scikit-learn* juga membedakan skenario analisis ke dalam dua metode. *Outlier detection* melabeli data pelatihan yang sudah terkontaminasi anomali sejak awal (menggunakan `fit_predict`). *Novelty detection* membangun profil normal dari data bersih, lalu menggunakannya untuk mendeteksi penyimpangan hanya pada observasi baru (misalnya dengan parameter `novelty=True` pada LOF).
+Implementasi antarmuka dalam *scikit-learn* membedakan skenario analisis ke dalam dua metode. *Outlier detection* melabeli data pelatihan yang sudah terkontaminasi anomali sejak awal (menggunakan `fit_predict`). Sebaliknya, *Novelty detection* membangun profil normal dari data bersih, lalu menggunakannya untuk mendeteksi penyimpangan eksklusif pada observasi baru (misalnya dengan parameter `novelty=True` pada LOF).
 
 Untuk data univariat, rata-rata dan deviasi standar mudah rusak oleh nilai ekstrem itu sendiri. Metode yang lebih tangguh (*robust*) mengganti deviasi standar dengan skor Z yang dimodifikasi (*modified z-score*) yang diturunkan dari Deviasi Absolut Median (MAD):
 
@@ -183,38 +183,29 @@ Pemisahan operasional antara deteksi dan penanganan memastikan bahwa praktisi da
 
 *Outlier* yang faktual dan valid menimbulkan dilema. Menghapus observasi membuang informasi dan mengurangi ukuran sampel data. Sebaliknya, membiarkan nilai ekstrem apa adanya dapat mendistorsi pelatihan. Algoritma yang sensitif terhadap magnitudo (seperti regresi linier atau metode berbasis jarak) rentan terhadap efek ini karena fungsi kerugiannya memberikan penalti besar pada titik ekstrem. Akibatnya, garis regresi tertarik kuat ke arah *outlier* hanya untuk meminimalkan kerugian pada titik tersebut, sehingga mengorbankan akurasi mayoritas data. Transformasi *robust* meredam pengaruh nilai ekstrem ini tanpa menghancurkan informasi posisinya.
 
-Terdapat beberapa metode utama untuk menangani nilai ekstrem:
+Terdapat tiga metode utama untuk menangani nilai ekstrem melalui pendekatan transformasi:
 
-* **Pemangkasan (*Capping* atau *Winsorizing*)**
- Daripada membuang baris data, kita menetapkan ambang batas atas dan batas bawah. Setiap nilai yang melampaui batas tersebut dipangkas dan disamakan dengan batasnya. Sebagai contoh, jika batas ditetapkan pada persentil ke-99, observasi pendapatan yang melebihi titik tersebut diubah menjadi sama persis dengan nilai persentil itu. Individu terkait tetap berada di kelompok teratas, tetapi magnitudo absolutnya terkendali. Implementasi yang sejalan dengan praktik pipeline yang benar, seperti kelas `Winsorizer` pada pustaka `Feature-engine`, mempelajari batas pemangkasan ini dari data *train* dan menerapkannya kembali secara persis pada saat pemrosesan data uji.
+1. **Pemangkasan (*Capping* atau *Winsorizing*)**
+ Daripada membuang baris data, kita menetapkan ambang batas atas dan bawah. Nilai yang melampaui batas tersebut dipangkas dan disamakan dengan batas ujungnya. Implementasi kelas seperti `Winsorizer` pada pustaka `Feature-engine` mempelajari batas pemotongan ini secara eksklusif dari *training set* dan menerapkannya kembali saat memproses himpunan inferensi uji.
 
-Ambang batas *capping* dapat dihitung menggunakan pendekatan berikut:
-1. **Kuantil:** Berdasarkan proporsi data, misalnya memangkas 1% data terendah dan tertinggi.
-2. **Rentang Antarkuartil (IQR):** Menggunakan rentang antara persentil ke-25 hingga ke-75 sebagai basis penghitungan pagar Tukey.
-3. **Deviasi Absolut Median (MAD):** Pengganti *robust* untuk standar deviasi. Standar deviasi biasa rusak saat dihadapkan pada *outlier* raksasa karena nilai ekstrem ikut membesarkan kalkulasi rata-rata dan varians. Metode *modified z-score* (diperkenalkan oleh Hampel, 1974) mengatasi masalah ini dengan bersandar pada pengukuran median.
+Ambang batas *capping* dapat dihitung menggunakan pilar berikut:
+* **Kuantil:** Berdasarkan proporsi populasi data, misalnya memangkas nilai 1% terendah dan tertinggi.
+* **Rentang Antarkuartil (IQR):** Menggunakan pagar ekuivalen persentil ke-25 hingga ke-75.
+* **Deviasi Absolut Median (MAD):** Pengganti *robust* standar deviasi yang rusak saat ditarik oleh *outlier* raksasa. Metode skor Z termodifikasi ini bersandar sepenuhnya pada median distribusi dan deviasinya.
 
 Persamaan *modified z-score* menggunakan rumusan:
 
 $$ M_i = \frac{0.6745 \cdot (x_i - \tilde{x})}{\text{MAD}} $$
 
-Di mana:
-* $M_i$ mewakili skor modifikasi untuk observasi ke-$i$.
-* $x_i$ adalah nilai titik data.
-* $\tilde{x}$ adalah median dari distribusi fitur.
-* $\text{MAD}$ merupakan deviasi absolut median, yaitu median dari selisih absolut setiap observasi terhadap $\tilde{x}$.
-* Faktor $0.6745$ digunakan untuk menyejajarkan skor dengan rentang distribusi normal baku.
-
-Titik data yang melewati rentang absolut $|M_i| > 3.5$ biasanya dipangkas atau ditandai sebagai *outlier*.
+Di mana $M_i$ mewakili skor observasi ke-$i$, $x_i$ adalah nilai asli, $\tilde{x}$ adalah median fitur, $\text{MAD}$ merupakan deviasi absolut selisih tiap data terhadap median, dan $0.6745$ adalah penyejajar rentang probabilitas normal. Data yang melampaui rentang $|M_i| > 3.5$ akan dipangkas.
 
 [GAMBAR 5.X: Plot Data - Distribusi pendapatan sebelum dan sesudah diterapkan pemangkasan (*capping*) pada persentil ke-99]
 
-Selain *capping*, penyesuaian distribusi fitur melalui penskalaan merupakan metode penanganan *outlier* yang lazim digunakan:
+2. **Penskalaan *Robust* (*Robust Scaling*)**
+ Penskalaan standar berbasis *Z-score* (`StandardScaler`) menjadi rapuh karena rata-rata terseret oleh nilai esktrem. Penskalaan alternatif (`RobustScaler`) memusatkan data dengan median dan menskalakannya secara spesifik menggunakan metrik penyebaran dalam *Interquartile Range* (IQR). Hal ini menjamin stabilitas pusat komputasi meskiput mendapat tekanan fisis di ujung nilai.
 
-* **Penskalaan *Robust* (*Robust Scaling*)**
- Penskalaan standar berbasis *z-score* (`StandardScaler`) menjadi sangat rentan karena rata-rata dan standar deviasinya terseret oleh *outlier*. Penskalaan *robust* (seperti `RobustScaler` di `scikit-learn`) memusatkan data dengan median dan menskalakannya menggunakan IQR. Pengukuran ini murni memakai titik data di pusat distribusi (persentil ke-25 sampai ke-75). Karakteristik ini membuat skala fitur tetap stabil meskipun terdapat deretan nilai raksasa di ujung rentang distribusi.
-
-* **Pemampatan Distribusi (*Log / Power Transform*)**
- Memampatkan skala terbukti efektif memfasilitasi data yang didominasi nilai kecil namun memiliki ekor panjang ke sisi kanan. Transformasi logaritmik atau penerapan *power transform* menekan nilai-nilai dominan ekstrem agar rentang magnitudonya bergeser mendekati sisa distribusi mayoritas. Operasi ini tidak mendisrupsi urutan ordinal; nilai maksimal tetap di puncak, tetapi jarak absolut antar observasi menjadi lebih sempit, sehingga model tidak terdistorsi akibat besaran asimetris saat pelatihan.
+3. **Pemampatan Distribusi (*Log / Power Transform*)**
+ Teknik yang secara fungsional efektif untuk fitur dengan ekor kanan meruncing (log-normal). Pendekatan eksponensial menekan nilai raksasa agar merapat ke rentang distribusi mayoritas tanpa mendisrupsi urutan ordinat (besaran maksimal tetap mempertahankan status puncaknya). Jarak antar-observasi dipersempit secara matematis, mengamankan model dari bias asimetris pada fungsionalitas turunan pelatihannya.
 
 
 ## Batas Antara *Data Cleaning* dan Rekayasa Fitur
