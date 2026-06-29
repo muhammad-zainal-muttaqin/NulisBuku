@@ -15,7 +15,15 @@ Langkah paling awal adalah *tokenization*, yakni proses memecah teks menjadi pot
 
 Kumpulan token menjadi bahan baku untuk membentuk representasi fitur. Pendekatan angka paling mendasar adalah *Bag-of-Words* (BoW). Sesuai namanya, teks diperlakukan semata-mata sebagai "kantong" berisi kata-kata, di mana informasi posisi dan tata bahasa diabaikan sepenuhnya.
 
-[GAMBAR 11.1: Diagram konseptual - Alur pemrosesan dari teks kalimat mentah menjadi token individual, lalu dikonversi ke vektor baris matriks Bag-of-Words yang sangat sparse]
+```{mermaid}
+%%| label: fig-ch11-11_1
+%%| fig-cap: "Alur Pemrosesan Teks Mentah Kalimat -> Token -> Bag-of-Words Sparse Matriks"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A["Teks Mentah: 'Buku Ini Buku Baru'"] -->|Tokenisasi & Case Folding| B["Token: 'buku', 'ini', 'buku', 'baru'"]
+    B -->|Pembersihan Stopwords| C["Kosakata: 'buku', 'baru'"]
+    C -->|Kalkulasi Frekuensi Bag-of-Words| D["Matriks Vektor Sparse: [2, 1]"]
+```
 
 Representasi BoW menghitung frekuensi kemunculan setiap token di dalam suatu dokumen. Secara matematis, representasi dokumen dibangun sebagai sebuah vektor frekuensi:
 
@@ -69,11 +77,24 @@ Operasi ini meredam sinyal dari kosakata yang tidak diskriminatif secara otomati
 * **Kata umum ("dan"):** Memiliki nilai TF tinggi karena sering dipakai penulis, tetapi nilai IDF-nya anjlok mendekati nol karena kata ini hadir di semua dokumen. Skor akhir menjadi sangat kecil.
 * **Kata spesifik ("mitokondria"):** Nilainya mungkin tidak ekstrem secara lokal (TF), tetapi nilai IDF sangat tinggi karena jarang muncul di luar pembahasan biologi. Kombinasi perkaliannya akan menghasilkan skor dominan.
 
-[GAMBAR 11.2: Skema Matriks - Pembobotan TF-IDF matriks term-dokumen dengan penyorotan pada bobot kata spesifik vs kata umum]
+```{mermaid}
+%%| label: fig-ch11-11_2
+%%| fig-cap: "Ruang Vektor Sparse (BoW) yang Ortogonal vs Ruang Vektor Padat (Embedding)"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Sparse_Space ["BoW Space - Jarak Sama"]
+        A1[Vektor 'Kucing'] -->|Ortogonal Jarak Jauh| B1[Vektor 'Anjing']
+        A1 -->|Ortogonal Jarak Jauh| C1[Vektor 'Meja']
+    end
+    subgraph Dense_Space ["Embedding Space - Kedekatan Semantik"]
+        A2[Vektor 'Kucing'] -->|Jarak Dekat Semantik| B2[Vektor 'Anjing']
+        A2 -->|Jarak Jauh| C2[Vektor 'Meja']
+    end
+```
 
 Meskipun TF-IDF adalah representasi yang dirancang manusia secara klasik, praktisi sering menggunakan variasi operasional dalam implementasi modern:
-1. **Sublinear TF:** Menerapkan transformasi logaritma pada frekuensi mentah (misalnya $1 + \log(\text{TF})$) untuk mencegah kata yang muncul ratusan kali mendominasi bobot secara berlebihan.
-2. **Okapi BM25:** Evolusi TF-IDF yang memasukkan normalisasi panjang dokumen dan memberikan batas atas pada efek frekuensi kata. BM25 tetap menjadi standar acuan yang relevan dalam sistem pencarian teks (*retrieval*) hingga hari ini.
+* **Sublinear TF:** Menerapkan transformasi logaritma pada frekuensi mentah (misalnya $1 + \log(\text{TF})$) untuk mencegah kata yang muncul ratusan kali mendominasi bobot secara berlebihan.
+* **Okapi BM25:** Evolusi TF-IDF yang memasukkan normalisasi panjang dokumen dan memberikan batas atas pada efek frekuensi kata. BM25 tetap menjadi standar acuan yang relevan dalam sistem pencarian teks (*retrieval*) hingga hari ini.
 
 Pembobotan TF-IDF mereduksi teks menjadi matriks *sparse* berdimensi tinggi yang menonjolkan kata kunci penting secara otomatis tanpa aturan manual. Karakteristik ini menjadikannya sangat efektif untuk algoritma linier, dan akan kita posisikan sebagai *baseline* perbandingan saat membahas representasi teks yang dipelajari mesin.
 
@@ -84,7 +105,14 @@ Pendekatan *Bag-of-Words* dan TF-IDF menghasilkan vektor berdimensi puluhan ribu
 
 Pemrosesan teks mengatasi batasan ini melalui *word embedding*. Pendekatan ini beralih dari perhitungan frekuensi kemunculan ke representasi berwujud vektor padat (*dense vector*). Kata dipetakan ke ruang laten berdimensi rendah - biasanya 100 hingga 300 dimensi - di mana hampir seluruh elemen berisi nilai numerik.
 
-[GAMBAR 11.3: Diagram Konseptual - Perbandingan ruang vektor jarang yang ortogonal pada Bag-of-Words dengan ruang vektor padat yang mengelompokkan kata bermakna serupa]
+```{mermaid}
+%%| label: fig-ch11-11_3
+%%| fig-cap: "Evolusi Arsitektur Embedding Kalimat"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Mean-Pooling Naif: Rerata Kata] --> B[SBERT / Jaringan Siam Dual-Encoder]
+    B --> C[Embedding Instruksional / Matryoshka]
+```
 
 Pembentukan vektor ini bersandar pada hipotesis distribusional, yang menyatakan bahwa kata yang sering berbagi konteks kalimat cenderung memiliki makna yang serupa. Algoritma seperti Word2Vec dan GloVe memindai korpus dalam jumlah masif untuk menyesuaikan koordinat numerik setiap kata.
 
@@ -99,8 +127,8 @@ Di mana $\mathbf{a}$ dan $\mathbf{b}$ mewakili vektor *embedding* dari dua kata,
 
 Metode *embedding* klasik berbasis kata memiliki batas saat memproses kata di luar kosakata pelatihan (*out-of-vocabulary*) dan bahasa dengan variasi imbuhan ekstrem seperti bahasa Indonesia. Dua adaptasi utama diterapkan dalam rekayasa fitur teks modern:
 
-1. **Representasi subkata:** Algoritma seperti *fastText* merepresentasikan kata sebagai kumpulan *n-gram* karakter. Vektor fitur sebuah kata dibentuk dari gabungan vektor potongan subkatanya. Hal ini memungkinkan kata berimbuhan yang tidak lazim tetap mendapatkan representasi fitur turunan dari kata dasarnya.
-2. **Fleksibilitas dimensi:** Vektor padat memakan ruang memori yang besar dalam skala produksi. Pendekatan *Matryoshka representation learning* melatih *embedding* dengan struktur bersarang. Vektor berukuran 1024 dimensi dapat dipangkas menjadi 256 dimensi saat inferensi tanpa merusak kualitas representasi secara drastis, memberikan kompromi yang aman antara biaya komputasi dan akurasi.
+- **Representasi subkata:** Algoritma seperti *fastText* merepresentasikan kata sebagai kumpulan *n-gram* karakter. Vektor fitur sebuah kata dibentuk dari gabungan vektor potongan subkatanya. Hal ini memungkinkan kata berimbuhan yang tidak lazim tetap mendapatkan representasi fitur turunan dari kata dasarnya.
+- **Fleksibilitas dimensi:** Vektor padat memakan ruang memori yang besar dalam skala produksi. Pendekatan *Matryoshka representation learning* melatih *embedding* dengan struktur bersarang. Vektor berukuran 1024 dimensi dapat dipangkas menjadi 256 dimensi saat inferensi tanpa merusak kualitas representasi secara drastis, memberikan kompromi yang aman antara biaya komputasi dan akurasi.
 
 
 ## Contextual, Sentence, dan Document Embedding
@@ -115,11 +143,28 @@ Di mana $u$ dan $v$ merupakan vektor *embedding* dari dua kalimat, operator $\cd
 
 Perkembangan *embedding* tingkat kalimat ini telah berevolusi pesat melampaui arsitektur statis standar:
 
-1. ***Instruction-Aware Embeddings*:** Model seperti INSTRUCTOR atau GRIT menghasilkan nilai vektor yang dapat dikondisikan sesuai niat (*intent*) tugas. Sebuah teks dapat menghasilkan vektor yang berbeda jika diinstruksikan untuk "representasikan teks ini untuk pencarian semantik" dibandingkan instruksi "representasikan untuk klasifikasi sentimen".
-2. **Representasi *Matryoshka*:** Didukung secara bawaan oleh *Sentence Transformers* v3+, metode ini melatih *embedding* sedemikian rupa sehingga dimensi terpenting dipadatkan di awal vektor. Praktisi dapat memotong (*truncate*) panjang dimensi fitur secara dinamis pada saat inferensi untuk menghemat biaya penyimpanan tanpa mengorbankan relevansi secara signifikan.
-3. **Adaptasi Lintas Tugas (LoRA):** Pendekatan seperti pada Jina Embeddings v5 menggunakan adapter *Low-Rank Adaptation* (LoRA) untuk menyetel satu model dasar agar mampu menghasilkan vektor spesifik-domain (misalnya vektor medis vs hukum) secara sangat hemat parameter.
+* ***Instruction-Aware Embeddings*:** Model seperti INSTRUCTOR atau GRIT menghasilkan nilai vektor yang dapat dikondisikan sesuai niat (*intent*) tugas. Sebuah teks dapat menghasilkan vektor yang berbeda jika diinstruksikan untuk "representasikan teks ini untuk pencarian semantik" dibandingkan instruksi "representasikan untuk klasifikasi sentimen".
+* **Representasi *Matryoshka*:** Didukung secara bawaan oleh *Sentence Transformers* v3+, metode ini melatih *embedding* sedemikian rupa sehingga dimensi terpenting dipadatkan di awal vektor. Praktisi dapat memotong (*truncate*) panjang dimensi fitur secara dinamis pada saat inferensi untuk menghemat biaya penyimpanan tanpa mengorbankan relevansi secara signifikan.
+* **Adaptasi Lintas Tugas (LoRA):** Pendekatan seperti pada Jina Embeddings v5 menggunakan adapter *Low-Rank Adaptation* (LoRA) untuk menyetel satu model dasar agar mampu menghasilkan vektor spesifik-domain (misalnya vektor medis vs hukum) secara sangat hemat parameter.
 
-[GAMBAR 11.4: Diagram - Evolusi arsitektur embedding kalimat mulai dari mean-pooling naif hingga representasi instruksional dan Matryoshka]
+```{mermaid}
+%%| label: fig-ch11-11_4
+%%| fig-cap: "Aliran Gradien Model Bahasa: Feature Extraction vs Fine-Tuning"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Feature_Extraction ["Feature Extraction"]
+        Input1[Input Teks] --> Transformer1[Frozen Pretrained Encoder]
+        Transformer1 -->|Embedding Tetap| FC1[Lapisan Klasifikasi Baru]
+        FC1 --> Output1[Prediksi]
+        Output1 -.->|Gradien HANYA Memperbarui| FC1
+    end
+    subgraph Fine_Tuning ["Full Fine-Tuning"]
+        Input2[Input Teks] --> Transformer2[Active Pretrained Encoder]
+        Transformer2 --> FC2[Lapisan Klasifikasi]
+        FC2 --> Output2[Prediksi]
+        Output2 -->|Gradien Memperbarui Seluruh Bobot Jaringan| Transformer2
+    end
+```
 
 Melalui teknik-teknik di atas, proses penerjemahan bahasa manusia ke ruang matriks menjadi sangat elastis, siap diserap secara langsung sebagai variabel prediktif dalam *pipeline machine learning* klasik sekalipun.
 
@@ -130,9 +175,9 @@ Membangun arsitektur *neural network* dari nol untuk setiap proyek teks merupaka
 
 Ekosistem ekstraksi fitur teks telah meluas secara radikal, tidak lagi sekadar bergantung pada arsitektur BERT generasi awal:
 
-1. **Ekstraktor Berbasis LLM:** Saat ini, kerangka kerja *Large Language Models* (LLMs) dapat difungsikan murni sebagai mesin ekstraksi. Melalui aktivasi lapisan tersembunyi (*hidden states*), model *decoder-only* ini memproyeksikan makna teks ke ruang vektor dengan pemahaman semantik yang jauh lebih superior dibandingkan model generasi sebelumnya.
-2. **Representasi *Hybrid Sparse-Dense*:** Kerangka seperti SPLADE mematahkan dikotomi klasik dengan menyintesis vektor padat (*dense*, yang unggul pada pemahaman sinonim) bersama vektor jarang (*sparse*, yang sangat presisi dalam pencocokan kata kunci eksak). Peleburan ini menciptakan profil fitur hibrida yang dominan pada tingkat akurasi pencocokan.
-3. **Adaptabilitas Multibahasa dan Distilasi:** Ekstraktor multibahasa membebaskan rekayasawan dari beban merancang pemrosesan linguistik manual (seperti *stemmer* atau *lemmatizer* Bahasa Indonesia). Selain itu, varian distilasi (*distilled models*) mendemokratisasi akses komputasi dengan memampatkan model raksasa ke ukuran yang ramah latensi untuk tahap inferensi *real-time*.
+* **Ekstraktor Berbasis LLM:** Saat ini, kerangka kerja *Large Language Models* (LLMs) dapat difungsikan murni sebagai mesin ekstraksi. Melalui aktivasi lapisan tersembunyi (*hidden states*), model *decoder-only* ini memproyeksikan makna teks ke ruang vektor dengan pemahaman semantik yang jauh lebih superior dibandingkan model generasi sebelumnya.
+* **Representasi *Hybrid Sparse-Dense*:** Kerangka seperti SPLADE mematahkan dikotomi klasik dengan menyintesis vektor padat (*dense*, yang unggul pada pemahaman sinonim) bersama vektor jarang (*sparse*, yang sangat presisi dalam pencocokan kata kunci eksak). Peleburan ini menciptakan profil fitur hibrida yang dominan pada tingkat akurasi pencocokan.
+* **Adaptabilitas Multibahasa dan Distilasi:** Ekstraktor multibahasa membebaskan rekayasawan dari beban merancang pemrosesan linguistik manual (seperti *stemmer* atau *lemmatizer* Bahasa Indonesia). Selain itu, varian distilasi (*distilled models*) mendemokratisasi akses komputasi dengan memampatkan model raksasa ke ukuran yang ramah latensi untuk tahap inferensi *real-time*.
 
 Industri saat ini menjadikan *Massive Text Embedding Benchmark* (MTEB) sebagai standar komprehensif untuk mengevaluasi kualitas ekstraktor. Papan peringkat MTEB mengkuantifikasi daya generalisasi representasi vektor terhadap berbagai tugas analitis, memastikan rekayasawan tidak perlu menebak model mana yang memiliki geometri fitur terbaik.
 
@@ -193,7 +238,48 @@ Pengujian representasi teks mensyaratkan praktik *pipeline* yang benar karena te
 **1. Kebocoran Kosa Kata (*Vocabulary Leakage*)**
 Terjadi jika fungsi *fit* pada *vectorizer* TF-IDF dipanggil terhadap seluruh korpus sebelum pemisahan data menjadi *training* dan *validation*. *Vectorizer* secara prematur mencetak kolom matriks bagi kata yang eksklusif hanya muncul di dokumen validasi. Model regresi logistik kemudian menyerap parameter pembobot kata masa depan tersebut pada saat pelatihan. Objek *vectorizer* wajib dikurung ketat di dalam susunan *pipeline* agar dimensi fiturnya murni terbangun dari observasi *training*.
 
-[KODE: pemanggilan vectorizer fit di dalam pipeline; sumber: notebook bab]
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+
+# 1. Menyiapkan korpus teks sintetis sederhana
+documents = [
+    "Saya sangat menyukai produk ini, kualitasnya luar biasa!",
+    "Layanan pelanggan sangat buruk dan lambat sekali.",
+    "Barang bagus, pengiriman cepat, sangat puas dengan pembelian ini.",
+    "Kecewa sekali dengan produknya, tidak sesuai deskripsi.",
+    "Sangat direkomendasikan, berfungsi dengan sangat baik.",
+    "Kualitas material sangat jelek dan mudah rusak."
+]
+labels = [1, 0, 1, 0, 1, 0]  # 1: Sentimen Positif, 0: Sentimen Negatif
+
+# 2. Melakukan pembagian data latih dan uji secara ketat
+docs_train, docs_test, y_train, y_test = train_test_split(
+    documents, labels, test_size=0.33, random_state=42
+)
+
+# 3. Membangun pipeline terintegrasi: TF-IDF -> Regresi Logistik
+# Desain ini membatasi pencarian kamus kosakata murni hanya pada docs_train saat .fit()
+text_pipeline = Pipeline([
+    ('tfidf', TfidfVectorizer(lowercase=True)),
+    ('classifier', LogisticRegression(random_state=42))
+])
+
+# 4. Melatih pipeline secara aman (fit murni pada set pelatihan)
+text_pipeline.fit(docs_train, y_train)
+
+# 5. Menguji keandalan model pada set pengujian (hanya memanggil transform)
+y_pred = text_pipeline.predict(docs_test)
+
+# 6. Mengekstrak kosa kata hasil fit untuk pembuktian isolasi
+vocab_train = text_pipeline.named_steps['tfidf'].vocabulary_
+
+print(f"Jumlah kosakata unik hasil fit data latih: {len(vocab_train)}")
+print(f"Daftar kosakata (5 sampel pertama): {list(vocab_train.keys())[:5]}")
+print(f"Prediksi sentimen untuk data uji: {y_pred}")
+```
 
 **2. Duplikasi Teks Lintas Batas**
 Data teks yang dikumpulkan dari internet sering kali merupakan hasil salinan utuh, seperti artikel berita sindikasi atau serbuan *bot* ulasan bersintaksis identik. Apabila deretan dokumen salinan ini secara tidak sengaja terdistribusi melintasi batas *split* *training* dan *validation*, evaluasi model akan kehilangan nilainya. Pengklasifikasi tidak mempelajari ciri kelas teks, melainkan mengambil jalan pintas dengan menghafal gaya tulisan yang bocor. Penutupan celah ini mewajibkan deduplikasi data awal secara agresif dan implementasi pemisahan berbasis identitas sumber (*group split*).

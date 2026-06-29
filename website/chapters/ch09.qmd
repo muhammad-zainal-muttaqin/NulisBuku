@@ -12,7 +12,17 @@ Kualitas fitur dievaluasi melalui lima dimensi yang menyelaraskan utilitas predi
 * **Ketahanan terhadap Galat (*Error Tolerance*):** Basis data lapangan lazimnya membawa nilai tabel yang dikosongkan (*missing values*), rentang angka ekstrem yang tidak disaring, serta ketidakkonsistenan tipe huruf. Lapisan rekayasa fitur berfungsi menangani gangguan ukuran tersebut tanpa memutus siklus aplikasi sistem (*crash*).
 * **Biaya Komputasi dan Pemeliharaan:** Modifikasi dimensi variabel membebani kapasitas RAM, media simpan, dan tenggat *engineering*. Praktisi akan mengeksklusi fitur turunan yang mengekstrak komputasi mahal, menukarnya dengan fungsi yang lebih efisien meskipun akurasi akhirnya sedikit lebih rendah.
 
-[GAMBAR 9.1: Diagram Radar - Lima dimensi evaluasi kualitas fitur di lingkungan produksi: utilitas prediktif, ketersediaan, stabilitas, ketahanan terhadap galat, dan biaya operasional]
+```{mermaid}
+%%| label: fig-ch09-9_1
+%%| fig-cap: "Radar Kualitas Fitur di Produksi"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Metrik Kualitas Fitur] --> B[Utilitas Prediktif]
+    A --> C[Ketersediaan Inferensi]
+    A --> D[Stabilitas Distribusi]
+    A --> E[Biaya Operasional & Latensi]
+    A --> F[Ketahanan Terhadap Galat / Noise]
+```
 
 Pergeseran stabilitas fitur (dimensi ketiga) dapat dipantau lebih awal tanpa menunggu hasil rilis konfirmasi data (*ground truth*). Metrik distribusi kuantitatif yang paling sering digunakan untuk mengukur deviasi pada variabel numerik maupun variabel kategorikal dinamakan *Population Stability Index* (PSI):
 
@@ -36,7 +46,19 @@ $$ \hat{y}_i = \frac{1}{n} \sum_{j=1}^{n} y_j $$
 
 Di mana $\hat{y}_i$ merupakan prediksi untuk sampel ke-$i$, $n$ adalah jumlah total sampel latih, dan $y_j$ adalah nilai target aktual pada sampel ke-$j$. Nilai eror dari rumusan statis ini menetapkan lantai performa yang harus dikalahkan oleh representasi fitur baru.
 
-[GAMBAR 9.1: Plot Data - Perbandingan tingkat eror antara model baseline melawan model berfitur lengkap]
+```{mermaid}
+%%| label: fig-ch09-9_5
+%%| fig-cap: "Perbandingan Utilitas Prediktif (Korelasi) vs Hubungan Kausal"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Korelasi ["Korelasi Semu"]
+        A[Penjualan Payung] -->|Korelasi Kuat| B[Kecelakaan Jalan Raya]
+    end
+    subgraph Kausalitas ["Kausalitas Nyata"]
+        C[Hujan Lebat - Pemicu] -->|Kausal| A
+        C -->|Kausal| B
+    end
+```
 
 Setelah *baseline* tercatat, ia menjadi tolok ukur pengujian langsung untuk setiap komponen fitur turunan. Jika sebuah fitur baru mampu mengalahkan *baseline*, pertanyaannya beralih: apakah margin peningkatannya sepadan dengan beban teknisnya? Beban operasional yang ditimbulkan mencakup:
 * **Alokasi memori:** Matriks fitur berdimensi tinggi atau *embedding* memakan lebih banyak kapasitas memori dan penyimpan.
@@ -71,8 +93,8 @@ Walaupun studi ablasi efektif sebagai saringan domain awal, teknik ini tidak did
 Evaluasi kualitas fitur secara individual bertumpu pada dua pendekatan utama: *model-based importance* dan *permutation importance*. Keduanya mengukur kontribusi sebuah fitur terhadap daya prediksi algoritma, tetapi beroperasi dengan mekanisme dan kelemahan evaluasi yang berbeda.
 
 Pendekatan *model-based importance* menghitung utilitas fitur bersamaan dengan proses pelatihan. Pada keluarga algoritma pohon keputusan, skor dihitung berdasarkan frekuensi dan efektivitas sebuah fitur saat memecah data. Pendekatan ini memiliki dua karakteristik utama:
-1. **Komputasi efisien:** Penilaian terintegrasi langsung ke dalam eksekusi fase pelatihan, sehingga tidak menuntut iterasi komputasi tambahan.
-2. **Bias kardinalitas:** Evaluasi internal merespons *overfitting* pada fitur yang memiliki variasi nilai unik tinggi (kardinalitas tinggi). Jika matriks memiliki kolom ID pelanggan, algoritma akan mengeksploitasi nilai ID tersebut untuk menghafal target kelas. Kolom ID menempati peringkat atas meskipun tidak membawa sinyal prediktif general.
+* **Komputasi efisien:** Penilaian terintegrasi langsung ke dalam eksekusi fase pelatihan, sehingga tidak menuntut iterasi komputasi tambahan.
+* **Bias kardinalitas:** Evaluasi internal merespons *overfitting* pada fitur yang memiliki variasi nilai unik tinggi (kardinalitas tinggi). Jika matriks memiliki kolom ID pelanggan, algoritma akan mengeksploitasi nilai ID tersebut untuk menghafal target kelas. Kolom ID menempati peringkat atas meskipun tidak membawa sinyal prediktif general.
 
 Untuk algoritma berbasis pohon, kontribusi fitur dihitung dari akumulasi penurunan *impurity* (ketidakmurnian). Jika algoritma menggunakan *Gini impurity*, penurunannya pada sebuah titik pemecahan (*node*) diformulasikan sebagai:
 
@@ -88,7 +110,15 @@ Prosedur *permutation importance* bekerja melalui tahapan berikut:
 3. Model memprediksi ulang himpunan data yang telah teracak sebagian.
 4. Fitur dikategorikan esensial jika intervensi pengacakan membuat tingkat galat model melonjak tajam melewati skor *baseline*. Jika akurasi model tetap stabil, fitur tersebut terkonfirmasi tidak memiliki daya prediktif.
 
-`[GAMBAR 9.1: Bar Chart - Perbandingan peringkat model-based importance vs permutation importance pada fitur berkardinalitas tinggi]`
+````{mermaid}
+%%| label: fig-ch09-9_6
+%%| fig-cap: "Alur Kebocoran Atribut Sensitif Lewat Fitur Proksi dan Embedding"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Atribut Terlindungi / Sensitif: e.g. Suku] -->|Korelasi Spasial| B[Fitur Proksi: e.g. Kode Pos / Lokasi]
+    B --> C[Model Prediksi Finansial]
+    C -->|Mempelajari Bias Diskriminasi Tidak Langsung| D[Keputusan Tidak Adil]
+````
 
 Walaupun kebal terhadap *overfitting* kardinalitas, *permutation importance* konvensional kehilangan akurasi saat mengukur fitur yang saling berkorelasi. Ketika dua fitur mengandung informasi yang tumpang tindih (misalnya luas lahan dan luas bangunan), mengacak salah satu fitur tidak memicu penurunan performa drastis. Model masih bisa mengekstrak sinyal prediktif yang sama dari fitur pasangannya yang utuh. Akibatnya, skor kedua fitur tersebut dilaporkan jauh lebih rendah dari kontribusi aslinya. Untuk mengatasi penalti korelasi ini, varian analitis seperti *Conditional Permutation Importance* (CPI) mengacak nilai fitur mengikuti distribusi kondisionalnya, sehingga struktur korelasi gabungan dalam matriks tetap terjaga.
 
@@ -108,7 +138,15 @@ Metode ini dibangun di atas pilar analitik berikut:
 
 Transparansi tingkat granular ini mengubah nilai komputasi mentah menjadi diagnosis yang dapat diaudit. Apabila sebuah model klasifikasi menolak pengajuan kredit pelanggan, nilai lokal SHAP memaparkan rincian vektor gaya yang saling berlawanan: probabilitas penolakan didorong naik secara dominan oleh "rasio utang yang tinggi", dan ditahan turun oleh "durasi nasabah yang lama". 
 
-[GAMBAR 9.5: Scatter Plot - Sebaran titik nilai SHAP yang menunjukkan arah dampak, magnitudo, dan interaksi non-linear fitur]
+```{mermaid}
+%%| label: fig-ch09-9_7
+%%| fig-cap: "Integrasi Metadata Data Card dan Silsilah Fitur pada Feature Store"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Data Card: Sumber & Aturan] --> B[Feature Store Registry]
+    C[Silsilah Transaksi: Silsilah Silsilah] --> B
+    B -->|Akses Terpadu| D[Sistem Ingesti Data ML]
+```
 
 Lebih jauh, penjelasan lokal ini dapat diagregasi kembali menjadi wawasan global. Praktik mutakhir dalam rekayasa fitur mulai mengadopsi rata-rata absolut nilai SHAP ($\text{mean}(|\text{SHAP}|)$) melintasi seluruh himpunan data sebagai kriteria utama untuk menyaring variabel, melahirkan perangkat *pipeline* hibrida seperti *BorutaShap*. Analisis distribusi nilai SHAP memungkinkan rekayasawan mendeteksi area non-linearitas, memvalidasi asumsi mekanis, serta membuktikan kepada pemangku kepentingan bahwa representasi data yang dirancang bekerja secara rasional.
 
@@ -149,8 +187,8 @@ Interpretasi skor fitur selalu bergantung pada orientasi operasional *pipeline*:
 * **Intervensi:** Jika sasarannya menekan angka kecelakaan melalui intervensi kebijakan (perspektif yang dibahas di Bab 17), modifikasi pada atribut prediktif non-kausal sama sekali tidak memberikan dampak nyata.
 
 Ketika *pipeline* dirancang untuk mengambil tindakan intervensi, skor *feature importance* standar harus diganti. Literatur analitik mengembangkan kerangka terpisah untuk persoalan ini:
-1. **Double/Debiased Machine Learning (DML):** Teknik ini memisahkan tugas prediksi dan estimasi efek kausal melalui tahap pembagian sampel silang. Model *machine learning* difungsikan untuk menghapus pengaruh variabel perancu terlebih dahulu sebelum dampak kausal dari suatu fitur dievaluasi.
-2. **Causal Forest:** Berbeda dengan analisis reduksi galat murni, varian algoritma ini memformulasikan nilai *variable importance* spesifik untuk mengukur seberapa besar sebuah atribut memengaruhi tingkat heterogenitas efek perlakuan (perbedaan respons lintas subpopulasi).
+* **Double/Debiased Machine Learning (DML):** Teknik ini memisahkan tugas prediksi dan estimasi efek kausal melalui tahap pembagian sampel silang. Model *machine learning* difungsikan untuk menghapus pengaruh variabel perancu terlebih dahulu sebelum dampak kausal dari suatu fitur dievaluasi.
+* **Causal Forest:** Berbeda dengan analisis reduksi galat murni, varian algoritma ini memformulasikan nilai *variable importance* spesifik untuk mengukur seberapa besar sebuah atribut memengaruhi tingkat heterogenitas efek perlakuan (perbedaan respons lintas subpopulasi).
 
 
 ## Informasi Sensitif dan Fitur Proksi
@@ -160,9 +198,10 @@ Evaluasi fitur yang utuh wajib mengukur utilitas prediktif sekaligus memperhitun
 *Proxy feature* (fitur proksi) adalah variabel yang tampak netral secara harfiah, tetapi memiliki korelasi statistik yang tinggi dengan atribut sensitif. Jika model mempelajari pola dari fitur proksi, model akan merekonstruksi identitas pengguna dan mengulang pola bias historis.
 
 Karakteristik penyusupan proksi umumnya terjadi melalui:
-1. **Kode pos wilayah hunian:** Secara fungsional merepresentasikan titik geografis, tetapi distribusinya sering mencerminkan pembelahan strata sosial ekonomi dan demografi kelompok tertentu.
-2. **Tipe perangkat pintar:** Riwayat pemakaian gawai tertentu atau catatan kunjungan gerai memiliki korelasi yang kuat dengan parameter kelas pendapatan.
-3. **Representasi laten (*embedding*):** Pada pengolahan teks atau citra, vektor kontinu (*embedding*) memampatkan data mentah menjadi representasi numerik berdimensi tinggi. Vektor ini ikut merekam dialek, struktur kalimat, atau preferensi yang mengarah langsung ke usia dan gender penggunanya. Karena dimensi *embedding* sulit dibaca oleh mata manusia, informasi sensitif dapat menembus inspeksi keamanan secara terselubung.
+
+* **Kode pos wilayah hunian:** Secara fungsional merepresentasikan titik geografis, tetapi distribusinya sering mencerminkan pembelahan strata sosial ekonomi dan demografi kelompok tertentu.
+* **Tipe perangkat pintar:** Riwayat pemakaian gawai tertentu atau catatan kunjungan gerai memiliki korelasi yang kuat dengan parameter kelas pendapatan.
+* **Representasi laten (*embedding*):** Pada pengolahan teks atau citra, vektor kontinu (*embedding*) memampatkan data mentah menjadi representasi numerik berdimensi tinggi. Vektor ini ikut merekam dialek, struktur kalimat, atau preferensi yang mengarah langsung ke usia dan gender penggunanya. Karena dimensi *embedding* sulit dibaca oleh mata manusia, informasi sensitif dapat menembus inspeksi keamanan secara terselubung.
 
 [GAMBAR 9.X: Skema - Alur kebocoran atribut sensitif ke dalam model melalui korelasi fitur proksi dan dimensi embedding]
 
@@ -184,9 +223,8 @@ $$
 
 Di mana $\text{Galat}(\hat{Y}, Y)$ adalah deviasi prediksi model terhadap label target yang sebenarnya, $\lambda$ adalah parameter yang mengatur kekuatan penalti, dan $c_j$ melambangkan bobot biaya (atau tingkat risiko privasi) dari fitur ke-$j$. 
 
-Penerapan minimisasi ini memastikan dua hal:
-1. **Pemisahan akurasi dan kelayakan etis:** Peningkatan nilai akurasi tidak boleh dicapai dengan mengorbankan keamanan data pengguna. Model dengan selisih akurasi marjinal sering kali lebih aman jika dilatih dengan kelompok fitur yang lebih terisolasi dari bias.
-2. **Inspeksi berlapis:** Praktisi diwajibkan memvalidasi bahwa angka presisi yang tinggi didapatkan dari sinyal yang sah, bukan dari eksploitasi celah identitas demografis.
+* **Pemisahan akurasi dan kelayakan etis:** Peningkatan nilai akurasi tidak boleh dicapai dengan mengorbankan keamanan data pengguna. Model dengan selisih akurasi marjinal sering kali lebih aman jika dilatih dengan kelompok fitur yang lebih terisolasi dari bias.
+* **Inspeksi berlapis:** Praktisi diwajibkan memvalidasi bahwa angka presisi yang tinggi didapatkan dari sinyal yang sah, bukan dari eksploitasi celah identitas demografis.
 
 Aturan minimisasi dan verifikasi stabilitas ini merupakan standar perancangan yang akan dirujuk kembali ketika seluruh tahapan dipadukan menjadi sebuah *pipeline* utuh pada fase produksi.
 

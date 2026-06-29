@@ -19,7 +19,13 @@ Transformasi ke ruang laten diterapkan dalam siklus *machine learning* untuk mel
 * **Kompresi (Prapemrosesan Model):** Transformasi dirancang untuk menekan *noise* dan membuang redundansi antarfitur, sambil tetap mengamankan struktur informasi utama. Contohnya, algoritma memampatkan 100 fitur sensor mentah menjadi 10 dimensi laten yang solid. Matriks 10 dimensi inilah yang diteruskan ke model pengklasifikasi. Kompresi membantu model mempelajari struktur data asli secara efisien tanpa terdistorsi observasi semu.
 * **Visualisasi Analitis:** Ditujukan murni bagi persepsi penglihatan manusia. Matriks ditarik dan ditekan ke kanvas spasial dua atau tiga dimensi agar sebaran pola data dapat diinspeksi. Plot ruang laten membantu analis melihat formasi klaster alami atau mempermudah lokalisasi data pencilan (*outlier*).
 
-[GAMBAR 8.1: Skema konseptual - Visualisasi ruang fitur dari dimensi tinggi (3D) ke representasi laten 2D]
+```{mermaid}
+%%| label: fig-ch08-8_1
+%%| fig-cap: "Visualisasi Ruang Fitur dari Dimensi Tinggi (3D) ke Laten 2D"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Ruang Fitur Asli: X, Y, Z] -->|SVD / Kompresi Non-Linier| B[Vektor Representasi Laten: Z1, Z2]
+```
 
 Kedua fungsi ini tidak dapat saling dipertukarkan. Menggunakan matriks visualisasi 2D sebagai prapemrosesan langsung untuk melatih model klasifikasi akan menurunkan kinerja prediksi secara tajam, karena bingkai 2D memotong terlalu banyak detail keragaman data. Sebaliknya, kompresi 10 dimensi sangat ideal untuk komputasi model, tetapi mustahil diinspeksi secara geometris oleh mata. Pemilihan algoritma transformasi bergantung langsung pada tujuan akhir fungsinya.
 
@@ -53,7 +59,14 @@ $$ X_{reduced} = X W_k $$
 
 Dalam persamaan ini, $W_k$ merupakan matriks dimensi $d \times k$ yang hanya mengambil $k$ vektor kolom pertama dari matriks komponen utama $V$.
 
-[GAMBAR 8.1: Diagram - Visualisasi Vektor Eigen dan Proyeksi Komponen Utama untuk Menangkap Varians Terbesar]
+```{mermaid}
+%%| label: fig-ch08-8_2
+%%| fig-cap: "Diagram Vektor Eigen dan Proyeksi Komponen Utama untuk Varians Terbesar"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Awan Titik Data] -->|Identifikasi Sumbu Vektor Utama| B[Komponen Utama Pertama PC1 - Menangkap Lebar Varians Terlebar]
+    A -->|Ortogonal Sumbu Pertama| C[Komponen Utama Kedua PC2]
+```
 
 ### Ekstensi dan Varian PCA
 
@@ -88,7 +101,15 @@ Pada formulasi tersebut:
 * $W \in \mathbb{R}_{+}^{n \times k}$ mewakili matriks aktivasi, menampung bobot koefisien yang mengendalikan seberapa besar porsi setiap komponen digunakan untuk membangun ulang tiap sampel observasi.
 * $H \in \mathbb{R}_{+}^{k \times d}$ bertindak sebagai matriks komponen laten ($k$), menyimpan kamus pola dasar yang merepresentasikan elemen penyusun data.
 
-[GAMBAR 8.2: Diagram Konseptual - Dekomposisi matriks NMF mendemonstrasikan input X dipecah menjadi matriks aktivasi W dan matriks komponen dasar H dengan konstrain murni bernilai tak-negatif]
+```{mermaid}
+%%| label: fig-ch08-8_3
+%%| fig-cap: "Dekomposisi Matriks NMF: X = W * H"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Matriks Input X: n x d - Nilai Positif] -->|Dekomposisi NMF| B[Matriks Aktivasi W: n x k]
+    A -->|Dekomposisi NMF| C[Matriks Komponen H: k x d]
+    B -->|Perkalian Matriks Positif| D[Aproksimasi Matriks X']
+```
 
 ### Fungsi Kerugian $\beta$-divergence
 
@@ -137,7 +158,14 @@ Metode t-SNE secara ekstrem memaksa kelompok data yang bertetangga agar terus be
 
 Untuk menutupi kelambatan t-SNE, standar terapan kini beralih pada UMAP. Algoritma ini berlandaskan pada geometri Riemannian dan topologi aljabar untuk membuat perkiraan jaringan dari titik-titik sampel.
 
-[GAMBAR 8.4: Diagram Konseptual - Simplicial complex pada UMAP untuk membangun topologi dari titik data]
+```{mermaid}
+%%| label: fig-ch08-8_4
+%%| fig-cap: "Simplicial Complex pada UMAP untuk Membangun Topologi"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Titik Data Spasial] -->|Definisikan Radius Ketetanggaan Fuzzy| B[Membentuk Simplex / Garis Penghubung]
+    B -->|Penyusunan Kompleks Geometris Semesta| C[Struktur Topologi Laten Semantik]
+```
 
 Keunggulan utama UMAP adalah kecepatan eksekusinya, serta kemampuannya untuk mereduksi ke dimensi yang lebih leluasa dari sekadar format 2D atau 3D. Literatur awal sering menyebut UMAP lebih superior dalam menjaga penataan struktur global dibandingkan t-SNE. Literatur riset terbaru mengoreksi klaim tersebut; UMAP mempertahankan struktur global karena secara bawaan algoritma ini menggunakan inisialisasi awal berbasis PCA. Apabila t-SNE dan UMAP diatur dengan parameter inisialisasi (PCA) yang sama, kemampuan keduanya dalam mempertahankan struktur relasi berskala global berada pada tingkat yang sebanding.
 
@@ -156,7 +184,22 @@ Meskipun tangguh untuk membuat segmentasi, fungsionalitas murni metode ini berpu
 
 Metode linier seperti PCA mencari sumbu varians maksimal, sementara algoritma manifold berfokus pada geometri lokal titik data. *Autoencoder* mengambil jalur yang berbeda: melatih *neural network* agar memadatkan data ke dalam ruang laten berdimensi rendah, lalu berusaha merekonstruksinya kembali. Pendekatan ini memetakan matriks masukan melalui representasi yang dipelajari mesin, dengan satu batasan tegas: model murni menekan data internal yang dimilikinya, bukan mentransfer semantik atau pemahaman dari luar.
 
-[GAMBAR 8.5: Skema - Arsitektur autoencoder dari data masukan X, penyusutan dimensi di lapisan bottleneck Z, hingga tebakan rekonstruksi keluaran]
+```{mermaid}
+%%| label: fig-ch08-8_5
+%%| fig-cap: "Skema Arsitektur Autoencoder: Encoder, Bottleneck, Decoder"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    subgraph En ["Encoder"]
+        Input[Vektor Input X] --> H1[Lapisan Padat Tersembunyi]
+    end
+    subgraph BN ["Bottleneck Laten"]
+        H1 --> Bottleneck[Vektor Laten Z]
+    end
+    subgraph De ["Decoder"]
+        Bottleneck --> H2[Lapisan Padat Tersembunyi]
+        H2 --> Output[Rekonstruksi Vektor X']
+    end
+```
 
 ### Arsitektur Dasar: Encoder dan Decoder
 
@@ -239,7 +282,45 @@ Bagian ini membandingkan reduksi linier (PCA) dan kompresi non-linier (*autoenco
 
 Pendekatan pertama menggunakan PCA, metode linier yang memproyeksikan data ke sumbu ortogonal baru. Kita mengatur PCA untuk mempertahankan 95% *variance* dari data awal, lalu meneruskan representasi baru tersebut ke algoritma klasifikasi. Guna menegakkan praktik pipeline yang benar, `StandardScaler`, modul PCA, dan *classifier* disatukan dalam sebuah *pipeline*. Langkah ini memastikan standardisasi dan proyeksi dihitung murni dari set pelatihan, sehingga mencegah kebocoran informasi (*data leakage*) ke set pengujian.
 
-[KODE: Pipeline scikit-learn yang menggabungkan StandardScaler, PCA, dan model klasifikasi; sumber: notebook bab 8]
+```python
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report
+
+# 1. Membuat dataset berdimensi tinggi (1000 sampel, 50 fitur)
+X, y = make_classification(n_samples=1000, n_features=50, n_informative=15, random_state=42)
+
+# 2. Pembagian data menjadi data latih dan uji secara ketat
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Merancang pipeline terintegrasi: Standarisasi -> PCA (retensi 95% variansi) -> Klasifikasi
+pca_pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('pca', PCA(n_components=0.95, random_state=42)),
+    ('classifier', LogisticRegression(random_state=42))
+])
+
+# 4. Melatih pipeline murni menggunakan data latih (mencegah data leakage)
+pca_pipeline.fit(X_train, y_train)
+
+# 5. Menguji performa generalisasi model pada data uji
+y_pred = pca_pipeline.predict(X_test)
+
+# 6. Mengekstrak informasi reduksi dimensi dari langkah PCA dalam pipeline
+n_features_original = X_train.shape[1]
+n_features_reduced = pca_pipeline.named_steps['pca'].n_components_
+explained_variance = sum(pca_pipeline.named_steps['pca'].explained_variance_ratio_)
+
+print(f"Jumlah fitur asli sebelum kompresi: {n_features_original}")
+print(f"Jumlah komponen PCA terpilih (meretensi 95% variansi): {n_features_reduced}")
+print(f"Total persentase akumulasi variansi yang dipertahankan: {explained_variance * 100:.2f}%\n")
+print("--- Laporan Klasifikasi Model ---")
+print(classification_report(y_test, y_pred))
+```
 
 Sebagai pembanding, *autoencoder* dilatih dengan ukuran lapisan *bottleneck* (ruang laten) yang sama persis dengan jumlah komponen utama PCA. Berbeda dari PCA yang memaksimalkan *variance* secara global, *autoencoder* memanfaatkan jaringan saraf untuk meminimalkan kesalahan rekonstruksi melalui transformasi non-linier.
 
@@ -251,10 +332,10 @@ Di mana $\mathbf{x}_i$ adalah vektor fitur asli, $E(\cdot)$ merupakan fungsi *en
 
 Draf awal studi kasus sering berasumsi *autoencoder* selalu mengalahkan PCA. Namun, performa keduanya bergantung pada karakteristik set data. Berikut perbandingan dan kondisi optimal bagi masing-masing pendekatan:
 
-1. **Ukuran data:** PCA unggul atau setara pada set data yang kecil. Karena *autoencoder* mensyaratkan pelatihan jaringan saraf berparameter besar, metode ini mudah mengalami *overfitting* jika volume data terbatas.
-2. **Struktur geometris:** PCA bekerja efisien untuk menangkap pola yang mendekati linier. *Autoencoder* mendominasi saat sebaran data membentuk struktur *manifold* melengkung atau memuat interaksi fitur non-linier yang rumit.
-3. **Komputasi dan interpretabilitas:** Proses proyeksi PCA berjalan sangat cepat dan koefisiennya dapat diukur kepentingannya. Sebaliknya, pelatihan *autoencoder* memakan siklus komputasi besar dan merepresentasikan ruang hitam yang sulit diinterpretasikan.
-4. **Pendekatan hibrida:** Pada rezim data minim namun berstruktur kompleks, praktisi sering menggunakan kombinasi. Pendekatan ini memakai komponen PCA berdimensi lebih kecil untuk menginisialisasi bobot *autoencoder*, mengatasi kelemahan inisialisasi acak, dan mempercepat konvergensi pemadatan.
+* **Ukuran data:** PCA unggul atau setara pada set data yang kecil. Karena *autoencoder* mensyaratkan pelatihan jaringan saraf berparameter besar, metode ini mudah mengalami *overfitting* jika volume data terbatas.
+* **Struktur geometris:** PCA bekerja efisien untuk menangkap pola yang mendekati linier. *Autoencoder* baru mendominasi saat sebaran data membentuk struktur *manifold* melengkung atau memuat interaksi fitur non-linier yang rumit.
+* **Komputasi dan interpretabilitas:** Proses proyeksi PCA berjalan sangat cepat dan matematis transparan. Pelatihan *autoencoder* memakan siklus komputasi yang jauh lebih besar dan sulit diinterpretasikan.
+* **Pendekatan hibrida:** Pada rezim data minim yang berstruktur kompleks, praktisi sering menggunakan *PCA-boosted autoencoders*. Pendekatan ini memakai komponen PCA untuk menginisialisasi bobot *autoencoder*, mengatasi kelemahan inisialisasi acak, dan mempercepat konvergensi.
 
 Perbedaan kapasitas pemisahan ini terlihat saat representasi tingkat tinggi ditekan menjadi bidang pandang.
 

@@ -4,7 +4,15 @@
 
 *Embedding* mengompresi makna semantik data ke dalam vektor padat. Saat ini, representasi tersebut umumnya dihasilkan oleh model *pretrained* berskala besar. Namun, pemakaian model *pretrained* untuk tugas spesifik memunculkan satu pertanyaan teknis: seberapa banyak bobot internal model yang harus dimodifikasi agar selaras dengan *dataset* target? Keputusan ini membentuk sebuah kontinum yang dikenal sebagai spektrum adaptasi.
 
-[GAMBAR 15.1: Skema - Spektrum adaptasi model pretrained, memperlihatkan transisi dari frozen extractor, partial fine-tuning, PEFT, hingga full fine-tuning dengan penyorotan pada layer yang dibekukan versus dilatih]
+```{mermaid}
+%%| label: fig-ch15-15_1
+%%| fig-cap: "Spektrum Adaptasi Model Pretrained: Frozen Extractor, Partial, PEFT, Full Fine-Tuning"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Frozen Extractor: Beban Komputasi Rendah, Bebas Overfit] --> B[Partial Fine-tuning: Latih Layer Atas]
+    B --> C[PEFT: Latih Lapisan Tambahan LoRA]
+    C --> D[Full Fine-tuning: Latih Ulang Seluruh Jaringan]
+```
 
 Secara matematis, prediksi model pada tugas baru diformulasikan sebagai fungsi komposit dari pengekstraksi fitur *pretrained* $g_\phi$ dan lapisan klasifikasi baru $f_\theta$. Optimasi model dilakukan dengan meminimalkan fungsi kerugian, misalnya *Cross-Entropy* ($\mathcal{L}$), terhadap data latih berukuran $N$:
 
@@ -38,7 +46,16 @@ Penerapan *feature bank* di lingkungan produksi memiliki beberapa karakteristik 
 * **Pencarian sub-linear:** Sistem menghindari pemindaian setiap vektor satu per satu. Pendekatan yang dipakai adalah pemanfaatan struktur indeks kompresi, seperti *Inverted File Index* atau *Product Quantization*, guna mempercepat penemuan tetangga terdekat.
 * **Pustaka standar industri:** Implementasi seperti FAISS (Facebook AI Similarity Search) bertindak sebagai mesin pencari utama. FAISS menjembatani pembuatan *embedding* dari model (misalnya *sentence-transformers*) dengan sistem pencarian waktu nyata.
 
-[GAMBAR 15.2: Skema - Alur kerja feature bank dari penyimpanan vektor ke dalam indeks FAISS hingga proses komparasi vektor kueri untuk menemukan tetangga terdekat]
+```{mermaid}
+%%| label: fig-ch15-15_2
+%%| fig-cap: "Alur Kerja Feature Bank Menggunakan Indeks FAISS"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Dataset Dokumen] -->|Extract Embedding| B[Vektor Representasi]
+    B -->|Penyimpanan Terindeks| C[Database Vektor FAISS]
+    D[Kueri Vektor Baru] -->|Komparasi Cosine Similarity| C
+    C -->|Output| E[Dokumen Tetangga Terdekat Sesuai Arti]
+```
 
 Untuk menentukan arti "paling mirip" dalam ruang berdimensi tinggi, sistem memakai metrik kemiripan. Metrik ini mendefinisikan cara perhitungan jarak antara dua vektor. Pada *representasi yang dipelajari mesin* untuk teks atau citra, metrik yang dominan adalah *cosine similarity*. 
 
@@ -84,7 +101,14 @@ Di mana:
 
 Jika model linier sederhana mampu meminimalkan fungsi kerugian ini dan meraih akurasi tinggi, model *pretrained* terbukti sukses menyusun data dan memisahkan kelas target di ruang vektor. Sebaliknya, jika akurasi tinggi baru didapat setelah kita mengganti model linier dengan algoritma non-linier yang lebih rumit, berarti representasi dasar tersebut gagal menstrukturkan data dengan baik.
 
-[GAMBAR 15.3: Skema - Arsitektur linear probing memisahkan frozen pre-trained model dan layer klasifikasi linier]
+```{mermaid}
+%%| label: fig-ch15-15_3
+%%| fig-cap: "Arsitektur Linear Probing"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    Input[Data Masukan] --> Frozen[Pretrained Foundation Model - BEKU]
+    Frozen -->|Vektor Representasi Semantik| Linear[Lapisan Klasifikasi Linier Baru - DILATIH]
+```
 Judul: Evaluasi Linear Probing
 Tipe: skema
 Tampilkan: Model pre-trained dalam keadaan beku (frozen) yang mengeluarkan vektor fitur (embedding) ke layer klasifikasi linier sederhana.
@@ -112,7 +136,21 @@ Pendekatan ini dapat dibedakan berdasarkan asal datanya:
 
 Batas kedua kategori ini bukanlah perbedaan "metode statistik vs. Jaringan saraf tiruan". Sebuah *autoencoder* berarsitektur *deep learning* tetap beroperasi sebagai alat kompresi internal jika dilatih dari awal hanya menggunakan data proyek terkait. Pembeda utamanya terletak pada asal representasi: apakah algoritma memadatkan data target itu sendiri, atau mentransfer pengetahuan dari luar.
 
-[GAMBAR 15.1: Skema - Skema Transfer Learning (membekukan layer)]
+```{mermaid}
+%%| label: fig-ch15-15_4
+%%| fig-cap: "Skema Transfer Learning (Membekukan Layer)"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Pretrained_Base ["Bobot Beku"]
+        A[Layer Konvolusi Bawah]
+        B[Layer Konvolusi Tengah]
+    end
+    subgraph New_Layers ["Bobot Aktif"]
+        C[Layer Klasifikasi Kustom Baru]
+    end
+    A --> B
+    B --> C
+```
 
 Secara matematis, perbedaan tersebut terlihat dari fungsi objektif yang digunakan saat melatih pembentuk representasi. Pada transfer representasi, *pre-trained model* umumnya dioptimalkan lebih dulu untuk tugas klasifikasi eksternal (misalnya membedakan kelas objek pada ImageNet) menggunakan fungsi kerugian *Cross-Entropy*:
 
@@ -126,8 +164,8 @@ Di mana:
 Bobot jaringan yang telah mengoptimalkan $\mathcal{L}_{CE}$ pada distribusi eksternal tersebut kemudian dibekukan (*frozen*) dan digunakan sebagai ekstraktor fitur tetap untuk masalah lokal. Konsep ini berbeda dengan kompresi internal yang meminimalkan fungsi kerugian rekonstruksi (seperti *mean squared error* pada *autoencoder*) tanpa mengandalkan label klasifikasi dari luar *pipeline*.
 
 Pemisahan kompresi dan transfer membawa konsekuensi teknis pada perancangan *pipeline*:
-1. **Kapasitas Pembelajaran:** Ekstraksi fitur dari luar menjadi solusi utama ketika dataset pelatihan terlalu kecil untuk membentuk matriks representasi sendiri.
-2. **Risiko *Domain Shift*:** *Pre-trained model* berisiko mengalami pergeseran domain jika distribusi asli pelatihannya jauh meleset dari konteks prediksi akhir (misalnya *embedding* bahasa umum diterapkan pada dokumen legal). Kompresi internal terhindar dari risiko ini karena fondasinya dibangun langsung di atas distribusi target.
+* **Kapasitas Pembelajaran:** Ekstraksi fitur dari luar menjadi solusi utama ketika dataset pelatihan terlalu kecil untuk membentuk matriks representasi sendiri.
+* **Risiko *Domain Shift*:** *Pre-trained model* berisiko mengalami pergeseran domain jika distribusi asli pelatihannya jauh meleset dari konteks prediksi akhir (misalnya *embedding* bahasa umum diterapkan pada dokumen legal). Kompresi internal terhindar dari risiko ini karena fondasinya dibangun langsung di atas distribusi target.
 
 
 ## Apakah Deep Learning Menghapus Kebutuhan Rekayasa Fitur?
@@ -142,7 +180,15 @@ Model *deep learning* sangat unggul dalam membentuk representasi yang dipelajari
 
 Praktik rekayasa fitur telah beralih dari kalkulasi transformasi matematis eksplisit untuk setiap variabel tunggal menuju injeksi bias induktif. Representasi yang dirancang manusia berguna untuk memasukkan pengetahuan pakar ke dalam model. Aturan logika bisnis spesifik, batasan fisika lingkungan nyata, maupun formula baku rasio keuangan merupakan contoh pola yang sulit dipelajari murni dari probabilitas data. 
 
-[GAMBAR 15.4: Skema - Perbandingan arsitektur fine-tuning penuh dengan feature extraction beku]
+```{mermaid}
+%%| label: fig-ch15-15_5
+%%| fig-cap: "Perbandingan Arsitektur Fine-Tuning Penuh dengan Feature Extraction Beku"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Injeksi Input] --> B[Model Pretrained]
+    B -->|Gaya FE Beku: Hanya Latih Kepala| C[Kepala Klasifikasi Baru]
+    B -->|Gaya Fine-Tuning: Latih Semua| D[Seluruh Jaringan Aktif]
+```
 
 Dalam proses pelatihannya, jaringan saraf berfokus menyesuaikan parameter untuk meminimalkan penyimpangan prediksi. Sebagai contoh, pembaruan *pre-trained weights* dalam tugas klasifikasi multikelas umumnya menggunakan fungsi kerugian *cross-entropy*:
 
@@ -168,7 +214,15 @@ Beberapa praktik rekayasa fitur konvensional yang tetap bertahan dalam *pipeline
 
 * **Tokenisasi teks:** Kita perlu memecah rentetan karakter menjadi unit diskret. Pendekatan berbasis *subword* seperti *Byte-Pair Encoding* (BPE) memecah kata kompleks menjadi fragmen yang lebih kecil. Metode ini membatasi ukuran kosakata model sekaligus membantu mesin mengenali makna dari potongan kata. Pada tahap ini, token khusus sering ditambahkan untuk merangkum konteks kalimat.
 
-[GAMBAR 15.3: Skema - Ekstraksi CLS token dari Transformer]
+```{mermaid}
+%%| label: fig-ch15-15_6
+%%| fig-cap: "Ekstraksi CLS Token dari Transformer untuk Menghasilkan Embedding Tunggal"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    Input[Baris Data Tabular] --> Trans[Transformer Block]
+    Trans -->|Ambil Nilai Sinyal Atas| CLS[Vektor Khusus CLS Token]
+    CLS --> Output[Embedding Representasi Baris]
+```
 
 * **Augmentasi data:** Praktik ini menambahkan variasi buatan ke dalam data latih. Pada pengolahan citra, kita sering membalik gambar, menggeser piksel, atau mengubah kecerahan warnanya. Modifikasi ini menanamkan pengetahuan domain dan mencegah model hanya menghafal posisi objek.
 * **Normalisasi fitur numerik:** Jaringan saraf sensitif terhadap perbedaan skala *input*. Jika satu fitur berada di rentang ribuan sementara fitur lain berupa pecahan desimal, turunan (*gradient*) dari fungsi kerugian menjadi tidak proporsional. Dalam tugas klasifikasi, pembaruan bobot model dievaluasi menggunakan fungsi *Cross-Entropy*:
@@ -200,7 +254,16 @@ Keterangan:
 
 Setelah tokenisasi, arsitektur *transformer* menyisipkan token khusus (biasa disebut token `[CLS]`) di awal barisan fitur. Lapisan *attention* kemudian mempelajari interaksi antar-fitur. Token `[CLS]` ini bertugas menghimpun informasi dari seluruh fitur lain untuk menjadi *embedding* final dari baris data tersebut.
 
-[GAMBAR 15.3: Diagram Konseptual - Ekstraksi CLS token dari Transformer untuk menghasilkan embedding tunggal dari sebuah baris data tabular]
+```{mermaid}
+%%| label: fig-ch15-15_7
+%%| fig-cap: "Arsitektur Model Hybrid yang Menggabungkan Fitur Rekayasa Tabular & Vektor Embedding"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A1[Fitur Tabular Hasil Rekayasa Manusia] --> Cat[Concatenate Layer]
+    A2[Data Teks] -->|Pretrained Encoder| Embedding[Vektor Laten Semantik]
+    Embedding --> Cat
+    Cat --> Model[Model Gradient Boosting / Neural Network]
+```
 
 **Ekstraksi Fitur dan *Foundation Models***
 
@@ -230,7 +293,16 @@ Sistem *machine learning* tingkat produksi jarang menggunakan rekayasa fitur tab
 * **Fitur rancangan manusia:** Menginjeksi batasan logika yang tegas, aturan bisnis absolut, dan ukuran matematika konkret (seperti agregasi waktu atau rasio finansial) yang sulit diinferensi secara mandiri oleh jaringan saraf.
 * **Representasi *embedding*:** Mengekstraksi pola semantik dari data tidak terstruktur (citra, audio, atau teks panjang) yang mustahil dikodekan melalui aturan pemrograman manual.
 
-[GAMBAR 15.6: Skema - Arsitektur model hybrid yang menggabungkan fitur rekayasa tabular dengan representasi vektor embedding dari model terlatih]
+```{mermaid}
+%%| label: fig-ch15-15_8
+%%| fig-cap: "Arsitektur Integrasi Pipeline Hibrida Menggabungkan Teks Pretrained + Tabular"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Pipeline Utama] --> B(Teks -> SBERT -> Embedding)
+    A --> C(Numerik -> Standard Scaler -> Skala)
+    B --> D[Concatenate Transformer]
+    C --> D
+```
 
 Secara struktural, penggabungan ini dilakukan melalui operasi konkatenasi vektor sebelum lapisan prediksi akhir. Vektor fitur tabular yang telah melewati tahap normalisasi dan pemrosesan awal disejajarkan dengan vektor *embedding* dari ekstraktor model *pretrained*.
 

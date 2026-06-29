@@ -1,0 +1,56 @@
+Berikut adalah daftar lengkap placeholder GAMBAR/DIAGRAM yang tersisa dan masih kosong, dikelompokkan rapi per Bab naskah beserta nomor barisnya:
+
+📘 Bab 2: Siklus Hidup dan Rekayasa Fitur Terintegrasi
+- 🖼️ GAMBAR 2.4 (Baris 242): [GAMBAR 2.4: Skema - Ilustrasi data leakage akibat imputasi global sebelum pemisahan data dibandingkan dengan pipeline tertutup]
+
+📘 Bab 3: Pembersihan dan Prapemrosesan Data
+- 🖼️ GAMBAR 3.4 (Baris 124): [GAMBAR 3.4: Plot Data - Q-Q plot efek transformasi Box-Cox pada data harga yang menceng]
+- 🖼️ GAMBAR 3.5 (Baris 158): [GAMBAR 3.5: Histogram - Perbandingan distribusi data umur kontinu sebelum dan sesudah dipetakan menjadi kelompok interval diskrit]
+- 🖼️ GAMBAR 3.6 (Baris 183): [GAMBAR 3.6: Skema - Skema scaling (MinMax vs Standard) yang menormalkan rentang angka antar dimensi fitur]
+- 🖼️ GAMBAR 3.7 (Baris 213): [GAMBAR 3.7: Plot Data - Grafik batang komparatif yang menampilkan lonjakan akurasi k-NN dan SVM pasca-standardisasi, sementara performa Random Forest tetap statis tak berubah]
+
+📘 Bab 5: Data Hilang (Imputasi)
+- 🖼️ GAMBAR 5.7 (Baris 229): [GAMBAR 5.7: Skema - Perbandingan alur eksekusi *data cleaning* statis melawan transformasi representasi dinamis yang dikurung oleh pembagian *train/test*]
+- 🖼️ GAMBAR 5.5 (Baris 248): [GAMBAR 5.5: Diagram Blok - Arsitektur pipeline pemrosesan data yang menunjukkan aliran X_train menuju fungsi fit, dan X_test menuju fungsi transform dengan parameter terkunci]
+
+📘 Bab 6: Rekayasa Fitur Numerik dan Kategorikal
+- 🖼️ GAMBAR 6.4 (Baris 295): [GAMBAR 6.4: Diagram - Representasi rasio finansial dari agregasi log peristiwa]
+
+📘 Bab 7: Seleksi Fitur (Feature Selection)
+- 🖼️ GAMBAR 7.4 (Baris 151): [GAMBAR 7.4: Plot Data - Lasso shrinkage path membatasi koefisien fitur menjadi nol seiring peningkatan nilai penalti alpha]
+- 🖼️ GAMBAR 7.5 (Baris 184): [GAMBAR 7.5: Skema - Alur validasi silang bersarang (nested cross-validation) memisahkan fase pencarian fitur terbaik dan evaluasi performa]
+- 🖼️ GAMBAR 7.6 (Baris 224): [GAMBAR 7.6: Plot Jalur - Pergerakan koefisien fitur (shrinkage path) pada regresi LASSO seiring peningkatan nilai penalti L1, menunjukkan koefisien fitur redundan yang ditekan menjadi nol]
+
+📘 Bab 8: Reduksi Dimensi
+- 🖼️ GAMBAR 8.5 (Baris 255): [GAMBAR 8.5: Plot Data - Trade-off perplexity pada t-SNE yang memperlihatkan distorsi ukuran klaster dan jarak antar klaster secara artifisial]
+- 🖼️ GAMBAR 8.6 (Baris 304): [GAMBAR 8.6: Plot Data - Visualisasi 3D ke 2D membandingkan ruang laten linier PCA bersanding dengan dimensi laten non-linier autoencoder]
+
+📘 Bab 9: Evaluasi dan Kebocoran Data (Data Leakage)
+- 🖼️ GAMBAR 9.1 (Baris 181): [GAMBAR 9.1: Diagram Konseptual - Perbandingan utilitas prediktif (korelasi penjualan payung dan kecelakaan) vs. Hubungan kausal (hujan sebagai pemicu keduanya)]
+- 🖼️ GAMBAR 9.X (Baris 206): [GAMBAR 9.X: Skema - Alur kebocoran atribut sensitif ke dalam model melalui korelasi fitur proksi dan dimensi embedding]
+- 🖼️ GAMBAR 9.8 (Baris 242): [GAMBAR 9.8: Diagram - Integrasi Metadata Data Card dan Silsilah Fitur pada Feature Store]
+- 🖼️ GAMBAR 9.5 (Baris 274): [GAMBAR 9.5: Diagram Batang - Perbandingan skor metrik baseline dengan skor setelah setiap kelompok fitur dicabut (demografis, transaksi, log interaksi)]
+
+📘 Bab 10: Deret Waktu (Time Series)
+- 🖼️ GAMBAR 10.6 (Baris 267): [GAMBAR 10.6: Diagram - Skema validasi temporal dengan pemisahan kronologis and area purge gap 25 jam di antara set pelatihan dan pengujian]
+
+📘 Bab 11: Teks & Dokumen
+- 🖼️ GAMBAR 11.6 (Baris 201): [GAMBAR 11.6: Skema Arsitektur - Perbandingan aliran gradien pada feature extraction beku, full fine-tuning, dan PEFT]
+- 🖼️ GAMBAR 11.5 (Baris 225): [GAMBAR 11.5: Skema - Batasan vektor sparse vs dense]
+
+📘 Bab 12: Audio & Ucapan
+- 🖼️ GAMBAR 12.1 (Baris 144): [GAMBAR 12.1: Perbandingan Visual - Waveform 1D mentah versus Spektrogram 2D]
+- 🖼️ GAMBAR 12.1 (Baris 165): [GAMBAR 12.1: Plot Data - Perbandingan visual antara representasi raw waveform 1D dan spektrogram 2D]
+- 🖼️ GAMBAR 12.4 (Baris 214): [GAMBAR 12.4: Heatmap - Visualisasi MFCC yang memampatkan rentang frekuensi suara, menunjukkan bagaimana derau lingkungan dapat melebur dengan sinyal target]
+
+📘 Bab 13: Data Spasial & Graf (Spatial & Graph)
+- 🖼️ GAMBAR 13.6 (Baris 365): [GAMBAR 13.6: Skema - Subgraf representasi pada proses pertukaran pesan antar simpul dalam graf sitasi]
+
+📘 Bab 15: Deep Learning & Representation Learning
+- 🖼️ GAMBAR 15.5 (Baris 336): [GAMBAR 15.5: Diagram - Arsitektur integrasi pipeline hibrida menggabungkan ekstraktor teks pretrained dengan transformasi fitur tabular]
+
+📘 Bab 16: Rekayasa Fitur Otomatis (AutoFE)
+- 🖼️ GAMBAR 16.5 (Baris 158): [GAMBAR 16.5: Bar Chart - Perbandingan metrik performa evaluasi antara *baseline* fitur manual, ekstraksi murni algoritma AutoFE, dan *pipeline* hasil kurasi akhir manusia]
+
+📘 Bab 17: Feature Store & Produksi
+- 🖼️ GAMBAR 17.6 (Baris 286): [GAMBAR 17.6: Skema - Arsitektur dua sistem prediktif berdampingan: pipeline peramalan ritel temporal di sisi kiri dan arsitektur hybrid multimodal medis di sisi kanan]

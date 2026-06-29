@@ -32,6 +32,13 @@ format:
     theme: cosmo
     toc: true
     number-sections: true
+    fig-align: center
+    mermaid:
+      theme: neutral
   docx:
     toc: true
     number-sections: true
+    reference-doc: custom-reference.docx
+    fig-align: center
+    mermaid:
+      theme: neutral

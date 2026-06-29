@@ -10,6 +10,7 @@
 website/.quarto/
 website/_book/
 website/index.tex
+**/*_files/
 /.quarto/
 _build/
 

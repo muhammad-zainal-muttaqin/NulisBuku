@@ -27,3 +27,14 @@ Pengalaman audit pada Bab 1 hingga Bab 5 menetapkan standar emas (*gold standard
 - **Integrasi Keterangan Rumus Matematis:** Dilarang menjelaskan variabel dari sebuah persamaan matematika menggunakan *bullet list* yang kaku (Contoh SALAH: "Di mana: \n - x = ... \n - y = ..."). Keterangan variabel wajib dilebur ke dalam kalimat naratif penyerta (Contoh BENAR: "Dalam perumusan tersebut, $x$ melambangkan ... sedangkan $y$ mewakili ...").
 - **Penghapusan Transisi Robotik (*AI Slop*):** Hapus kalimat pengantar usang dan kaku khas AI seperti "Berikut adalah beberapa karakteristik utama:", "Terdapat tiga kelemahan yaitu:", atau "Di bawah ini adalah penjelasannya:". Langsung hubungkan paragraf dengan transisi makna yang mulus dan masuk ke inti pembahasan.
 - **Efisiensi Kata & Konteks (*Direct & Intuitive*):** Buang kata-kata *filler* yang membuat kalimat membengkak. Fokus pada penyampaian intuisi dari sebuah konsep *machine learning* layaknya seorang dosen yang sedang menjelaskan langsung kepada mahasiswanya secara terstruktur, membumi, dan tidak menggurui.
+
+### Aturan Desain Visual & Pembuatan Diagram (Mermaid Style Guide)
+- **Prinsip Cetak Hitam-Putih (Monokrom):** Buku ini didesain untuk dicetak secara fisik dalam format grayscale/hitam-putih. Seluruh diagram wajib menggunakan skema warna monokromatik/netral. Dilarang keras menggunakan warna-warni kustom (pastel, merah, hijau, biru, oranye) yang akan tampak berlumpur atau tidak kontras saat dicetak hitam-putih.
+- **Wajib Solid White untuk Latar Belakang Label Panah (Pencegahan Bug Rendering):** Jangan menggunakan latar belakang transparan atau 'none' untuk teks penjelasan panah (edge label). Headless browser/Puppeteer pada sistem operasi Windows akan merender transparansi tersebut menjadi kotak abu-abu gelap atau hitam pekat di dalam dokumen Word (DOCX). Atur `edgeLabelBackground` secara eksplisit menjadi solid white (`#ffffff`).
+- **Gunakan Inisialisasi Tema Netral Global:** Setiap kode Mermaid wajib menggunakan inisialisasi tema `neutral` dan menyetel `edgeLabelBackground` ke `#ffffff`. Contoh deklarasi standar yang wajib diikuti di awal diagram:
+  ```mermaid
+  %%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+  graph TD
+      ...
+  ```
+- **Hapus Semua Style Manual Berwarna:** Dilarang menggunakan baris `style Node fill:#XXXXXX,stroke:#YYYYYY` yang menyisipkan warna kustom. Biarkan tema `neutral` global yang mengatur warna kotak dan garis agar seragam dan bersih di seluruh buku.

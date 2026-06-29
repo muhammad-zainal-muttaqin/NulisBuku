@@ -17,7 +17,23 @@ Di mana $h^{(d)}$ adalah sekumpulan fitur pada kedalaman $d$, dan $\phi$ adalah 
 
 Sebagai contoh, perhatikan fitur dasar berupa nilai nominal dari setiap transaksi. Pada kedalaman satu, DFS menerapkan *aggregation primitive* ke tabel pelanggan, menghasilkan fitur total nominal transaksi per pelanggan (`SUM(transaksi.nominal)`). Pada kedalaman dua, DFS mengambil fitur kedalaman satu tersebut dan merangkumnya berdasarkan wilayah domisili pelanggan, menghasilkan rata-rata total transaksi pelanggan per wilayah (`MEAN(SUM(transaksi.nominal))`).
 
-[GAMBAR 16.1: Diagram Arsitektur - Skema pohon relasi entitas pada Deep Feature Synthesis yang menunjukkan penumpukan primitif agregasi dari tabel Transaksi, ditarik ke tabel Pesanan, dan diteruskan ke tabel Pelanggan]
+```{mermaid}
+%%| label: fig-ch16-16_1
+%%| fig-cap: "Skema Pohon Relasi Entitas pada Deep Feature Synthesis (DFS)"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Tabel_Transaksi ["Tabel Transaksi"]
+        A[Nilai_Belanja]
+    end
+    subgraph Tabel_Pesanan ["Tabel Pesanan"]
+        B[Total_Jumlah_Transaksi]
+    end
+    subgraph Tabel_Pelanggan ["Tabel Pelanggan"]
+        C[Rata-rata_Belanja_Pelanggan]
+    end
+    A -->|Primitif Agregasi: SUM| B
+    B -->|Primitif Agregasi: MEAN| C
+```
 
 Penumpukan operasi membuat eksplorasi pola data berjalan amat cepat. Namun, otomatisasi ini memunculkan kendala berupa ledakan ruang fitur (*feature space explosion*). Algoritma beroperasi tanpa pemahaman konteks bisnis, sehingga mesin dapat menghitung rata-rata dari kode pos atau nilai maksimum dari nomor telepon semata-mata karena tipe datanya numerik.
 
@@ -35,14 +51,22 @@ Meskipun DFS menghilangkan pekerjaan manual yang mekanis, kapasitas algoritma un
 Otomasi dalam rekayasa fitur umumnya terintegrasi ke dalam sistem *AutoML* (*Automated Machine Learning*). Jika *Deep Feature Synthesis* berfokus pada pembentukan fitur baru dari tabel relasional, *AutoML* mengambil peran lebih luas dengan mengotomatiskan seluruh alur kerja.
 
 Sistem *AutoML* modern mengatur fitur melalui beberapa tahapan berurutan:
-1. **Pra-pemrosesan:** Menangani tipe data dan mengisi nilai kosong (*missing values*).
-2. **Pembentukan representasi:** Menghasilkan fitur spesifik berdasarkan tipe data asal, seperti mengekstraksi atribut hari dari tanggal atau menghitung matriks n-gram dari teks.
-3. **Penyaringan fitur:** Membuang fitur konstan atau fitur duplikat.
-4. **Seleksi model:** Memilih algoritma dasar dan menyetel *hyperparameter*.
+* **Pra-pemrosesan:** Menangani tipe data dan mengisi nilai kosong (*missing values*).
+* **Pembentukan representasi:** Menghasilkan fitur spesifik berdasarkan tipe data asal, seperti mengekstraksi atribut hari dari tanggal atau menghitung matriks n-gram dari teks.
+* **Penyaringan fitur:** Membuang fitur konstan atau fitur duplikat.
+* **Seleksi model:** Memilih algoritma dasar dan menyetel *hyperparameter*.
 
 *AutoML* menjelajahi ruang pencarian *pipeline* kombinatorial yang luas. Mesin merakit dan membandingkan ribuan urutan transformasi. Satu *pipeline* mungkin memakai imputasi median dan *target encoding* sebelum melatih model *gradient boosting*. Pada saat bersamaan, *pipeline* lain menggunakan imputasi k-NN dan SVM.
 
-[GAMBAR 16.2: Skema - Arsitektur pencarian pipeline AutoML, menampilkan tahapan ekstraksi fitur spesifik-tipe hingga seleksi model dasar]
+```{mermaid}
+%%| label: fig-ch16-16_2
+%%| fig-cap: "Arsitektur Pencarian Pipeline AutoML"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Dataset Input] -->|Deteksi Skema Otomatis| B[Inisialisasi Transformer Khusus Tipe]
+    B -->|Uji Coba Kombinasi| C[Search Engine Pipeline]
+    C -->|Seleksi & Evaluasi| D[Pipeline ML Final Teroptimal]
+```
 
 Untuk menavigasi jutaan kombinasi transformasi secara efisien, kerangka kerja *AutoML* sering menggunakan optimasi Bayesian. Sistem mencari konfigurasi terbaik menggunakan fungsi akuisisi, seperti *Expected Improvement* (EI):
 
@@ -53,8 +77,8 @@ Di mana $x$ adalah konfigurasi *pipeline* fitur, $f(x)$ adalah skor validasi dar
 *AutoML* mempercepat pembuatan *baseline* prediktif. Pra-pemrosesan yang membutuhkan waktu uji coba manual berjam-jam dapat dieksekusi dalam hitungan menit. Kerangka kerja tingkat produksi juga menjaga praktik *pipeline* yang benar secara bawaan. Sistem menahan agar transformer hanya di-*fit* pada data latih, sehingga menekan risiko *leakage* temporal saat mesin menyeleksi kandidat.
 
 Eksplorasi otomatis memiliki batasan. Penelusuran ruang fitur masif secara murni komputasional sering berujung pada pemborosan daya (*burning compute*). Praktik ini memunculkan masalah spesifik:
-1. **Korelasi kebetulan:** Mesin yang mengevaluasi banyak kombinasi rentan mengandalkan pola *spurious*. *Pipeline* tampak unggul pada data latih, tetapi gagal mempertahankan generalisasi saat pengujian.
-2. **Kebutaan semantik:** *AutoML* menelusuri fitur secara matematis tanpa konteks domain. Sistem tidak tahu bahwa nilai kosong pada sebuah sensor suhu sebenarnya mengindikasikan bahwa mesin produksi sedang dimatikan secara sengaja.
+* **Korelasi kebetulan:** Mesin yang mengevaluasi banyak kombinasi rentan mengandalkan pola *spurious*. *Pipeline* tampak unggul pada data latih, tetapi gagal mempertahankan generalisasi saat pengujian.
+* **Kebutaan semantik:** *AutoML* menelusuri fitur secara matematis tanpa konteks domain. Sistem tidak tahu bahwa nilai kosong pada sebuah sensor suhu sebenarnya mengindikasikan bahwa mesin produksi sedang dimatikan secara sengaja.
 
 Menambah alokasi waktu pencarian jarang menyelesaikan masalah saat performa stagnan. Kebuntuan ini membutuhkan intervensi manusia untuk menata ulang representasi atau memperbaiki kualitas data asal.
 
@@ -65,7 +89,17 @@ Rekayasa fitur otomatis (AutoFE) klasik beroperasi dengan mengombinasikan kolom 
 
 Pendekatan ini dipelopori oleh kerangka kerja *Context-Aware Automated Feature Engineering* (CAAFE). CAAFE memfungsikan GenAI sebagai pengusul hipotesis terarah. Sebagai contoh, jika *dataset* medis memiliki atribut "Tinggi" dan "Berat Badan", LLM tidak akan mengalikan keduanya secara acak, melainkan secara spesifik merumuskan kalkulasi logis seperti *Body Mass Index* (BMI).
 
-[GAMBAR 16.3: Diagram Alur - Arsitektur CAAFE yang memperlihatkan ekstraksi metadata, usulan kode oleh LLM, dan putaran validasi]
+```{mermaid}
+%%| label: fig-ch16-16_3
+%%| fig-cap: "Arsitektur Agen CAAFE (Context-Aware Automated Feature Engineering)"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Dataset Skema & Metadata] -->|Kirim Prompt| B[Agen LLM]
+    B -->|Tulis Ide Fitur & Kode Python| C[Modul Transformer Sementara]
+    C -->|Eksekusi & Evaluasi| D{Apakah Performa Naik?}
+    D -->|Tidak: Kirim Feedback Bug/Skor| B
+    D -->|Ya| E[Simpan Kode & Integrasikan ke Pipeline Utama]
+```
 
 Kemampuan ekosistem otomasi ini telah berevolusi jauh dari sekadar *zero-shot prompting* sederhana menuju paradigma *Program-Search* yang canggih. Salah satu lompatan teoretis yang signifikan adalah kerangka kerja **LLM-FE** (Abhyankar, Shojaee & Reddy, 2025). Arsitektur ini menempatkan LLM bukan sekadar sebagai pembuat kode, melainkan sebagai pengoptimal evolusioner (*evolutionary optimizer*):
 * **Iterasi Berbasis Umpan Balik:** LLM mengusulkan sekumpulan skrip transformasi, lalu agen evaluator mengeksekusinya dan menghitung metrik validasi silang pada model.
@@ -87,16 +121,26 @@ Sistem generatif ini tidak luput dari titik buta yang penting. LLM memproduksi l
 Kehadiran teknik ekstraksi fitur otomatis, baik melalui sintesis terstruktur maupun penjelajahan generatif berbasis *Large Language Models* (LLM), sering memunculkan ekspektasi bahwa rekayasa fitur dapat diserahkan sepenuhnya secara mandiri kepada agen kecerdasan buatan. Kenyataannya, dalam sistem produksi nyata, arsitektur otomatis ini tidak didesain sebagai pengambil keputusan final, melainkan murni sebagai pabrik pengusul hipotesis komputasional. 
 
 Guna menekan risiko komersial, ekosistem otomatisasi mewajibkan adopsi kerangka kerja *human-in-the-loop* (HITL). Pendekatan kolaboratif ini (seperti yang dirumuskan pada riset klasifikasi *Human-LLM Collaborative* mutakhir) mendesain sebuah interaksi di mana siklus algoritma dihentikan sejenak untuk menerima verifikasi pakar manusia:
-1. **Praktisi Merancang Koridor Operasi:** Manusia bertugas menetapkan target prediksi, membatasi operator matematis yang diizinkan (misalnya menggunakan *Domain Specific Language* / DSL agar model tidak merakit fungsi trigonometri pada data keuangan), dan mendikte *cutoff time* untuk mencegah kebocoran informasi temporal.
-2. **Mesin Mengeksekusi Eksplorasi Skala Besar:** Algoritma mengambil alih beban berat komputasi iteratif. Agen mesin menulis ratusan kombinasi transformasi relasional, mengujinya menggunakan skema *cross-validation*, lalu menyodorkan daftar peringkat fitur yang secara terukur menaikkan metrik AUC atau RMSE.
-3. **Praktisi Mengambil Peran Kurator Final:** Laporan pengujian empiris dikembalikan ke analis. Pakar manusia membaca jejak penalaran (*reasoning traces*) yang disediakan mesin, lalu mengevaluasi kelayakan semantik dari fitur-fitur berperingkat teratas tersebut.
 
-[GAMBAR 16.4: Tangkapan Layar - Interaksi antarmuka sistem *Human-in-the-Loop* yang memperlihatkan analis memvalidasi jejak penalaran dari fitur usulan agen]
+* **Praktisi Merancang Koridor Operasi:** Manusia bertugas menetapkan target prediksi, membatasi operator matematis yang diizinkan (misalnya menggunakan *Domain Specific Language* / DSL agar model tidak merakit fungsi trigonometri pada data keuangan), dan mendikte *cutoff time* untuk mencegah kebocoran informasi temporal.
+* **Mesin Mengeksekusi Eksplorasi Skala Besar:** Algoritma mengambil alih beban berat komputasi iteratif. Agen mesin menulis ratusan kombinasi transformasi relasional, mengujinya menggunakan skema *cross-validation*, lalu menyodorkan daftar peringkat fitur yang secara terukur menaikkan metrik AUC atau RMSE.
+* **Praktisi Mengambil Peran Kurator Final:** Laporan pengujian empiris dikembalikan ke analis. Pakar manusia membaca jejak penalaran (*reasoning traces*) yang disediakan mesin, lalu mengevaluasi kelayakan semantik dari fitur-fitur berperingkat teratas tersebut.
+
+```{mermaid}
+%%| label: fig-ch16-16_4
+%%| fig-cap: "Interaksi Antarmuka Sistem Human-in-the-Loop Analis Memvalidasi Fitur Usulan AI"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Saran Fitur Baru LLM] --> B[Dashboard Analis Manusia]
+    B -->|Analis Mengklik Approve / Reject| C{Tervalidasi?}
+    C -->|Ya| D[Injeksi ke Pipeline Produksi]
+    C -->|Tidak| E[Buang & Tandai sebagai Spurious]
+```
 
 Inspeksi manual oleh pakar menjadi lapisan keamanan mutlak karena algoritma validasi murni bersifat buta terhadap batas realitas dunia fisik dan aturan bisnis perusahaan. Validasi diagnostik yang dilakukan oleh kurator manusia berfokus untuk menangkal beberapa insiden penting:
-1. **Jebakan Korelasi Semu (*Spurious Features*):** Menghentikan fitur yang skor prediktifnya menonjol akibat kebetulan statistik spesifik pada himpunan data latih, namun secara fundamental tidak memiliki landasan rasional atau kausalitas sebab-akibat.
-2. **Kebocoran Proses Produksi:** Menolak kandidat fitur yang tampak aman dari kebocoran baris data (*row-level leakage*) namun di dunia nyata mustahil dikalkulasi secara instan pada milidetik yang sama saat model dipanggil (*inference latency limits*).
-3. **Proksi Data Sensitif:** Menemukan dan membuang fitur turunan (seperti rasio demografi geografis sekunder) yang secara terselubung mengidentifikasi variabel terlarang atau rahasia privasi pasien.
+* **Jebakan Korelasi Semu (*Spurious Features*):** Menghentikan fitur yang skor prediktifnya menonjol akibat kebetulan statistik spesifik pada himpunan data latih, namun secara fundamental tidak memiliki landasan rasional atau kausalitas sebab-akibat.
+* **Kebocoran Proses Produksi:** Menolak kandidat fitur yang tampak aman dari kebocoran baris data (*row-level leakage*) namun di dunia nyata mustahil dikalkulasi secara instan pada milidetik yang sama saat model dipanggil (*inference latency limits*).
+* **Proksi Data Sensitif:** Menemukan dan membuang fitur turunan (seperti rasio demografi geografis sekunder) yang secara terselubung mengidentifikasi variabel terlarang atau rahasia privasi pasien.
 
 Kerangka kerja HITL ini mengunci kedudukan *AutoFE* di dalam ranah sistem produksi analitis. Kendati seluruh proses persilangan, seleksi mandiri, dan pengujian statistiknya dijalankan seratus persen oleh agen otonom, luaran final sistem ini sepenuhnya masih diklasifikasikan sebagai **representasi yang dirancang manusia**. Eksekusinya tunduk pada batasan rancangan awal manusia, dan lisensi produksinya harus dibubuhkan melalui verifikasi sadar dari kurator pengetahuan.
 

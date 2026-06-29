@@ -19,12 +19,25 @@ Di mana:
 * $L$ adalah panjang *lookback*.
 * Target observasinya adalah $y_{t+H}$, di mana $H$ merupakan jarak *horizon* ke masa depan.
 
-[GAMBAR 10.1: Diagram konseptual - Jendela rolling dan expanding pada deret waktu]
+```{mermaid}
+%%| label: fig-ch10-10_1
+%%| fig-cap: "Jendela Rolling dan Expanding pada Deret Waktu"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Rolling_Fixed_Size ["Rolling Window - Ukuran Tetap Bergeser"]
+        A1[Hari 1-5: Train] --> B1[Hari 6: Target]
+        C1[Hari 2-6: Train] --> D1[Hari 7: Target]
+    end
+    subgraph Expanding_Accum ["Expanding Window - Akumulasi Terbuka"]
+        A2[Hari 1-5: Train] --> B2[Hari 6: Target]
+        C2[Hari 1-6: Train] --> D2[Hari 7: Target]
+    end
+```
 
 Penyelarasan waktu antara input dan target amat rentan memicu *data leakage* (kebocoran data). Praktik *pipeline* yang benar mengharuskan rancangan jendela waktu yang ketat:
 
-* **Window Kausal (Causal Window):** Jendela input harus berhenti tepat sebelum titik awal *horizon*. Model hanya mengevaluasi data masa lalu untuk memprediksi masa depan. Ini adalah syarat mutlak untuk tugas peramalan (*forecasting*).
-* **Window Terpusat (Centered Window):** Jendela merangkum observasi sebelum dan sesudah suatu titik. Menerapkan skema ini pada peramalan akan membocorkan informasi masa depan ke dalam fitur input. *Window* terpusat hanya dikhususkan untuk analisis retrospektif, seperti imputasi nilai kosong atau penghalusan data historis.
+* **Window Kausal (Causal Window):** Jendela input harus berhenti tepat sebelum titik awal *horizon*. Model hanya mengevaluasi data masa lalu untuk memprediksi masa depan. Ini adalah syarat mutlak untuk tugas *forecasting* deret waktu.
+* **Window Terpusat (Centered Window):** Jendela merangkum observasi sebelum dan sesudah suatu titik. Menerapkan skema ini pada *forecasting* akan membocorkan informasi masa depan ke dalam fitur input. *Window* terpusat hanya dikhususkan untuk analisis retrospektif, seperti imputasi nilai kosong atau penghalusan data historis.
 
 Terakhir, *windowing* menuntut jarak waktu (*interval*) antarpengamatan yang konstan. Pada kenyataannya, banyak data sensor atau log transaksi tercatat secara ireguler. Data frekuensi tak beraturan ini wajib diseragamkan (*resampling*) sebelum diproses menjadi sampel. Kita dapat melakukan *downsampling* untuk meringkas frekuensi tinggi ke interval yang lebih lambat, atau *upsampling* untuk mengisi celah antar-pengamatan. Dengan interval yang seragam, setiap pergeseran *stride* akan memuat rentang historis yang ekuivalen untuk dipelajari oleh model.
 
@@ -60,7 +73,14 @@ Penentuan ukuran jendela agregasi ini melibatkan *trade-off* mendasar:
 **2. Statistik *Expanding* (Jendela Melebar)**
 Berbeda dengan statistik *rolling* yang bergeser sepenuhnya, *expanding window* menahan batas awalnya pada satu titik yang tetap, sementara ujung akhirnya terus bertambah seiring masuknya observasi baru. Teknik ini spesifik digunakan untuk menghitung memori kumulatif berjangka panjang, seperti total nominal transaksi seorang pelanggan dari hari pendaftaran pertama hingga hari ini.
 
-[GAMBAR 10.2: Skema Konseptual - Perbandingan mekanisme jendela bergeser (rolling window) berukuran tetap dengan jendela melebar (expanding window) yang mengakumulasi observasi]
+```{mermaid}
+%%| label: fig-ch10-10_2
+%%| fig-cap: "Perbandingan Mekanisme Jendela Bergeser (Rolling) vs Melebar (Expanding)"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Data Deret Waktu] --> B(Rolling: Analisis Jangka Pendek & Volatilitas Baru)
+    A --> C(Expanding: Analisis Tren Jangka Panjang & Konsistensi Pola)
+```
 
 Melalui perpaduan tiga teknik representasi ini - kewaspadaan sesaat dari *lag*, deteksi tren lokal dari *rolling*, dan ingatan kumulatif dari *expanding* - sifat alami data temporal dapat direpresentasikan secara utuh dalam arsitektur tabular. Dalam praktiknya, pustaka spesifik ranah waktu seperti *tsfresh* atau submodul transformasi pada *aeon* dapat melakukan komputasi puluhan metrik *rolling* ini secara terotomatisasi.
 
@@ -75,7 +95,14 @@ Untuk menyelesaikan masalah ekstrapolasi, data perlu ditransformasi agar mencapa
 
 Teknik utama untuk memaksa kondisi stasioner pada fitur adalah *differencing* (pembedaan). Arsitektur model diubah agar tidak lagi memprediksi besaran absolut yang terus bertumbuh, melainkan memprediksi selisih perubahan dari satu titik waktu ke titik berikutnya.
 
-[GAMBAR 10.X: Grafik - Dekomposisi Tren, Musiman, dan Residu pada Deret Waktu]
+```{mermaid}
+%%| label: fig-ch10-10_6
+%%| fig-cap: "Ekstraksi Fitur Menggunakan tsfresh yang Meratakan Jendela Deret Waktu ke Tabular"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Data Sekuensial: Jendela Sinyal Sensor] -->|Ekstraksi Parameter Statistik Komprehensif| B[Tsfresh Engine]
+    B --> C[Matriks Tabular: Mean, Max, FFT, Kemiringan, Varians]
+```
 
 Secara matematis, *differencing* orde pertama dirumuskan dengan persamaan:
 
@@ -89,10 +116,11 @@ Di mana:
 * $y_{t-1}$ adalah nilai observasi pada satu titik waktu sebelumnya.
 
 Praktik rekayasa fitur menyediakan beberapa varian transformasi untuk menangani tren dan musiman:
-1. **Seasonal Differencing:** Menghilangkan efek periodik dengan mengurangkan nilai saat ini terhadap nilai pada posisi yang sama di siklus sebelumnya. Persamaannya adalah $y'_t = y_t - y_{t-m}$, dengan $m$ sebagai panjang periode musiman (contoh: $m=7$ untuk observasi harian dengan pola mingguan).
-2. **Dekomposisi Deret Waktu:** Menggunakan metode analitik seperti STL (*Seasonal and Trend decomposition using Loess*) untuk memisahkan data menjadi tiga komponen: tren, musiman, dan residu. Model hanya dilatih pada komponen residu yang sifatnya stasioner.
-3. **Fitur Tren Eksplisit:** Mengukur arah pergerakan data dengan menghitung kemiringan garis regresi (*slope*) atau rata-rata bergerak (*moving average*) di dalam satu jendela waktu, kemudian memasukkannya sebagai kolom fitur prediktif.
-4. **Indikator Waktu Kategorikal:** Menangkap efek musiman dengan mengekstrak kategori elemen waktu, seperti jam dalam satu hari atau bulan dalam satu tahun. Pendekatan ini memungkinkan model mempelajari karakteristik tiap musim sebagai kondisi diskrit tanpa menghapus tren dasar.
+
+* **Seasonal Differencing:** Menghilangkan efek periodik dengan mengurangkan nilai saat ini terhadap nilai pada posisi yang sama di siklus sebelumnya. Persamaannya adalah $y'_t = y_t - y_{t-m}$, dengan $m$ sebagai panjang periode musiman (contoh: $m=7$ untuk observasi harian dengan pola mingguan).
+* **Dekomposisi Deret Waktu:** Menggunakan metode analitik seperti STL (*Seasonal and Trend decomposition using Loess*) untuk memisahkan data menjadi tiga komponen: tren, musiman, dan residu. Model hanya dilatih pada komponen residu yang sifatnya stasioner.
+* **Fitur Tren Eksplisit:** Mengukur arah pergerakan data dengan menghitung kemiringan garis regresi (slope) atau rata-rata bergerak (*moving average*) di dalam satu jendela waktu, kemudian memasukkannya sebagai kolom fitur prediktif.
+* **Indikator Waktu Kategorikal:** Menangkap efek musiman dengan mengekstrak kategori elemen waktu, seperti jam dalam satu hari atau bulan dalam satu tahun. Pendekatan ini memungkinkan model mempelajari karakteristik tiap musim sebagai kondisi diskrit tanpa menghapus tren dasar.
 
 
 ## Fitur Domain Frekuensi
@@ -103,7 +131,13 @@ Keterbatasan domain waktu muncul ketika kita menghadapi data sensor berfrekuensi
 
 Alat matematis utama untuk melakukan transisi ini adalah transformasi Fourier, sering dieksekusi melalui algoritma *Fast Fourier Transform* (FFT). Secara konseptual, FFT mengambil satu jendela waktu dari sinyal yang kompleks dan memecahnya menjadi sekumpulan gelombang periodik sederhana yang memiliki frekuensi dan amplitudo berbeda-beda.
 
-[GAMBAR 10.4]
+```{mermaid}
+%%| label: fig-ch10-10_4
+%%| fig-cap: "Skema Purge Gap dalam Pemisahan Data Temporal"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Jendela Pelatihan Kronologis] -->|Batas Purge Gap: Potong Informasi 25 Jam| B[Jendela Pengujian]
+```
 Judul: Transformasi Fourier pada gelombang
 Tipe: Diagram konseptual
 Tampilkan: Sinyal kompleks di domain waktu yang dipecah menjadi beberapa komponen gelombang sinus berfrekuensi tunggal di ruang tiga dimensi, memperlihatkan transisi dari sumbu waktu ke sumbu frekuensi.
@@ -132,7 +166,7 @@ Kasus penggunaan klasik untuk representasi frekuensi adalah sistem pemeliharaan 
 
 ## Validasi Temporal: Menghindari Look-Ahead Leakage
 
-Menerapkan *cross-validation* acak (seperti *K-Fold*) pada data deret waktu menimbulkan *look-ahead leakage*. Pengocokan baris data sebelum pembagian set mengabaikan arah waktu. Jika model peramalan harga saham dilatih menggunakan data hari Jumat untuk memprediksi harga hari Kamis, model tersebut mendapatkan bocoran dari masa depan. Evaluasi akan menghasilkan metrik yang terlalu tinggi, tetapi model akan gagal saat memprediksi data baru.
+Menerapkan *cross-validation* acak (seperti *K-Fold*) pada data deret waktu menimbulkan *look-ahead leakage*. Pengocokan baris data sebelum pembagian set mengabaikan arah waktu. Jika model prediksi harga saham dilatih menggunakan data hari Jumat untuk memprediksi harga hari Kamis, model tersebut mendapatkan bocoran dari masa depan. Evaluasi akan menghasilkan metrik yang terlalu tinggi, tetapi model akan gagal saat memprediksi data baru.
 
 Pemisahan data deret waktu wajib mengikuti urutan waktu (*temporal split*). Seluruh set pelatihan harus secara ketat mendahului set validasi. Terdapat dua variasi skema pembagian untuk skenario ini:
 * ***Expanding window***: Rentang waktu set pelatihan membesar seiring bertambahnya observasi, sementara ukuran set validasi tetap.
@@ -142,7 +176,14 @@ Walaupun *temporal split* mengunci arah waktu, proses *windowing* menimbulkan ri
 
 Sebagai contoh, jika algoritma menggunakan *lookback* tujuh hari, sampel validasi pertama di hari ke-100 memakai data mentah dari hari ke-93 hingga ke-99. Data mentah pada rentang yang sama juga ikut menyusun fitur pada sampel-sampel akhir di set pelatihan. Evaluasi menjadi terlalu optimis jika garis batas pemisahan dibiarkan menyatu tanpa jeda.
 
-[GAMBAR 10.5: Diagram Konseptual - Visualisasi temporal split yang menyoroti letak purge gap di antara set pelatihan terakhir dan set validasi pertama untuk memotong tumpang-tindih data mentah]
+```{mermaid}
+%%| label: fig-ch10-10_5
+%%| fig-cap: "Letak Purge Gap di Antara Set Pelatihan Terakhir dan Set Validasi Pertama"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Data Latih: Riwayat Transaksi] --> B[Data Purge Gap: Hari Evaluasi Transisi]
+    B --> C[Data Validasi: Transaksi Baru Di Luar Sinyal Window Latih]
+```
 
 *Praktik pipeline yang benar* mengatasi kebocoran di garis batas ini dengan menyisipkan *purge gap* (celah pembersihan). *Purge gap* adalah blok sampel observasi yang dibuang secara sengaja agar tidak ada informasi yang bocor melintasi batas pemisahan.
 
@@ -165,17 +206,26 @@ Pustaka modern untuk analisis deret waktu, seperti `sktime`, otomatis menangani 
 Pendekatan rekayasa fitur temporal bergantung pada keluarga model yang akan memproses data. Cara menyiapkan data untuk algoritma klasik berbeda secara mendasar dari pemformatan input untuk arsitektur *deep learning* modern. Transisi ini menandai pergeseran utama dari representasi yang dirancang manusia menuju representasi yang dipelajari mesin.
 
 Persyaratan data untuk model tabular klasik (seperti *Random Forest* atau *Gradient Boosting*) meliputi:
-1. **Vektor berdimensi tunggal:** Algoritma tradisional membutuhkan observasi yang diratakan. Jendela riwayat waktu tidak dapat dimasukkan dalam format asli beruntun.
-2. **Absennya kesadaran kronologis:** Model memperlakukan setiap fitur secara terisolasi dan tidak memiliki konsep bawaan tentang urutan waktu antar kolom.
-3. **Ekstraksi eksplisit:** Pengguna harus menyarikan makna waktu dengan membuat variabel turunan, seperti nilai lag, rata-rata bergulir, atau laju perubahan harian.
-4. **Otomasi ekstraksi:** Penggunaan pustaka seperti `tsfresh` sering diterapkan untuk menghitung dan meratakan ribuan fitur statistik dari satu jendela waktu ke dalam matriks tabular.
+* **Vektor berdimensi tunggal:** Algoritma tradisional membutuhkan observasi yang diratakan. Jendela riwayat waktu tidak dapat dimasukkan dalam format asli beruntun.
+* **Absennya kesadaran kronologis:** Model memperlakukan setiap fitur secara terisolasi dan tidak memiliki konsep bawaan tentang urutan waktu antar kolom.
+* **Ekstraksi eksplisit:** Pengguna harus menyarikan makna waktu dengan membuat variabel turunan, seperti nilai lag, rata-rata bergulir, atau laju perubahan harian.
+* **Otomasi ekstraksi:** Penggunaan pustaka seperti `tsfresh` sering diterapkan untuk menghitung dan meratakan ribuan fitur statistik dari satu jendela waktu ke dalam matriks tabular.
 
-[GAMBAR 10.6: Skema - Ekstraksi fitur menggunakan tsfresh yang meratakan jendela deret waktu menjadi matriks fitur tabular]
+```{mermaid}
+%%| label: fig-ch10-10_7
+%%| fig-cap: "Skema Validasi Temporal dengan Pemisahan Kronologis dan Area Purge Gap"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Kronologis_Split ["Pemisahan Kronologis Temporal"]
+        A[Latih - Masa Lalu] --> B[Purge Gap]
+        B --> C[Uji - Masa Depan]
+    end
+```
 
 Pemrosesan data untuk model sekuensial pada *deep learning* (seperti RNN, LSTM, dan *Transformer*) menggunakan pendekatan yang berbeda:
-1. **Struktur *tensor* dua dimensi:** Model menerima input berbentuk matriks berukuran jumlah langkah waktu dikali jumlah fitur.
-2. **Retensi kronologis:** Urutan langkah waktu dipertahankan secara utuh. Model menangkap dinamika temporal melalui pembaruan *hidden state* atau mekanisme *attention*.
-3. **Pergeseran beban ekstraksi:** Pemahaman tentang pola temporal bergeser sepenuhnya menjadi representasi yang dipelajari mesin selama proses *training*.
+* **Struktur *tensor* dua dimensi:** Model menerima input berbentuk matriks berukuran jumlah langkah waktu dikali jumlah fitur.
+* **Retensi kronologis:** Urutan langkah waktu dipertahankan secara utuh. Model menangkap dinamika temporal melalui pembaruan *hidden state* atau mekanisme *attention*.
+* **Pergeseran beban ekstraksi:** Pemahaman tentang pola temporal bergeser sepenuhnya menjadi representasi yang dipelajari mesin selama proses *training*.
 
 Meskipun model sekuensial mampu menemukan pola urutan angka secara mandiri, arsitektur ini tetap membutuhkan penyesuaian bentuk data awal. Skala fitur harus dinormalisasi agar perhitungan *gradient* stabil. Selain itu, model membutuhkan panduan eksplisit untuk mengetahui posisi waktu absolut. Informasi waktu ini umumnya disuntikkan melalui *cyclical encoding* dengan menggunakan fungsi trigonometri:
 
@@ -216,8 +266,35 @@ Meskipun batas potong ditarik secara kronologis, sampel pengujian paling awal te
 
 [GAMBAR 10.6: Diagram - Skema validasi temporal dengan pemisahan kronologis dan area purge gap 25 jam di antara set pelatihan dan pengujian]
 
-```
-[KODE: contoh pemisahan temporal dengan purge gap; sumber: notebook bab]
+```python
+import pandas as pd
+import numpy as np
+
+# 1. Menyiapkan data deret waktu sintetis (frekuensi per jam selama 30 hari)
+date_range = pd.date_range(start='2026-01-01', periods=24*30, freq='h')
+np.random.seed(42)
+df = pd.DataFrame({
+    'Suhu': np.random.normal(loc=25, scale=5, size=len(date_range)),
+    'Beban_Listrik': np.random.normal(loc=150, scale=30, size=len(date_range))
+}, index=date_range)
+
+# 2. Menentukan titik potong temporal (misalnya: 80% pelatihan, 20% pengujian)
+split_point = df.index[int(len(df) * 0.8)]
+
+# 3. Mendefinisikan ukuran Purge Gap (contoh: 25 jam)
+purge_gap_hours = 25
+purge_gap_delta = pd.Timedelta(hours=purge_gap_hours)
+
+# 4. Melakukan pemisahan temporal secara ketat dengan menyertakan Purge Gap
+X_train = df[:split_point]
+# Set pengujian dimulai setelah split_point + purge_gap_delta untuk membuang overlap
+X_test = df[split_point + purge_gap_delta:]
+
+# 5. Memverifikasi isolasi temporal
+print(f"Batas Terakhir Set Pelatihan: {X_train.index[-1]}")
+print(f"Batas Awal Set Pengujian   : {X_test.index[0]}")
+print(f"Jarak Waktu Antar Set      : {X_test.index[0] - X_train.index[-1]}")
+print(f"Jumlah Baris Terbuang (Gap): {len(df) - (len(X_train) + len(X_test))} jam")
 ```
 
 Aturan isolasi temporal dan eksekusi *pipeline* dijalankan melalui dua langkah utama:

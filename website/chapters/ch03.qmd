@@ -22,12 +22,16 @@ Selain itu, pada algoritma berbasis gradien seperti regresi linier dan jaringan 
 
 Bentuk persebaran observasi data juga berdampak langsung pada kualitas pemodelan. Data nyata sering membentuk distribusi menceng (*skewed distribution*), yaitu persebaran data yang tidak simetris dan memiliki satu ekor memanjang akibat nilai-nilai ekstrem.
 
-[GAMBAR 3.1: Plot Distribusi - Perbandingan kurva normal yang simetris sempurna di sisi kiri dengan kurva menceng yang ekornya memanjang tajam ke kanan akibat sekelompok observasi ekstrem]
+```{mermaid}
+%%| label: fig-ch03-3_2
+%%| fig-cap: "Perbandingan Distribusi Nilai Menggunakan Metode Skala Min-Max dan Standardisasi"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Fitur Numerik Mentah] --> B(Min-Max Scaling: Batas Keras 0 s.d 1)
+    A --> C(Standardisasi: Mean=0, Std=1, Rentang Bebas)
+```
 
-Bentuk distribusi yang asimetris menciptakan hambatan komputasi bagi algoritma melalui beberapa pola:
-
-* **Pelanggaran asumsi sebaran:** Mayoritas model linier mengasumsikan distribusi data yang terpusat stabil di sekitar nilai rata-rata. Data menceng secara langsung membelokkan garis regresi yang berusaha ditarik oleh algoritma.
-* **Sensitivitas terhadap galat:** Model bekerja dengan cara meminimalkan galat komputasi (*error*) secara agregat. Sekelompok kecil observasi ekstrem di ujung kurva akan menghasilkan kalkulasi galat yang besar secara proporsional. Akibatnya, model akan menggeser bobot fiturnya secara berlebihan untuk mengakomodasi sebagian kecil observasi tersebut, yang pada akhirnya mengorbankan akurasi untuk mayoritas data normal.
+Bentuk distribusi yang asimetris menciptakan hambatan komputasi bagi algoritma melalui dua pola utama. Pertama, ia melanggar asumsi sebaran yang dibutuhkan oleh model; mayoritas model linier mengasumsikan distribusi data terpusat stabil di sekitar nilai rata-rata, sehingga data menceng secara langsung akan membelokkan garis regresi. Kedua, algoritma sangat sensitif terhadap galat karena cara kerjanya yang meminimalkan *error* secara agregat. Sekelompok kecil observasi ekstrem di ujung kurva akan menghasilkan kalkulasi galat yang proporsional besar. Akibatnya, model akan menggeser bobot fiturnya secara berlebihan untuk mengakomodasi sebagian kecil observasi ekstrem tersebut, yang pada akhirnya mengorbankan akurasi untuk mayoritas data normal.
 
 Karena besaran angka mentah berbenturan dengan mekanisme komputasi algoritma, fitur numerik wajib ditransformasi. Penyesuaian rentang skala dan perbaikan bentuk distribusi memastikan setiap fitur memiliki kesempatan setara untuk berkontribusi pada hasil prediksi.
 
@@ -42,16 +46,7 @@ Standardisasi memodifikasi sebaran nilai fitur agar memiliki rata-rata nol denga
 
 $$ z = \frac{x - \mu}{\sigma} $$
 
-Di mana:
-* $z$ adalah nilai hasil standardisasi.
-* $x$ adalah observasi nilai asli.
-* $\mu$ adalah rata-rata variabel.
-* $\sigma$ adalah deviasi baku variabel.
-
-Karakteristik utama standardisasi meliputi:
-* **Mempertahankan jarak proporsional:** Rasio komparatif antar titik data dipertahankan sesuai bentuk sebaran aslinya.
-* **Toleran terhadap nilai ekstrem:** Titik pencilan (*outlier*) tidak dipaksa mengecil. Posisi ekstremnya dipertahankan (misalnya $z = 4.5$), memfasilitasi algoritma yang memanfaatkan informasi abnormal tersebut.
-* **Rentang tidak terbatas:** Nilai akhir tidak dikurung dalam batas minimum atau maksimum yang kaku.
+Dalam rumus ini, $z$ adalah nilai hasil standardisasi, $x$ adalah observasi nilai asli, sedangkan $\mu$ dan $\sigma$ berturut-turut merupakan rata-rata dan deviasi baku dari variabel tersebut. Standardisasi memiliki beberapa karakteristik utama. Pertama, metode ini mempertahankan jarak proporsional sehingga rasio komparatif antar-titik data tetap sesuai dengan bentuk sebaran aslinya. Kedua, ia lebih toleran terhadap nilai ekstrem; titik pencilan (*outlier*) tidak dipaksa mengecil dan posisi ekstremnya dipertahankan (misalnya $z = 4.5$), memfasilitasi algoritma yang memang membutuhkan informasi abnormal tersebut. Terakhir, rentang nilai akhirnya tidak dibatasi atau dikurung dalam batas minimum dan maksimum yang kaku.
 
 ### Skala Min-Max (*Min-Max Scaling*)
 
@@ -59,24 +54,27 @@ Skala min-max memampatkan seluruh nilai numerik ke dalam rentang tertutup, umumn
 
 $$ x_{scaled} = \frac{x - x_{min}}{x_{max} - x_{min}} $$
 
-Di mana:
-* $x_{scaled}$ adalah representasi nilai setelah diskalakan.
-* $x$ adalah observasi nilai asli.
-* $x_{min}$ adalah batas nilai observasi terkecil pada fitur.
-* $x_{max}$ adalah batas nilai observasi terbesar pada fitur.
+Di mana $x_{scaled}$ melambangkan nilai setelah diskalakan, $x$ adalah observasi nilai asli, sementara $x_{min}$ dan $x_{max}$ adalah batas observasi terkecil dan terbesar pada fitur tersebut. Karakteristik skala min-max sangat bergantung pada batasan absolut. Metode ini memaksakan rentang yang konstan, di mana nilai terkecil dipetakan secara eksak menjadi $0$, dan observasi terbesar menjadi $1$. Konsekuensinya, metode ini sangat sensitif terhadap pencilan. Jika terdapat *outlier* tunggal dengan nilai ekstrem, rentang denominasi ($x_{max} - x_{min}$) akan membesar drastis. Akibatnya, kelompok data mayoritas justru terkompresi rapat di kisaran desimal sempit yang mendekati nilai nol.
 
-Karakteristik skala min-max sangat bergantung pada batasan absolut:
-* **Rentang konstan absolut:** Nilai terkecil dipetakan secara eksak menjadi $0$, dan observasi terbesar menjadi $1$.
-* **Sensitif terhadap pencilan:** Jika terdapat observasi *outlier* tunggal dengan nilai ekstrem, rentang denominasi ($x_{max} - x_{min}$) membesar drastis. Akibatnya, kelompok data mayoritas terkompresi rapat di kisaran desimal sempit mendekati nol.
-
-[GAMBAR 3.6: Skema - Perbandingan distribusi nilai menggunakan metode Skala Min-Max dan Standardisasi]
+```{mermaid}
+%%| label: fig-ch03-3_6
+%%| fig-cap: "Skema Scaling Menormalkan Rentang Angka Antar Dimensi Fitur"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Rentang_Sebelum ["Sebelum Normalisasi"]
+        A1[Fitur Pendapatan: 5.000.000 s.d 100.000.000]
+        A2[Fitur Jumlah Anak: 0 s.d 5]
+    end
+    subgraph Rentang_Sesudah ["Sesudah Normalisasi"]
+        B1[Fitur Pendapatan Berskala: -1.5 s.d 3.2]
+        B2[Fitur Jumlah Anak Berskala: -0.8 s.d 2.1]
+    end
+    Rentang_Sebelum -->|Standardization Transformer| Rentang_Sesudah
+```
 
 ### Kriteria Penggunaan
 
-Pemilihan metode bergantung pada karakteristik matematis dari algoritma yang akan digunakan:
-
-* **Pilih Standardisasi** untuk model linier dan model berbasis Euclidean (seperti *Support Vector Machine* atau k-NN). Pendekatan ini tidak merusak variansi jarak *outlier* serta memuluskan laju konvergensi fungsi objektif.
-* **Pilih Skala Min-Max** untuk algoritma yang memetakan fungsi pada ruang terbatas konstan. Metode ini relevan untuk memproses representasi fisik dengan rentang mutlak (misalnya nilai intensitas piksel 0-255) atau memberikan asupan awal untuk unit aktivasi jaringan saraf tiruan (*neural network*).
+Pemilihan metode penskalaan sangat bergantung pada karakteristik matematis dari algoritma yang akan digunakan. Standardisasi sangat disarankan untuk model linier dan algoritma berbasis jarak Euclidean (seperti *Support Vector Machine* atau *k-Nearest Neighbors*). Pendekatan ini tidak merusak variansi jarak *outlier* dan mampu memuluskan laju konvergensi fungsi objektif. Sebaliknya, skala min-max lebih tepat dipilih untuk algoritma yang memetakan fungsi pada ruang terbatas konstan. Metode ini relevan untuk memproses representasi fisik dengan rentang mutlak (misalnya nilai intensitas piksel 0-255 pada citra digital) atau sebagai asupan awal untuk unit aktivasi tertentu pada jaringan saraf tiruan (*neural network*).
 
 
 ## Robust Scaling dan Penanganan Outlier
@@ -85,32 +83,24 @@ Standardisasi mengandalkan nilai rata-rata dan deviasi standar untuk menyesuaika
 
 Misalnya pada data pendapatan karyawan di sebuah perusahaan. Mayoritas staf menerima gaji standar, tetapi ada satu orang CEO dengan penghasilan ribuan kali lipat lebih besar. Pendapatan CEO ini menarik nilai rata-rata ke atas secara drastis. Jika kita memaksakan standardisasi pada kondisi ini, gaji karyawan reguler akan tertekan dan saling berhimpit pada area sempit di bagian bawah skala. Variasi asli antar-karyawan biasa menjadi hilang karena tertutup oleh rentang angka yang melebar akibat satu anomali.
 
-Untuk mengatasi masalah ini, kita menggunakan pendekatan *robust scaling*. Metode ini mengganti parameter acuan dengan metrik yang lebih kebal terhadap nilai ekstrem:
+Untuk mengatasi masalah ini, kita menggunakan pendekatan *robust scaling*. Metode ini mengganti parameter acuan dengan metrik yang lebih kebal terhadap nilai ekstrem. Pertama, ia menggunakan median untuk menggantikan rata-rata ($Q_2$). Median murni melihat posisi urutan sehingga tidak terseret oleh angka ekstrem di ujung distribusi. Kedua, ia menggunakan Rentang Antarkuartil (IQR) untuk menggantikan deviasi standar. IQR mengukur jarak antara persentil ke-25 ($Q_1$) dan persentil ke-75 ($Q_3$), sehingga metrik ini hanya mengevaluasi sebaran 50 persen data di pusat populasi dan secara alami mengabaikan anomali di kedua ujungnya.
 
-* **Median menggantikan rata-rata:** Rata-rata diganti dengan nilai tengah data yang telah diurutkan ($Q_2$). Median murni melihat posisi urutan, sehingga tidak terseret oleh angka ekstrem di ujung distribusi.
-* **Rentang Antarkuartil menggantikan deviasi standar:** Deviasi standar diganti dengan Rentang Antarkuartil (IQR), yang mengukur jarak antara persentil ke-25 ($Q_1$) dan persentil ke-75 ($Q_3$). Metrik ini hanya mengevaluasi sebaran 50 persen data di pusat populasi dan mengabaikan anomali di kedua ujungnya.
-
-Transformasi ini menggunakan formula dasar berikut:
-
-$$ x'_{i} = \frac{x_i - Q_2}{Q_3 - Q_1} $$
-
-Di mana:
-* $x'_{i}$ adalah nilai fitur setelah transformasi.
-* $x_i$ adalah nilai fitur asli.
-* $Q_2$ adalah median dari distribusi fitur.
-* $Q_1$ dan $Q_3$ adalah kuartil pertama dan ketiga.
-* Penyebut $Q_3 - Q_1$ mewakili Rentang Antarkuartil (IQR).
-
-Melalui formula ini, *robust scaling* memastikan titik-titik data normal tetap tersebar secara proporsional. Anomali ekstrem dipertahankan pada posisinya yang jauh dari pusat tanpa merusak skala kelompok data utama.
+Transformasi *robust scaling* menggunakan formula dasar $x'_{i} = \frac{x_i - Q_2}{Q_3 - Q_1}$. Di sini, $x'_{i}$ adalah nilai fitur setelah transformasi, $x_i$ adalah nilai fitur asli, $Q_2$ adalah median, dan penyebut $Q_3 - Q_1$ mewakili IQR. Melalui formula ini, *robust scaling* memastikan titik-titik data normal tetap tersebar secara proporsional. Anomali ekstrem dipertahankan pada posisinya yang jauh dari pusat tanpa merusak skala kelompok data utama.
 
 Selain penyesuaian skala, penanganan *outlier* sering dilakukan melalui pembatasan rentang secara eksplisit, yang dikenal sebagai *clipping* atau *winsorization*. Alih-alih membiarkan anomali memiliki nilai bebas, *winsorization* memotong data dan mengganti angka di luar ambang batas dengan nilai batas maksimum atau minimum tersebut.
 
-Penentuan batas pemotongan dapat dilakukan melalui beberapa metode:
-* **Batas IQR:** Titik data yang melebihi $Q_3 + 1.5 \times \text{IQR}$ atau kurang dari $Q_1 - 1.5 \times \text{IQR}$ dipotong menjadi nilai batas tersebut.
-* **Batas MAD (Median Absolute Deviation):** Menggunakan deviasi absolut median yang secara statistik lebih kuat terhadap kontaminasi ekstrem dibandingkan IQR. Pendekatan ini disarankan untuk distribusi dengan kepadatan *outlier* tinggi.
-* **Batas Persentil:** Menetapkan ambang pemotongan kaku berdasarkan persentil tertentu, seperti memotong semua nilai di bawah persentil ke-1 dan di atas persentil ke-99.
+Penentuan batas pemotongan (*clipping* atau *winsorization*) dapat dilakukan melalui beberapa metode. Metode pertama adalah batas IQR, di mana titik data yang melebihi $Q_3 + 1.5 \times \text{IQR}$ atau kurang dari $Q_1 - 1.5 \times \text{IQR}$ dipotong menjadi batas nilai maksimum atau minimum tersebut. Metode kedua menggunakan batas *Median Absolute Deviation* (MAD), yaitu mengukur deviasi absolut median yang secara statistik terbukti lebih kuat terhadap kontaminasi ekstrem dibandingkan IQR. Pendekatan ini sangat disarankan untuk distribusi dengan kepadatan *outlier* yang tinggi. Metode ketiga adalah batas persentil, yang menetapkan ambang pemotongan kaku berdasarkan persentil tertentu, seperti memotong secara merata semua nilai di bawah persentil ke-1 dan di atas persentil ke-99.
 
-[GAMBAR 3.2: Plot Data - Efek clipping/winsorization (sebelum dan sesudah) pada distribusi dengan outlier ekstrem]
+```{mermaid}
+%%| label: fig-ch03-3_5
+%%| fig-cap: "Alur Pemetaan Batas Interval Diskrit (Discretization/Binning)"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Umur Kontinu: 23, 45, 67, 12, 55] -->|Aturan Binning| B{Batasan Umur}
+    B -->|<18| C[Kategori: Anak-anak]
+    B -->|18-50| D[Kategori: Dewasa]
+    B -->|>50| E[Kategori: Lansia]
+```
 
 Langkah pemotongan ini menjaga rentang distribusi tetap padat dan mencegah model (terutama model berbasis gradien atau jarak) memberikan bobot kesalahan yang tidak wajar akibat satu pengamatan ekstrem.
 
@@ -119,11 +109,7 @@ Langkah pemotongan ini menjaga rentang distribusi tetap padat dan mencegah model
 
 Selain penyesuaian skala metrik, bentuk distribusi fitur numerik juga perlu diperbaiki. Model berbasis jarak atau gradien bekerja lebih baik bila data mendekati distribusi normal. Namun, sebagian besar observasi riil seperti harga atau pendapatan menceng (*skewed*) dengan ekor panjang di satu sisi. Memasukkan data menceng secara langsung ke dalam model linier membuat model kesulitan membaca pola sentral.
 
-Untuk menstabilkan varians dan mengurangi kemencengan, kita menggunakan *power transform*. Transformasi ini menerapkan kompresi non-linier yang lebih kuat pada angka yang besar, sehingga sebaran di ujung ekor tertarik merapat ke pusat. Dua metode utama dalam teknik ini adalah:
-- **Box-Cox**: Hanya mendukung data bernilai positif murni.
-- **Yeo-Johnson**: Dapat memproses data bernilai nol atau negatif.
-
-Kedua metode ini mengestimasi parameter kompresi optimal secara algoritmis melalui *Maximum Likelihood Estimation* (MLE). Sebagai representasi, formula transformasi Box-Cox didefinisikan sebagai:
+Untuk menstabilkan varians dan mengurangi kemencengan, kita menggunakan *power transform*. Transformasi ini menerapkan kompresi non-linier yang lebih kuat pada angka-angka besar, sehingga sebaran data yang berada di ujung ekor akan tertarik dan merapat ke pusat. Dua metode utama dalam teknik ini adalah transformasi Box-Cox (yang hanya mendukung data bernilai positif murni) dan Yeo-Johnson (yang mampu memproses angka bernilai nol atau negatif). Kedua metode ini bekerja secara algoritmis mengestimasi parameter kompresi optimal melalui pendekatan *Maximum Likelihood Estimation* (MLE). Sebagai representasi, formula transformasi Box-Cox didefinisikan sebagai berikut:
 
 $$
 x_i^{(\lambda)} = 
@@ -133,21 +119,15 @@ x_i^{(\lambda)} =
 \end{cases}
 $$
 
-Di mana $x_i$ merepresentasikan nilai fitur awal, dan $\lambda$ adalah parameter kompresi yang disesuaikan dari data latih. Jika $\lambda$ bernilai nol, metode ini menghasilkan transformasi logaritma natural.
+Di mana $x_i$ merepresentasikan nilai fitur awal, dan $\lambda$ adalah parameter kompresi yang disesuaikan dari data latih. Jika $\lambda$ bernilai nol, metode ini menghasilkan bentuk transformasi logaritma natural biasa.
 
 [GAMBAR 3.4: Plot Data - Q-Q plot efek transformasi Box-Cox pada data harga yang menceng]
 
 Meskipun *power transform* mampu mengkoreksi kemencengan, transformasi parametrik ini tetap rentan terdistorsi oleh *outlier* ekstrem. Pendekatan alternatif yang kebal *outlier* adalah *quantile transform*.
 
-*Quantile transform* sepenuhnya membuang operasi aritmetika dan beroperasi menggunakan pemetaan urutan (*rank*). Algoritmanya bekerja dengan:
-1. Mengurutkan peringkat nilai dari setiap baris observasi.
-2. Memetakan peringkat tersebut ke nilai probabilitas kumulatif.
-3. Mencetak ulang probabilitas kumulatif tersebut ke dalam bentuk distribusi seragam (*uniform*) atau distribusi normal.
+*Quantile transform* sepenuhnya membuang operasi aritmetika dan beroperasi menggunakan pemetaan urutan (*rank*). Algoritmanya bekerja dengan mengurutkan peringkat nilai dari setiap observasi, memetakannya ke nilai probabilitas kumulatif, dan akhirnya mencetak ulang probabilitas tersebut ke dalam bentuk distribusi seragam (*uniform*) atau distribusi normal.
 
-Pemetaan berbasis kuantil ini menghasilkan beberapa kompromi praktis:
-- **Kekebalan penuh terhadap *outlier***: Nilai observasi sebesar apa pun sekadar menduduki peringkat teratas, tanpa memengaruhi penyebaran dan skala mayoritas data.
-- **Distorsi jarak spasial**: Jarak linier awal antar titik data dihapus total. Transformasi ini mengubah korelasi asli antar fitur yang diukur pada skala yang sama.
-- **Batasan ukuran data**: *Quantile transform* memetakan nilai berdasarkan empirisme sampel, sehingga rentan mengalami *overfitting* pada dataset berukuran kecil. Jika ukuran sampel hanya dalam rentang ratusan baris, *power transform* adalah pilihan yang jauh lebih stabil.
+Pemetaan berbasis kuantil ini menghasilkan beberapa kompromi praktis dalam desain fitur. Di satu sisi, pendekatan ini menawarkan kekebalan penuh terhadap *outlier*, karena nilai observasi sebesar apa pun hanya akan sekadar menduduki peringkat teratas tanpa memengaruhi penyebaran mayoritas data. Di sisi lain, hal ini mengakibatkan distorsi jarak spasial karena jarak linier awal antar-titik data dihapus total. Transformasi ini juga dapat mengubah korelasi asli antar-fitur. Terakhir, *quantile transform* memiliki batasan pada ukuran data; karena ia memetakan nilai berdasarkan empirisme sampel semata, metode ini rentan mengalami *overfitting* pada *dataset* berukuran kecil. Jika ukuran sampel hanya dalam rentang ratusan baris, pendekatan parametrik seperti *power transform* selalu menjadi pilihan yang jauh lebih stabil.
 
 
 ## Clipping dan Discretization (Binning)
@@ -169,12 +149,7 @@ Keterangan:
 * $\theta_{min}$ adalah ambang batas bawah.
 * $\theta_{max}$ adalah ambang batas atas.
 
-Praktisi menentukan $\theta_{min}$ dan $\theta_{max}$ melalui tiga mekanisme utama:
-* **Persentil (Quantiles):** Memotong distribusi pada batas persentil murni (misalnya membatasi populasi pada persentil ke-5 dan ke-95).
-* **Rentang Interkuartil (IQR):** Menggunakan batas deteksi *outlier* standar, seperti $Q1 - 1.5 \times IQR$ dan $Q3 + 1.5 \times IQR$.
-* **Median Absolute Deviation (MAD):** Mengukur dispersi dari median dan menetapkan batas berdasarkan kelipatan nilai tersebut (contoh batas atas: $Median + 3.29 \times MAD$). MAD lebih kebal terhadap kontaminasi nilai ekstrem dibandingkan IQR atau deviasi standar.
-
-*Clipping* mencegah *outlier* mendominasi pembobotan algoritma, menjamin stabilitas tanpa mendistorsi kepadatan data di area tengah (*inliers*).
+Praktisi menentukan $\theta_{min}$ dan $\theta_{max}$ melalui tiga mekanisme utama. Pertama, berbasis persentil (*quantiles*), di mana pemotongan distribusi bersandar pada batas persentil murni (misalnya membatasi populasi hanya pada rentang persentil ke-5 hingga ke-95). Kedua, berbasis Rentang Interkuartil (IQR), yakni menggunakan batas deteksi pencilan standar seperti $Q_1 - 1.5 \times \text{IQR}$ untuk batas bawah dan $Q_3 + 1.5 \times \text{IQR}$ untuk batas atas. Ketiga, berbasis *Median Absolute Deviation* (MAD), yang mengukur dispersi dari median dan menetapkan batas berdasarkan kelipatannya (contohnya mematok batas atas pada nilai $\text{Median} + 3.29 \times \text{MAD}$). Perhitungan MAD terbukti jauh lebih kebal terhadap kontaminasi ekstrem jika dibandingkan dengan menggunakan IQR atau deviasi standar. Pendekatan *clipping* pada akhirnya menjamin stabilitas karena mencegah *outlier* mendominasi pembobotan algoritma, sembari tetap menjaga tanpa mendistorsi kepadatan data di area sentral (*inliers*).
 
 ### Discretization (Binning)
 
@@ -182,15 +157,9 @@ Praktisi menentukan $\theta_{min}$ dan $\theta_{max}$ melalui tiga mekanisme uta
 
 [GAMBAR 3.5: Histogram - Perbandingan distribusi data umur kontinu sebelum dan sesudah dipetakan menjadi kelompok interval diskrit]
 
-Penentuan lebar dan tepi batas interval dapat mengikuti beberapa strategi operasional:
-* **Uniform (Lebar Konstan):** Membagi seluruh rentang nilai ke dalam jumlah interval dengan jarak absolut yang sama. Metode ini rentan terhadap kecondongan data (*skew*) karena dapat menghasilkan banyak interval kosong.
-* **Quantile (Frekuensi Konstan):** Memastikan setiap interval memiliki populasi observasi yang identik, menyesuaikan lebar interval secara dinamis.
-* **K-Means:** Menjalankan algoritma *clustering* 1D untuk mendeteksi pusat pengelompokan yang natural berdasarkan kedekatan nilai.
-* **Supervised Discretization (Pohon Keputusan):** Melatih satu pohon keputusan dangkal (kedalaman 2-4) pada fitur kontinu tersebut untuk memprediksi variabel target. Daun dari pohon tersebut menjadi interval diskrit. Metode ini memastikan batasan *binning* berkorelasi langsung dengan daya prediksi.
+Penentuan lebar dan tepi batas interval dapat mengikuti beberapa strategi operasional. Strategi seragam (*uniform*) membagi seluruh rentang nilai ke dalam jumlah interval dengan lebar jarak absolut yang sama, meski rentan menghasilkan banyak interval kosong jika data terlalu condong. Strategi kuantil (*quantile*) memastikan setiap interval memiliki populasi observasi yang identik dengan menyesuaikan lebar jarak secara dinamis. Strategi k-Means menjalankan algoritma *clustering* 1D untuk mendeteksi pusat pengelompokan yang paling natural berdasarkan kedekatan nilai. Terakhir, diskritisasi terarah (*supervised discretization*) melatih satu pohon keputusan dangkal (kedalaman 2-4) khusus pada fitur kontinu tersebut demi memprediksi variabel target; daun dari pohon inilah yang akan ditetapkan sebagai interval diskrit. Metode terakhir ini menjamin batasan *binning* berkorelasi langsung dengan daya prediksi model.
 
-*Discretization* mengubah asumsi arsitektur model secara drastis:
-1. **Model Linier (Regresi, SVM Linier):** *Binning* memberikan kemampuan menangkap sinyal non-linear. Model linier tidak lagi berasumsi perubahan satu unit berdampak konstan, melainkan menetapkan bobot unik pada setiap kategori interval (misalnya bobot usia 18-25 terpisah dari 26-40).
-2. **Model Berbasis Pohon (Random Forest, Gradient Boosting):** Proses *binning* konvensional jarang memberi nilai tambah. Mesin pembentuk pohon pada dasarnya sudah beroperasi dengan mencari titik pisah diskrit secara adaptif.
+Proses *discretization* ini sanggup mengubah asumsi arsitektur model secara drastis. Pada model linier (seperti regresi atau SVM linier), *binning* menyuntikkan kemampuan untuk menangkap sinyal non-linier; model tidak lagi berasumsi bahwa perubahan satu unit angka akan berdampak konstan, melainkan menetapkan bobot unik pada setiap kategori interval (misalnya bobot usia 18-25 dipisah dengan bobot kelompok usia 26-40). Sebaliknya, pada algoritma berbasis pohon (*random forest*, *gradient boosting*), teknik *binning* pra-pemrosesan konvensional ini jarang memberi nilai tambah karena mesin pohon memang sudah beroperasi dengan mencari titik pisah diskrit secara adaptif dan internal.
 
 Sebagai evolusi modern dari teknik ini, transformasi **Spline** (*Piecewise Polynomials*) mengatasi kelemahan utama *binning*: batas interval yang kasar (efek tangga). *Spline transformer* memproyeksikan fitur ke dalam basis polinomial derajat rendah, menciptakan transisi kurva yang kontinu melewati ambang batas interval. Pendekatan ini mempertahankan daya representasi non-linear model linier tanpa merusak gradien pada perbatasan antar kelompok observasi.
 
@@ -203,9 +172,7 @@ Transformasi nilai seperti *standardization* atau *min-max scaling* bukanlah tah
 
 Model dalam kategori ini sangat bergantung pada rentang nilai absolut dari sebuah fitur. Jika satu fitur memiliki rentang numerik hingga jutaan (seperti pendapatan) sedangkan fitur lain hanya berskala puluhan (seperti usia), fitur dengan angka besar akan mendominasi hasil prediksi.
 
-Model yang sensitif terbagi menjadi dua keluarga:
-* **Model berbasis jarak (*metric-based estimators*):** Algoritma *k-NN* dan *SVM* mengukur kedekatan antar titik data spasial. Selisih jarak dari fitur berskala jutaan akan menutupi kontribusi fitur yang angkanya lebih kecil.
-* **Model berbasis gradien (*gradient-based estimators*):** Regresi linear dan *neural networks* memperbarui bobot parameter menggunakan fungsi turunan. Perbedaan skala fitur yang tajam akan memperlambat konvergensi dan berisiko membuat algoritma optimasi gagal menemukan titik minimum.
+Model yang sensitif terbagi menjadi dua keluarga perhitungan. Keluarga pertama adalah model berbasis jarak (*metric-based estimators*), seperti *k-Nearest Neighbors* (k-NN) dan *Support Vector Machine* (SVM) yang mengukur kedekatan antar-titik data secara spasial. Selisih jarak komputasi dari fitur yang berskala jutaan akan menelan kontribusi fitur lain yang angkanya lebih kecil. Keluarga kedua adalah model berbasis gradien (*gradient-based estimators*), seperti regresi linier dan *neural networks* yang memperbarui bobot parameter menggunakan fungsi turunan. Perbedaan skala fitur yang tajam akan melencengkan arah pencarian dan memperlambat konvergensi, bahkan berisiko membuat algoritma optimasi gagal menemukan titik minimum (*error* terkecil).
 
 Untuk mencegah fitur dominan merusak prediksi, praktisi menormalkan skala menggunakan metode seperti *Standard Scaler*. Transformasi ini mengubah nilai asli fitur menjadi skor *Z-score*:
 
@@ -219,10 +186,7 @@ Di mana $z$ mewakili nilai hasil transformasi, $x$ adalah angka fitur mentah, $\
 
 Keluarga **model berbasis pohon (*tree-based estimators*)** memiliki karakteristik yang sama sekali tidak terpengaruh oleh besaran skala fitur. Kategori ini mencakup *Decision Trees*, *Random Forest*, dan *Gradient Boosting*.
 
-Beberapa karakteristik yang membuat model pohon kebal terhadap perbedaan skala meliputi:
-* **Pembelahan ordinal:** Pohon keputusan mencari titik ambang batas pada satu variabel independen (contoh: kondisi `Usia < 30`). Model mengevaluasi urutan nilai, bukan mengombinasikan magnitudo antar-fitur dalam satu fungsi gabungan.
-* **Kuantisasi internal:** Pustaka *gradient boosting* modern seperti LightGBM menggunakan teknik *histogram-based binning* yang mengelompokkan nilai kontinu ke dalam *bin* diskret. Batas cabang dicari berdasarkan urutan *bin*, sehingga algoritma kebal terhadap skala angka aslinya (*scale-invariant*).
-* **Tanpa prapemrosesan eksternal:** Kerangka kerja seperti CatBoost menangani kuantisasi numerik secara mandiri langsung saat pelatihan. Pengguna bisa memasukkan data mentah tanpa proses *scaling* dan akan mendapatkan hasil evaluasi prediksi yang identik dengan data berskala.
+Ada beberapa karakteristik yang membuat model pohon dikategorikan kebal terhadap perbedaan skala. Pertama, model melakukan pembelahan secara ordinal. Pohon keputusan memproses variabel secara independen dan mencari titik potong secara berurutan (misalnya sekadar mengevaluasi kondisi `Usia < 30`). Algoritma tidak pernah menjumlahkan atau mengalikan magnitudo antar-fitur dalam satu fungsi matematis. Kedua, adanya kuantisasi internal. Pustaka *gradient boosting* modern (seperti LightGBM atau XGBoost) telah mengintegrasikan teknik pemilahan otomatis (*histogram-based binning*) yang mengelompokkan urutan nilai kontinu ke dalam rentang keranjang (*bin*) yang diskret. Batas pembagian cabang pada pohon pun dicari semata-mata berdasarkan rentang keranjang tersebut, membuat model pada dasarnya netral terhadap besaran nominal aslinya (*scale-invariant*). Oleh karenanya, praktisi dapat menyuapkan data numerik mentah ke dalam model berbasis pohon tanpa melakukan *scaling* sama sekali, namun tetap akan mendapatkan hasil prediksi yang identik secara matematis dengan skenario data terskala.
 
 
 ## Studi Kasus: Efek Transformasi pada Berbagai Keluarga Model
@@ -244,19 +208,8 @@ Berdasarkan rumus di atas, atribut gaji dengan nilai varians dalam orde jutaan a
 
 Ketika kita menyisipkan komponen standardisasi ke dalam *pipeline* untuk memaksa fitur berada pada rentang yang seragam, ruang Euclidean tersebut tidak lagi dikuasai oleh satu variabel. Hasilnya, akurasi k-NN dan SVM langsung melonjak drastis karena sistem penalti jarak kini memproses setiap fitur secara proporsional.
 
-Di sisi lain, algoritma *Random Forest* menunjukkan karakteristik respons yang sepenuhnya berbeda.
-
-* **Kebal terhadap perbedaan rentang:** Performa model berbasis pohon keputusan (*tree-based estimators*) bernilai persis sama, baik saat memproses data berdistribusi asimetris maupun data yang telah distandardisasi.
-* **Mekanisme pencarian titik potong:** Pohon keputusan mencari *threshold* percabangan optimal murni berdasarkan urutan atau peringkat titik data tunggal, bukan dengan cara mengkalkulasi jarak spasial antar observasi.
-* **Proses kuantisasi internal:** Banyak implementasi algoritma pohon modern (*gradient boosting* seperti LightGBM) menerapkan teknik *histogram-based binning*. Semua deret fitur kontinu akan dikuantisasi ke dalam serangkaian nampan diskret internal. Karakteristik ini membuat algoritma sepenuhnya mengabaikan besaran asli dari numerik mentah tersebut.
-
-Karena transformasi linear seperti standardisasi tidak mengubah urutan nilai sebuah himpunan, struktur topologi pohon yang terbangun dari data mentah tidak akan pernah menyimpang dari struktur pohon data berskala.
+Di sisi lain, algoritma *Random Forest* menunjukkan karakteristik respons yang sepenuhnya berbeda, karena ia masuk dalam keluarga model berbasis pohon (*tree-based estimators*). Model ini terbukti kebal terhadap perbedaan rentang; performanya bernilai persis sama, baik saat memproses data mentah yang sangat asimetris maupun data yang telah distandardisasi. Hal ini terjadi berkat mekanisme pencarian titik potong pohon keputusan yang mencari *threshold* percabangan optimal murni berdasarkan urutan peringkat pada satu fitur tunggal, bukan dengan cara mengkalkulasi jarak kombinasi antar-fitur. Selain itu, banyak implementasi algoritma pohon modern menerapkan teknik *histogram-based binning*, di mana semua deret fitur kontinu akan dikuantisasi ke dalam interval diskret internal. Karakteristik ini membuat algoritma sepenuhnya kebal terhadap magnitudo aslinya. Karena standardisasi pada dasarnya hanya mentransformasi skala (bukan mengubah urutan peringkat observasi), topologi percabangan pohon yang terbangun dari data mentah tidak akan pernah menyimpang dari struktur pohon data berskala.
 
 [GAMBAR 3.7: Plot Data - Grafik batang komparatif yang menampilkan lonjakan akurasi k-NN dan SVM pasca-standardisasi, sementara performa Random Forest tetap statis tak berubah]
 
-Eksperimen sederhana ini menghasilkan panduan praktis yang dapat langsung diaplikasikan:
-
-1. **Wajib menyertakan standardisasi:** Langkah transformasi ini mutlak dibutuhkan sebelum melatih model berbasis metrik spasial (seperti k-NN dan SVM dengan *kernel* RBF) maupun model yang melakukan pembaruan parameter berbasis gradien (seperti regresi linier dan jaringan saraf tiruan, di mana data tak berskala dapat menghambat konvergensi algoritma).
-2. **Aman melewati standardisasi:** Pemrosesan ini dapat dilewati sepenuhnya jika *pipeline* dirancang menggunakan keluarga model berbasis pohon, seperti *Decision Tree*, *Random Forest*, XGBoost, atau CatBoost.
-
-Menghilangkan modul standardisasi saat menggunakan model pohon keputusan dapat membebaskan sistem dari kewajiban kalkulasi yang tidak perlu. Keputusan desain ini memastikan kecepatan eksekusi data berjalan lebih efisien, tanpa mengorbankan kualitas akurasi sedikit pun.
+Eksperimen komparatif ini menghasilkan panduan praktis yang dapat langsung diadopsi. Kita wajib menyertakan standardisasi sebelum melatih model berbasis metrik spasial (seperti k-NN dan SVM) maupun model yang menggunakan optimasi gradien (seperti regresi linier dan jaringan saraf tiruan, di mana data tak berskala sangat menghambat laju konvergensi). Sebaliknya, kita dapat melewati tahap prapemrosesan ini sepenuhnya jika *pipeline* dirancang menggunakan keluarga algoritma berbasis pohon (seperti *Random Forest*, XGBoost, atau LightGBM). Menghilangkan modul penskalaan saat menggunakan pohon keputusan akan membebaskan sistem dari kalkulasi yang tidak berguna, memastikan eksekusi komputasi lebih efisien tanpa mengorbankan kualitas akurasi sedikit pun.

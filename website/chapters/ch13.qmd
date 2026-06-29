@@ -10,7 +10,15 @@ Agar koordinat dapat diproses menjadi fitur yang valid, kerangka kerja rekayasa 
 * **Proyeksi Kartesius:** Sebelum algoritma menghitung agregasi kedekatan, sistem WGS84 wajib diproyeksikan ke sistem bidang datar bersatuan metrik seperti UTM (*Universal Transverse Mercator*). Transformasi spasial ini memungkinkan kalkulasi geometri lokal yang presisi.
 * **Jarak Geodesik:** Apabila transformasi proyeksi datar tidak memadai, ekstraksi jarak harus dijalankan menggunakan rumus matematis bola bumi, misalnya rumus *Haversine*, yang secara akurat memetakan rute terpendek melintasi kelengkungan bumi.
 
-[GAMBAR 13.1: Diagram - Transformasi koordinat mentah menjadi fitur jarak, proksimitas radius, dan indeks sel heksagonal]
+```{mermaid}
+%%| label: fig-ch13-13_1
+%%| fig-cap: "Transformasi Koordinat Mentah Menjadi Fitur Jarak, Radius, dan Indeks Heksagonal"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Koordinat Latitude, Longitude] --> B[Fitur Jarak Geodesik ke Titik Pusat Kota]
+    A --> C[Fitur Jarak Proksimitas Radius Fasilitas]
+    A --> D[Indeks Heksagonal Sel H3 Uber]
+```
 
 Setelah landasan spasial dikalibrasi, lokasi diterjemahkan dari koordinat absolut menjadi atribut relasional yang prediktif. Praktik ini direpresentasikan melalui dua arsitektur ekstraksi utama:
 1. **Fitur Jarak Absolut (*Distance Features*):** Mengalkulasi metrik spasial menuju titik referensi eksternal. Alih-alih mempelajari koordinat geografis sebuah properti yang kaku, model regresi menerima sinyal ekonomi secara eksplisit melalui atribut "jarak menuju stasiun kereta terdekat" atau "jarak ke pusat bisnis".
@@ -39,7 +47,14 @@ Keputusan desain utama terletak pada definisi matriks bobot ($W$). Penentuan kan
 * **Tetangga terdekat (KNN):** Mengambil sejumlah $k$ lokasi dengan jarak terpendek, yang menjaga jumlah tetangga tetap konstan terlepas dari kepadatan wilayah.
 * **Kontiguitas:** Menggunakan batas administratif, misalnya menetapkan area dengan kode pos atau kelurahan yang saling bersinggungan sebagai tetangga.
 
-[GAMBAR 13.1: Diagram Konseptual - Visualisasi matriks bobot spasial (W) yang menghubungkan titik observasi utama dengan tetangganya dalam perhitungan spatial lag]
+```{mermaid}
+%%| label: fig-ch13-13_2
+%%| fig-cap: "Visualisasi Matriks Bobot Spasial (W) untuk Perhitungan Spatial Lag"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Entitas Spasial Utama] -->|Identifikasi Tetangga Terdekat| B[Matriks Bobot W: Nilai 1 jika Bertetangga, 0 jika Tidak]
+    B -->|Perkalian Matriks| C[Spatial Lag: Fitur Agregat Nilai Tetangga Sekitar]
+```
 
 **Indikator Autokorelasi Lokal (LISA)**
 
@@ -83,7 +98,15 @@ Proses evaluasi spasial beroperasi melalui dua mekanisme pembatasan:
 1. **Pemisahan Berbasis Blok:** Peta dibagi menjadi beberapa wilayah atau blok besar. Seluruh observasi dalam satu blok dialokasikan sebagai data latih, dan blok lainnya sepenuhnya difungsikan sebagai data uji.
 2. **Zona Penyangga (*Buffer*):** Jarak aman atau zona mati (*dead zone*) diterapkan di sekitar batas blok uji. Titik latih yang masuk ke dalam rentang zona ini dihapus selama proses pelatihan guna memotong kebocoran informasi jarak dekat.
 
-[GAMBAR 13.1: Skema - Pemisahan acak vs. Pemisahan blok spasial dengan zona penyangga untuk mencegah kebocoran target]
+```{mermaid}
+%%| label: fig-ch13-13_3
+%%| fig-cap: "Pemisahan Acak vs Pemisahan Blok Spasial dengan Zona Penyangga (Buffer Zone)"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Blok_Spasial_Benar ["Spasial Blok - Mencegah Leakage"]
+        A1[Blok Latih Spasial] -->|Zona Penyangga / Buffer Zone| B1[Blok Uji Spasial]
+    end
+```
 
 Kasus prediksi deforestasi dari citra satelit memperlihatkan dampak metode ini dengan jelas. Karakteristik tutupan lahan sebuah piksel satelit memiliki korelasi kuat dengan piksel di sekelilingnya. Jika dipisahkan secara acak, model dapat mendeteksi status tetangga piksel uji tanpa mengekstrak ciri visual hutan yang gundul. Sebaliknya, pemisahan blok spasial memaksa model mengidentifikasi indikator lingkungan yang objektif sehingga sistem siap diterapkan pada wilayah yang belum pernah direkam.
 
@@ -108,7 +131,18 @@ Pengekstraksian fitur topologi pada graf umumnya memanfaatkan tiga kategori metr
 
 * **Koefisien Klaster (*Clustering Coefficient*):** Menilai kepadatan interaksi lokal. Metrik ini menghitung proporsi tetangga dari sebuah target yang juga saling terhubung satu sama lain. Nilai koefisien tinggi menandakan kehadiran simpul di dalam suatu komunitas yang berikatan erat (*clique*).
 
-[GAMBAR 13.3: Diagram Konseptual - Pengukuran sentralitas (Degree vs Betweenness) pada simpul dalam sebuah jaringan]
+```{mermaid}
+%%| label: fig-ch13-13_4
+%%| fig-cap: "Pengukuran Sentralitas (Degree vs Betweenness) pada Jaringan Graf"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A((Simpul A)) --- B((Simpul B))
+    A --- C((Simpul C))
+    B --- C
+    C --- D((Simpul D - Betweenness Tinggi Jembatan Klaster))
+    D --- E((Simpul E))
+    D --- F((Simpul F))
+```
 
 Pustaka numerik seperti NetworkX menyediakan fungsi kalkulasi siap pakai untuk merangkum keseluruhan metrik di atas. Validitas representasi struktural ini terlihat jelas pada kasus klasifikasi penipuan di jaringan sosial. Akun bot secara tipikal memiliki angka *out-degree* masif karena mengikuti ribuan akun secara agresif, tetapi menahan *in-degree* di angka nol. Apabila ditambah dengan koefisien klaster yang bernilai nol, matriks hasil transformasi ini secara eksplisit mengkategorikan isolasi struktural sebuah observasi. Transformasi awal ini mematangkan data graf mentah menjadi input tabular standar sebagai jembatan yang diperlukan sebelum beralih menggunakan representasi yang dipelajari mesin.
 
@@ -131,7 +165,15 @@ $$ h_v = \frac{1}{|\mathcal{N}(v)|} \sum_{u \in \mathcal{N}(v)} x_u $$
 
 Di mana $h_v$ adalah fitur agregasi untuk simpul target $v$, $\mathcal{N}(v)$ merupakan himpunan simpul tetangga yang terhubung langsung dengan $v$, $|\mathcal{N}(v)|$ adalah jumlah tetangga tersebut, dan $x_u$ mewakili vektor atribut dari simpul tetangga $u$.
 
-[GAMBAR 13.5: Skema - Proses agregasi atribut dari simpul tetangga dan ekstraksi fitur jalur struktural pada graf]
+```{mermaid}
+%%| label: fig-ch13-13_5
+%%| fig-cap: "Proses Agregasi Atribut dari Simpul Tetangga dan Ekstraksi Jalur Struktural"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A((Tetangga 1)) -->|Kirim Atribut X| Agg[Fungsi Aggregator]
+    B((Tetangga 2)) -->|Kirim Atribut X| Agg
+    Agg -->|Pembaruan / Update| Target((Simpul Target Utama))
+```
 
 Topologi graf juga memfasilitasi ekstraksi fitur berbasis jalur yang melacak rute relasional antar entitas. Fitur ini jamak diaplikasikan pada tugas prediksi tautan (*link prediction*), seperti pada sistem rekomendasi. Metrik numerik yang diturunkan dari struktur jalur meliputi:
 
@@ -159,7 +201,15 @@ Nilai bias $\pi_{vx}$ dikendalikan oleh dua parameter utama:
 * **Parameter pengembalian ($p$):** Mengendalikan probabilitas untuk segera kembali ke simpul sebelumnya. Nilai $p$ yang rendah mendorong eksplorasi lokal (*Breadth-First Search* atau BFS), yang ideal untuk menangkap kedekatan komunitas atau homofili (*homophily*).
 * **Parameter masuk-keluar ($q$):** Mengendalikan probabilitas untuk menjelajah menjauhi simpul asal. Nilai $q$ yang rendah mendukung eksplorasi ke area yang lebih jauh (*Depth-First Search* atau DFS), yang bermanfaat untuk menangkap kesetaraan struktural (*structural equivalence*), seperti menemukan simpul-simpul yang berperan sebagai jembatan lintas komunitas.
 
-[GAMBAR 13.4: Skema - Skema Random Walk (Node2Vec) mengilustrasikan perpindahan dari simpul asal dengan parameter p dan q]
+```{mermaid}
+%%| label: fig-ch13-13_6
+%%| fig-cap: "Skema Random Walk (Node2Vec) dengan Parameter p dan q"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A((Simpul Asal)) -->|Kembali: Param p| B((Simpul Sebelumnya))
+    A -->|Eksplorasi Mendalam: Param q| C((Simpul Jauh))
+    A -->|Eksplorasi Lokal| D((Simpul Sejajar))
+```
 
 Urutan simpul hasil pelompatan ini diperlakukan layaknya kalimat. *Node2Vec* menerapkan arsitektur *Word2Vec* tipe *Skip-gram* untuk memaksimalkan probabilitas munculnya simpul-simpul tetangga di sekitar simpul target:
 
@@ -196,7 +246,14 @@ Penjelasan notasi di atas:
 
 Persamaan tersebut menjelaskan bahwa simpul $v$ mengumpulkan seluruh nilai representasi dari para tetangganya, mengambil nilai rata-rata, lalu memodifikasinya menggunakan matriks bobot $\mathbf{W}^{(k)}$. Di saat yang sama, identitas atau informasi dari simpul itu sendiri tetap dipertahankan dengan menyertakan perhitungan fungsi matriks bobot $\mathbf{B}^{(k)}$.
 
-[GAMBAR 13.5: Skema - Pesan agregasi GNN]
+```{mermaid}
+%%| label: fig-ch13-13_7
+%%| fig-cap: "Pesan Agregasi GNN"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Pesan Fitur Simpul-simpul Tetangga] -->|Kombinasi Relasional| B[Fungsi Agregasi GNN]
+    B --> C[Sinyal Fitur Simpul Terkini]
+```
 Judul: Mekanisme message passing pada Graph Neural Network.
 Tipe: skema
 Tampilkan: Ilustrasi simpul target yang menerima pesan berupa vektor fitur dari simpul-simpul tetangganya, menggabungkannya, dan memprosesnya menggunakan jaringan saraf untuk memperbarui representasinya sendiri.
@@ -240,7 +297,21 @@ Di mana:
 
 Apabila simpul $i$ berada di set pelatihan dan salah satu tetangganya, $j$, berada di set uji, maka informasi fitur dari himpunan pengujian akan terbawa untuk memperbarui representasi simpul pelatihan $i$. Akibatnya, kinerja model saat dievaluasi akan terlihat tinggi secara artifisial, bukan karena representasinya tangguh, melainkan karena proses pelatihan telah tercemar oleh data dari set uji.
 
-[GAMBAR 13.6: Diagram Konseptual - Subgraf representasi yang menunjukkan pemutusan sisi penghubung antara set pelatihan dan set uji untuk mencegah kebocoran]
+```{mermaid}
+%%| label: fig-ch13-13_8
+%%| fig-cap: "Subgraf Mencegah Kebocoran Set Pelatihan dan Set Uji"
+%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Subgraf_Latih ["Subgraf Pelatihan"]
+        A((Node Latih 1)) --- B((Node Latih 2))
+    end
+    subgraph Subgraf_Uji ["Subgraf Pengujian"]
+        C((Node Uji 1)) --- D((Node Uji 2))
+    end
+    subgraph Pemutusan ["Hubungan Yang Diputus Mencegah Leakage"]
+        B -.->|Sisi Terputus| C
+    end
+```
 
 Desain pemisahan pada graf membedakan dua skenario evaluasi untuk mengelola masalah konektivitas ini:
 
@@ -250,9 +321,10 @@ Desain pemisahan pada graf membedakan dua skenario evaluasi untuk mengelola masa
 Dampak buruk kebocoran ini sangat nyata pada kasus seperti deteksi penipuan keuangan. Jika pemisahan dilakukan secara acak, akun penipu di set pelatihan bisa memiliki riwayat transfer langsung ke akun di set uji. Sinyal penipuan tersebut akan ditarik melintasi sisi penghubung selama agregasi. Di lingkungan produksi, koneksi langsung seperti itu belum tentu tersedia, sehingga kinerja model akan anjlok.
 
 Menerapkan *praktik pipeline yang benar* menuntut perlindungan dan isolasi yang kaku. Strategi mitigasi standar yang lazim diadopsi meliputi:
-1. **Pemutusan Sisi Penghubung:** Menghapus seluruh sisi yang melintasi subgraf pelatihan dan pengujian sebelum proses pembentukan fitur dimulai, sehingga isolasi fisik pada evaluasi *inductive* dapat dijamin keamanannya.
-2. **Pemisahan Temporal:** Pada jejaring dinamis yang terus bertumbuh, model dilatih menggunakan struktur graf hingga batas waktu tertentu, kemudian dievaluasi murni pada simpul atau interaksi yang baru terbentuk setelah batas waktu tersebut.
-3. **Isolasi *Negative Sampling*:** Pada tugas prediksi tautan (*link prediction*), pembangkitan pasangan simpul negatif harus dilakukan secara terpisah di masing-masing partisi agar model tidak menghafal ketidakhadiran sisi dari set pengujian.
+
+* **Pemutusan Sisi Penghubung:** Menghapus seluruh sisi yang melintasi subgraf pelatihan dan pengujian sebelum proses pembentukan fitur dimulai, sehingga isolasi fisik pada evaluasi *inductive* dapat dijamin keamanannya.
+* **Pemisahan Temporal:** Pada jejaring dinamis yang terus bertumbuh, model dilatih menggunakan struktur graf hingga batas waktu tertentu, kemudian dievaluasi murni pada simpul atau interaksi yang baru terbentuk setelah batas waktu tersebut.
+* **Isolasi *Negative Sampling*:** Pada tugas prediksi tautan (*link prediction*), pembangkitan pasangan simpul negatif harus dilakukan secara terpisah di masing-masing partisi agar model tidak menghafal ketidakhadiran sisi dari set pengujian.
 
 
 ## Studi Kasus: Prediksi Berbasis Lokasi dan Klasifikasi Simpul
@@ -267,7 +339,58 @@ Pada kasus pertama, kita memprediksi harga rumah di suatu wilayah. Pendekatan in
 * **Injeksi Fitur Keruangan:** Kinerja model meningkat secara drastis setelah kita menyuntikkan fitur turunan yang mengkuantifikasi kedekatan lokasi. Alih-alih mengandalkan koordinat mentah, kita menambahkan metrik spasial seperti jarak fisik ke fasilitas umum (contohnya taman kota) serta nilai *spatial lag* yang mengukur rata-rata pergerakan harga rumah di lingkungan terdekat. Pola ketetanggaan ini dikemas menjadi representasi yang *dirancang manusia* agar siap diolah oleh model.
 * **Validasi _Spatial Block_:** Eksperimen data spasial sangat rentan terhadap kebocoran informasi akibat autokorelasi geografis. Pengacakan data secara konvensional dapat menyebabkan model dilatih dengan data rumah di satu sisi jalan dan diuji dengan rumah di seberangnya. Oleh karena itu, kita perlu memisahkan area data latih dan uji secara geografis menggunakan metode *spatial block cross-validation* beserta zona penyangga (*buffer*).
 
-[KODE: Pemisahan data latih dan uji menggunakan spatial block cross-validation untuk mencegah kebocoran spasial; sumber: notebook bab 13]
+```python
+import numpy as np
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.model_selection import GroupKFold
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+
+# 1. Menyiapkan simulasi data geografis rumah (1000 titik koordinat)
+np.random.seed(42)
+lat = np.random.uniform(-6.3, -6.1, 1000)   # Koordinat Lintang
+lon = np.random.uniform(106.7, 106.9, 1000) # Koordinat Bujur
+# Simulasi harga yang dipengaruhi secara non-linier oleh posisi koordinat
+harga = 500 + (lon - 106.7) * 2000 - (lat + 6.2) * 1500 + np.random.normal(0, 50, 1000)
+
+df = pd.DataFrame({'Latitude': lat, 'Longitude': lon, 'Harga': harga})
+
+# 2. Pembentukan "Spatial Blocks" via Clustering KMeans pada koordinat lokasi
+# Membagi wilayah pengamatan secara geografis menjadi 10 blok regional terpisah
+coords = df[['Latitude', 'Longitude']]
+kmeans = KMeans(n_clusters=10, random_state=42, n_init=10)
+df['Spatial_Block'] = kmeans.fit_predict(coords)
+
+# 3. Menjalankan GroupKFold berdasarkan pembagian Spatial Block
+# Teknik ini menjamin set latih dan uji terisolasi secara spasial (mencegah autokorelasi)
+gkf = GroupKFold(n_splits=5)
+mse_scores = []
+
+print("--- Hasil Spatial Block Cross-Validation ---")
+for fold, (train_idx, test_idx) in enumerate(gkf.split(df, groups=df['Spatial_Block']), 1):
+    X_train, X_test = df.iloc[train_idx][['Latitude', 'Longitude']], df.iloc[test_idx][['Latitude', 'Longitude']]
+    y_train, y_test = df.iloc[train_idx]['Harga'], df.iloc[test_idx]['Harga']
+    
+    # Model dilatih hanya pada blok regional pelatihan
+    model = RandomForestRegressor(n_estimators=50, random_state=42)
+    model.fit(X_train, y_train)
+    
+    # Pengujian murni dilakukan pada blok regional uji yang terpisah fisik
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    mse_scores.append(mse)
+    
+    train_blocks = df.iloc[train_idx]['Spatial_Block'].unique()
+    test_blocks = df.iloc[test_idx]['Spatial_Block'].unique()
+    
+    print(f"Fold {fold}:")
+    print(f"   - Blok Latih: {train_blocks}")
+    print(f"   - Blok Uji  : {test_blocks} (Isolasi Terpenuhi)")
+    print(f"   - MSE       : {mse:.2f}")
+
+print(f"\nRata-rata MSE Lintas Blok Spasial: {np.mean(mse_scores):.2f}")
+```
 
 ### Kasus 2: Klasifikasi Topik Makalah (Domain Jaringan Abstrak)
 
