@@ -22,6 +22,7 @@ temp_pipeline_concat.txt
 tmp_all_reads.txt
 *.tmp
 *.log
+temp/
 
 # === OS / editor ===
 .DS_Store
