@@ -19,6 +19,17 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
+      # Diperlukan agar Quarto bisa memproses notebook (.ipynb) di website/notebooks/.
+      # Notebook memakai `execute: enabled: false`, jadi sel TIDAK dijalankan saat build
+      # (tidak perlu torch/transformers); jupyter hanya untuk membaca output tersimpan.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Jupyter (untuk render notebook, tanpa eksekusi)
+        run: pip install jupyter
+
       - name: Render Quarto Book
         run: |
           quarto render website --to html

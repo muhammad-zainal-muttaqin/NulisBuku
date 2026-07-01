@@ -1,0 +1,31 @@
+---
+title: "Notebook Praktik"
+---
+
+Bagian ini berisi notebook praktik buku, satu per bab. Setiap notebook terdiri dari dua bagian: **Demo** (tinggal dijalankan dan diamati) dan **Mini Project** (latihan mandiri dengan soal dan data awal).
+
+Notebook bertingkat dependensi. Bab fondasi ringan dan bisa dijalankan di laptop, sedangkan bab lanjutan memakai *pretrained model* dan paling praktis dijalankan di Google Colab (klik badge *Open in Colab* pada sel pertama tiap notebook).
+
+| Bab | Notebook | Tingkat |
+|----|----------|---------|
+| 1  | [Dari Data Mentah ke Representasi Model](ch01.ipynb) | Ringan (laptop) |
+| 2  | [Pipeline, Validasi, dan Data Leakage](ch02.ipynb) | Ringan (laptop) |
+| 3  | [Representasi Fitur Numerik](ch03.ipynb) | Ringan (laptop) |
+| 4  | [Representasi Fitur Kategorikal](ch04.ipynb) | Ringan (laptop) |
+| 5  | [Missing Values & Outliers](ch05.ipynb) | Ringan (laptop) |
+| 6  | [Pembentukan Fitur Turunan](ch06.ipynb) | Ringan (laptop) |
+| 7  | [Seleksi Fitur](ch07.ipynb) | Ringan (laptop) |
+| 8  | [Reduksi Dimensi & Representasi Laten](ch08.ipynb) | Ringan (laptop) |
+| 9  | [Evaluasi Kualitas Fitur](ch09.ipynb) | Ringan (laptop) |
+| 10 | [Deret Waktu & Data Sensor](ch10.ipynb) | Ringan (laptop) |
+| 11 | [Teks & Dokumen](ch11.ipynb) | Lanjutan (Colab) |
+| 12 | [Citra & Audio](ch12.ipynb) | Lanjutan (Colab) |
+| 13 | [Data Spasial & Graf](ch13.ipynb) | Lanjutan (Colab) |
+| 14 | [Data Multimodal](ch14.ipynb) | Lanjutan (Colab) |
+| 15 | [Representasi Dipelajari Mesin & Pretrained](ch15.ipynb) | Lanjutan (Colab) |
+| 16 | [Rekayasa Fitur Otomatis](ch16.ipynb) | Lanjutan (Colab) |
+| 17 | [Sintesis: Merancang Pipeline](ch17.ipynb) | Ringan (laptop) |
+
+: Daftar notebook praktik {.striped}
+
+Bab ringan (1-10, 17) sudah dijalankan sehingga keluarannya tersimpan; bab lanjutan (11-16) menampilkan kode dan menghasilkan keluaran saat dijalankan di Colab.

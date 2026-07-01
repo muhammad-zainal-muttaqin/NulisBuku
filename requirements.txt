@@ -1,0 +1,20 @@
+# Dependensi notebook praktik "Rekayasa Fitur Modern"
+# ---------------------------------------------------------------
+# BASE (Bab 1-10): ringan, cukup untuk laptop tanpa GPU.
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.4
+scipy>=1.11
+matplotlib>=3.8
+
+# ---------------------------------------------------------------
+# LANJUTAN (Bab 11+): pakai pretrained model, paling nyaman di Google Colab.
+# Di Colab cukup jalankan sel "%pip install ..." yang sudah ada di tiap notebook,
+# jadi tidak perlu memasang semuanya sekaligus di sini. Daftar acuan per bab:
+#
+#   Bab 11 (Teks)        : sentence-transformers>=3.0  transformers>=4.40  torch>=2.2
+#   Bab 12 (Citra&Audio) : torchvision  torchaudio  scikit-image  librosa
+#   Bab 13 (Spasial&Graf): networkx  node2vec  torch-geometric
+#   Bab 14 (Multimodal)  : transformers  torchvision
+#   Bab 15 (Pretrained)  : transformers  timm
+#   Bab 16 (AutoFE)      : featuretools  flaml

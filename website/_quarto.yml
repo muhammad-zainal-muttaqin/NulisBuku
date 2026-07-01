@@ -26,6 +26,26 @@ book:
     - chapters/ch15.qmd
     - chapters/ch16.qmd
     - chapters/ch17.qmd
+    - part: "Notebook Praktik"
+      chapters:
+        - notebooks/index.qmd
+        - notebooks/ch01.ipynb
+        - notebooks/ch02.ipynb
+        - notebooks/ch03.ipynb
+        - notebooks/ch04.ipynb
+        - notebooks/ch05.ipynb
+        - notebooks/ch06.ipynb
+        - notebooks/ch07.ipynb
+        - notebooks/ch08.ipynb
+        - notebooks/ch09.ipynb
+        - notebooks/ch10.ipynb
+        - notebooks/ch11.ipynb
+        - notebooks/ch12.ipynb
+        - notebooks/ch13.ipynb
+        - notebooks/ch14.ipynb
+        - notebooks/ch15.ipynb
+        - notebooks/ch16.ipynb
+        - notebooks/ch17.ipynb
 
 format:
   html:
