@@ -194,7 +194,7 @@ Lebih jauh, penjelasan lokal ini dapat diagregasi kembali menjadi wawasan global
 
 Mengevaluasi kualitas fitur sering memunculkan dua asumsi keliru. Asumsi pertama adalah mempercayai skor evaluasi secara absolut dari satu partisi data tunggal. Asumsi kedua adalah mencampuradukkan kemampuan prediktif model dengan hubungan sebab-akibat di dunia nyata.
 
-\subsection{Stabilitas Skor Kepentingan}\label{stabilitas-skor-kepentingan}
+\textbf{Stabilitas Skor Kepentingan.}\label{stabilitas-skor-kepentingan}
 
 Mengukur \emph{feature importance} menggunakan satu set pelatihan dan set pengujian tunggal membuat evaluasi rentan terhadap variansi sampel. Sebuah fitur dapat terlihat dominan secara kebetulan karena distribusi data yang tidak berimbang atau keberadaan nilai pencilan di dalam partisi spesifik tersebut.
 
@@ -218,13 +218,11 @@ Evaluasi stabilitas ini mendapat tantangan tambahan saat menghadapi fitur yang s
   \textbf{Kestabilan Seleksi:} Algoritma seleksi seperti Boruta-SHAP sering dimanfaatkan untuk menekan angka varians ini, menstabilkan hasil \emph{feature importance} melalui kombinasi permutasi label target.
 \end{itemize}
 
-\subsection{Membedakan Utilitas Prediktif dan Efek Kausal}\label{membedakan-utilitas-prediktif-dan-efek-kausal}
+\textbf{Membedakan Utilitas Prediktif dan Efek Kausal.}\label{membedakan-utilitas-prediktif-dan-efek-kausal}
 
 Skor \emph{feature importance} yang tinggi kerap memancing dugaan bahwa fitur tersebut adalah penyebab fenomena target. Ukuran ini pada dasarnya hanya mengkuantifikasi korelasi matematis untuk meminimalkan galat, bukan mengungkap kausalitas.
 
 Sebagai ilustrasi, sebuah algoritma dilatih memprediksi angka kecelakaan lalu lintas harian menggunakan berbagai data atribut kota. Fitur volume penjualan payung mungkin keluar dengan tingkat \emph{feature importance} paling tinggi. Model menangkap kecocokan statistik: saat grafik penjualan payung menanjak, frekuensi kecelakaan juga tinggi.
-
-{[}GAMBAR 9.1: Diagram Konseptual - Perbandingan utilitas prediktif (korelasi penjualan payung dan kecelakaan) vs.~Hubungan kausal (hujan sebagai pemicu keduanya){]}
 
 Menerbitkan peraturan pelarangan toko menjual payung tidak akan menurunkan jumlah kecelakaan jalan raya. Penjualan payung dan kecelakaan lalu lintas didorong oleh variabel perancu eksternal yang sama, yaitu turunnya hujan. Model mengeksploitasi korelasi ini murni karena datanya tersedia dan berpola stabil.
 

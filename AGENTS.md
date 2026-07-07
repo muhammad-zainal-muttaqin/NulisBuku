@@ -2,6 +2,21 @@
 
 This file is the **master instruction manual** for any AI Agent working on this repository.
 
+## Format & Working Directory Aktif (per 7 Juli 2026)
+
+**Naskah final = PDF terlayout B5 dari LaTeX. Sumber utama konten sekarang di `BookTEX/chapters/chNN.tex`, BUKAN lagi `.qmd`.**
+
+Keputusan Bu Fatma (7 Juli 2026): naskah final berupa **PDF B5** (176×250 mm) yang di-*layout* dari **LaTeX**, satu berkas per bab, subbab maksimal 1 level. Karena itu:
+
+- **Working directory default = `BookTEX/`.** Sunting konten langsung di `BookTEX/chapters/chNN.tex`.
+- **`website/chapters/*.qmd` kini berkas TURUNAN** (di-*generate* dari `.tex` lewat `BookTEX/tools/reverse.py`). **Jangan disunting tangan** — suntingan akan tertimpa saat sync berikutnya. Website tetap ada sebagai *online resources* (notebook dll.), tapi ikut dari `.tex`.
+- **Sync satu perintah:** `./sync.ps1` (dari root) → build PDF (`tectonic`) + regen `.qmd` + `quarto render`. Cek arah perubahan tanpa mengubah apa pun: `./sync.ps1 -Status`. Detail lengkap: `BookTEX/README.md` dan bagian "Sinkronisasi" di `README.md`.
+- **Aturan heading markdown di bawah berlaku untuk `.qmd` (turunan)**; di `.tex`, batas 1 level subbab dijaga oleh `secnumdepth=1`/`tocdepth=1` di `preamble.tex`.
+
+> **Larangan skrip vs. jalur `.tex`:** larangan menulis skrip pemroses massal (di bawah) berlaku untuk **penyuntingan naskah** — perbaikan prosa/kalimat tetap wajib manual-interaktif. `convert.py`/`reverse.py`/`sync.ps1` adalah *tooling konversi format* (bukan penyunting konten) dan dikecualikan.
+
+> **Catatan konflik yang belum diputuskan:** `3-July-2026/chapter-revision-instructions-1.md` (revisi editorial babak-1) meminta **membuang referensi notebook/latihan/mini-project** dari bab (aturan #8), sementara ada jalur kerja terpisah membuat notebook praktik per bab. Ini belum direkonsiliasi — **tanyakan** sebelum menghapus referensi notebook massal.
+
 ## The Absolute Mandate
 You MUST read and strictly obey the instructions contained in the `pipeline/` directory before taking any action. These files are the single source of truth for the book's content, structure, style, and vocabulary.
 

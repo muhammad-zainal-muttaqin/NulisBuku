@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>2&nbsp; Pipeline, Validasi, dan Data Leakage – Rekayasa Fitur Modern</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/ch03.html" rel="next">
+<link href="../chapters/ch01.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-9e3e5b9121e68b3f077afb32f2c64d95.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="mermaid-theme" content="neutral">
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/ch02.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Pipeline, Validasi, dan Data Leakage</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Rekayasa Fitur Modern</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Pengantar</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch01.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Dari Data Mentah ke Representasi Model</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch02.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Pipeline, Validasi, dan Data Leakage</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch03.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Representasi Fitur Numerik</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch04.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Representasi Fitur Kategorikal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch05.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Missing Values &amp; Outliers (Reproducible, Berbasis Pipeline)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch06.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Pembentukan Fitur Turunan</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch07.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Seleksi Fitur</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch08.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Reduksi Dimensi &amp; Representasi Laten</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch09.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Evaluasi Kualitas Fitur</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Deret Waktu &amp; Data Sensor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teks &amp; Dokumen</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch12.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Citra &amp; Audio</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Data Spasial &amp; Graf</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Data Multimodal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Representasi yang Dipelajari Mesin &amp; Pretrained Model</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Rekayasa Fitur Otomatis &amp; Kolaborasi Manusia--AI</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ch17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sintesis: Merancang Pipeline &amp; Prinsip yang Bertahan Lama</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Notebook Praktik</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Notebook Praktik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch01.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Notebook Bab 1 - Dari Data Mentah ke Representasi Model</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch02.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Notebook Bab 2 - Pipeline, Validasi, dan Data Leakage</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch03.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Notebook Bab 3 - Representasi Fitur Numerik</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch04.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Notebook Bab 4 - Representasi Fitur Kategorikal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch05.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Notebook Bab 5 - Missing Values &amp; Outliers</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch06.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Notebook Bab 6 - Pembentukan Fitur Turunan</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch07.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Notebook Bab 7 - Seleksi Fitur</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch08.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Notebook Bab 8 - Reduksi Dimensi &amp; Representasi Laten</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch09.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Notebook Bab 9 - Evaluasi Kualitas Fitur</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Notebook Bab 10 - Deret Waktu &amp; Data Sensor</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Notebook Bab 11 - Teks &amp; Dokumen</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch12.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Notebook Bab 12 - Citra &amp; Audio</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Notebook Bab 13 - Data Spasial &amp; Graf</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">Notebook Bab 14 - Data Multimodal</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">33</span>&nbsp; <span class="chapter-title">Notebook Bab 15 - Representasi Dipelajari Mesin &amp; Pretrained Model</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">34</span>&nbsp; <span class="chapter-title">Notebook Bab 16 - Rekayasa Fitur Otomatis</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/ch17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">35</span>&nbsp; <span class="chapter-title">Notebook Bab 17 - Sintesis: Merancang Pipeline</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#fit-dan-transform-pipeline-sebagai-kontrak-pelatihan-dan-inferensi" id="toc-fit-dan-transform-pipeline-sebagai-kontrak-pelatihan-dan-inferensi" class="nav-link active" data-scroll-target="#fit-dan-transform-pipeline-sebagai-kontrak-pelatihan-dan-inferensi"><span class="header-section-number">2.1</span> Fit dan Transform: Pipeline sebagai Kontrak Pelatihan dan Inferensi</a></li>
+  <li><a href="#transformer-yang-dapat-digunakan-ulang-serialisasi-dan-random-state" id="toc-transformer-yang-dapat-digunakan-ulang-serialisasi-dan-random-state" class="nav-link" data-scroll-target="#transformer-yang-dapat-digunakan-ulang-serialisasi-dan-random-state"><span class="header-section-number">2.2</span> Transformer yang Dapat Digunakan Ulang, Serialisasi, dan Random State</a>
+  <ul class="collapse">
+  <li><a href="#serialisasi-dan-persistensi-model" id="toc-serialisasi-dan-persistensi-model" class="nav-link" data-scroll-target="#serialisasi-dan-persistensi-model"><span class="header-section-number">2.2.1</span> Serialisasi dan Persistensi Model</a></li>
+  <li><a href="#pipeline-khusus-untuk-resampling" id="toc-pipeline-khusus-untuk-resampling" class="nav-link" data-scroll-target="#pipeline-khusus-untuk-resampling"><span class="header-section-number">2.2.2</span> Pipeline Khusus untuk Resampling</a></li>
+  <li><a href="#pengendalian-keacakan-random-state" id="toc-pengendalian-keacakan-random-state" class="nav-link" data-scroll-target="#pengendalian-keacakan-random-state"><span class="header-section-number">2.2.3</span> Pengendalian Keacakan (Random State)</a></li>
+  </ul></li>
+  <li><a href="#taksonomi-data-leakage" id="toc-taksonomi-data-leakage" class="nav-link" data-scroll-target="#taksonomi-data-leakage"><span class="header-section-number">2.3</span> Taksonomi <em>Data Leakage</em></a></li>
+  <li><a href="#mengapa-leakage-bermula-pada-tahap-rekayasa-fitur" id="toc-mengapa-leakage-bermula-pada-tahap-rekayasa-fitur" class="nav-link" data-scroll-target="#mengapa-leakage-bermula-pada-tahap-rekayasa-fitur"><span class="header-section-number">2.4</span> Mengapa Leakage Bermula pada Tahap Rekayasa Fitur</a></li>
+  <li><a href="#strategi-pemisahan-data-yang-benar" id="toc-strategi-pemisahan-data-yang-benar" class="nav-link" data-scroll-target="#strategi-pemisahan-data-yang-benar"><span class="header-section-number">2.5</span> Strategi Pemisahan Data yang Benar</a></li>
+  <li><a href="#pipeline-di-dalam-cross-validation" id="toc-pipeline-di-dalam-cross-validation" class="nav-link" data-scroll-target="#pipeline-di-dalam-cross-validation"><span class="header-section-number">2.6</span> <em>Pipeline</em> di Dalam <em>Cross-Validation</em></a></li>
+  <li><a href="#kesalahan-praktik-pada-alur-transformasi" id="toc-kesalahan-praktik-pada-alur-transformasi" class="nav-link" data-scroll-target="#kesalahan-praktik-pada-alur-transformasi"><span class="header-section-number">2.7</span> Kesalahan Praktik pada Alur Transformasi</a></li>
+  <li><a href="#studi-kasus-pipeline-yang-valid-vs.-pipeline-yang-bocor" id="toc-studi-kasus-pipeline-yang-valid-vs.-pipeline-yang-bocor" class="nav-link" data-scroll-target="#studi-kasus-pipeline-yang-valid-vs.-pipeline-yang-bocor"><span class="header-section-number">2.8</span> Studi Kasus: <em>Pipeline</em> yang Valid vs.&nbsp;<em>Pipeline</em> yang Bocor</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Pipeline, Validasi, dan Data Leakage</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="fit-dan-transform-pipeline-sebagai-kontrak-pelatihan-dan-inferensi" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="fit-dan-transform-pipeline-sebagai-kontrak-pelatihan-dan-inferensi"><span class="header-section-number">2.1</span> Fit dan Transform: Pipeline sebagai Kontrak Pelatihan dan Inferensi</h2>
+<p>Transformasi data dalam <em>machine learning</em> menuntut konsistensi absolut antara tahap pelatihan dan tahap inferensi. Model mengharapkan fitur dari data masa depan diubah menggunakan aturan dan metrik yang sama persis dengan data pelatihannya. Konsistensi ini adalah inti dari praktik <em>pipeline</em> yang benar.</p>
+<p>Kunci untuk menjaga konsistensi ini terletak pada dua mekanisme utama: <em>fit</em> dan <em>transform</em>. Tahap <em>fit</em> adalah proses pengamatan dan perhitungan parameter dari kumpulan data pelatihan; sistem membaca data latih untuk menetapkan acuan numerik seperti nilai rata-rata, standar deviasi, atau batas rentang kategori. Setelah itu, tahap <em>transform</em> mengambil alih untuk mengaplikasikan parameter hasil <em>fit</em> tersebut ke dalam data observasi demi menghasilkan matriks fitur akhir. Aturannya sangat tegas: perhitungan parameter pada tahap <em>fit</em> hanya boleh menyentuh data pelatihan. Setelah parameter ini dikunci, operasi <em>transform</em> menggunakan acuan yang sama untuk memodifikasi data pelatihan, data validasi, maupun data inferensi di masa depan.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_1">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Pelatihan ["Fase Latih: Fit &amp; Transform"]
+        A1[Data Mentah Latih] --&gt;|Fit| B1(Menghitung Statistik: e.g. Rata-rata)
+        B1 --&gt;|Transform| C1[Matriks Fitur Latih Berskala]
+    end
+    subgraph Inferensi ["Fase Uji: Transform Murni"]
+        A2[Data Mentah Uji] --&gt;|Gunakan Statistik Latih| C1
+        C1 --&gt;|Output| D2[Matriks Fitur Uji Berskala]
+    end
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.1: Ilustrasi Tabel ke Matriks Fitur pada Proses Fit dan Transform
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Secara konseptual, kontrak transformasi ini direpresentasikan dengan rumusan:</p>
+<p><span class="math display">\[X_{transform} = T(X_{raw}; \theta_{pelatihan})\]</span></p>
+<p>Di mana <span class="math inline">\(X_{raw}\)</span> adalah data observasi mentah yang akan diubah, <span class="math inline">\(T\)</span> mewakili fungsi transformasi, dan <span class="math inline">\(\theta_{pelatihan}\)</span> melambangkan parameter yang diekstraksi secara eksklusif dari data pelatihan. Informasi dari data pengujian atau inferensi dilarang bocor ke dalam <span class="math inline">\(\theta_{pelatihan}\)</span>.</p>
+<p>Misalkan kita menstandardisasi sebuah fitur. Tahap <em>fit</em> menemukan fitur tersebut memiliki rata-rata 5,0 dengan standar deviasi 2,0 pada populasi data pelatihan. Beberapa bulan kemudian, data inferensi baru masuk dengan rata-rata aktual populasi 7,0. Kita tetap wajib mengurangi setiap nilai pada data inferensi dengan 5,0 dan membaginya dengan 2,0. Acuan distribusi masa pelatihan mutlak dipertahankan.</p>
+<p>Jika kita memanggil fungsi <em>fit</em> ulang pada kelompok data inferensi, kita telah menghitung acuan yang baru. Makna fitur akan melenceng dari standar awalnya dan model akan salah menafsirkan nilai tersebut. Fenomena ini disebut <em>training-serving skew</em>, sebuah anomali yang membuat akurasi model menjadi berantakan di lingkungan produksi meskipun performa pelatihannya tinggi.</p>
+<p>Mengingat manipulasi transformasi secara manual rentan memicu kelalaian, kita mengikat proses ini ke dalam sebuah <em>pipeline</em>. Objek tunggal ini menyatukan operasi pemrosesan data dan algoritma untuk membungkus kontrak <em>fit</em> dan <em>transform</em> secara terpusat. Saat dilatih, <em>pipeline</em> membatasi pencarian parameter murni pada himpunan data latih. Objek ini kemudian menyalurkan parameter tersebut ke tahap <em>transform</em> untuk menangani data baru secara konsisten.</p>
+<p>Praktik rekayasa modern melengkapi abstraksi <em>pipeline</em> ini dengan berbagai utilitas. Ekosistem pustaka seperti scikit-learn menyediakan konfigurasi <code>set_output(transform='pandas')</code> agar setiap <em>transformer</em> mengembalikan <em>DataFrame</em> pandas, bukan <em>array</em> tanpa label. Fitur ini menjaga nama kolom tetap utuh sepanjang rantai transformasi untuk memudahkan pelacakan asal-usul fitur. Untuk eksekusi skala besar, pengembang juga dapat memanfaatkan mekanisme <em>caching</em> lewat parameter <code>memory</code> guna mencegah komputasi ulang <em>transformer</em> pada objek yang sama. Integrasi antara disiplin kontrak transformasi dan utilitas kode ini memastikan seluruh representasi data selaras dan stabil.</p>
+</section>
+<section id="transformer-yang-dapat-digunakan-ulang-serialisasi-dan-random-state" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="transformer-yang-dapat-digunakan-ulang-serialisasi-dan-random-state"><span class="header-section-number">2.2</span> Transformer yang Dapat Digunakan Ulang, Serialisasi, dan Random State</h2>
+<p>Banyak praktisi merangkai pemrosesan data sebagai rentetan skrip <em>ad-hoc</em>. Mereka menambal nilai kosong, mengubah skala, atau mengevaluasi fitur secara langsung pada tabel utama. Sebagai contoh, saat mereka memutuskan untuk menyaring kolom berdasarkan kalkulasi rasio nilai yang kosong (<span class="math inline">\(r_{missing} = \frac{N_{na}}{N_{total}}\)</span>). Dalam perumusan tersebut, <span class="math inline">\(r_{missing}\)</span> adalah rasio kekosongan data pada suatu fitur, <span class="math inline">\(N_{na}\)</span> mewakili jumlah baris yang tidak memiliki nilai, dan <span class="math inline">\(N_{total}\)</span> adalah populasi observasi keseluruhan. Keputusan mengeksekusi modifikasi <em>ad-hoc</em> di luar kerangka komputasi utama seperti ini cenderung rapuh dan membuka celah kesalahan. Hasilnya, muncul ketidaksesuaian struktural antara data latih dan wujud data inferensi aktual ketika model berjalan di lingkungan produksi.</p>
+<p>Setiap operasi modifikasi fitur wajib dikapsulkan ke dalam sebuah <em>transformer</em>. Objek mandiri ini memisahkan secara tegas fase pembelajaran parameter internal (<code>fit</code>) dari fase modifikasi data itu sendiri (<code>transform</code>). Parameter yang dipelajari dari <span class="math inline">\(N_{total}\)</span> baris - seperti batas rentang normalisasi atau nilai imputasi - terkunci aman dari risiko intervensi manual yang tidak disengaja.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_2">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph LR
+    A[Eksplorasi Data] --&gt; B[Transformasi Imputasi &amp; Scaling]
+    B --&gt; C[Ekstraksi Fitur Turunan]
+    C --&gt; D[Seleksi Fitur Relevan]
+    D --&gt;|Bungkus| E[Reusable Pipeline Object]
+    E --&gt;|Iterasi Baru| A
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.2: Siklus Eksplorasi-Ekstraksi-Seleksi dalam Objek Transformer Mandiri
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="serialisasi-dan-persistensi-model" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="serialisasi-dan-persistensi-model"><span class="header-section-number">2.2.1</span> Serialisasi dan Persistensi Model</h3>
+<p>Objek <em>transformer</em> yang telah menampung parameter dapat disimpan secara permanen. Proses mentransfer wujud komputasi dari memori menuju berkas fisik ini dinamakan serialisasi. Praktik rekayasa fitur modern berpegang pada beberapa standar. Jika bekerja di ekosistem Python, format <em>native</em> seperti pustaka <code>joblib</code> atau <code>pickle</code> merupakan spesifikasi resmi yang dianjurkan. Namun, jika algoritma diproyeksikan untuk beroperasi di luar kerangka Python (misalnya pada arsitektur mesin C++ atau Java), spesifikasi ONNX (<em>Open Neural Network Exchange</em>) sebagai format lintas bahasa harus diprioritaskan. Berkas biner hasil serialisasi ini kelak dikirimkan mendampingi model prediktif utama ke <em>server</em> produksi, demi menjamin data baru diproses dengan takaran yang mutlak sama dengan tahapan pelatihan.</p>
+</section>
+<section id="pipeline-khusus-untuk-resampling" class="level3" data-number="2.2.2">
+<h3 data-number="2.2.2" class="anchored" data-anchor-id="pipeline-khusus-untuk-resampling"><span class="header-section-number">2.2.2</span> Pipeline Khusus untuk Resampling</h3>
+<p>Data yang tidak seimbang (<em>imbalanced data</em>) memunculkan tantangan struktural terhadap kontrak desain <em>transformer</em>. Algoritma <em>resampling</em> seperti SMOTE secara aktif mengubah jumlah baris sampel pada titik eksekusinya. Dalam hal ini, kita harus menghindari skema <em>pipeline</em> standar karena ia mengasumsikan konsistensi jumlah baris secara persis. Memaksakan penerapan algoritma <em>resampling</em> pada kerangka bawaan ini sering kali memicu perubahan matriks inferensi yang keliru. Solusinya adalah menggunakan <em>pipeline</em> ekstensi seperti <code>imblearn.pipeline.Pipeline</code> yang memastikan penambahan sampel sintetis (<code>fit_resample</code>) hanya aktif selama berlangsungnya fase pelatihan. Tahapan tersebut secara otomatis diabaikan pada saat inferensi berjalan tunggal (<code>transform</code>). Tanpa penyekatan fungsional ini, sampel tiruan akan meluber ke dalam himpunan data pengujian murni, sehingga memproduksi estimasi performa akurasi yang tidak valid.</p>
+</section>
+<section id="pengendalian-keacakan-random-state" class="level3" data-number="2.2.3">
+<h3 data-number="2.2.3" class="anchored" data-anchor-id="pengendalian-keacakan-random-state"><span class="header-section-number">2.2.3</span> Pengendalian Keacakan (Random State)</h3>
+<p>Keterulangan rekayasa fitur bertumpu pada kontrol elemen keacakan matematis. Generator nomor acak mengoperasikan proses sentral seperti pemisahan dataset awal, dan pengendaliannya (<em>random state</em>) menyusun fondasi keakuratan pengujian silang (<em>cross-validation</em>). Untuk objek pemisah (<em>splitter</em>), memberikan nilai bilangan bulat (<em>integer</em>) secara langsung merupakan langkah teraman yang menggaransi struktur lipatan pengujian akan selalu identik ketika teknisi membandingkan kinerja dari beberapa model. Sementara itu, untuk <em>estimator</em> atau <em>transformer</em>, menyerahkan instans objek <code>RandomState</code> memastikan tiap siklus lipatan data menerima urutan acak yang independen serta solid secara statistik. Terakhir, kita wajib menghindari penyetelan angka acak (<em>seed</em>) secara global pada tingkat <em>runtime</em> pustaka numerik, karena berisiko menimbulkan komplikasi algoritma sekunder yang sulit dilacak pada landasan kode berskala luas.</p>
+</section>
+</section>
+<section id="taksonomi-data-leakage" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="taksonomi-data-leakage"><span class="header-section-number">2.3</span> Taksonomi <em>Data Leakage</em></h2>
+<p>Validasi model <em>machine learning</em> sering kali menghasilkan metrik performa tinggi di tahap awal, namun gagal saat diuji pada data riil. Penyebab utama kegagalan ini adalah <em>data leakage</em> (kebocoran data). Kondisi ini terjadi ketika informasi dari himpunan pengujian atau variabel target masuk ke dalam proses pelatihan. Mesin tidak lagi mempelajari pola generalisasi, melainkan menyontek jawaban dari fitur yang bocor.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_3" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_3">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    subgraph Data_Leakage_Path ["Aliran Bocor"]
+        A[Dataset Utuh] --&gt;|Langkah Keliru: Scaling Seluruh Data| B(Dataset Ter-scale Secara Global)
+        B --&gt;|Split| C[Set Pelatihan]
+        B --&gt;|Split| D[Set Pengujian]
+        C --&gt;|Melatih| E[Model ML]
+        D --&gt;|Validasi Semu| E
+    end
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.3: Mekanisme Data Leakage: Masuknya Informasi Pengujian ke Latih
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Terdapat enam tipe utama kebocoran data yang dapat merusak validitas model.</p>
+<p>Tipe pertama adalah kebocoran target (<em>target leakage</em>). Kebocoran ini muncul saat atribut fitur bertindak sebagai proksi target, atau nilainya baru direkam setelah kejadian target berlangsung, sehingga fitur tersebut secara logis tidak tersedia pada momen prediksi di lapangan. Sebagai contoh, memprediksi pembatalan layanan pelanggan menggunakan fitur “tanggal penutupan akun”, yang tentu saja baru terisi setelah target mencapai status batal. Kebocoran target umumnya menghasilkan fitur dengan metrik kepentingan yang sangat anomali. Secara matematis, perhitungan dasar <em>permutation feature importance</em> mengukur penurunan performa saat satu fitur diacak dengan formula konseptual <span class="math inline">\(I_j = \text{Error}(f(X_{\pi(j)}), Y) - \text{Error}(f(X), Y)\)</span>. Di sini <span class="math inline">\(I_j\)</span> adalah tingkat kepentingan fitur ke-<span class="math inline">\(j\)</span>, <span class="math inline">\(\text{Error}\)</span> adalah fungsi kerugian dari prediksi model <span class="math inline">\(f\)</span>, <span class="math inline">\(X\)</span> adalah matriks fitur asli, <span class="math inline">\(Y\)</span> adalah target aktual, dan <span class="math inline">\(X_{\pi(j)}\)</span> adalah matriks fitur dengan nilai pada kolom ke-<span class="math inline">\(j\)</span> yang diacak. Jika fitur memuat <em>target leakage</em>, pengacakan kolom tersebut akan menghancurkan bocoran jawaban, sehingga nilai <em>error</em> melonjak drastis dan skor <span class="math inline">\(I_j\)</span> menjadi terlampau dominan.</p>
+<p>Tipe kedua adalah kontaminasi latih-uji (<em>train-test contamination</em>). Fase pelatihan secara tidak sengaja menyerap informasi statistik dari himpunan data uji karena proses agregasi fitur dilakukan mendahului tahap pemisahan data. Kasus klasiknya adalah menghitung rata-rata seluruh populasi data untuk imputasi nilai kosong, baru kemudian membelah data menjadi himpunan latih dan uji; parameter rata-rata tersebut sudah tidak steril karena dipengaruhi distribusi data uji. Pencegahannya adalah dengan melakukan seluruh kalkulasi agregat eksklusif pada himpunan latih, lalu diaplikasikan searah ke himpunan uji.</p>
+<p>Tipe ketiga adalah kebocoran temporal (<em>temporal leakage</em>). Pada deret waktu dan data historis, penggunaan observasi masa depan untuk menyusun prediksi kejadian masa lalu akan membalikkan urutan kausalitas. Contohnya memisahkan riwayat transaksi perbankan secara acak tanpa mempertahankan urutan waktu, sehingga model mengeksploitasi pola transaksi hari Jumat untuk menebak probabilitas penipuan di hari Selasa sebelumnya.</p>
+<p>Tipe keempat adalah kebocoran antar-kelompok (<em>between-group leakage</em>). Sebagian data memuat unit observasi berkelompok dengan korelasi kuat antar-barisnya. Memecah data secara acak murni akan mendistribusikan anggota dari entitas yang sama ke dalam himpunan latih dan uji secara bersamaan. Jika rekam medis menyimpan sepuluh baris riwayat kunjungan dari pasien yang sama lalu disebar melintasi batas himpunan, model akan menghafalkan identitas unik pasien alih-alih belajar mendiagnosis gejala umum.</p>
+<p>Tipe kelima adalah kebocoran <em>embedding</em> (<em>embedding leakage</em>). Praktik modern sering memanfaatkan model praletih untuk mengubah data mentah menjadi vektor padat. Jika adaptasi lapisan model dilakukan pada seluruh korpus teks proyek sebelum pemisahan data, vektor fitur latih sudah terpengaruh secara matematis oleh konteks semantik dokumen pengujian.</p>
+<p>Terakhir, tipe keenam adalah kebocoran penyesuaian LLM (<em>LLM fine-tuning leakage</em>). Pada komputasi teks skala masif, dokumen pengujian tanpa sengaja masuk ke dalam tumpukan data prapelatihan atau dataset instruksi (<em>instruction-tuning</em>). Akibatnya, LLM dapat mencetak akurasi evaluasi nyaris sempurna pada dataset tolok ukur karena baris kode evaluasi tersebut telah terekspos sebelumnya, mengubah pengujian generalisasi menjadi sekadar tes hafalan.</p>
+</section>
+<section id="mengapa-leakage-bermula-pada-tahap-rekayasa-fitur" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="mengapa-leakage-bermula-pada-tahap-rekayasa-fitur"><span class="header-section-number">2.4</span> Mengapa Leakage Bermula pada Tahap Rekayasa Fitur</h2>
+<p>Kebocoran data (<em>data leakage</em>) hampir tidak pernah bersumber dari algoritma <em>machine learning</em>. Algoritma pada dasarnya hanyalah pengoptimal matematis yang menyesuaikan bobot berdasarkan pola pada set data yang diterimanya. Sebaliknya, kebocoran informasi justru terjadi jauh lebih awal, yakni pada tahap persiapan data dan rekayasa fitur. Saat kita mengubah tabel struktural mentah menjadi matriks representasi numerik, risiko masuknya informasi dari himpunan uji (<em>test set</em>) ke dalam parameter pelatihan (<em>training set</em>) menjadi sangat tinggi.</p>
+<p>Tujuan utama rekayasa fitur adalah mengekstraksi representasi data yang membuat pola target lebih mudah dikenali oleh model. Karena proses transformasi ini sering menuntut kalkulasi pada tingkat populasi, kebocoran data umumnya berasal dari praktik transformasi yang tak sengaja memecah batas isolasi partisi. Praktik pertama adalah perhitungan statistik agregat yang membuat turunan fitur lintas observasi secara bersamaan, seperti menghitung rata-rata pengeluaran warga dalam satu wilayah atau persentase rasio keberhasilan historis. Praktik kedua adalah penerapan transformasi skala secara menyeluruh, misalnya menggunakan <em>Standard Scaler</em> ke seluruh tabel sebelum melakukan proses pemotongan data (<em>splitting</em>). Praktik ketiga adalah komputasi imputasi dan evaluasi atribut, di mana ukuran metrik kriteria seleksi atau statistik pengisian nilai kosong dihitung menggunakan seluruh observasi gabungan, alih-alih diukur murni dari himpunan latih.</p>
+<p>Sebagai contoh konkret, dalam menangani atribut tak lengkap, kita umumnya menghitung rasio nilai yang hilang (<span class="math inline">\(r_{missing} = \frac{N_{missing}}{N_{total}}\)</span>) untuk memutuskan kelayakan suatu fitur. Di sini, <span class="math inline">\(r_{missing}\)</span> adalah proporsi kekosongan data, <span class="math inline">\(N_{missing}\)</span> merupakan jumlah observasi yang tidak memiliki nilai, dan <span class="math inline">\(N_{total}\)</span> adalah total baris. Apabila penyebut <span class="math inline">\(N_{total}\)</span> mencakup jumlah observasi gabungan sebelum <em>dataset</em> dipisah, maka keputusan seleksi (misalnya mencabut fitur jika <span class="math inline">\(r_{missing} &gt; 0.4\)</span>) telah dipengaruhi oleh kondisi data pengujian. Ketika pemotongan baris baru dilakukan setelah transformasi ini, nilai atau struktur ruang fitur pada himpunan latih sudah secara permanen terjangkiti informasi dari masa depan.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_4" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_4">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Transaksi Log Mentah] --&gt;|Kalkulasi Statistik Agregat Global| B[Rata-rata Pengeluaran Pelanggan]
+    B --&gt;|Pemisahan Dataset| C[Set Pelatihan - Membawa Nilai Rata-rata Uji]
+    B --&gt;|Pemisahan Dataset| D[Set Pengujian]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.4: Mekanisme Data Leakage Akibat Transformasi Agregasi Sebelum Pemisahan Dataset
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Kerentanan operasi fitur terhadap kontaminasi inilah yang menjadi pemicu perlunya praktik <em>pipeline</em> yang benar. Mengisolasi partisi evaluasi secara konsisten tidak dapat digantungkan pada kehati-hatian penulisan skrip manual, melainkan harus dikunci melalui instrumen pemrograman yang terstruktur. Isolasi ini pertama-tama dapat dilakukan di tingkat pustaka menggunakan kelas pembungkus seperti <code>ColumnTransformer</code> yang dijahit di dalam objek utama <code>Pipeline</code>. Dalam eksekusi validasi (<em>cross-validation</em>), struktur ini menjamin bahwa seluruh perhitungan varians atau proporsi dipaksa untuk <em>fit</em> ulang pada setiap sub-partisi latih, sehingga membiarkan partisi evaluasinya benar-benar buta dari parameter kalkulasi. Selanjutnya, isolasi juga diterapkan di tingkat infrastruktur. Pada arsitektur produksi, fitur-fitur kompleks disajikan melalui perantara <em>feature store</em> seperti Feast. Komponen infrastruktur ini memberlakukan operasi <em>point-in-time join</em> yang mengamankan konsistensi waktu; algoritma hanya diizinkan mengakses fitur agregat yang telah divalidasi dan tercatat kuat sebelum stempel kedatangan <em>event</em> data prediksi.</p>
+</section>
+<section id="strategi-pemisahan-data-yang-benar" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="strategi-pemisahan-data-yang-benar"><span class="header-section-number">2.5</span> Strategi Pemisahan Data yang Benar</h2>
+<p>Pemisahan data berfungsi sebagai mekanisme karantina untuk mencegah <em>leakage</em> sebelum kita mengeksekusi rekayasa fitur. Memilih strategi pemisahan yang keliru akan menghasilkan evaluasi model yang menyesatkan. Strategi yang tepat sangat bergantung pada struktur asal data dan kemandirian antar-unit observasi.</p>
+<p>Terdapat tiga pendekatan utama dalam memisahkan data pelatihan dan pengujian. Pendekatan pertama adalah <em>random split</em>, yang memisahkan baris observasi secara acak. Metode ini valid ketika setiap titik observasi bersifat mandiri, karena pengacakan akan mendistribusikan pola secara merata antara kelompok latih dan uji. Namun, pendekatan ini akan memicu <em>leakage</em> jika data memiliki struktur kelompok atau runtunan waktu. Pendekatan kedua adalah <em>group split</em>, yakni memisahkan observasi berdasarkan identitas subjek. Pendekatan ini wajib diterapkan pada data yang memuat rekam jejak subjek yang sama berulang kali, misalnya pindaian rontgen dari pasien yang sama atau riwayat kunjungan pelanggan. Pendekatan ketiga adalah <em>temporal split</em>, yang memisahkan data berdasarkan urutan waktu kronologis untuk memastikan model hanya belajar dari peristiwa masa lalu demi memprediksi masa depan.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_5" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_5">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A[Dataset Utama] --&gt; B[Random Split - Acak Murni]
+    A --&gt; C[Group Split - Berdasarkan ID Entitas]
+    A --&gt; D[Temporal Split - Kronologis Waktu]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.5: Perbandingan Strategi Pemisahan Data: Random, Group, dan Temporal Split
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Pemisahan Berbasis Kelompok (Group Split)</strong> Apabila memaksakan pemisahan acak pada data rekam medis, sebagian rontgen milik pasien A dapat masuk ke kelompok latih, sementara sisa rontgen miliknya jatuh ke kelompok uji. Model cenderung menghafal karakteristik anatomi spesifik pasien tersebut ketimbang belajar membedakan pola penyakit. <em>Group split</em> menggeser unit pemisahan dari level baris ke level subjek. Syarat mutlak dari pemisahan ini dirumuskan sebagai <span class="math inline">\(G_{latih} \cap G_{uji} = \emptyset\)</span>, di mana <span class="math inline">\(G_{latih}\)</span> adalah himpunan pengenal unik subjek (seperti ID pasien) pada partisi pelatihan, dan <span class="math inline">\(G_{uji}\)</span> adalah himpunan pengenal pada partisi pengujian. Implementasi seperti <code>GroupKFold</code> atau <code>StratifiedGroupKFold</code> di pustaka <em>machine learning</em> memastikan seluruh rekam jejak milik satu subjek masuk secara utuh ke dalam satu partisi, sekaligus mempertahankan distribusi target prediksi.</p>
+<p><strong>Pemisahan Temporal (Temporal Split)</strong> Sistem yang beroperasi di dunia nyata tidak memiliki akses ke data masa depan. <em>Temporal split</em> menyimulasikan batasan ini melalui titik potong waktu yang tegas. Pada proses <em>cross-validation</em> untuk data sekuensial, kelas utilitas seperti <code>TimeSeriesSplit</code> memastikan partisi pelatihan selalu berasal dari periode sebelum partisi pengujian. Kita juga dapat mendefinisikan parameter <em>gap</em> untuk memberikan jeda observasi antara partisi latih dan uji, yang berguna untuk menyimulasikan latensi ketersediaan fitur saat model diterapkan di lingkungan produksi.</p>
+<p><strong>Validasi Silang Bersarang (Nested Cross-Validation)</strong> Bentuk <em>leakage</em> lain terjadi ketika kita menala hiperparameter (misalnya ambang batas seleksi fitur) lalu mengevaluasi performa akhir pada partisi data yang sama. Praktik ini memicu bias optimistis karena keputusan penalaan dipengaruhi oleh partisi uji. <em>Nested cross-validation</em> menyelesaikan masalah ini dengan menyekat dua proses secara hierarkis: putaran dalam (<em>inner loop</em>) digunakan murni untuk menala dan mencari hiperparameter terbaik, sedangkan putaran luar (<em>outer loop</em>) digunakan khusus untuk mengestimasi performa generalisasi pada sisa data yang sama sekali tidak tersentuh oleh putaran dalam.</p>
+<p>Disiplin pemisahan data ini menjamin bahwa seluruh transformasi fitur selanjutnya dikalibrasi pada partisi yang bersih, sehingga estimasi performa model tetap jujur.</p>
+</section>
+<section id="pipeline-di-dalam-cross-validation" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="pipeline-di-dalam-cross-validation"><span class="header-section-number">2.6</span> <em>Pipeline</em> di Dalam <em>Cross-Validation</em></h2>
+<p>Menguji model dengan satu kali pemisahan data latih dan uji rentan menghasilkan estimasi kinerja yang tidak stabil. Skor akurasi tinggi bisa saja muncul akibat distribusi acak pada satu pemisahan tertentu. Praktisi menggunakan <em>cross-validation</em> (validasi silang) untuk mengevaluasi kinerja secara iteratif dan mendapatkan taksiran yang lebih andal.</p>
+<p>Secara matematis, estimasi kesalahan melalui <span class="math inline">\(K\)</span>-Fold <em>Cross-Validation</em> dihitung sebagai rata-rata dari seluruh iterasi dengan formula <span class="math inline">\(CV_{(K)} = \frac{1}{K} \sum_{k=1}^K E_k\)</span>. Dalam hal ini, <span class="math inline">\(K\)</span> adalah total jumlah partisi data (<em>fold</em>), dan <span class="math inline">\(E_k\)</span> mewakili nilai kesalahan (seperti <em>Mean Squared Error</em>) saat mengevaluasi model pada <em>fold</em> validasi ke-<span class="math inline">\(k\)</span>.</p>
+<p>Skema ini membagi himpunan data menjadi kumpulan <em>fold</em> berukuran seimbang. Di setiap perputaran, satu <em>fold</em> bertindak sebagai blok validasi, dan kumpulan <em>fold</em> sisanya disatukan sebagai data pelatihan. Masalah muncul ketika tahapan rekayasa fitur diimplementasikan keliru bersamaan dengan rotasi iteratif ini.</p>
+<p><strong>Risiko Kebocoran Data dalam Validasi Silang</strong></p>
+<p>Kesalahan paling umum adalah menjalankan fungsi transformasi pada seluruh dataset sebelum fungsi <em>cross-validation</em> dipanggil. Jika perhitungan parameter standardisasi dilakukan secara global di awal, nilai statistik tersebut ikut menyerap informasi dari baris-baris data yang nantinya bertindak sebagai blok validasi. Dampaknya terhadap evaluasi metrik sangat menipu: skor validasi akan melonjak tinggi karena distribusi data validasi sudah terdeteksi di tahap pelatihan. Model sebenarnya mempelajari pola observasi yang seharusnya tertutup rapat, sehingga pada akhirnya performa model akan anjlok drastis ketika dihadapkan pada data baru di lingkungan produksi.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_6a" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_6a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_6a">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A1[Dataset Utuh] --&gt;|Fit &amp; Transform Global| B1[Matriks Fitur Global]
+    B1 --&gt;|Split K-Fold| C1[Folds Latih &amp; Validasi Bocor]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_6a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.6: Aliran Data Cross-Validation yang Salah (Bocor)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_6b" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_6b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_6b">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A2[Dataset Utuh] --&gt;|Split K-Fold| B2[Folds Latih &amp; Validasi Steril]
+    B2 --&gt;|Fit &amp; Transform Terisolasi Per Fold| C2[Pelatihan Jujur]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_6b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.7: Aliran Data Cross-Validation yang Benar (Terisolasi)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Mekanisme Isolasi Transformasi</strong></p>
+<p>Untuk menjamin evaluasi tidak bias, seluruh urutan penyesuaian fitur harus dirangkai ke dalam satu objek <em>pipeline</em>. Tabel observasi asli diteruskan beriringan dengan objek <em>pipeline</em> ke dalam fungsi silang. Metode ini mengunci ruang eksekusi transformasi berada di dalam perputaran internal setiap tahapan <em>cross-validation</em>.</p>
+<p>Cara kerja <em>pipeline</em> di setiap rotasi silang terbagi menjadi tiga langkah terisolasi. Pertama, tahap penghitungan parameter (<code>fit()</code>) pada <em>pipeline</em> dibatasi secara ketat hanya pada blok data pelatihan iterasi yang sedang berjalan. Kedua, objek <em>pipeline</em> yang sudah menyimpan parameter dari data pelatihan meluncurkan modifikasi data (<code>transform()</code>) secara mandiri pada blok validasi yang sedang disisihkan. Ketiga, pada transisi rotasi berikutnya, ukuran acuan seperti nilai tengah imputasi atau simpangan baku akan dibuang dan dihitung ulang dari nol berdasarkan himpunan pelatihan iterasi yang baru.</p>
+<p><strong>Optimalisasi Komputasi dan Nested CV</strong></p>
+<p>Menjalankan rekayasa fitur berulang kali di dalam skema silang, terlebih bila digabung dengan pencarian <em>hyperparameter</em> (<em>GridSearchCV</em>), memakan beban komputasi yang masif. Pustaka <em>machine learning</em> modern menyediakan dua fasilitas utama untuk mengoptimalkan kendala teknis ini. Fasilitas pertama adalah <em>caching</em> transformasi, di mana objek <code>Pipeline</code> mendukung argumen <code>memory</code> untuk merekam status keluaran langkah <em>transformer</em> ke dalam penyimpanan diska. <em>Pipeline</em> otomatis akan memanggil hasil kalkulasi yang tersimpan jika parameter dan observasi masukan tidak berubah di perputaran selanjutnya. Fasilitas kedua adalah pendekatan <em>nested cross-validation</em>. Untuk mencegah kebocoran informasi melalui pemilihan <em>hyperparameter</em>, evaluasi model terbaik dilakukan lewat validasi silang bersarang, di mana perputaran dalam berfokus menala setelan rekayasa fitur, sementara perputaran luar bekerja menaksir kinerja generalisasi murni tanpa intervensi penyetelan algoritma.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-language="Python"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tempfile</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> shutil <span class="im">import</span> rmtree</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> cross_val_score</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.pipeline <span class="im">import</span> Pipeline</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.impute <span class="im">import</span> SimpleImputer</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.datasets <span class="im">import</span> make_classification</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Inisialisasi data dummy untuk simulasi klasifikasi</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>X, y <span class="op">=</span> make_classification(n_samples<span class="op">=</span><span class="dv">1000</span>, n_features<span class="op">=</span><span class="dv">20</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Membuat direktori temporer khusus untuk menyimpan cache pipeline</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>cachedir <span class="op">=</span> tempfile.mkdtemp()</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Mendefinisikan tahapan transformasi dan estimator dalam pipeline</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>pipeline_steps <span class="op">=</span> [</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'imputer'</span>, SimpleImputer(strategy<span class="op">=</span><span class="st">'median'</span>)),</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'scaler'</span>, StandardScaler()),</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'classifier'</span>, LogisticRegression(random_state<span class="op">=</span><span class="dv">42</span>))</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Konstruksi pipeline terisolasi dengan parameter cache 'memory'</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>pipeline <span class="op">=</span> Pipeline(steps<span class="op">=</span>pipeline_steps, memory<span class="op">=</span>cachedir)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Evaluasi performa model menggunakan skema Cross-Validation (K-Fold = 5)</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Transformasi data terjadi secara aman di dalam putaran internal CV tanpa kebocoran data</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> cross_val_score(pipeline, X, y, cv<span class="op">=</span><span class="dv">5</span>, scoring<span class="op">=</span><span class="st">'accuracy'</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Bersihkan direktori penyimpanan cache secara aman untuk membebaskan ruang memori</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>rmtree(cachedir)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Skor Cross-Validation per lipat: </span><span class="sc">{</span>scores<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Rata-rata Akurasi Model: </span><span class="sc">{</span>scores<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="kesalahan-praktik-pada-alur-transformasi" class="level2" data-number="2.7">
+<h2 data-number="2.7" class="anchored" data-anchor-id="kesalahan-praktik-pada-alur-transformasi"><span class="header-section-number">2.7</span> Kesalahan Praktik pada Alur Transformasi</h2>
+<p>Memahami konsep rekayasa fitur belum tentu menjamin penulisan kode yang bebas masalah. Saat merancang alur transformasi, pengembang sering kali secara tak sengaja melanggar <em>praktik pipeline yang benar</em>. Pelanggaran ini merusak integritas model secara diam-diam melalui kebocoran informasi (<em>data leakage</em>) atau diskrepansi tipe data. Dokumentasi panduan <em>Common Pitfalls</em> dari pustaka <em>Scikit-Learn</em> menyoroti beberapa pola kelalaian yang secara konsisten berulang dalam implementasi lapangan.</p>
+<p>Pola kelalaian pertama adalah pemanggilan <code>fit_transform</code> berulang pada himpunan uji. Metode <code>fit_transform</code> didesain untuk menghitung konstanta acuan (seperti <em>mean</em> dan varians) sekaligus menerapkannya pada himpunan data latih. Kesalahan fatal terjadi ketika perintah ini dipanggil kembali pada himpunan uji (<em>test set</em>). Pemanggilan ulang ini akan menimpa parameter acuan latih, lalu menggantinya dengan rentang skala yang murni bersandar pada distribusi himpunan uji, sehingga kontrak konsistensi pun hancur. Secara matematis, transformasi <em>Z-score</em> pada data uji harus selalu tunduk pada parameter data latih melalui persamaan <span class="math inline">\(x'_{\text{test}} = \frac{x_{\text{test}} - \mu_{\text{train}}}{\sigma_{\text{train}}}\)</span>. Dalam persamaan ini, <span class="math inline">\(\mu_{\text{train}}\)</span> dan <span class="math inline">\(\sigma_{\text{train}}\)</span> secara eksklusif ditarik dari perhitungan tahap <code>fit</code> pada data latih. Kelalaian ini terbukti dapat mengakibatkan lonjakan galat prediksi secara ekstrem. Aturan mutlaknya adalah himpunan uji hanya boleh dieksekusi menggunakan perintah <code>transform</code>.</p>
+<p>Pola kelalaian kedua adalah seleksi fitur sebelum pemisahan data, sebuah bentuk kebocoran data yang paling sering tidak disadari. Praktisi kerap menyeleksi dan membuang fitur menggunakan seluruh tumpukan data utuh sebelum membaginya menjadi himpunan latih dan uji. Membiarkan mekanisme seleksi mengintip sebaran target dari data uji akan melahirkan ilusi performa yang sangat meyakinkan, bahkan bisa menggelembungkan akurasi model pada tumpukan <em>noise</em> acak secara artifisial.</p>
+<p>Pola kelalaian ketiga adalah ekstraksi <em>embedding</em> global. Bentuk modern dari kontaminasi silang ini muncul pada pemrosesan teks, di mana praktisi menginisiasi vektorisasi (seperti matriks TF-IDF) terhadap gabungan korpus dokumen utuh, kemudian baru membelah hasilnya. Praktik ini secara langsung membocorkan informasi frekuensi kemunculan kata spesifik dari himpunan uji ke dalam fitur latih. Seluruh proses inisialisasi kamus kosakata mutlak wajib diletakkan setelah partisi selesai.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_7a" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_7a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_7a">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A1[Dataset Utuh] --&gt;|Imputasi Rata-rata| B1[Dataset Terimputasi]
+    B1 --&gt;|Split| C1[Train &amp; Test Leakage]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_7a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.8: Aliran Data Imputasi Global yang Salah (Bocor)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-ch02-2_7b" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ch02-2_7b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-ch02-2_7b">%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
+graph TD
+    A2[Dataset Utuh] --&gt;|Split| B2[Train &amp; Test Steril]
+    B2 --&gt;|Fit Imputer Hanya pada Train| C2[Pipeline Aman]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ch02-2_7b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2.9: Aliran Data Imputasi dengan Pipeline Tertutup yang Benar
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Pola kelalaian terakhir adalah manipulasi fitur kustom di luar objek <em>pipeline</em>. Mengubah format matriks menggunakan fungsi modifikasi lepas (seperti penghapusan spasi teks di luar kerangka <em>estimator</em>) sangatlah rapuh. Ketika sistem berpindah ke lingkungan produksi, sekuens modifikasi tanpa pembungkus ini hampir pasti terlupakan. Solusi permanennya adalah membungkus logika tersebut ke dalam kelas pewaris (<em>custom transformer</em>), sehingga ia dapat disatukan dan diekspor (<em>serialize</em>) di dalam satu <em>pipeline</em> yang tak terpisahkan.</p>
+</section>
+<section id="studi-kasus-pipeline-yang-valid-vs.-pipeline-yang-bocor" class="level2" data-number="2.8">
+<h2 data-number="2.8" class="anchored" data-anchor-id="studi-kasus-pipeline-yang-valid-vs.-pipeline-yang-bocor"><span class="header-section-number">2.8</span> Studi Kasus: <em>Pipeline</em> yang Valid vs.&nbsp;<em>Pipeline</em> yang Bocor</h2>
+<p>Dalam skenario pembuatan model penaksir harga <em>real estate</em>, sebagian data pada atribut ukuran lahan mungkin kosong. Nilai yang hilang ini dapat diisi menggunakan metode imputasi rata-rata. Urutan eksekusi imputasi menentukan apakah evaluasi model berjalan objektif atau mengalami kebocoran data (<em>data leakage</em>). Berikut adalah perbandingan dua pendekatan komputasi untuk menangani kondisi tersebut.</p>
+<p>Pendekatan pertama adalah manipulasi global yang menghasilkan kebocoran data. Pada praktik keliru ini, seluruh baris <em>dataset</em> utuh digunakan untuk menghitung nilai rata-rata ukuran lahan sebelum pemisahan data dilakukan. Sel kosong pada seluruh observasi kemudian diisi dengan nilai rata-rata global tersebut, baru setelahnya data dipisah menjadi himpunan pelatihan dan pengujian. Dampak dari urutan terbalik ini sangat jelas: nilai imputasi pada data latih secara tak langsung ikut dibentuk oleh statistik data uji. Akurasi evaluasi akan melonjak secara semu karena model telah terekspos pada karakteristik distribusi data uji sejak tahap pembentukan fitur.</p>
+<p>Pendekatan kedua adalah isolasi melalui <em>pipeline</em>, yakni pendekatan yang sah dan tervalidasi. Langkah paling awal yang wajib dilakukan adalah memotong <em>dataset</em> menjadi himpunan pelatihan murni dan himpunan pengujian independen. Setelah dipotong, nilai rata-rata ukuran lahan dihitung murni menggunakan observasi yang ada pada himpunan pelatihan. Nilai rata-rata ini kemudian diterapkan untuk mengisi sel kosong di fase pelatihan, dan kelak parameter rata-rata yang sama persis digunakan secara konsisten pada tahap pengujian.</p>
+<p>Secara matematis, jika <span class="math inline">\(N_{train}\)</span> adalah jumlah observasi valid pada data latih, rata-rata <span class="math inline">\(\mu_{train}\)</span> dihitung sebagai:</p>
+<p><span class="math display">\[\mu_{train} = \frac{1}{N_{train}} \sum_{i=1}^{N_{train}} x_i\]</span></p>
+<p>Pada persamaan tersebut, <span class="math inline">\(x_i\)</span> mewakili nilai ukuran lahan yang tersedia di dalam data latih. Nilai <span class="math inline">\(\mu_{train}\)</span> tunggal ini kemudian dipertahankan untuk menambal nilai kosong pada observasi di data uji. Pendekatan ini memastikan data uji tetap terisolasi dan tidak berkontribusi pada komputasi parameter fitur.</p>
+<p>[GAMBAR 2.4: Skema - Ilustrasi data leakage akibat imputasi global sebelum pemisahan data dibandingkan dengan pipeline tertutup]</p>
+<p>Saat dievaluasi, performa dari pendekatan kedua umumnya lebih rendah dibandingkan pendekatan pertama. Skor yang menurun ini justru mencerminkan kemampuan prediksi yang realistis saat model menghadapi observasi baru. Tanpa isolasi <em>pipeline</em> yang tegas, rekayasa fitur berisiko meloloskan kalkulasi cacat yang membuat validasi model tidak sah. Pada skala produksi, pencegahan kebocoran temporal ini juga dapat diamankan oleh infrastruktur pelengkap seperti <em>feature store</em> melalui mekanisme <em>point-in-time join</em>, sehingga data dari masa depan terblokir dan tidak memengaruhi perhitungan fitur pelatihan historis.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/ch01.html" class="pagination-link" aria-label="Dari Data Mentah ke Representasi Model">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Dari Data Mentah ke Representasi Model</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/ch03.html" class="pagination-link" aria-label="Representasi Fitur Numerik">
+        <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Representasi Fitur Numerik</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

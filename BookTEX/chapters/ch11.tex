@@ -12,7 +12,7 @@
 
 Model \emph{machine learning} tidak dapat memproses teks mentah secara langsung. Teks harus melalui tahap ekstraksi fitur untuk diubah menjadi representasi numerik. Secara klasik, proses ini melibatkan dua tahapan utama: memecah teks menjadi unit-unit kecil dan mengubah unit tersebut menjadi matriks angka.
 
-\subsection{\texorpdfstring{Pemisahan Token (\emph{Tokenization})}{Pemisahan Token (Tokenization)}}\label{pemisahan-token-tokenization}
+\textbf{Pemisahan Token (\emph{Tokenization}).}\label{pemisahan-token-tokenization}
 
 Langkah paling awal adalah \emph{tokenization}, yakni proses memecah teks menjadi potongan dasar yang disebut token. Terdapat dua pendekatan utama dalam melakukan \emph{tokenization}:
 
@@ -24,7 +24,7 @@ Langkah paling awal adalah \emph{tokenization}, yakni proses memecah teks menjad
   \textbf{Tingkat sub-kata (\emph{Subword-level}):} Memecah kata-kata yang jarang muncul menjadi unit karakter yang lebih kecil. Algoritma seperti \emph{Byte-Pair Encoding} (BPE) merupakan fondasi utama pada \emph{tokenizer} modern. Pendekatan ini mampu menangani kata OOV secara natural dengan merangkainya dari unit sub-kata yang sudah dikenal, sehingga model tidak perlu membuang kata yang belum pernah terdeteksi saat pelatihan.
 \end{itemize}
 
-\subsection{\texorpdfstring{\emph{Bag-of-Words} (BoW)}{Bag-of-Words (BoW)}}\label{bag-of-words-bow}
+\textbf{\emph{Bag-of-Words} (BoW).}\label{bag-of-words-bow}
 
 Kumpulan token menjadi bahan baku untuk membentuk representasi fitur. Pendekatan angka paling mendasar adalah \emph{Bag-of-Words} (BoW). Sesuai namanya, teks diperlakukan semata-mata sebagai ``kantong'' berisi kata-kata, di mana informasi posisi dan tata bahasa diabaikan sepenuhnya.
 
@@ -56,7 +56,7 @@ Setiap token unik dalam himpunan data menjadi satu dimensi fitur. Karena satu ka
 
 Dalam implementasi sistem skala besar, melacak seluruh kamus kosakata di dalam memori kerap kali menjadi kendala komputasi. Sebagai alternatif produksi, pendekatan \emph{hashing} (seperti \passthrough{\lstinline!HashingVectorizer!} di scikit-learn) sering digunakan. Teknik pemetaan indeks ini mengubah token langsung ke dalam indeks kolom matriks menggunakan fungsi \emph{hash} tanpa harus memelihara struktur daftar kosa kata di memori, walaupun hal ini memunculkan risiko terjadinya tabrakan indeks (\emph{hash collision}).
 
-\subsection{\texorpdfstring{\emph{N-Grams} untuk Menangkap Konteks}{N-Grams untuk Menangkap Konteks}}\label{n-grams-untuk-menangkap-konteks}
+\textbf{\emph{N-Grams} untuk Menangkap Konteks.}\label{n-grams-untuk-menangkap-konteks}
 
 Kelemahan utama abstraksi kantong kata murni adalah hilangnya informasi urutan. Dua kalimat seperti ``kucing mengejar tikus'' dan ``tikus mengejar kucing'' memiliki vektor \emph{sparse} yang identik. Untuk merekam konteks lokal antar posisi kata, kita mendefinisikan token baru dari kombinasi kata berdampingan melalui konsep \emph{n-gram}:
 

@@ -121,7 +121,7 @@ Akar kebocoran ini adalah autokorelasi spasial, yakni kecenderungan observasi ya
 
 Di mana \(n\) adalah jumlah observasi spasial, \(x_i\) dan \(x_j\) adalah nilai fitur pada lokasi \(i\) dan \(j\), \(\bar{x}\) adalah rata-rata fitur, \(w_{ij}\) melambangkan bobot spasial antara lokasi \(i\) dan \(j\) (skor ketetanggaan), serta \(W\) adalah jumlah total bobot spasial. Nilai \(I\) yang tinggi dan positif menunjukkan kuatnya autokorelasi, yang berarti informasi target dapat mengalir melintasi batas observasi secara tak kasatmata.
 
-\subsection{Kegagalan Validasi Silang Acak}\label{kegagalan-validasi-silang-acak}
+\textbf{Kegagalan Validasi Silang Acak.}\label{kegagalan-validasi-silang-acak}
 
 Pemisahan data secara acak (\emph{random k-fold cross-validation}) menghasilkan partisi latih dan uji yang tersebar menyerupai taburan garam dan merica (\emph{salt and pepper}) di atas peta. Metode ini gagal pada data spasial akibat tiga masalah utama:
 
@@ -135,7 +135,7 @@ Pemisahan data secara acak (\emph{random k-fold cross-validation}) menghasilkan 
   \textbf{Penurunan Performa:} Saat model diterapkan pada lokasi baru, kinerjanya turun drastis karena kehilangan akses ke sinyal tetangga tersebut.
 \end{itemize}
 
-\subsection{\texorpdfstring{\emph{Spatial Cross-Validation} dan Zona Penyangga}{Spatial Cross-Validation dan Zona Penyangga}}\label{spatial-cross-validation-dan-zona-penyangga}
+\textbf{\emph{Spatial Cross-Validation} dan Zona Penyangga.}\label{spatial-cross-validation-dan-zona-penyangga}
 
 Penerapan \emph{praktik pipeline yang benar} mengharuskan model dievaluasi menggunakan \emph{spatial cross-validation}. Metode ini mencegah kebocoran dengan memblokir observasi berdekatan agar tidak terpisah ke dua set yang berbeda.
 
@@ -340,7 +340,7 @@ Melalui proses penghitungan bertingkat ke dalam, area konteks yang mampu dipelaj
   \textbf{Vektor Keluaran:} Representasi numerik padat akan dihasilkan pada bagian paling ujung arsitektur. Vektor ini siap disuntikkan ke dalam \emph{pipeline} ML berbasis data tabular, atau dapat langsung dilatih hingga tahap finalisasi prediksi (\emph{end-to-end}).
 \end{enumerate}
 
-\subsection{Varian Arsitektur GNN}\label{varian-arsitektur-gnn}
+\textbf{Varian Arsitektur GNN.}\label{varian-arsitektur-gnn}
 
 Meskipun GCN efektif, agregasi berbasis rata-rata seragam memunculkan kendala saat struktur graf menjadi bervariasi. Arsitektur jaringan terus berevolusi melalui beberapa model baru:
 
@@ -354,7 +354,7 @@ Meskipun GCN efektif, agregasi berbasis rata-rata seragam memunculkan kendala sa
   \textbf{GNN Ekuivarian (EGNN):} Model ini memfasilitasi pelacakan koordinat 3D fisik dengan menjamin bahwa vektor yang diproduksi terbebas dari kesalahan nilai saat titik referensi utama mengalami translasi posisi (pergeseran) maupun rotasi ruang.
 \end{itemize}
 
-\subsection{Batasan Praktis Message Passing}\label{batasan-praktis-message-passing}
+\textbf{Batasan Praktis Message Passing.}\label{batasan-praktis-message-passing}
 
 Ekspektasi bahwa penambahan jumlah lapisan jaringan akan memperbesar luas tangkapan konteks tidak selamanya benar. Analisis performa arsitektur dalam ini memperlihatkan sejumlah permasalahan:
 
@@ -431,7 +431,7 @@ Menerapkan \emph{praktik pipeline yang benar} menuntut perlindungan dan isolasi 
 
 Bagian ini membandingkan pendekatan pemodelan pada dua domain keruangan yang berbeda: dunia fisik dan struktur jaringan abstrak. Kedua studi kasus berikut mendemonstrasikan bahwa teknik ekstraksi representasi sangat menentukan batas kinerja dari sebuah model \emph{machine learning}.
 
-\subsection{Kasus 1: Prediksi Harga Rumah (Domain Fisik)}\label{kasus-1-prediksi-harga-rumah-domain-fisik}
+\textbf{Kasus 1: Prediksi Harga Rumah (Domain Fisik).}\label{kasus-1-prediksi-harga-rumah-domain-fisik}
 
 Pada kasus pertama, kita memprediksi harga rumah di suatu wilayah. Pendekatan ini dapat dikembangkan melalui beberapa tahapan representasi:
 
@@ -498,7 +498,7 @@ for fold, (train_idx, test_idx) in enumerate(gkf.split(df, groups=df['Spatial_Bl
 print(f"\nRata-rata MSE Lintas Blok Spasial: {np.mean(mse_scores):.2f}")
 \end{lstlisting}
 
-\subsection{Kasus 2: Klasifikasi Topik Makalah (Domain Jaringan Abstrak)}\label{kasus-2-klasifikasi-topik-makalah-domain-jaringan-abstrak}
+\textbf{Kasus 2: Klasifikasi Topik Makalah (Domain Jaringan Abstrak).}\label{kasus-2-klasifikasi-topik-makalah-domain-jaringan-abstrak}
 
 Studi kasus kedua beralih dari peta geografis ke graf sitasi makalah (seperti dataset Cora). Tujuannya adalah mengklasifikasikan topik subjek dari suatu makalah akademik (simpul) berdasarkan pola kutipannya (sisi).
 
@@ -533,7 +533,5 @@ Di mana:
 \item
   \(\text{AGGREGATE}\) adalah fungsi matematika (misalnya rata-rata atau penjumlahan) yang meleburkan informasi dari simpul-simpul tetangga.
 \end{itemize}
-
-{[}GAMBAR 13.6: Skema - Subgraf representasi pada proses pertukaran pesan antar simpul dalam graf sitasi{]}
 
 Persamaan di atas memperjelas bahwa representasi sebuah makalah pada arsitektur GNN tidak berdiri sendiri, melainkan secara aktif dibentuk oleh agregasi informasi dari subgraf tetangganya. Kedua studi kasus ini memberikan benang merah yang sejalan: cara pengekstraksian dan penyajian struktur ketetanggaan ke dalam model memiliki dampak yang sama besarnya dengan pilihan arsitektur algoritmanya.

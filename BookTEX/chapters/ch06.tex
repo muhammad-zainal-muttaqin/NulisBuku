@@ -252,7 +252,7 @@ Pada sistem pembelajaran digital, log aktivitas mahasiswa diubah menjadi metrik 
 
 Data stempel waktu (\emph{timestamp}) mentah biasanya direkam sebagai deretan angka yang terus membesar, seperti nilai detik UNIX. Jika data ini dimasukkan langsung, model hanya melihat garis lurus yang naik. Format ini gagal menangkap pola perilaku berulang yang terikat dengan ritme aktivitas manusia. Agar dapat dimanfaatkan, stempel waktu tersebut perlu diurai menjadi komponen-komponen diskrit.
 
-\subsection{Ekstraksi Komponen Kalender}\label{ekstraksi-komponen-kalender}
+\textbf{Ekstraksi Komponen Kalender.}\label{ekstraksi-komponen-kalender}
 
 Langkah pertama yang umum dilakukan adalah memecah waktu menjadi atribut kalender. Dari satu nilai stempel waktu, kita dapat menurunkan berbagai fitur turunan melalui beberapa kategori:
 
@@ -269,7 +269,7 @@ Langkah pertama yang umum dilakukan adalah memecah waktu menjadi atribut kalende
 
 Pustaka modern seperti \passthrough{\lstinline!Feature-engine!} (melalui modul \passthrough{\lstinline!DatetimeFeatures!}) mampu mengekstrak komponen-komponen ini secara otomatis di dalam \emph{pipeline}. Pembentukan atribut kalender membantu model memetakan rutinitas harian atau mingguan yang memengaruhi data secara langsung, seperti lonjakan kemacetan pada hari kerja atau tren ritel pada akhir pekan.
 
-\subsection{Masalah Jarak pada Waktu Linier}\label{masalah-jarak-pada-waktu-linier}
+\textbf{Masalah Jarak pada Waktu Linier.}\label{masalah-jarak-pada-waktu-linier}
 
 Pemisahan komponen kalender memunculkan isu matematis baru terkait perhitungan jarak. Waktu memiliki sifat siklik atau berputar:
 
@@ -284,7 +284,7 @@ Pemisahan komponen kalender memunculkan isu matematis baru terkait perhitungan j
 
 Jika waktu dibiarkan tersaji sebagai bilangan bulat linear dari 0 hingga 23, model yang bekerja berdasarkan metrik jarak (seperti K-NN atau regresi) akan mengira bahwa angka 0 dan 23 saling berjauhan. Kesalahan evaluasi ini merusak pemahaman algoritma terhadap peristiwa yang terjadi melintasi pergantian siklus.
 
-\subsection{Transformasi Siklik dengan Trigonometri}\label{transformasi-siklik-dengan-trigonometri}
+\textbf{Transformasi Siklik dengan Trigonometri.}\label{transformasi-siklik-dengan-trigonometri}
 
 Untuk mempertahankan bentuk asli waktu, representasi linear dikonversi melalui \emph{encoding} siklik. Sumbu waktu dibengkokkan menjadi lingkaran menggunakan fungsi trigonometri, sehingga satu variabel waktu diproyeksikan menjadi dua komponen terpisah:
 
@@ -354,7 +354,7 @@ Pembentukan fitur turunan selalu berawal dari hipotesis empiris. Saat kita mengg
 
 Mempertahankan atribut yang redundan memperlebar dimensi data secara sia-sia. Matriks fitur yang membengkak berisiko mengumpulkan \emph{noise}, membebani memori komputasi, dan memicu kondisi \emph{overfitting}. Algoritma menggunakan kapasitasnya untuk menghafal kombinasi nilai spesifik pada data latih, lalu gagal menggeneralisasi polanya saat memproses observasi baru.
 
-\subsection{Perbandingan terhadap Baseline}\label{perbandingan-terhadap-baseline}
+\textbf{Perbandingan terhadap Baseline.}\label{perbandingan-terhadap-baseline}
 
 Validasi kelayakan atribut turunan membutuhkan model \emph{baseline}. Model referensi ini dilatih hanya menggunakan fitur mentah awal. Kualitas fitur baru tidak dapat dinilai memakai nilai galat latih. Menambahkan dimensi ke dalam matriks data hampir selalu mengurangi galat latih dan menciptakan ilusi akurasi yang menyesatkan.
 
@@ -370,7 +370,7 @@ Di mana \(K\) merupakan jumlah lipatan (\emph{fold}) pengujian, \(y_{\text{val}}
 \label{fig:ch06-fig-7}
 \end{figure}
 
-\subsection{Metode Diagnostik Lanjutan}\label{metode-diagnostik-lanjutan}
+\textbf{Metode Diagnostik Lanjutan.}\label{metode-diagnostik-lanjutan}
 
 Selain mengandalkan akurasi metrik agregat, arsitektur representasi dapat dievaluasi memakai metode diagnostik lanjutan untuk memahami kontribusi fitur secara spesifik:
 
@@ -393,8 +393,6 @@ Pengetahuan domain merupakan fondasi intelektual utama dalam rekayasa fitur turu
 
 \textbf{1. Data Transaksi Perbankan dan E-commerce}
 Tabel data asal biasanya berwujud log peristiwa (\emph{event log}) berupa angka nominal pengeluaran dan stempel waktu tunggal. Menganalisis setiap transaksi secara terisolasi sering kali tidak efektif. Pengetahuan kebiasaan finansial mendorong rekayasawan untuk merancang fitur agregasi temporal, seperti kalkulasi rata-rata pengeluaran berbobot kebaruan (\emph{recency-weighted mean}) selama tiga puluh hari terakhir. Praktisi juga memformulasikan metrik rasio, misalnya persentase transaksi silang terhadap profil pendapatan. Otomasi tingkat lanjut dapat dicapai menggunakan pustaka seperti \emph{tsfresh} yang mampu mengekstraksi ratusan fitur runtun waktu sekaligus (statistik, spektral, entropi) dari log transaksi.
-
-{[}GAMBAR 6.4: Diagram - Representasi rasio finansial dari agregasi log peristiwa{]}
 
 \textbf{2. Rekam Medis dan Kesehatan}
 Formulir rekam medis sering kali mencatat variabel biologis secara terpisah. Pengetahuan klinis dapat diterjemahkan menjadi interaksi matematis yang bermakna bagi algoritma \emph{machine learning}:

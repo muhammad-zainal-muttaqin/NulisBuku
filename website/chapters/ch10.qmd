@@ -6,19 +6,23 @@ Dalam data tabular tradisional, satu baris umumnya merepresentasikan satu unit o
 
 *Windowing* memotong data deret waktu tunggal menjadi himpunan sampel individual. Setiap sampel terdiri dari fitur input historis dan target prediksi di masa depan. Proses ini diatur oleh beberapa parameter utama:
 
-* **Lookback (Jendela Input):** Panjang rentang waktu ke belakang yang digunakan model untuk membuat prediksi. Jika memprediksi penjualan besok berdasarkan data tujuh hari terakhir, nilai *lookback* adalah tujuh.
-* **Horizon (Jendela Target):** Jarak waktu ke masa depan tempat target prediksi berada, serta panjang dari target tersebut.
-* **Stride (Langkah):** Besaran pergeseran jendela saat membentuk sampel berikutnya. *Stride* yang kecil menghasilkan banyak sampel latih, tetapi membuat observasi yang berdekatan saling berkorelasi akibat *overlapping* yang tinggi.
+- **Lookback (Jendela Input):** Panjang rentang waktu ke belakang yang digunakan model untuk membuat prediksi. Jika memprediksi penjualan besok berdasarkan data tujuh hari terakhir, nilai *lookback* adalah tujuh.
+
+- **Horizon (Jendela Target):** Jarak waktu ke masa depan tempat target prediksi berada, serta panjang dari target tersebut.
+
+- **Stride (Langkah):** Besaran pergeseran jendela saat membentuk sampel berikutnya. *Stride* yang kecil menghasilkan banyak sampel latih, tetapi membuat observasi yang berdekatan saling berkorelasi akibat *overlapping* yang tinggi.
 
 Secara matematis, jika kita memiliki deret waktu $x = \{x_1, x_2, \dots, x_T\}$, sebuah sampel historis pada titik waktu $t$ direpresentasikan sebagai matriks atau vektor jendela $W_t$:
 
-$$ W_t = [x_{t-L+1}, x_{t-L+2}, \dots, x_t] $$
+$$W_t = [x_{t-L+1}, x_{t-L+2}, \dots, x_t]$$
 
 Di mana:
-* $W_t$ adalah jendela input pada titik waktu $t$.
-* $L$ adalah panjang *lookback*.
-* Target observasinya adalah $y_{t+H}$, di mana $H$ merupakan jarak *horizon* ke masa depan.
 
+- $W_t$ adalah jendela input pada titik waktu $t$.
+
+- $L$ adalah panjang *lookback*.
+
+- Target observasinya adalah $y_{t+H}$, di mana $H$ merupakan jarak *horizon* ke masa depan.
 ```{mermaid}
 %%| label: fig-ch10-10_1
 %%| fig-cap: "Jendela Rolling dan Expanding pada Deret Waktu"
@@ -33,46 +37,51 @@ graph TD
         C2[Hari 1-6: Train] --> D2[Hari 7: Target]
     end
 ```
-
 Penyelarasan waktu antara input dan target amat rentan memicu *data leakage* (kebocoran data). Praktik *pipeline* yang benar mengharuskan rancangan jendela waktu yang ketat:
 
-* **Window Kausal (Causal Window):** Jendela input harus berhenti tepat sebelum titik awal *horizon*. Model hanya mengevaluasi data masa lalu untuk memprediksi masa depan. Ini adalah syarat mutlak untuk tugas *forecasting* deret waktu.
-* **Window Terpusat (Centered Window):** Jendela merangkum observasi sebelum dan sesudah suatu titik. Menerapkan skema ini pada *forecasting* akan membocorkan informasi masa depan ke dalam fitur input. *Window* terpusat hanya dikhususkan untuk analisis retrospektif, seperti imputasi nilai kosong atau penghalusan data historis.
+- **Window Kausal (Causal Window):** Jendela input harus berhenti tepat sebelum titik awal *horizon*. Model hanya mengevaluasi data masa lalu untuk memprediksi masa depan. Ini adalah syarat mutlak untuk tugas *forecasting* deret waktu.
+
+- **Window Terpusat (Centered Window):** Jendela merangkum observasi sebelum dan sesudah suatu titik. Menerapkan skema ini pada *forecasting* akan membocorkan informasi masa depan ke dalam fitur input. *Window* terpusat hanya dikhususkan untuk analisis retrospektif, seperti imputasi nilai kosong atau penghalusan data historis.
 
 Terakhir, *windowing* menuntut jarak waktu (*interval*) antarpengamatan yang konstan. Pada kenyataannya, banyak data sensor atau log transaksi tercatat secara ireguler. Data frekuensi tak beraturan ini wajib diseragamkan (*resampling*) sebelum diproses menjadi sampel. Kita dapat melakukan *downsampling* untuk meringkas frekuensi tinggi ke interval yang lebih lambat, atau *upsampling* untuk mengisi celah antar-pengamatan. Dengan interval yang seragam, setiap pergeseran *stride* akan memuat rentang historis yang ekuivalen untuk dipelajari oleh model.
-
 
 ## Fitur Lag dan Statistik *Rolling*
 
 Setelah mengonstruksi *lookback window*, langkah selanjutnya adalah mengekstraksi rentang waktu tersebut menjadi atribut diskrit. Tujuan utama tahap ini adalah meratakan dimensi waktu. Model *machine learning* tabular standar beroperasi pada baris dan kolom yang saling lepas dan tidak memiliki mekanisme bawaan untuk mengenali urutan kejadian. Dengan memetakan riwayat pengamatan menjadi kolom-kolom baru, kita mengonversi proses historis yang dinamis menjadi deretan prediktor statis.
 
-Cara paling langsung untuk merepresentasikan masa lalu adalah melalui fitur *lag*. Fitur ini menarik nilai observasi dari langkah waktu sebelumnya untuk digunakan sebagai prediktor pada saat ini. Sebagai contoh, jika kita memprediksi suhu udara hari ini, suhu dari hari kemarin bertindak sebagai fitur *lag* 1, sedangkan suhu dua hari yang lalu menjadi *lag* 2. 
+Cara paling langsung untuk merepresentasikan masa lalu adalah melalui fitur *lag*. Fitur ini menarik nilai observasi dari langkah waktu sebelumnya untuk digunakan sebagai prediktor pada saat ini. Sebagai contoh, jika kita memprediksi suhu udara hari ini, suhu dari hari kemarin bertindak sebagai fitur *lag* 1, sedangkan suhu dua hari yang lalu menjadi *lag* 2.
 
 Meskipun efektif menyediakan referensi terdekat, penambahan fitur *lag* secara berlebihan memiliki konsekuensi struktural:
-* **Ledakan dimensi:** Menarik riwayat pengamatan terlalu jauh ke belakang satu per satu akan memperlebar matriks data secara drastis.
-* **Risiko *overfitting*:** Matriks yang terlalu lebar dan saling berkorelasi tinggi menyulitkan model untuk membedakan sinyal asli dari pola acak (*noise*).
+
+- **Ledakan dimensi:** Menarik riwayat pengamatan terlalu jauh ke belakang satu per satu akan memperlebar matriks data secara drastis.
+
+- **Risiko *overfitting*:** Matriks yang terlalu lebar dan saling berkorelasi tinggi menyulitkan model untuk membedakan sinyal asli dari pola acak (*noise*).
 
 Untuk menangkap pola historis tanpa memperbanyak kolom secara berlebihan, kita menggunakan agregasi statistik. Teknik ini terbagi menjadi dua pendekatan utama berdasarkan perilaku pergeseran jendelanya:
 
 **1. Statistik *Rolling* (Jendela Bergeser)**
-Pendekatan ini meringkas *lookback window* berukuran tetap menjadi satu metrik agregat. Alih-alih menyodorkan data 30 hari sebagai 30 kolom mandiri, kita menghitung nilai rata-rata, standar deviasi untuk mendeteksi fluktuasi ekstrem, atau nilai maksimum untuk menemukan titik puncak. 
+Pendekatan ini meringkas *lookback window* berukuran tetap menjadi satu metrik agregat. Alih-alih menyodorkan data 30 hari sebagai 30 kolom mandiri, kita menghitung nilai rata-rata, standar deviasi untuk mendeteksi fluktuasi ekstrem, atau nilai maksimum untuk menemukan titik puncak.
 
 Salah satu representasi paling dasar dari statistik *rolling* adalah rata-rata bergerak sederhana (*Simple Moving Average*), dengan formulasi:
 
-$$ SMA_t = \frac{1}{w} \sum_{i=0}^{w-1} x_{t-i} $$
+$$SMA_t = \frac{1}{w} \sum_{i=0}^{w-1} x_{t-i}$$
 
 Di mana:
-* $SMA_t$ adalah nilai rata-rata bergerak pada titik waktu $t$.
-* $w$ adalah ukuran jendela (*window size*).
-* $x_{t-i}$ mewakili nilai observasi aktual pada $i$ langkah ke belakang dari $t$.
+
+- $SMA_t$ adalah nilai rata-rata bergerak pada titik waktu $t$.
+
+- $w$ adalah ukuran jendela (*window size*).
+
+- $x_{t-i}$ mewakili nilai observasi aktual pada $i$ langkah ke belakang dari $t$.
 
 Penentuan ukuran jendela agregasi ini melibatkan *trade-off* mendasar:
-* **Jendela sempit:** Bereaksi cepat terhadap peristiwa terbaru tetapi sangat sensitif pada kehadiran *noise*.
-* **Jendela panjang:** Mampu meredam fluktuasi sesaat demi merekam tren kestabilan jangka panjang, namun akan merespons lambat ketika arah tren utama berbalik.
+
+- **Jendela sempit:** Bereaksi cepat terhadap peristiwa terbaru tetapi sangat sensitif pada kehadiran *noise*.
+
+- **Jendela panjang:** Mampu meredam fluktuasi sesaat demi merekam tren kestabilan jangka panjang, namun akan merespons lambat ketika arah tren utama berbalik.
 
 **2. Statistik *Expanding* (Jendela Melebar)**
 Berbeda dengan statistik *rolling* yang bergeser sepenuhnya, *expanding window* menahan batas awalnya pada satu titik yang tetap, sementara ujung akhirnya terus bertambah seiring masuknya observasi baru. Teknik ini spesifik digunakan untuk menghitung memori kumulatif berjangka panjang, seperti total nominal transaksi seorang pelanggan dari hari pendaftaran pertama hingga hari ini.
-
 ```{mermaid}
 %%| label: fig-ch10-10_2
 %%| fig-cap: "Perbandingan Mekanisme Jendela Bergeser (Rolling) vs Melebar (Expanding)"
@@ -81,9 +90,7 @@ graph LR
     A[Data Deret Waktu] --> B(Rolling: Analisis Jangka Pendek & Volatilitas Baru)
     A --> C(Expanding: Analisis Tren Jangka Panjang & Konsistensi Pola)
 ```
-
 Melalui perpaduan tiga teknik representasi ini - kewaspadaan sesaat dari *lag*, deteksi tren lokal dari *rolling*, dan ingatan kumulatif dari *expanding* - sifat alami data temporal dapat direpresentasikan secara utuh dalam arsitektur tabular. Dalam praktiknya, pustaka spesifik ranah waktu seperti *tsfresh* atau submodul transformasi pada *aeon* dapat melakukan komputasi puluhan metrik *rolling* ini secara terotomatisasi.
-
 
 ## Differencing, Tren, dan Pola Musiman
 
@@ -94,7 +101,6 @@ Pola tren menciptakan hambatan struktural bagi algoritma *machine learning*, khu
 Untuk menyelesaikan masalah ekstrapolasi, data perlu ditransformasi agar mencapai kondisi stasioner. Stasioneritas adalah kondisi di mana properti statistik data (rata-rata dan varians) stabil dan tidak bergeser seiring berjalannya waktu.
 
 Teknik utama untuk memaksa kondisi stasioner pada fitur adalah *differencing* (pembedaan). Arsitektur model diubah agar tidak lagi memprediksi besaran absolut yang terus bertumbuh, melainkan memprediksi selisih perubahan dari satu titik waktu ke titik berikutnya.
-
 ```{mermaid}
 %%| label: fig-ch10-10_6
 %%| fig-cap: "Ekstraksi Fitur Menggunakan tsfresh yang Meratakan Jendela Deret Waktu ke Tabular"
@@ -103,25 +109,27 @@ graph LR
     A[Data Sekuensial: Jendela Sinyal Sensor] -->|Ekstraksi Parameter Statistik Komprehensif| B[Tsfresh Engine]
     B --> C[Matriks Tabular: Mean, Max, FFT, Kemiringan, Varians]
 ```
-
 Secara matematis, *differencing* orde pertama dirumuskan dengan persamaan:
 
-$$
-y'_t = y_t - y_{t-1}
-$$
+$$y'_t = y_t - y_{t-1}$$
 
 Di mana:
-* $y'_t$ merepresentasikan nilai fitur yang telah ditransformasi pada langkah waktu $t$.
-* $y_t$ adalah nilai observasi asli pada langkah waktu $t$.
-* $y_{t-1}$ adalah nilai observasi pada satu titik waktu sebelumnya.
+
+- $y'_t$ merepresentasikan nilai fitur yang telah ditransformasi pada langkah waktu $t$.
+
+- $y_t$ adalah nilai observasi asli pada langkah waktu $t$.
+
+- $y_{t-1}$ adalah nilai observasi pada satu titik waktu sebelumnya.
 
 Praktik rekayasa fitur menyediakan beberapa varian transformasi untuk menangani tren dan musiman:
 
-* **Seasonal Differencing:** Menghilangkan efek periodik dengan mengurangkan nilai saat ini terhadap nilai pada posisi yang sama di siklus sebelumnya. Persamaannya adalah $y'_t = y_t - y_{t-m}$, dengan $m$ sebagai panjang periode musiman (contoh: $m=7$ untuk observasi harian dengan pola mingguan).
-* **Dekomposisi Deret Waktu:** Menggunakan metode analitik seperti STL (*Seasonal and Trend decomposition using Loess*) untuk memisahkan data menjadi tiga komponen: tren, musiman, dan residu. Model hanya dilatih pada komponen residu yang sifatnya stasioner.
-* **Fitur Tren Eksplisit:** Mengukur arah pergerakan data dengan menghitung kemiringan garis regresi (slope) atau rata-rata bergerak (*moving average*) di dalam satu jendela waktu, kemudian memasukkannya sebagai kolom fitur prediktif.
-* **Indikator Waktu Kategorikal:** Menangkap efek musiman dengan mengekstrak kategori elemen waktu, seperti jam dalam satu hari atau bulan dalam satu tahun. Pendekatan ini memungkinkan model mempelajari karakteristik tiap musim sebagai kondisi diskrit tanpa menghapus tren dasar.
+- **Seasonal Differencing:** Menghilangkan efek periodik dengan mengurangkan nilai saat ini terhadap nilai pada posisi yang sama di siklus sebelumnya. Persamaannya adalah $y'_t = y_t - y_{t-m}$, dengan $m$ sebagai panjang periode musiman (contoh: $m=7$ untuk observasi harian dengan pola mingguan).
 
+- **Dekomposisi Deret Waktu:** Menggunakan metode analitik seperti STL (*Seasonal and Trend decomposition using Loess*) untuk memisahkan data menjadi tiga komponen: tren, musiman, dan residu. Model hanya dilatih pada komponen residu yang sifatnya stasioner.
+
+- **Fitur Tren Eksplisit:** Mengukur arah pergerakan data dengan menghitung kemiringan garis regresi (slope) atau rata-rata bergerak (*moving average*) di dalam satu jendela waktu, kemudian memasukkannya sebagai kolom fitur prediktif.
+
+- **Indikator Waktu Kategorikal:** Menangkap efek musiman dengan mengekstrak kategori elemen waktu, seperti jam dalam satu hari atau bulan dalam satu tahun. Pendekatan ini memungkinkan model mempelajari karakteristik tiap musim sebagai kondisi diskrit tanpa menghapus tren dasar.
 
 ## Fitur Domain Frekuensi
 
@@ -130,7 +138,6 @@ Seluruh teknik ekstraksi yang memproses urutan nilai berdasarkan waktu, seperti 
 Keterbatasan domain waktu muncul ketika kita menghadapi data sensor berfrekuensi tinggi. Data mekanis dan fisiologis yang berosilasi cepat, seperti sinyal akselerometer pada ponsel, sensor getaran mesin industri, atau rekaman elektrokardiogram (ECG), dapat menghasilkan ribuan titik observasi per detik. Pada resolusi ini, mengamati pergeseran amplitudo dari satu milidetik ke milidetik berikutnya jarang memberikan sinyal prediktif. Pola terpenting justru bersembunyi pada seberapa cepat gelombang tersebut berulang. Untuk menangkap pola periodik ini, analisis harus dipindahkan ke domain frekuensi.
 
 Alat matematis utama untuk melakukan transisi ini adalah transformasi Fourier, sering dieksekusi melalui algoritma *Fast Fourier Transform* (FFT). Secara konseptual, FFT mengambil satu jendela waktu dari sinyal yang kompleks dan memecahnya menjadi sekumpulan gelombang periodik sederhana yang memiliki frekuensi dan amplitudo berbeda-beda.
-
 ```{mermaid}
 %%| label: fig-ch10-10_4
 %%| fig-cap: "Skema Purge Gap dalam Pemisahan Data Temporal"
@@ -145,37 +152,45 @@ Sumber data: -
 
 Transformasi ini mengubah cara representasi data dibangun. Alih-alih mencatat besaran simpangan sensor pada waktu tertentu, model menerima informasi tentang seberapa dominan keberadaan gelombang berfrekuensi tertentu (misalnya 50 Hz) di dalam seluruh jendela waktu. Secara formal, pemetaan dari ruang waktu ke ruang frekuensi ini dihitung menggunakan persamaan *Discrete Fourier Transform* (DFT):
 
-$$ X_k = \sum_{n=0}^{N-1} x_n \cdot e^{-i 2 \pi k n / N} $$
+$$X_k = \sum_{n=0}^{N-1} x_n \cdot e^{-i 2 \pi k n / N}$$
 
 Di mana notasi dari persamaan tersebut mewakili:
-* $X_k$: Komponen frekuensi ke-$k$, sebuah bilangan kompleks yang menyimpan informasi amplitudo dan fase dari spektrum.
-* $x_n$: Nilai sinyal observasi mentah pada titik waktu ke-$n$.
-* $N$: Jumlah total titik observasi di dalam keseluruhan jendela waktu.
-* $e^{-i 2 \pi k n / N}$: Basis fungsi gelombang kompleks yang berosilasi pada frekuensi yang bersesuaian.
+
+- $X_k$: Komponen frekuensi ke-$k$, sebuah bilangan kompleks yang menyimpan informasi amplitudo dan fase dari spektrum.
+
+- $x_n$: Nilai sinyal observasi mentah pada titik waktu ke-$n$.
+
+- $N$: Jumlah total titik observasi di dalam keseluruhan jendela waktu.
+
+- $e^{-i 2 \pi k n / N}$: Basis fungsi gelombang kompleks yang berosilasi pada frekuensi yang bersesuaian.
 
 Kita jarang memasukkan larik keluaran mentah FFT secara langsung ke dalam model *machine learning* tabular. Praktik standar adalah mengekstrak turunan metrik spektral sebagai representasi fitur ringkas. Beberapa fitur frekuensi yang paling tangguh dan diskriminatif meliputi:
-* **Frekuensi Puncak (*Peak Frequency*):** Titik frekuensi spesifik yang memiliki energi tertinggi di dalam spektrum.
-* **Energi Pita Frekuensi:** Total daya yang terkumpul pada rentang frekuensi tertentu (misalnya, pita frekuensi tinggi).
-* **Pusat Massa Spektral (*Spectral Centroid*):** Titik keseimbangan rata-rata frekuensi berdasarkan amplitudonya, menunjukkan apakah spektrum didominasi oleh frekuensi tinggi atau rendah.
-* **Entropi Spektral:** Ukuran keacakan distribusi komponen frekuensi. Sinyal bising (*noise*) memiliki entropi tinggi, sedangkan nada murni yang stabil memiliki entropi rendah.
+
+- **Frekuensi Puncak (*Peak Frequency*):** Titik frekuensi spesifik yang memiliki energi tertinggi di dalam spektrum.
+
+- **Energi Pita Frekuensi:** Total daya yang terkumpul pada rentang frekuensi tertentu (misalnya, pita frekuensi tinggi).
+
+- **Pusat Massa Spektral (*Spectral Centroid*):** Titik keseimbangan rata-rata frekuensi berdasarkan amplitudonya, menunjukkan apakah spektrum didominasi oleh frekuensi tinggi atau rendah.
+
+- **Entropi Spektral:** Ukuran keacakan distribusi komponen frekuensi. Sinyal bising (*noise*) memiliki entropi tinggi, sedangkan nada murni yang stabil memiliki entropi rendah.
 
 Dalam *pipeline* rekayasa fitur modern, perancang representasi tidak perlu menulis komputasi spektral dari nol. Ekosistem pustaka deret waktu telah menyediakan komponen siap pakai. Pustaka seperti `tsfresh` secara otomatis menghitung puluhan fitur frekuensi, mulai dari koefisien FFT, kerapatan spektral Welch, hingga entropi Fourier dari sebuah jendela *rolling*. Di sisi lain, pustaka berorientasi *pipeline* seperti `aeon` menyediakan modul *transformer* seperti `PeriodogramTransformer` atau `DWTTransformer` (untuk transformasi *wavelet*) yang dapat dimasukkan langsung ke dalam alur prediksi yang aman dari kebocoran (*leakage*).
 
 Kasus penggunaan klasik untuk representasi frekuensi adalah sistem pemeliharaan prediktif pada mesin industri. Kerusakan awal pada bantalan (*bearing*) motor jarang meningkatkan total volume getaran secara keseluruhan, tetapi kerusakan tersebut sering memicu lonjakan energi tajam pada pita frekuensi tinggi yang sangat spesifik. Memantau fitur spektral ini memungkinkan sistem klasifikasi menangkap anomali sebelum komponen rusak secara fisik. Pemahaman tentang dekomposisi frekuensi ini akan menjadi fondasi konseptual untuk pemrosesan data audio di Bab 12, tempat prinsip yang sama diterapkan untuk membangun representasi terstruktur seperti spektrogram.
-
 
 ## Validasi Temporal: Menghindari Look-Ahead Leakage
 
 Menerapkan *cross-validation* acak (seperti *K-Fold*) pada data deret waktu menimbulkan *look-ahead leakage*. Pengocokan baris data sebelum pembagian set mengabaikan arah waktu. Jika model prediksi harga saham dilatih menggunakan data hari Jumat untuk memprediksi harga hari Kamis, model tersebut mendapatkan bocoran dari masa depan. Evaluasi akan menghasilkan metrik yang terlalu tinggi, tetapi model akan gagal saat memprediksi data baru.
 
 Pemisahan data deret waktu wajib mengikuti urutan waktu (*temporal split*). Seluruh set pelatihan harus secara ketat mendahului set validasi. Terdapat dua variasi skema pembagian untuk skenario ini:
-* ***Expanding window***: Rentang waktu set pelatihan membesar seiring bertambahnya observasi, sementara ukuran set validasi tetap.
-* ***Sliding window***: Set pelatihan bergeser maju dengan rentang waktu yang tetap, mencerminkan alur pembaruan model secara berkala.
+
+- ***Expanding window***: Rentang waktu set pelatihan membesar seiring bertambahnya observasi, sementara ukuran set validasi tetap.
+
+- ***Sliding window***: Set pelatihan bergeser maju dengan rentang waktu yang tetap, mencerminkan alur pembaruan model secara berkala.
 
 Walaupun *temporal split* mengunci arah waktu, proses *windowing* menimbulkan risiko kebocoran spesifik pada modalitas deret waktu. *Windowing* memotong data panjang menjadi sampel-sampel pendek yang saling tumpang-tindih. Konsekuensinya, sampel terakhir di set pelatihan dan sampel pertama di set validasi sering kali memuat baris data mentah yang sama pada rentang jendela masa lalu (*lookback*) mereka.
 
 Sebagai contoh, jika algoritma menggunakan *lookback* tujuh hari, sampel validasi pertama di hari ke-100 memakai data mentah dari hari ke-93 hingga ke-99. Data mentah pada rentang yang sama juga ikut menyusun fitur pada sampel-sampel akhir di set pelatihan. Evaluasi menjadi terlalu optimis jika garis batas pemisahan dibiarkan menyatu tanpa jeda.
-
 ```{mermaid}
 %%| label: fig-ch10-10_5
 %%| fig-cap: "Letak Purge Gap di Antara Set Pelatihan Terakhir dan Set Validasi Pertama"
@@ -184,33 +199,37 @@ graph TD
     A[Data Latih: Riwayat Transaksi] --> B[Data Purge Gap: Hari Evaluasi Transisi]
     B --> C[Data Validasi: Transaksi Baru Di Luar Sinyal Window Latih]
 ```
-
 *Praktik pipeline yang benar* mengatasi kebocoran di garis batas ini dengan menyisipkan *purge gap* (celah pembersihan). *Purge gap* adalah blok sampel observasi yang dibuang secara sengaja agar tidak ada informasi yang bocor melintasi batas pemisahan.
 
 Ukuran celah pembersihan dihitung secara eksak melalui persamaan:
 
-$$ n_{\text{purge}} = w_{\text{lookback}} + h_{\text{horizon}} $$
+$$n_{\text{purge}} = w_{\text{lookback}} + h_{\text{horizon}}$$
 
 Di mana:
-* $n_{\text{purge}}$ adalah ukuran *purge gap* (jumlah sampel observasi yang dibuang).
-* $w_{\text{lookback}}$ adalah panjang jendela fitur historis ke masa lalu.
-* $h_{\text{horizon}}$ adalah horizon prediksi atau jarak langkah ke titik target.
+
+- $n_{\text{purge}}$ adalah ukuran *purge gap* (jumlah sampel observasi yang dibuang).
+
+- $w_{\text{lookback}}$ adalah panjang jendela fitur historis ke masa lalu.
+
+- $h_{\text{horizon}}$ adalah horizon prediksi atau jarak langkah ke titik target.
 
 Elemen horizon prediksi ($h_{\text{horizon}}$) wajib diikutsertakan karena label dari sampel pelatihan terakhir bergantung pada nilai di masa depan. Seluruh rentang waktu ini dilompati secara penuh agar set validasi tidak tersentuh residu informasi.
 
 Pustaka modern untuk analisis deret waktu, seperti `sktime`, otomatis menangani penyisipan celah ini melalui parameter internal fungsi evaluasinya (*splitters*). Pemisahan data yang dilengkapi *purge gap* menjamin set pengujian berdiri sendiri secara independen, sehingga hasil validasi merepresentasikan ketangguhan model secara objektif.
 
-
-## Fitur untuk Model Klasik vs. Input Sekuensial
+## Fitur untuk Model Klasik vs. Input Sekuensial
 
 Pendekatan rekayasa fitur temporal bergantung pada keluarga model yang akan memproses data. Cara menyiapkan data untuk algoritma klasik berbeda secara mendasar dari pemformatan input untuk arsitektur *deep learning* modern. Transisi ini menandai pergeseran utama dari representasi yang dirancang manusia menuju representasi yang dipelajari mesin.
 
 Persyaratan data untuk model tabular klasik (seperti *Random Forest* atau *Gradient Boosting*) meliputi:
-* **Vektor berdimensi tunggal:** Algoritma tradisional membutuhkan observasi yang diratakan. Jendela riwayat waktu tidak dapat dimasukkan dalam format asli beruntun.
-* **Absennya kesadaran kronologis:** Model memperlakukan setiap fitur secara terisolasi dan tidak memiliki konsep bawaan tentang urutan waktu antar kolom.
-* **Ekstraksi eksplisit:** Pengguna harus menyarikan makna waktu dengan membuat variabel turunan, seperti nilai lag, rata-rata bergulir, atau laju perubahan harian.
-* **Otomasi ekstraksi:** Penggunaan pustaka seperti `tsfresh` sering diterapkan untuk menghitung dan meratakan ribuan fitur statistik dari satu jendela waktu ke dalam matriks tabular.
 
+- **Vektor berdimensi tunggal:** Algoritma tradisional membutuhkan observasi yang diratakan. Jendela riwayat waktu tidak dapat dimasukkan dalam format asli beruntun.
+
+- **Absennya kesadaran kronologis:** Model memperlakukan setiap fitur secara terisolasi dan tidak memiliki konsep bawaan tentang urutan waktu antar kolom.
+
+- **Ekstraksi eksplisit:** Pengguna harus menyarikan makna waktu dengan membuat variabel turunan, seperti nilai lag, rata-rata bergulir, atau laju perubahan harian.
+
+- **Otomasi ekstraksi:** Penggunaan pustaka seperti `tsfresh` sering diterapkan untuk menghitung dan meratakan ribuan fitur statistik dari satu jendela waktu ke dalam matriks tabular.
 ```{mermaid}
 %%| label: fig-ch10-10_7
 %%| fig-cap: "Skema Validasi Temporal dengan Pemisahan Kronologis dan Area Purge Gap"
@@ -221,42 +240,49 @@ graph TD
         B --> C[Uji - Masa Depan]
     end
 ```
-
 Pemrosesan data untuk model sekuensial pada *deep learning* (seperti RNN, LSTM, dan *Transformer*) menggunakan pendekatan yang berbeda:
-* **Struktur *tensor* dua dimensi:** Model menerima input berbentuk matriks berukuran jumlah langkah waktu dikali jumlah fitur.
-* **Retensi kronologis:** Urutan langkah waktu dipertahankan secara utuh. Model menangkap dinamika temporal melalui pembaruan *hidden state* atau mekanisme *attention*.
-* **Pergeseran beban ekstraksi:** Pemahaman tentang pola temporal bergeser sepenuhnya menjadi representasi yang dipelajari mesin selama proses *training*.
+
+- **Struktur *tensor* dua dimensi:** Model menerima input berbentuk matriks berukuran jumlah langkah waktu dikali jumlah fitur.
+
+- **Retensi kronologis:** Urutan langkah waktu dipertahankan secara utuh. Model menangkap dinamika temporal melalui pembaruan *hidden state* atau mekanisme *attention*.
+
+- **Pergeseran beban ekstraksi:** Pemahaman tentang pola temporal bergeser sepenuhnya menjadi representasi yang dipelajari mesin selama proses *training*.
 
 Meskipun model sekuensial mampu menemukan pola urutan angka secara mandiri, arsitektur ini tetap membutuhkan penyesuaian bentuk data awal. Skala fitur harus dinormalisasi agar perhitungan *gradient* stabil. Selain itu, model membutuhkan panduan eksplisit untuk mengetahui posisi waktu absolut. Informasi waktu ini umumnya disuntikkan melalui *cyclical encoding* dengan menggunakan fungsi trigonometri:
 
-$$
-x_{sin} = \sin\left(\frac{2\pi t}{P}\right), \quad x_{cos} = \cos\left(\frac{2\pi t}{P}\right)
-$$
+$$x_{sin} = \sin\left(\frac{2\pi t}{P}\right), \quad x_{cos} = \cos\left(\frac{2\pi t}{P}\right)$$
 
 Pada formulasi ini, $t$ mewakili unit waktu saat ini, dan $P$ adalah total panjang satu siklus penuh (misalnya 24 untuk representasi jam, atau 7 untuk representasi hari). Fitur siklik ini memberikan penunjuk arah temporal esensial yang sangat sulit dipelajari oleh model secara eksklusif dari urutan data semata.
 
 Perkembangan teknik pemodelan runtun waktu modern semakin mengaburkan batas antara input tabular dan sekuensial murni:
-* **Injeksi fitur manual:** Arsitektur sekuensial terkini seperti Lag-Llama secara spesifik mengintegrasikan fitur lag buatan manusia secara bersamaan dengan masuknya deret waktu mentah.
-* **Pembagian jendela spasial-temporal (*Patching*):** Model seperti PatchTST memotong deret waktu menjadi beberapa sub-segmen (*patch*) pendek. Pendekatan ini menjembatani keuntungan ekstraksi karakteristik data lokal dengan pemodelan hubungan sekuensial jarak jauh.
-* ***Pretrained model* sebagai ekstraktor:** *Foundation model* khusus deret waktu (seperti Chronos atau MOMENT) kini dapat beroperasi sebagai *feature extractor* dalam kondisi beku (*frozen*). Model ini mengubah urutan kronologis mentah menjadi vektor *embedding* padat yang siap ditransfer sebagai input tambahan bernilai tinggi untuk algoritma klasik.
 
+- **Injeksi fitur manual:** Arsitektur sekuensial terkini seperti Lag-Llama secara spesifik mengintegrasikan fitur lag buatan manusia secara bersamaan dengan masuknya deret waktu mentah.
 
-### Studi Kasus: Prediksi Deret Waktu Multivariat
+- **Pembagian jendela spasial-temporal (*Patching*):** Model seperti PatchTST memotong deret waktu menjadi beberapa sub-segmen (*patch*) pendek. Pendekatan ini menjembatani keuntungan ekstraksi karakteristik data lokal dengan pemodelan hubungan sekuensial jarak jauh.
+
+- ***Pretrained model* sebagai ekstraktor:** *Foundation model* khusus deret waktu (seperti Chronos atau MOMENT) kini dapat beroperasi sebagai *feature extractor* dalam kondisi beku (*frozen*). Model ini mengubah urutan kronologis mentah menjadi vektor *embedding* padat yang siap ditransfer sebagai input tambahan bernilai tinggi untuk algoritma klasik.
+
+## Studi Kasus: Prediksi Deret Waktu Multivariat
 
 Kasus ini mengintegrasikan pendekatan rekayasa fitur untuk data deret waktu multivariat melalui masalah prediksi beban listrik kota pada satu jam berikutnya. Beban listrik tidak berdiri sendiri; suhu udara, kelembapan, dan pola aktivitas penduduk memengaruhi permintaan secara bersamaan. Karena beberapa variabel berubah beriringan seiring waktu, data ini direpresentasikan sebagai deret waktu multivariat.
 
 Kita menggunakan algoritma *random forest* sebagai model *baseline*. Algoritma ini membutuhkan input berupa matriks fitur datar dan tidak memiliki mekanisme internal untuk membaca urutan sekuensial. Untuk mengubah aliran waktu kontinu menjadi baris pengamatan terpisah, dua parameter pemotongan sampel ditentukan:
-* ***Horizon* prediksi:** Ditetapkan sejauh satu jam ke depan sebagai target prediksi.
-* ***Lookback*:** Ditetapkan sepanjang 24 jam ke belakang untuk merangkum satu siklus penuh dari aktivitas harian kota.
+
+- ***Horizon* prediksi:** Ditetapkan sejauh satu jam ke depan sebagai target prediksi.
+
+- ***Lookback*:** Ditetapkan sepanjang 24 jam ke belakang untuk merangkum satu siklus penuh dari aktivitas harian kota.
 
 Setelah jendela pengamatan terbentuk, berbagai fitur dirakit dari rentang tersebut:
-* **Fitur Siklik:** Nilai jam (0 hingga 23) tidak dimasukkan sebagai angka mentah agar model tidak membaca jam 23 dan 0 sebagai dua waktu yang berjauhan. Angka waktu tersebut diekstrak menjadi representasi siklik menggunakan transformasi sinus dan kosinus.
-* **Fitur *Lag*:** Dibangun 24 fitur *lag* yang menangkap riwayat beban listrik aktual pada setiap jam dalam siklus satu hari sebelumnya.
-* **Fitur *Rolling*:** Faktor cuaca memengaruhi beban secara akumulatif. Alih-alih memakai suhu di satu titik waktu, kita menangkap sinyal tren makro dengan menghitung rata-rata *rolling* suhu dalam 24 jam terakhir.
+
+- **Fitur Siklik:** Nilai jam (0 hingga 23) tidak dimasukkan sebagai angka mentah agar model tidak membaca jam 23 dan 0 sebagai dua waktu yang berjauhan. Angka waktu tersebut diekstrak menjadi representasi siklik menggunakan transformasi sinus dan kosinus.
+
+- **Fitur *Lag*:** Dibangun 24 fitur *lag* yang menangkap riwayat beban listrik aktual pada setiap jam dalam siklus satu hari sebelumnya.
+
+- **Fitur *Rolling*:** Faktor cuaca memengaruhi beban secara akumulatif. Alih-alih memakai suhu di satu titik waktu, kita menangkap sinyal tren makro dengan menghitung rata-rata *rolling* suhu dalam 24 jam terakhir.
 
 Secara matematis, ekstraksi fitur *rolling* untuk suhu dihitung menggunakan formula *Moving Average* (rata-rata pergerakan):
 
-$$ MA_t = \frac{1}{w} \sum_{i=0}^{w-1} x_{t-i} $$
+$$MA_t = \frac{1}{w} \sum_{i=0}^{w-1} x_{t-i}$$
 
 Di mana $MA_t$ adalah nilai rata-rata suhu pada jam $t$, $w$ adalah ukuran jendela *lookback* (24 jam), dan $x_{t-i}$ adalah nilai suhu aktual pada $i$ jam ke belakang.
 
@@ -264,9 +290,7 @@ Tahap selanjutnya adalah desain validasi. Mengacak baris data dilarang keras pad
 
 Meskipun batas potong ditarik secara kronologis, sampel pengujian paling awal tetap akan menarik rentang riwayat 24 jam ke belakang yang melewati garis batas. Akibatnya, input set pengujian berisiko menyentuh titik observasi yang statusnya masih menjadi bagian dari jam-jam akhir pelatihan. Untuk mencegah hal tersebut, kita harus menyisipkan *purge gap*.
 
-[GAMBAR 10.6: Diagram - Skema validasi temporal dengan pemisahan kronologis dan area purge gap 25 jam di antara set pelatihan dan pengujian]
-
-```python
+``` {.python language="Python"}
 import pandas as pd
 import numpy as np
 
@@ -298,7 +322,9 @@ print(f"Jumlah Baris Terbuang (Gap): {len(df) - (len(X_train) + len(X_test))} ja
 ```
 
 Aturan isolasi temporal dan eksekusi *pipeline* dijalankan melalui dua langkah utama:
-1. **Penerapan *Purge Gap*:** Sebuah blok data sepanjang 25 jam (berasal dari perhitungan *lookback* ditambah *horizon*) yang tepat berada di garis batas irisan dibuang sepenuhnya agar kedua set tidak saling tumpang tindih.
-2. **Transformasi Terisolasi:** Fungsi *scaler* untuk menormalisasi variabel input hanya di-*fit* pada set pelatihan. Pendekatan ini merupakan *praktik pipeline yang benar* untuk memastikan agar statistik dan distribusi dari data masa depan tidak mencemari bobot model.
+
+1.  **Penerapan *Purge Gap*:** Sebuah blok data sepanjang 25 jam (berasal dari perhitungan *lookback* ditambah *horizon*) yang tepat berada di garis batas irisan dibuang sepenuhnya agar kedua set tidak saling tumpang tindih.
+
+2.  **Transformasi Terisolasi:** Fungsi *scaler* untuk menormalisasi variabel input hanya di-*fit* pada set pelatihan. Pendekatan ini merupakan *praktik pipeline yang benar* untuk memastikan agar statistik dan distribusi dari data masa depan tidak mencemari bobot model.
 
 Melalui perancangan jendela pengamatan dan eksekusi *purge gap* yang ketat ini, metrik evaluasi yang dihasilkan dapat secara riil mencerminkan performa model ketika diimplementasikan pada data sistem di lingkungan produksi.

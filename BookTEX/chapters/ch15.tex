@@ -142,7 +142,7 @@ Terdapat tiga pendekatan evaluasi jarak yang biasanya dipilih sesuai tuntutan ar
 
 Sebuah \emph{embedding} adalah pemetaan data ke ruang vektor. Namun, kualitas representasi ini sangat bergantung pada konteks tugas. Vektor yang memisahkan kelas dengan baik pada satu dataset bisa gagal total pada dataset lain. Hasil dari \emph{Massive Text Embedding Benchmark} (MTEB) mengonfirmasi bahwa tidak ada model \emph{embedding} tunggal yang mendominasi seluruh jenis tugas prediksi; setiap representasi memiliki keunggulan spesifik.
 
-\subsection{Metode Linear Probing}\label{metode-linear-probing}
+\textbf{Metode Linear Probing.}\label{metode-linear-probing}
 
 Untuk mengevaluasi kualitas \emph{embedding} tanpa bias dari arsitektur klasifikasi yang rumit, kita menggunakan \emph{linear probing}. Metode ini memperlakukan model \emph{pretrained} murni sebagai ekstraktor fitur statis (\emph{frozen extractor}) dan menempatkan model linier sederhana di ujungnya.
 
@@ -186,7 +186,7 @@ Judul: Evaluasi Linear Probing
 Tipe: skema
 Tampilkan: Model pre-trained dalam keadaan beku (frozen) yang mengeluarkan vektor fitur (embedding) ke layer klasifikasi linier sederhana.
 
-\subsection{Mengidentifikasi Domain Shift}\label{mengidentifikasi-domain-shift}
+\textbf{Mengidentifikasi Domain Shift.}\label{mengidentifikasi-domain-shift}
 
 Transfer representasi dari luar kerap menemui jalan buntu akibat \emph{domain shift} - perbedaan fundamental antara sebaran data tempat model \emph{pretrained} dilatih dengan data tugas akhir kita. Model membawa asumsi bentuk data dari proses pelatihannya; saat asumsi ini dilanggar, representasi yang dihasilkan kehilangan makna.
 
@@ -459,8 +459,6 @@ Konstruksi arsitektur ini membelah aliran pemrosesan matriks ke dalam dua jalur 
 \end{itemize}
 
 Kedua arus fitur ini berujung pada tahap penggabungan matriks (\emph{concatenation}). Di dalam ekosistem pengembangan \emph{machine learning}, fusi ini diorkestrasi secara elegan menggunakan kelas fungsional \passthrough{\lstinline!FeatureUnion!} dari pustaka \emph{Scikit-Learn}. Metode ini menumpuk vektor \emph{embedding} teks dan fitur rekayasa tabular menjadi satu kesatuan vektor gabungan berdimensi 778 untuk setiap baris observasi.
-
-{[}GAMBAR 15.5: Diagram - Arsitektur integrasi pipeline hibrida menggabungkan ekstraktor teks pretrained dengan transformasi fitur tabular{]}
 
 Matriks raksasa hasil perpaduan tersebut kemudian diserahkan kepada algoritma pengklasifikasi akhir seperti \emph{XGBoost}. Validitas arsitektur ini sangat bergantung pada kepatuhan terhadap aturan pencegahan kebocoran data (\emph{data leakage}): seluruh operasi kalkulasi rata-rata tabular dan pemetaan vektorisasi teks harus murni dipelajari pasca-partisi data (\emph{data split}).
 

@@ -8,11 +8,15 @@
 % >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
 \chapter{Representasi Fitur Numerik}\label{representasi-fitur-numerik}
 
+Fitur numerik adalah bentuk representasi kuantitatif yang paling umum ditemui dalam data tabular. Namun, angka-angka mentah di dunia nyata menyimpan berbagai hambatan komputasi yang dapat mendistorsi proses pemelajaran mesin. Di satu sisi, perbedaan rentang skala antar-atribut yang sangat kontras, misalnya membandingkan variabel pendapatan dalam jutaan dengan variabel usia dalam puluhan, secara otomatis akan membelokkan perhitungan fungsi objektif pada model berbasis jarak spasial atau gradien. Di sisi lain, sebaran data yang menceng ekstrem akibat pencilan (\emph{outlier}) dapat melanggar asumsi dasar statistik yang dibutuhkan oleh algoritma parametrik untuk dapat belajar secara optimal.
+
+Bab ini akan mengupas tuntas cara menata kembali representasi fitur numerik agar sesuai dengan karakteristik matematis algoritma model. Kita mendalami teknik penskalaan standar, penanganan pencilan berbasis kuartil yang tangguh (\emph{robust}), hingga pemampatan distribusi melengkung menggunakan transformasi parametrik dan non-parametrik. Memahami kapan, mengapa, dan bagaimana memodifikasi rentang sebaran angka ini merupakan bekal penting untuk menstabilkan konvergensi model dan mendongkrak ketajaman hasil prediksi.
+
 \section{Skala dan Distribusi: Mengapa Fitur Numerik Butuh Transformasi}\label{skala-dan-distribusi-mengapa-fitur-numerik-butuh-transformasi}
 
 Algoritma \emph{machine learning} menginterpretasikan angka murni berdasarkan besaran matematisnya. Model tidak memiliki pemahaman bawaan mengenai konteks atau satuan ukur dari sebuah nilai. Angka 10.000.000 selalu diproses jauh lebih besar daripada 50, meskipun angka pertama mewakili pendapatan tahunan dan angka kedua mewakili usia manusia. Sifat komputasi yang harfiah ini menimbulkan dua masalah utama saat memproses fitur numerik mentah.
 
-\subsection{Dominasi Skala pada Fungsi Objektif}\label{dominasi-skala-pada-fungsi-objektif}
+\textbf{Dominasi Skala pada Fungsi Objektif.}\label{dominasi-skala-pada-fungsi-objektif}
 
 Skala merujuk pada rentang nilai observasi dari sebuah variabel. Ketika algoritma menerima fitur-fitur dengan rentang skala yang terlampau jauh berbeda, fitur dengan varians besar akan mendominasi perhitungan objektif.
 
@@ -26,7 +30,7 @@ Bila model mengevaluasi observasi dengan fitur gaji (rentang jutaan rupiah) dan 
 
 Selain itu, pada algoritma berbasis gradien seperti regresi linier dan jaringan saraf tiruan, perbedaan skala antar fitur yang drastis memperlambat perhitungan iteratif. Kondisi ekstrem bahkan mampu menggagalkan model mencapai konvergensi yang stabil, karena arsitektur dasarnya mengasumsikan seluruh fitur beroperasi pada skala yang sebanding.
 
-\subsection{Distribusi Menceng Melanggar Asumsi Model}\label{distribusi-menceng-melanggar-asumsi-model}
+\textbf{Distribusi Menceng Melanggar Asumsi Model.}\label{distribusi-menceng-melanggar-asumsi-model}
 
 Bentuk persebaran observasi data juga berdampak langsung pada kualitas pemodelan. Data nyata sering membentuk distribusi menceng (\emph{skewed distribution}), yaitu persebaran data yang tidak simetris dan memiliki satu ekor memanjang akibat nilai-nilai ekstrem.
 
@@ -44,7 +48,7 @@ Karena besaran angka mentah berbenturan dengan mekanisme komputasi algoritma, fi
 
 Algoritma pemelajaran mesin berbasis jarak (seperti \emph{k-Nearest Neighbors}) dan turunan gradien (seperti regresi linier) sensitif terhadap skala fitur numerik. Jika model memproses fitur usia dalam skala puluhan dan harga rumah dalam skala jutaan, fitur harga rumah akan mendominasi komputasi akibat magnitudo nominalnya. Penyesuaian skala diperlukan agar seluruh input memiliki kontribusi yang setara. Terdapat dua metode prapemrosesan utama: standardisasi dan skala min-max.
 
-\subsection{Standardisasi}\label{standardisasi}
+\textbf{Standardisasi.}\label{standardisasi}
 
 Standardisasi memodifikasi sebaran nilai fitur agar memiliki rata-rata nol dengan deviasi baku satu. Proses ini menghitung nilai baku (\emph{Z-score}) dari setiap titik observasi menggunakan persamaan:
 
@@ -52,7 +56,7 @@ Standardisasi memodifikasi sebaran nilai fitur agar memiliki rata-rata nol denga
 
 Dalam rumus ini, \(z\) adalah nilai hasil standardisasi, \(x\) adalah observasi nilai asli, sedangkan \(\mu\) dan \(\sigma\) berturut-turut merupakan rata-rata dan deviasi baku dari variabel tersebut. Standardisasi memiliki beberapa karakteristik utama. Pertama, metode ini mempertahankan jarak proporsional sehingga rasio komparatif antar-titik data tetap sesuai dengan bentuk sebaran aslinya. Kedua, ia lebih toleran terhadap nilai ekstrem; titik pencilan (\emph{outlier}) tidak dipaksa mengecil dan posisi ekstremnya dipertahankan (misalnya \(z = 4.5\)), memfasilitasi algoritma yang memang membutuhkan informasi abnormal tersebut. Terakhir, rentang nilai akhirnya tidak dibatasi atau dikurung dalam batas minimum dan maksimum yang kaku.
 
-\subsection{\texorpdfstring{Skala Min-Max (\emph{Min-Max Scaling})}{Skala Min-Max (Min-Max Scaling)}}\label{skala-min-max-min-max-scaling}
+\textbf{Skala Min-Max (\emph{Min-Max Scaling}).}\label{skala-min-max-min-max-scaling}
 
 Skala min-max memampatkan seluruh nilai numerik ke dalam rentang tertutup, umumnya interval nilai \(0\) hingga \(1\). Transformasi ini dihitung menggunakan formula kompresi:
 
@@ -66,7 +70,7 @@ Di mana \(x_{scaled}\) melambangkan nilai setelah diskalakan, \(x\) adalah obser
 \label{fig:ch03-fig-2}
 \end{figure}
 
-\subsection{Kriteria Penggunaan}\label{kriteria-penggunaan}
+\textbf{Kriteria Penggunaan.}\label{kriteria-penggunaan}
 
 Pemilihan metode penskalaan sangat bergantung pada karakteristik matematis dari algoritma yang akan digunakan. Standardisasi sangat disarankan untuk model linier dan algoritma berbasis jarak Euclidean (seperti \emph{Support Vector Machine} atau \emph{k-Nearest Neighbors}). Pendekatan ini tidak merusak variansi jarak \emph{outlier} dan mampu memuluskan laju konvergensi fungsi objektif. Sebaliknya, skala min-max lebih tepat dipilih untuk algoritma yang memetakan fungsi pada ruang terbatas konstan. Metode ini relevan untuk memproses representasi fisik dengan rentang mutlak (misalnya nilai intensitas piksel 0-255 pada citra digital) atau sebagai asupan awal untuk unit aktivasi tertentu pada jaringan saraf tiruan (\emph{neural network}).
 
@@ -120,7 +124,7 @@ Pemetaan berbasis kuantil ini menghasilkan beberapa kompromi praktis dalam desai
 
 Transformasi matematis seperti logaritma atau standardisasi bukan satu-satunya cara memanipulasi sebaran numerik. Pendekatan lain beroperasi dengan membatasi rentang nilai secara absolut atau mengelompokkan presisi data ke dalam kategori interval.
 
-\subsection{Clipping (Winsorization)}\label{clipping-winsorization}
+\textbf{Clipping (Winsorization).}\label{clipping-winsorization}
 
 \emph{Clipping} membatasi nilai mentah pada ambang minimum dan maksimum absolut. Nilai yang melewati batas ini ditekan agar sejajar dengan ambang tersebut, sehingga observasi \emph{outlier} tidak dibuang melainkan dipertahankan pada nilai ekstrem yang dikendalikan. Saat batas ini ditentukan melalui parameter statistik, teknik ini disebut \emph{winsorization}.
 
@@ -144,7 +148,7 @@ Keterangan:
 
 Praktisi menentukan \(\theta_{min}\) dan \(\theta_{max}\) melalui tiga mekanisme utama. Pertama, berbasis persentil (\emph{quantiles}), di mana pemotongan distribusi bersandar pada batas persentil murni (misalnya membatasi populasi hanya pada rentang persentil ke-5 hingga ke-95). Kedua, berbasis Rentang Interkuartil (IQR), yakni menggunakan batas deteksi pencilan standar seperti \(Q_1 - 1.5 \times \text{IQR}\) untuk batas bawah dan \(Q_3 + 1.5 \times \text{IQR}\) untuk batas atas. Ketiga, berbasis \emph{Median Absolute Deviation} (MAD), yang mengukur dispersi dari median dan menetapkan batas berdasarkan kelipatannya (contohnya mematok batas atas pada nilai \(\text{Median} + 3.29 \times \text{MAD}\)). Perhitungan MAD terbukti jauh lebih kebal terhadap kontaminasi ekstrem jika dibandingkan dengan menggunakan IQR atau deviasi standar. Pendekatan \emph{clipping} pada akhirnya menjamin stabilitas karena mencegah \emph{outlier} mendominasi pembobotan algoritma, sembari tetap menjaga tanpa mendistorsi kepadatan data di area sentral (\emph{inliers}).
 
-\subsection{Discretization (Binning)}\label{discretization-binning}
+\textbf{Discretization (Binning).}\label{discretization-binning}
 
 \emph{Discretization} mengubah fitur kontinu menjadi variabel kategorikal ordinal atau diskrit dengan melebur angka spesifik ke dalam interval batas (\emph{bins}).
 
@@ -160,7 +164,7 @@ Sebagai evolusi modern dari teknik ini, transformasi \textbf{Spline} (\emph{Piec
 
 Transformasi nilai seperti \emph{standardization} atau \emph{min-max scaling} bukanlah tahap wajib untuk semua algoritma \emph{machine learning}. Keputusan menerapkan pengubahan skala bergantung pada arsitektur perhitungan yang digunakan. Praktisi membagi model ke dalam dua kelompok berdasarkan tingkat sensitivitasnya terhadap parameter skala.
 
-\subsection{Model yang Sensitif terhadap Skala}\label{model-yang-sensitif-terhadap-skala}
+\textbf{Model yang Sensitif terhadap Skala.}\label{model-yang-sensitif-terhadap-skala}
 
 Model dalam kategori ini sangat bergantung pada rentang nilai absolut dari sebuah fitur. Jika satu fitur memiliki rentang numerik hingga jutaan (seperti pendapatan) sedangkan fitur lain hanya berskala puluhan (seperti usia), fitur dengan angka besar akan mendominasi hasil prediksi.
 
@@ -174,7 +178,7 @@ Di mana \(z\) mewakili nilai hasil transformasi, \(x\) adalah angka fitur mentah
 
 {[}GAMBAR 3.6: Skema - Skema scaling (MinMax vs Standard) yang menormalkan rentang angka antar dimensi fitur{]}
 
-\subsection{Model yang Tidak Sensitif terhadap Skala}\label{model-yang-tidak-sensitif-terhadap-skala}
+\textbf{Model yang Tidak Sensitif terhadap Skala.}\label{model-yang-tidak-sensitif-terhadap-skala}
 
 Keluarga \textbf{model berbasis pohon (\emph{tree-based estimators})} memiliki karakteristik yang sama sekali tidak terpengaruh oleh besaran skala fitur. Kategori ini mencakup \emph{Decision Trees}, \emph{Random Forest}, dan \emph{Gradient Boosting}.
 
@@ -211,3 +215,15 @@ Di sisi lain, algoritma \emph{Random Forest} menunjukkan karakteristik respons y
 {[}GAMBAR 3.7: Plot Data - Grafik batang komparatif yang menampilkan lonjakan akurasi k-NN dan SVM pasca-standardisasi, sementara performa Random Forest tetap statis tak berubah{]}
 
 Eksperimen komparatif ini menghasilkan panduan praktis yang dapat langsung diadopsi. Kita wajib menyertakan standardisasi sebelum melatih model berbasis metrik spasial (seperti k-NN dan SVM) maupun model yang menggunakan optimasi gradien (seperti regresi linier dan jaringan saraf tiruan, di mana data tak berskala sangat menghambat laju konvergensi). Sebaliknya, kita dapat melewati tahap prapemrosesan ini sepenuhnya jika \emph{pipeline} dirancang menggunakan keluarga algoritma berbasis pohon (seperti \emph{Random Forest}, XGBoost, atau LightGBM). Menghilangkan modul penskalaan saat menggunakan pohon keputusan akan membebaskan sistem dari kalkulasi yang tidak berguna, memastikan eksekusi komputasi lebih efisien tanpa mengorbankan kualitas akurasi sedikit pun.
+
+\section{Sintesis Keputusan dan Prinsip Akhir}\label{sintesis-keputusan-dan-prinsip-akhir}
+
+Manipulasi terhadap rentang skala dan bentuk distribusi fitur numerik adalah keputusan desain yang harus didasarkan pada karakteristik arsitektur model dan sebaran asli data.
+
+\textbf{Panduan Pemilihan Penskalaan.} Standardisasi merupakan pilihan utama untuk model parametrik, model linear, dan algoritma berbasis gradien atau metrik jarak (seperti k-NN dan SVM), terutama saat data terdistribusi normal atau mendekati simetris. Skala min-max lebih tepat digunakan untuk algoritma yang memproses input dalam rentang tertutup yang konstan (seperti pengolahan intensitas piksel citra digital). Jika data mengandung banyak pencilan ekstrem, terapkan \emph{robust scaling} menggunakan median dan IQR agar penyebaran kelompok data utama tidak terdistorsi.
+
+\textbf{Koreksi Distribusi.} Sebaran data yang menceng dengan ekor panjang ditarik menuju sebaran normal menggunakan \emph{power transform} (seperti Box-Cox atau Yeo-Johnson). Untuk kekebalan penuh terhadap pencilan dengan konsekuensi distorsi jarak spasial asli, \emph{quantile transform} adalah alternatif non-parametrik yang tangguh. Batasi rentang nilai secara absolut menggunakan teknik \emph{clipping} untuk meredam keliaran anomali ekstrem tanpa membuang baris observasinya.
+
+\textbf{Sensitivitas Algoritma.} Keluarga model berbasis pohon (seperti \emph{random forest} dan \emph{gradient boosting}) sepenuhnya kebal terhadap perbedaan skala fitur karena proses percabangannya bekerja secara ordinal dan independen pada setiap kolom. Menghilangkan tahapan penskalaan saat menggunakan model pohon membebaskan sistem dari komputasi redundan di lingkungan produksi.
+
+Latihan praktis dan eksperimen pengujian efek penskalaan pada berbagai keluarga model secara interaktif dapat diakses pada dokumen naskah pendamping di repositori buku ini.

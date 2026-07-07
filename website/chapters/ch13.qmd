@@ -3,13 +3,16 @@
 ## Data Spasial: Koordinat, Sistem Referensi, Jarak, dan Kedekatan
 
 Data spasial menyimpan informasi geometris tentang letak suatu entitas. Dalam basis data, lokasi geografis umumnya terekam sebagai titik koordinat mentah, yaitu lintang (*latitude*) dan bujur (*longitude*). Memasukkan pasangan koordinat ini secara langsung ke dalam *pipeline machine learning* sebagai angka numerik standar akan memicu serangkaian kegagalan analitis:
-* Algoritma akan memperlakukan nilai lintang dan bujur secara terpisah, mengabaikan interaksi mutlak keduanya sebagai satu lokasi terpadu.
-* Skala fisis spasial tidak seragam akibat kelengkungan bumi. Pada sistem referensi bola seperti WGS84, satu derajat bujur di ekuator merepresentasikan jarak fisik yang jauh lebih panjang daripada satu derajat di dekat kutub bumi. Konsekuensinya, kalkulasi jarak Euklides biasa menjadi cacat secara matematis.
+
+- Algoritma akan memperlakukan nilai lintang dan bujur secara terpisah, mengabaikan interaksi mutlak keduanya sebagai satu lokasi terpadu.
+
+- Skala fisis spasial tidak seragam akibat kelengkungan bumi. Pada sistem referensi bola seperti WGS84, satu derajat bujur di ekuator merepresentasikan jarak fisik yang jauh lebih panjang daripada satu derajat di dekat kutub bumi. Konsekuensinya, kalkulasi jarak Euklides biasa menjadi cacat secara matematis.
 
 Agar koordinat dapat diproses menjadi fitur yang valid, kerangka kerja rekayasa fitur harus diintegrasikan dengan Sistem Referensi Koordinat (*Coordinate Reference System* / CRS) melalui pustaka spasial seperti *GeoPandas* atau *pyproj*:
-* **Proyeksi Kartesius:** Sebelum algoritma menghitung agregasi kedekatan, sistem WGS84 wajib diproyeksikan ke sistem bidang datar bersatuan metrik seperti UTM (*Universal Transverse Mercator*). Transformasi spasial ini memungkinkan kalkulasi geometri lokal yang presisi.
-* **Jarak Geodesik:** Apabila transformasi proyeksi datar tidak memadai, ekstraksi jarak harus dijalankan menggunakan rumus matematis bola bumi, misalnya rumus *Haversine*, yang secara akurat memetakan rute terpendek melintasi kelengkungan bumi.
 
+- **Proyeksi Kartesius:** Sebelum algoritma menghitung agregasi kedekatan, sistem WGS84 wajib diproyeksikan ke sistem bidang datar bersatuan metrik seperti UTM (*Universal Transverse Mercator*). Transformasi spasial ini memungkinkan kalkulasi geometri lokal yang presisi.
+
+- **Jarak Geodesik:** Apabila transformasi proyeksi datar tidak memadai, ekstraksi jarak harus dijalankan menggunakan rumus matematis bola bumi, misalnya rumus *Haversine*, yang secara akurat memetakan rute terpendek melintasi kelengkungan bumi.
 ```{mermaid}
 %%| label: fig-ch13-13_1
 %%| fig-cap: "Transformasi Koordinat Mentah Menjadi Fitur Jarak, Radius, dan Indeks Heksagonal"
@@ -19,11 +22,11 @@ graph TD
     A --> C[Fitur Jarak Proksimitas Radius Fasilitas]
     A --> D[Indeks Heksagonal Sel H3 Uber]
 ```
-
 Setelah landasan spasial dikalibrasi, lokasi diterjemahkan dari koordinat absolut menjadi atribut relasional yang prediktif. Praktik ini direpresentasikan melalui dua arsitektur ekstraksi utama:
-1. **Fitur Jarak Absolut (*Distance Features*):** Mengalkulasi metrik spasial menuju titik referensi eksternal. Alih-alih mempelajari koordinat geografis sebuah properti yang kaku, model regresi menerima sinyal ekonomi secara eksplisit melalui atribut "jarak menuju stasiun kereta terdekat" atau "jarak ke pusat bisnis".
-2. **Indeks Spasial Hierarkis:** Memetakan koordinat ke dalam *grid* menggunakan kerangka kerja geospasial modern seperti algoritma H3 yang dikembangkan oleh Uber. H3 memecah permukaan bumi menjadi sel-sel berbentuk heksagonal (*hexagonal hierarchical spatial indexing*). Sistem ini mengonversi titik koordinat acak menjadi atribut pengelompokan (*categorical id*) sel 64-bit yang seragam. Pola indeks ini menyederhanakan perhitungan fitur kedekatan (*proximity*), seperti mengekstraksi metrik "total kemacetan lalu lintas dalam radius dua sel heksagonal sekeliling titik utama".
 
+1.  **Fitur Jarak Absolut (*Distance Features*):** Mengalkulasi metrik spasial menuju titik referensi eksternal. Alih-alih mempelajari koordinat geografis sebuah properti yang kaku, model regresi menerima sinyal ekonomi secara eksplisit melalui atribut "jarak menuju stasiun kereta terdekat" atau "jarak ke pusat bisnis".
+
+2.  **Indeks Spasial Hierarkis:** Memetakan koordinat ke dalam *grid* menggunakan kerangka kerja geospasial modern seperti algoritma H3 yang dikembangkan oleh Uber. H3 memecah permukaan bumi menjadi sel-sel berbentuk heksagonal (*hexagonal hierarchical spatial indexing*). Sistem ini mengonversi titik koordinat acak menjadi atribut pengelompokan (*categorical id*) sel 64-bit yang seragam. Pola indeks ini menyederhanakan perhitungan fitur kedekatan (*proximity*), seperti mengekstraksi metrik "total kemacetan lalu lintas dalam radius dua sel heksagonal sekeliling titik utama".
 
 ## Fitur Ketetanggaan dan Autokorelasi Spasial
 
@@ -35,18 +38,23 @@ Model non-spasial, seperti *random forest* atau *gradient boosting*, memproses d
 
 Teknik yang paling lazim digunakan dalam rekayasa fitur spasial adalah *spatial lag*. Representasi ini berwujud nilai rata-rata berbobot dari suatu variabel pada lokasi-lokasi yang menjadi tetangga observasi tersebut.
 
-$$ y_{lag, i} = \sum_{j=1}^{N} w_{ij} y_j $$
+$$y_{lag, i} = \sum_{j=1}^{N} w_{ij} y_j$$
 
 Notasi pada persamaan di atas diuraikan sebagai berikut:
-* $y_{lag, i}$ adalah fitur *spatial lag* untuk lokasi $i$.
-* $w_{ij}$ adalah bobot spasial antara lokasi $i$ dan tetangganya $j$. Komponen ini umumnya dinormalisasi per baris (*row-standardized*), sehingga jumlah seluruh bobot untuk satu observasi bernilai satu ($\sum_j w_{ij} = 1$).
-* $y_j$ adalah nilai variabel yang diamati pada lokasi tetangga $j$.
+
+- $y_{lag, i}$ adalah fitur *spatial lag* untuk lokasi $i$.
+
+- $w_{ij}$ adalah bobot spasial antara lokasi $i$ dan tetangganya $j$. Komponen ini umumnya dinormalisasi per baris (*row-standardized*), sehingga jumlah seluruh bobot untuk satu observasi bernilai satu ($\sum_j w_{ij} = 1$).
+
+- $y_j$ adalah nilai variabel yang diamati pada lokasi tetangga $j$.
 
 Keputusan desain utama terletak pada definisi matriks bobot ($W$). Penentuan kandidat "tetangga" biasanya menggunakan satu dari tiga skema berikut:
-* **Radius jarak (*distance band*):** Memasukkan semua lokasi yang berada dalam batasan jarak $r$ kilometer dari titik observasi.
-* **Tetangga terdekat (KNN):** Mengambil sejumlah $k$ lokasi dengan jarak terpendek, yang menjaga jumlah tetangga tetap konstan terlepas dari kepadatan wilayah.
-* **Kontiguitas:** Menggunakan batas administratif, misalnya menetapkan area dengan kode pos atau kelurahan yang saling bersinggungan sebagai tetangga.
 
+- **Radius jarak (*distance band*):** Memasukkan semua lokasi yang berada dalam batasan jarak $r$ kilometer dari titik observasi.
+
+- **Tetangga terdekat (KNN):** Mengambil sejumlah $k$ lokasi dengan jarak terpendek, yang menjaga jumlah tetangga tetap konstan terlepas dari kepadatan wilayah.
+
+- **Kontiguitas:** Menggunakan batas administratif, misalnya menetapkan area dengan kode pos atau kelurahan yang saling bersinggungan sebagai tetangga.
 ```{mermaid}
 %%| label: fig-ch13-13_2
 %%| fig-cap: "Visualisasi Matriks Bobot Spasial (W) untuk Perhitungan Spatial Lag"
@@ -55,14 +63,17 @@ graph TD
     A[Entitas Spasial Utama] -->|Identifikasi Tetangga Terdekat| B[Matriks Bobot W: Nilai 1 jika Bertetangga, 0 jika Tidak]
     B -->|Perkalian Matriks| C[Spatial Lag: Fitur Agregat Nilai Tetangga Sekitar]
 ```
-
 **Indikator Autokorelasi Lokal (LISA)**
 
 Selain *spatial lag* sederhana, pustaka geospasial modern seperti PySAL (`esda`) memungkinkan kita mengekstrak fitur struktural yang lebih kaya. Indikator Autokorelasi Spasial Lokal (LISA), yang dikenal sebagai *Local Moran's I*, mengklasifikasikan setiap observasi ke dalam empat kuadran berdasarkan kemiripannya dengan lingkungan sekitar. Label ini dapat diekstrak menjadi fitur kategorikal:
-* **HH (*High-High*):** Lokasi bernilai tinggi yang dikelilingi tetangga bernilai tinggi (*hot spot*).
-* **LL (*Low-Low*):** Lokasi bernilai rendah di tengah area bernilai rendah (*cold spot*).
-* **HL (*High-Low*):** Pencilan nilai tinggi yang berada di lingkungan bernilai rendah (*diamond*).
-* **LH (*Low-High*):** Pencilan nilai rendah di kawasan bernilai tinggi (*doughnut*).
+
+- **HH (*High-High*):** Lokasi bernilai tinggi yang dikelilingi tetangga bernilai tinggi (*hot spot*).
+
+- **LL (*Low-Low*):** Lokasi bernilai rendah di tengah area bernilai rendah (*cold spot*).
+
+- **HL (*High-Low*):** Pencilan nilai tinggi yang berada di lingkungan bernilai rendah (*diamond*).
+
+- **LH (*Low-High*):** Pencilan nilai rendah di kawasan bernilai tinggi (*doughnut*).
 
 **Penerapan dan Risiko**
 
@@ -70,34 +81,35 @@ Sebagai contoh, dalam prediksi penjualan toko ritel, model yang hanya dilatih me
 
 Fitur ketetanggaan memungkinkan model tabular biasa menggunakan konteks ruang secara efisien. Meskipun begitu, ekstraksi fitur ini sangat menuntut praktik pipeline yang benar. Menggunakan nilai target historis dari lokasi sekitar untuk menghitung *lag* sangat rentan memunculkan informasi dari masa depan pada saat prediksi, yang berujung pada terjadinya *leakage* spasial. Risiko spesifik ini menuntut penyesuaian pada strategi pembagian data pada bagian selanjutnya.
 
-
 ## *Data Leakage* pada Data Spasial dan *Spatial Cross-Validation*
 
 Ketergantungan antar-lokasi dalam data geografis memunculkan kerentanan evaluasi. Data spasial sangat rentan terhadap kebocoran target (*target leakage*) yang merusak validitas metrik performa model.
 
 Akar kebocoran ini adalah autokorelasi spasial, yakni kecenderungan observasi yang saling berdekatan untuk memiliki nilai yang serupa. Fenomena ini sering diukur menggunakan indeks *Moran's I*:
 
-$$ I = \frac{n}{W} \frac{\sum_{i=1}^{n} \sum_{j=1}^{n} w_{ij}(x_i - \bar{x})(x_j - \bar{x})}{\sum_{i=1}^{n} (x_i - \bar{x})^2} $$
+$$I = \frac{n}{W} \frac{\sum_{i=1}^{n} \sum_{j=1}^{n} w_{ij}(x_i - \bar{x})(x_j - \bar{x})}{\sum_{i=1}^{n} (x_i - \bar{x})^2}$$
 
 Di mana $n$ adalah jumlah observasi spasial, $x_i$ dan $x_j$ adalah nilai fitur pada lokasi $i$ dan $j$, $\bar{x}$ adalah rata-rata fitur, $w_{ij}$ melambangkan bobot spasial antara lokasi $i$ dan $j$ (skor ketetanggaan), serta $W$ adalah jumlah total bobot spasial. Nilai $I$ yang tinggi dan positif menunjukkan kuatnya autokorelasi, yang berarti informasi target dapat mengalir melintasi batas observasi secara tak kasatmata.
 
-### Kegagalan Validasi Silang Acak
+**Kegagalan Validasi Silang Acak.**
 
 Pemisahan data secara acak (*random k-fold cross-validation*) menghasilkan partisi latih dan uji yang tersebar menyerupai taburan garam dan merica (*salt and pepper*) di atas peta. Metode ini gagal pada data spasial akibat tiga masalah utama:
 
-* **Kontaminasi Jarak Dekat:** Titik data uji sering kali berbatasan langsung dengan titik data latih.
-* **Metrik Akurasi Semu:** Model mencetak akurasi tinggi akibat menghafal nilai dari titik tetangga terdekatnya yang bocor ke set latih, tanpa mempelajari pola lingkungan secara umum.
-* **Penurunan Performa:** Saat model diterapkan pada lokasi baru, kinerjanya turun drastis karena kehilangan akses ke sinyal tetangga tersebut.
+- **Kontaminasi Jarak Dekat:** Titik data uji sering kali berbatasan langsung dengan titik data latih.
 
-### *Spatial Cross-Validation* dan Zona Penyangga
+- **Metrik Akurasi Semu:** Model mencetak akurasi tinggi akibat menghafal nilai dari titik tetangga terdekatnya yang bocor ke set latih, tanpa mempelajari pola lingkungan secara umum.
+
+- **Penurunan Performa:** Saat model diterapkan pada lokasi baru, kinerjanya turun drastis karena kehilangan akses ke sinyal tetangga tersebut.
+
+***Spatial Cross-Validation* dan Zona Penyangga.**
 
 Penerapan *praktik pipeline yang benar* mengharuskan model dievaluasi menggunakan *spatial cross-validation*. Metode ini mencegah kebocoran dengan memblokir observasi berdekatan agar tidak terpisah ke dua set yang berbeda.
 
 Proses evaluasi spasial beroperasi melalui dua mekanisme pembatasan:
 
-1. **Pemisahan Berbasis Blok:** Peta dibagi menjadi beberapa wilayah atau blok besar. Seluruh observasi dalam satu blok dialokasikan sebagai data latih, dan blok lainnya sepenuhnya difungsikan sebagai data uji.
-2. **Zona Penyangga (*Buffer*):** Jarak aman atau zona mati (*dead zone*) diterapkan di sekitar batas blok uji. Titik latih yang masuk ke dalam rentang zona ini dihapus selama proses pelatihan guna memotong kebocoran informasi jarak dekat.
+1.  **Pemisahan Berbasis Blok:** Peta dibagi menjadi beberapa wilayah atau blok besar. Seluruh observasi dalam satu blok dialokasikan sebagai data latih, dan blok lainnya sepenuhnya difungsikan sebagai data uji.
 
+2.  **Zona Penyangga (*Buffer*):** Jarak aman atau zona mati (*dead zone*) diterapkan di sekitar batas blok uji. Titik latih yang masuk ke dalam rentang zona ini dihapus selama proses pelatihan guna memotong kebocoran informasi jarak dekat.
 ```{mermaid}
 %%| label: fig-ch13-13_3
 %%| fig-cap: "Pemisahan Acak vs Pemisahan Blok Spasial dengan Zona Penyangga (Buffer Zone)"
@@ -107,9 +119,7 @@ graph TD
         A1[Blok Latih Spasial] -->|Zona Penyangga / Buffer Zone| B1[Blok Uji Spasial]
     end
 ```
-
 Kasus prediksi deforestasi dari citra satelit memperlihatkan dampak metode ini dengan jelas. Karakteristik tutupan lahan sebuah piksel satelit memiliki korelasi kuat dengan piksel di sekelilingnya. Jika dipisahkan secara acak, model dapat mendeteksi status tetangga piksel uji tanpa mengekstrak ciri visual hutan yang gundul. Sebaliknya, pemisahan blok spasial memaksa model mengidentifikasi indikator lingkungan yang objektif sehingga sistem siap diterapkan pada wilayah yang belum pernah direkam.
-
 
 ## Data Graf: Derajat, Sentralitas, dan Fitur Klaster
 
@@ -119,18 +129,19 @@ Model *machine learning* konvensional seperti regresi logistik atau *random fore
 
 Pengekstraksian fitur topologi pada graf umumnya memanfaatkan tiga kategori metrik:
 
-* **Derajat (*Degree*):** Menghitung jumlah sisi yang terhubung langsung ke sebuah simpul. Pada graf berarah, perhitungan dipecah menjadi *in-degree* (indikator daya tarik atau popularitas) dan *out-degree* (indikator tingkat aktivitas komunikasi). Untuk memfasilitasi perbandingan ukuran antar jaringan, jumlah sisi mutlak ini diubah menjadi sentralitas derajat (*degree centrality*):
+- **Derajat (*Degree*):** Menghitung jumlah sisi yang terhubung langsung ke sebuah simpul. Pada graf berarah, perhitungan dipecah menjadi *in-degree* (indikator daya tarik atau popularitas) dan *out-degree* (indikator tingkat aktivitas komunikasi). Untuk memfasilitasi perbandingan ukuran antar jaringan, jumlah sisi mutlak ini diubah menjadi sentralitas derajat (*degree centrality*):
 
- $$ C_d(v) = \frac{\text{deg}(v)}{N - 1} $$
+$$C_d(v) = \frac{\text{deg}(v)}{N - 1}$$
 
- Di mana $C_d(v)$ adalah nilai sentralitas derajat untuk simpul $v$, $\text{deg}(v)$ mewakili jumlah koneksi langsung yang dimiliki $v$, dan $N$ adalah total jumlah simpul di dalam graf. Pembagi $N-1$ merupakan jumlah koneksi maksimal yang mungkin dimiliki sebuah simpul ke seluruh simpul lainnya.
+Di mana $C_d(v)$ adalah nilai sentralitas derajat untuk simpul $v$, $\text{deg}(v)$ mewakili jumlah koneksi langsung yang dimiliki $v$, dan $N$ adalah total jumlah simpul di dalam graf. Pembagi $N-1$ merupakan jumlah koneksi maksimal yang mungkin dimiliki sebuah simpul ke seluruh simpul lainnya.
 
-* **Sentralitas (*Centrality*):** Mengukur nilai strategis sebuah simpul berdasarkan posisinya di dalam arsitektur global graf. Sentralitas mengevaluasi kekuatan struktural yang tidak dapat ditangkap hanya dengan menghitung jumlah koneksi langsung.
- * **PageRank:** Menilai tingkat otoritas simpul secara rekursif. Sebuah simpul mendapat skor tinggi jika ia menerima sisi dari simpul-simpul lain yang juga berstatus penting.
- * **Betweenness:** Mengukur seberapa penting peran sebuah simpul sebagai titik jembatan. Fitur ini menghitung proporsi jalur terpendek (*shortest path*) antar semua pasangan simpul yang melewati simpul target. Simpul dengan *betweenness* tinggi memegang kendali atas aliran informasi antar kelompok meskipun tidak memiliki banyak koneksi langsung.
+- **Sentralitas (*Centrality*):** Mengukur nilai strategis sebuah simpul berdasarkan posisinya di dalam arsitektur global graf. Sentralitas mengevaluasi kekuatan struktural yang tidak dapat ditangkap hanya dengan menghitung jumlah koneksi langsung.
 
-* **Koefisien Klaster (*Clustering Coefficient*):** Menilai kepadatan interaksi lokal. Metrik ini menghitung proporsi tetangga dari sebuah target yang juga saling terhubung satu sama lain. Nilai koefisien tinggi menandakan kehadiran simpul di dalam suatu komunitas yang berikatan erat (*clique*).
+- **PageRank:** Menilai tingkat otoritas simpul secara rekursif. Sebuah simpul mendapat skor tinggi jika ia menerima sisi dari simpul-simpul lain yang juga berstatus penting.
 
+- **Betweenness:** Mengukur seberapa penting peran sebuah simpul sebagai titik jembatan. Fitur ini menghitung proporsi jalur terpendek (*shortest path*) antar semua pasangan simpul yang melewati simpul target. Simpul dengan *betweenness* tinggi memegang kendali atas aliran informasi antar kelompok meskipun tidak memiliki banyak koneksi langsung.
+
+- **Koefisien Klaster (*Clustering Coefficient*):** Menilai kepadatan interaksi lokal. Metrik ini menghitung proporsi tetangga dari sebuah target yang juga saling terhubung satu sama lain. Nilai koefisien tinggi menandakan kehadiran simpul di dalam suatu komunitas yang berikatan erat (*clique*).
 ```{mermaid}
 %%| label: fig-ch13-13_4
 %%| fig-cap: "Pengukuran Sentralitas (Degree vs Betweenness) pada Jaringan Graf"
@@ -143,9 +154,7 @@ graph LR
     D --- E((Simpul E))
     D --- F((Simpul F))
 ```
-
 Pustaka numerik seperti NetworkX menyediakan fungsi kalkulasi siap pakai untuk merangkum keseluruhan metrik di atas. Validitas representasi struktural ini terlihat jelas pada kasus klasifikasi penipuan di jaringan sosial. Akun bot secara tipikal memiliki angka *out-degree* masif karena mengikuti ribuan akun secara agresif, tetapi menahan *in-degree* di angka nol. Apabila ditambah dengan koefisien klaster yang bernilai nol, matriks hasil transformasi ini secara eksplisit mengkategorikan isolasi struktural sebuah observasi. Transformasi awal ini mematangkan data graf mentah menjadi input tabular standar sebagai jembatan yang diperlukan sebelum beralih menggunakan representasi yang dipelajari mesin.
-
 
 ## Agregasi Ketetanggaan dan Fitur Berbasis Jalur
 
@@ -153,18 +162,19 @@ Metrik derajat (*degree*) menangkap tingkat aktivitas dasar sebuah simpul, tetap
 
 Fungsi agregasi matematika menormalkan variabilitas ukuran lingkungan graf. Sebuah simpul bisa memiliki satu tetangga sementara simpul lain memiliki ratusan tetangga. Fungsi agregasi menyusutkan lingkungan yang heterogen ini menjadi dimensi fitur yang tetap, sehingga model prediktif menerima jumlah kolom masukan yang seragam. Beberapa pendekatan agregasi umum meliputi:
 
-* **Rata-rata (*Mean*):** Menghitung nilai tengah dari atribut tetangga.
-* **Jumlah (*Sum*):** Mengakumulasi total atribut tetangga.
-* **Nilai Maksimum (*Max*):** Menangkap sinyal terkuat di sekitar simpul target.
+- **Rata-rata (*Mean*):** Menghitung nilai tengah dari atribut tetangga.
+
+- **Jumlah (*Sum*):** Mengakumulasi total atribut tetangga.
+
+- **Nilai Maksimum (*Max*):** Menangkap sinyal terkuat di sekitar simpul target.
 
 Sebagai contoh, model deteksi kelayakan kredit mengevaluasi pendapatan target sekaligus menghitung rata-rata skor kredit dari seluruh individu dalam lingkaran transaksinya. Sinyal yang diekstrak dari lingkungan ini memberikan daya prediksi tambahan melebihi data individu tunggal.
 
 Formulasi dasar untuk agregasi nilai rata-rata dapat dituliskan sebagai berikut:
 
-$$ h_v = \frac{1}{|\mathcal{N}(v)|} \sum_{u \in \mathcal{N}(v)} x_u $$
+$$h_v = \frac{1}{|\mathcal{N}(v)|} \sum_{u \in \mathcal{N}(v)} x_u$$
 
 Di mana $h_v$ adalah fitur agregasi untuk simpul target $v$, $\mathcal{N}(v)$ merupakan himpunan simpul tetangga yang terhubung langsung dengan $v$, $|\mathcal{N}(v)|$ adalah jumlah tetangga tersebut, dan $x_u$ mewakili vektor atribut dari simpul tetangga $u$.
-
 ```{mermaid}
 %%| label: fig-ch13-13_5
 %%| fig-cap: "Proses Agregasi Atribut dari Simpul Tetangga dan Ekstraksi Jalur Struktural"
@@ -174,17 +184,17 @@ graph TD
     B((Tetangga 2)) -->|Kirim Atribut X| Agg
     Agg -->|Pembaruan / Update| Target((Simpul Target Utama))
 ```
-
 Topologi graf juga memfasilitasi ekstraksi fitur berbasis jalur yang melacak rute relasional antar entitas. Fitur ini jamak diaplikasikan pada tugas prediksi tautan (*link prediction*), seperti pada sistem rekomendasi. Metrik numerik yang diturunkan dari struktur jalur meliputi:
 
-* **Jarak terpendek (*Shortest path*):** Jumlah langkah minimum yang dibutuhkan untuk menghubungkan dua simpul berbeda.
-* **Tetangga bersama (*Common neighbors*):** Total persimpangan simpul yang terhubung ke kedua entitas secara bersamaan.
-* **Indeks Adamic-Adar:** Pembobotan dari metode *common neighbors* yang memberi nilai lebih tinggi pada tetangga bersinggungan dengan derajat rendah. Asumsinya, koneksi spesifik membawa sinyal kedekatan yang lebih kuat dibandingkan koneksi melalui simpul hub populer.
+- **Jarak terpendek (*Shortest path*):** Jumlah langkah minimum yang dibutuhkan untuk menghubungkan dua simpul berbeda.
+
+- **Tetangga bersama (*Common neighbors*):** Total persimpangan simpul yang terhubung ke kedua entitas secara bersamaan.
+
+- **Indeks Adamic-Adar:** Pembobotan dari metode *common neighbors* yang memberi nilai lebih tinggi pada tetangga bersinggungan dengan derajat rendah. Asumsinya, koneksi spesifik membawa sinyal kedekatan yang lebih kuat dibandingkan koneksi melalui simpul hub populer.
 
 Pada sistem rekomendasi, ketersediaan banyak jalur pendek antara profil pengguna dan produk menunjukkan probabilitas interaksi yang tinggi.
 
 Seluruh metode agregasi ketetanggaan dan metrik jarak mendatarkan struktur jaringan yang kompleks ke dalam matriks fitur konvensional. Transformasi lokal ini membuat karakteristik graf dapat diproses oleh algoritma *machine learning* standar. Praktik merangkum atribut tetangga secara manual ini menjadi jembatan menuju arsitektur GraphSAGE dan *Graph Neural Networks* (GNN), yang mengubah agregasi statis ini menjadi mekanisme pertukaran pesan yang dipelajari mesin secara dinamis.
-
 
 ## Embedding Simpul: Node2Vec dan Representasi Laten
 
@@ -198,9 +208,9 @@ Di mana $c_i$ adalah simpul pada langkah ke-$i$ dalam lintasan, $\pi_{vx}$ adala
 
 Nilai bias $\pi_{vx}$ dikendalikan oleh dua parameter utama:
 
-* **Parameter pengembalian ($p$):** Mengendalikan probabilitas untuk segera kembali ke simpul sebelumnya. Nilai $p$ yang rendah mendorong eksplorasi lokal (*Breadth-First Search* atau BFS), yang ideal untuk menangkap kedekatan komunitas atau homofili (*homophily*).
-* **Parameter masuk-keluar ($q$):** Mengendalikan probabilitas untuk menjelajah menjauhi simpul asal. Nilai $q$ yang rendah mendukung eksplorasi ke area yang lebih jauh (*Depth-First Search* atau DFS), yang bermanfaat untuk menangkap kesetaraan struktural (*structural equivalence*), seperti menemukan simpul-simpul yang berperan sebagai jembatan lintas komunitas.
+- **Parameter pengembalian ($p$):** Mengendalikan probabilitas untuk segera kembali ke simpul sebelumnya. Nilai $p$ yang rendah mendorong eksplorasi lokal (*Breadth-First Search* atau BFS), yang ideal untuk menangkap kedekatan komunitas atau homofili (*homophily*).
 
+- **Parameter masuk-keluar ($q$):** Mengendalikan probabilitas untuk menjelajah menjauhi simpul asal. Nilai $q$ yang rendah mendukung eksplorasi ke area yang lebih jauh (*Depth-First Search* atau DFS), yang bermanfaat untuk menangkap kesetaraan struktural (*structural equivalence*), seperti menemukan simpul-simpul yang berperan sebagai jembatan lintas komunitas.
 ```{mermaid}
 %%| label: fig-ch13-13_6
 %%| fig-cap: "Skema Random Walk (Node2Vec) dengan Parameter p dan q"
@@ -210,7 +220,6 @@ graph LR
     A -->|Eksplorasi Mendalam: Param q| C((Simpul Jauh))
     A -->|Eksplorasi Lokal| D((Simpul Sejajar))
 ```
-
 Urutan simpul hasil pelompatan ini diperlakukan layaknya kalimat. *Node2Vec* menerapkan arsitektur *Word2Vec* tipe *Skip-gram* untuk memaksimalkan probabilitas munculnya simpul-simpul tetangga di sekitar simpul target:
 
 $$\max_{\mathbf{z}} \sum_{u \in V} \log P(\mathcal{N}_S(u) \mid \mathbf{z}_u)$$
@@ -221,11 +230,11 @@ Sebagai contoh, jika diterapkan pada jaringan kutipan akademik, model akan mengh
 
 Namun, metode ini memiliki dua batasan mendasar:
 
-1. **Mengabaikan atribut simpul:** Vektor dilatih murni dari topologi graf. *Node2Vec* tidak dapat memanfaatkan fitur bawaan simpul, seperti data teks abstrak pada makalah akademik.
-2. **Bersifat *transductive*:** Metode ini membangun tabel pencarian (*lookup table*) statis dan tidak dapat menghasilkan *embedding* untuk simpul baru yang muncul setelah fase pelatihan selesai.
+1.  **Mengabaikan atribut simpul:** Vektor dilatih murni dari topologi graf. *Node2Vec* tidak dapat memanfaatkan fitur bawaan simpul, seperti data teks abstrak pada makalah akademik.
+
+2.  **Bersifat *transductive*:** Metode ini membangun tabel pencarian (*lookup table*) statis dan tidak dapat menghasilkan *embedding* untuk simpul baru yang muncul setelah fase pelatihan selesai.
 
 Kedua batasan ini mendorong transisi ke arsitektur jaringan saraf graf yang mampu merampatkan fungsi agregasi ke simpul tak terlihat.
-
 
 ## Graph Neural Networks (GNN) sebagai Ekstraktor Fitur
 
@@ -235,17 +244,21 @@ GNN bekerja layaknya versi terotomatisasi dari kalkulasi lingkungan ketetanggaan
 
 Secara matematis, fungsi agregasi pada lapisan *Graph Convolutional Network* (GCN) dirumuskan sebagai berikut:
 
-$$ \mathbf{h}_v^{(k)} = \sigma \left( \mathbf{W}^{(k)} \sum_{u \in \mathcal{N}(v)} \frac{\mathbf{h}_u^{(k-1)}}{|\mathcal{N}(v)|} + \mathbf{B}^{(k)} \mathbf{h}_v^{(k-1)} \right) $$
+$$\mathbf{h}_v^{(k)} = \sigma \left( \mathbf{W}^{(k)} \sum_{u \in \mathcal{N}(v)} \frac{\mathbf{h}_u^{(k-1)}}{|\mathcal{N}(v)|} + \mathbf{B}^{(k)} \mathbf{h}_v^{(k-1)} \right)$$
 
 Penjelasan notasi di atas:
-* $\mathbf{h}_v^{(k)}$ mewakili vektor representasi simpul target $v$ pada lapisan ke-$k$.
-* $\mathbf{h}_u^{(k-1)}$ merupakan vektor representasi dari simpul tetangga $u$ yang diproses pada lapisan sebelumnya.
-* $\mathcal{N}(v)$ menunjukkan himpunan semua simpul yang bertetangga langsung dengan $v$.
-* $\mathbf{W}^{(k)}$ dan $\mathbf{B}^{(k)}$ bertindak sebagai matriks bobot yang diperbarui iteratif selama proses pelatihan model.
-* $\sigma$ mewakili fungsi aktivasi non-linear.
+
+- $\mathbf{h}_v^{(k)}$ mewakili vektor representasi simpul target $v$ pada lapisan ke-$k$.
+
+- $\mathbf{h}_u^{(k-1)}$ merupakan vektor representasi dari simpul tetangga $u$ yang diproses pada lapisan sebelumnya.
+
+- $\mathcal{N}(v)$ menunjukkan himpunan semua simpul yang bertetangga langsung dengan $v$.
+
+- $\mathbf{W}^{(k)}$ dan $\mathbf{B}^{(k)}$ bertindak sebagai matriks bobot yang diperbarui iteratif selama proses pelatihan model.
+
+- $\sigma$ mewakili fungsi aktivasi non-linear.
 
 Persamaan tersebut menjelaskan bahwa simpul $v$ mengumpulkan seluruh nilai representasi dari para tetangganya, mengambil nilai rata-rata, lalu memodifikasinya menggunakan matriks bobot $\mathbf{W}^{(k)}$. Di saat yang sama, identitas atau informasi dari simpul itu sendiri tetap dipertahankan dengan menyertakan perhitungan fungsi matriks bobot $\mathbf{B}^{(k)}$.
-
 ```{mermaid}
 %%| label: fig-ch13-13_7
 %%| fig-cap: "Pesan Agregasi GNN"
@@ -260,25 +273,34 @@ Tampilkan: Ilustrasi simpul target yang menerima pesan berupa vektor fitur dari 
 Sumber data: -
 
 Melalui proses penghitungan bertingkat ke dalam, area konteks yang mampu dipelajari model akan semakin melebar:
-1. **Lapisan Pertama:** Jaringan mulai menyerap atribut informasi dari simpul yang berbatasan secara langsung (tetangga 1-hop).
-2. **Lapisan Kedua:** Jaringan dapat mengumpulkan konteks yang berasal dari tetangga para tetangganya (area 2-hop).
-3. **Vektor Keluaran:** Representasi numerik padat akan dihasilkan pada bagian paling ujung arsitektur. Vektor ini siap disuntikkan ke dalam *pipeline* ML berbasis data tabular, atau dapat langsung dilatih hingga tahap finalisasi prediksi (*end-to-end*).
 
-### Varian Arsitektur GNN
+1.  **Lapisan Pertama:** Jaringan mulai menyerap atribut informasi dari simpul yang berbatasan secara langsung (tetangga 1-hop).
+
+2.  **Lapisan Kedua:** Jaringan dapat mengumpulkan konteks yang berasal dari tetangga para tetangganya (area 2-hop).
+
+3.  **Vektor Keluaran:** Representasi numerik padat akan dihasilkan pada bagian paling ujung arsitektur. Vektor ini siap disuntikkan ke dalam *pipeline* ML berbasis data tabular, atau dapat langsung dilatih hingga tahap finalisasi prediksi (*end-to-end*).
+
+**Varian Arsitektur GNN.**
+
 Meskipun GCN efektif, agregasi berbasis rata-rata seragam memunculkan kendala saat struktur graf menjadi bervariasi. Arsitektur jaringan terus berevolusi melalui beberapa model baru:
-* ***Graph Attention Network* (GAT) dan GATv2:** Varian arsitektur ini mengganti perhitungan seragam dengan nilai *attention* tambahan, sehingga jaringan dapat memberikan prioritas komputasi kepada tetangga yang dianggap lebih relevan. GATv2 mengoptimalkan pola tersebut dengan memberlakukan pemusatan kueri dinamis untuk masing-masing simpul individu.
-* **GNN Heterogen:** Graf dalam kondisi nyata tersusun atas entitas multi-dimensi, seperti jejaring data pengetahuan (*knowledge graph*) antara makalah, peneliti, dan lembaga akademis. Model seperti *Relational GCN* (R-GCN) dan *Heterogeneous Graph Transformer* (HGT) mengelompokkan perhitungan graf berdasarkan jalur relasinya, mencegah distorsi makna pada vektor.
-* **GNN Ekuivarian (EGNN):** Model ini memfasilitasi pelacakan koordinat 3D fisik dengan menjamin bahwa vektor yang diproduksi terbebas dari kesalahan nilai saat titik referensi utama mengalami translasi posisi (pergeseran) maupun rotasi ruang.
 
-### Batasan Praktis Message Passing
+- ***Graph Attention Network* (GAT) dan GATv2:** Varian arsitektur ini mengganti perhitungan seragam dengan nilai *attention* tambahan, sehingga jaringan dapat memberikan prioritas komputasi kepada tetangga yang dianggap lebih relevan. GATv2 mengoptimalkan pola tersebut dengan memberlakukan pemusatan kueri dinamis untuk masing-masing simpul individu.
+
+- **GNN Heterogen:** Graf dalam kondisi nyata tersusun atas entitas multi-dimensi, seperti jejaring data pengetahuan (*knowledge graph*) antara makalah, peneliti, dan lembaga akademis. Model seperti *Relational GCN* (R-GCN) dan *Heterogeneous Graph Transformer* (HGT) mengelompokkan perhitungan graf berdasarkan jalur relasinya, mencegah distorsi makna pada vektor.
+
+- **GNN Ekuivarian (EGNN):** Model ini memfasilitasi pelacakan koordinat 3D fisik dengan menjamin bahwa vektor yang diproduksi terbebas dari kesalahan nilai saat titik referensi utama mengalami translasi posisi (pergeseran) maupun rotasi ruang.
+
+**Batasan Praktis Message Passing.**
+
 Ekspektasi bahwa penambahan jumlah lapisan jaringan akan memperbesar luas tangkapan konteks tidak selamanya benar. Analisis performa arsitektur dalam ini memperlihatkan sejumlah permasalahan:
-* ***Over-smoothing*:** Proses agregasi secara berulang dari sejumlah besar tetangga di setiap lapisan mengakibatkan fitur spesifik individu merata dan pudar secara perlahan, sehingga antar simpul tidak lagi bisa dibedakan.
-* ***Over-squashing*:** Adanya kumpulan pesan masif dari titik simpul berjarak jauh yang terpaksa saling menyempit saat dialirkan melewati sedikit simpul perantara.
+
+- ***Over-smoothing*:** Proses agregasi secara berulang dari sejumlah besar tetangga di setiap lapisan mengakibatkan fitur spesifik individu merata dan pudar secara perlahan, sehingga antar simpul tidak lagi bisa dibedakan.
+
+- ***Over-squashing*:** Adanya kumpulan pesan masif dari titik simpul berjarak jauh yang terpaksa saling menyempit saat dialirkan melewati sedikit simpul perantara.
 
 Sebagai catatan tambahan, pendekatan ini masih dipagari batas kognitif oleh uji *Weisfeiler-Lehman* (WL), di mana komputasi bisa saja gagal dalam mendeteksi atau membedakan variasi formasi jaringan melingkar (siklis) dengan karakteristik khusus. Berbagai solusi seperti penyesuaian susunan ikatan koneksi (*graph rewiring*) atau penciptaan arsitektur pengalih sering kali direkomendasikan untuk menurunkan risiko-risiko di atas.
 
 Terlepas dari keterbatasannya, GNN menjadi pondasi ekstraksi fitur tercanggih untuk data spasial yang bergantung erat pada pemetaan jaringan. Pada contoh pendeteksian kimiawi, atom tunggal diletakkan sebagai simpul dengan atribut kelistrikan, sedangkan struktur ikatannya dibangun sebagai garis sisi di graf tersebut. Konfigurasi jaringan *message passing* yang optimal kemudian mampu membungkus sifat molekul itu secara utuh dan memunculkan probabilitas bahaya senyawa (toksisitas) bagi manusia secara komprehensif.
-
 
 ## Data Leakage pada Pemisahan Graf
 
@@ -286,17 +308,21 @@ Pemisahan data menjadi partisi pelatihan dan pengujian pada tabel biasa merupaka
 
 Kebocoran pada graf terjadi secara halus melalui mekanisme agregasi ketetanggaan. Ketika model melakukan proses *message passing*, informasi mengalir bebas dari satu simpul ke simpul lainnya. Secara formal, aliran agregasi ini dapat diamati pada pembaruan lapisan *GNN*:
 
-$$ h_i^{(l+1)} = \sigma \left( \sum_{j \in \mathcal{N}(i)} W h_j^{(l)} \right) $$
+$$h_i^{(l+1)} = \sigma \left( \sum_{j \in \mathcal{N}(i)} W h_j^{(l)} \right)$$
 
 Di mana:
-* $h_i^{(l+1)}$ adalah representasi fitur simpul $i$ pada lapisan berikutnya.
-* $\mathcal{N}(i)$ adalah himpunan seluruh tetangga dari simpul $i$.
-* $h_j^{(l)}$ adalah representasi tetangga $j$ pada lapisan saat ini.
-* $W$ adalah matriks bobot transformasi yang dipelajari mesin.
-* $\sigma$ adalah fungsi aktivasi non-linier.
+
+- $h_i^{(l+1)}$ adalah representasi fitur simpul $i$ pada lapisan berikutnya.
+
+- $\mathcal{N}(i)$ adalah himpunan seluruh tetangga dari simpul $i$.
+
+- $h_j^{(l)}$ adalah representasi tetangga $j$ pada lapisan saat ini.
+
+- $W$ adalah matriks bobot transformasi yang dipelajari mesin.
+
+- $\sigma$ adalah fungsi aktivasi non-linier.
 
 Apabila simpul $i$ berada di set pelatihan dan salah satu tetangganya, $j$, berada di set uji, maka informasi fitur dari himpunan pengujian akan terbawa untuk memperbarui representasi simpul pelatihan $i$. Akibatnya, kinerja model saat dievaluasi akan terlihat tinggi secara artifisial, bukan karena representasinya tangguh, melainkan karena proses pelatihan telah tercemar oleh data dari set uji.
-
 ```{mermaid}
 %%| label: fig-ch13-13_8
 %%| fig-cap: "Subgraf Mencegah Kebocoran Set Pelatihan dan Set Uji"
@@ -312,34 +338,37 @@ graph TD
         B -.->|Sisi Terputus| C
     end
 ```
-
 Desain pemisahan pada graf membedakan dua skenario evaluasi untuk mengelola masalah konektivitas ini:
 
-1. **Pembelajaran *Transductive*:** Struktur graf secara keseluruhan dibiarkan terlihat selama fase pelatihan, namun label untuk simpul uji disembunyikan. Model membentuk representasi dengan melihat topologi jaringan secara utuh, yang rentan memicu kebocoran fitur tanpa pengawasan pembatasan yang ketat.
-2. **Pembelajaran *Inductive*:** Model dievaluasi pada subgraf yang terisolasi. Set uji dipisahkan secara fisik dari set pelatihan tanpa ada sisi penghubung, sehingga model dipaksa untuk mengenali pola hanya dari fitur dan topologi baru.
+1.  **Pembelajaran *Transductive*:** Struktur graf secara keseluruhan dibiarkan terlihat selama fase pelatihan, namun label untuk simpul uji disembunyikan. Model membentuk representasi dengan melihat topologi jaringan secara utuh, yang rentan memicu kebocoran fitur tanpa pengawasan pembatasan yang ketat.
+
+2.  **Pembelajaran *Inductive*:** Model dievaluasi pada subgraf yang terisolasi. Set uji dipisahkan secara fisik dari set pelatihan tanpa ada sisi penghubung, sehingga model dipaksa untuk mengenali pola hanya dari fitur dan topologi baru.
 
 Dampak buruk kebocoran ini sangat nyata pada kasus seperti deteksi penipuan keuangan. Jika pemisahan dilakukan secara acak, akun penipu di set pelatihan bisa memiliki riwayat transfer langsung ke akun di set uji. Sinyal penipuan tersebut akan ditarik melintasi sisi penghubung selama agregasi. Di lingkungan produksi, koneksi langsung seperti itu belum tentu tersedia, sehingga kinerja model akan anjlok.
 
 Menerapkan *praktik pipeline yang benar* menuntut perlindungan dan isolasi yang kaku. Strategi mitigasi standar yang lazim diadopsi meliputi:
 
-* **Pemutusan Sisi Penghubung:** Menghapus seluruh sisi yang melintasi subgraf pelatihan dan pengujian sebelum proses pembentukan fitur dimulai, sehingga isolasi fisik pada evaluasi *inductive* dapat dijamin keamanannya.
-* **Pemisahan Temporal:** Pada jejaring dinamis yang terus bertumbuh, model dilatih menggunakan struktur graf hingga batas waktu tertentu, kemudian dievaluasi murni pada simpul atau interaksi yang baru terbentuk setelah batas waktu tersebut.
-* **Isolasi *Negative Sampling*:** Pada tugas prediksi tautan (*link prediction*), pembangkitan pasangan simpul negatif harus dilakukan secara terpisah di masing-masing partisi agar model tidak menghafal ketidakhadiran sisi dari set pengujian.
+- **Pemutusan Sisi Penghubung:** Menghapus seluruh sisi yang melintasi subgraf pelatihan dan pengujian sebelum proses pembentukan fitur dimulai, sehingga isolasi fisik pada evaluasi *inductive* dapat dijamin keamanannya.
 
+- **Pemisahan Temporal:** Pada jejaring dinamis yang terus bertumbuh, model dilatih menggunakan struktur graf hingga batas waktu tertentu, kemudian dievaluasi murni pada simpul atau interaksi yang baru terbentuk setelah batas waktu tersebut.
+
+- **Isolasi *Negative Sampling*:** Pada tugas prediksi tautan (*link prediction*), pembangkitan pasangan simpul negatif harus dilakukan secara terpisah di masing-masing partisi agar model tidak menghafal ketidakhadiran sisi dari set pengujian.
 
 ## Studi Kasus: Prediksi Berbasis Lokasi dan Klasifikasi Simpul
 
 Bagian ini membandingkan pendekatan pemodelan pada dua domain keruangan yang berbeda: dunia fisik dan struktur jaringan abstrak. Kedua studi kasus berikut mendemonstrasikan bahwa teknik ekstraksi representasi sangat menentukan batas kinerja dari sebuah model *machine learning*.
 
-### Kasus 1: Prediksi Harga Rumah (Domain Fisik)
+**Kasus 1: Prediksi Harga Rumah (Domain Fisik).**
 
 Pada kasus pertama, kita memprediksi harga rumah di suatu wilayah. Pendekatan ini dapat dikembangkan melalui beberapa tahapan representasi:
 
-* **_Baseline_ Koordinat Mentah:** Titik awal pemodelan menggunakan algoritma berbasis pohon (*random forest*) yang hanya menerima nilai absolut lintang dan bujur. Pendekatan ini umumnya hanya memberikan akurasi yang moderat. Oleh karena ruang fitur dibelah secara tegak lurus terhadap sumbu, algoritma terpaksa membuat banyak percabangan rumit hanya untuk memetakan efek jarak radial dari sebuah pusat tata kota.
-* **Injeksi Fitur Keruangan:** Kinerja model meningkat secara drastis setelah kita menyuntikkan fitur turunan yang mengkuantifikasi kedekatan lokasi. Alih-alih mengandalkan koordinat mentah, kita menambahkan metrik spasial seperti jarak fisik ke fasilitas umum (contohnya taman kota) serta nilai *spatial lag* yang mengukur rata-rata pergerakan harga rumah di lingkungan terdekat. Pola ketetanggaan ini dikemas menjadi representasi yang *dirancang manusia* agar siap diolah oleh model.
-* **Validasi _Spatial Block_:** Eksperimen data spasial sangat rentan terhadap kebocoran informasi akibat autokorelasi geografis. Pengacakan data secara konvensional dapat menyebabkan model dilatih dengan data rumah di satu sisi jalan dan diuji dengan rumah di seberangnya. Oleh karena itu, kita perlu memisahkan area data latih dan uji secara geografis menggunakan metode *spatial block cross-validation* beserta zona penyangga (*buffer*).
+- ***Baseline* Koordinat Mentah:** Titik awal pemodelan menggunakan algoritma berbasis pohon (*random forest*) yang hanya menerima nilai absolut lintang dan bujur. Pendekatan ini umumnya hanya memberikan akurasi yang moderat. Oleh karena ruang fitur dibelah secara tegak lurus terhadap sumbu, algoritma terpaksa membuat banyak percabangan rumit hanya untuk memetakan efek jarak radial dari sebuah pusat tata kota.
 
-```python
+- **Injeksi Fitur Keruangan:** Kinerja model meningkat secara drastis setelah kita menyuntikkan fitur turunan yang mengkuantifikasi kedekatan lokasi. Alih-alih mengandalkan koordinat mentah, kita menambahkan metrik spasial seperti jarak fisik ke fasilitas umum (contohnya taman kota) serta nilai *spatial lag* yang mengukur rata-rata pergerakan harga rumah di lingkungan terdekat. Pola ketetanggaan ini dikemas menjadi representasi yang *dirancang manusia* agar siap diolah oleh model.
+
+- **Validasi *Spatial Block*:** Eksperimen data spasial sangat rentan terhadap kebocoran informasi akibat autokorelasi geografis. Pengacakan data secara konvensional dapat menyebabkan model dilatih dengan data rumah di satu sisi jalan dan diuji dengan rumah di seberangnya. Oleh karena itu, kita perlu memisahkan area data latih dan uji secara geografis menggunakan metode *spatial block cross-validation* beserta zona penyangga (*buffer*).
+
+``` {.python language="Python"}
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -392,27 +421,32 @@ for fold, (train_idx, test_idx) in enumerate(gkf.split(df, groups=df['Spatial_Bl
 print(f"\nRata-rata MSE Lintas Blok Spasial: {np.mean(mse_scores):.2f}")
 ```
 
-### Kasus 2: Klasifikasi Topik Makalah (Domain Jaringan Abstrak)
+**Kasus 2: Klasifikasi Topik Makalah (Domain Jaringan Abstrak).**
 
-Studi kasus kedua beralih dari peta geografis ke graf sitasi makalah (seperti dataset Cora). Tujuannya adalah mengklasifikasikan topik subjek dari suatu makalah akademik (simpul) berdasarkan pola kutipannya (sisi). 
+Studi kasus kedua beralih dari peta geografis ke graf sitasi makalah (seperti dataset Cora). Tujuannya adalah mengklasifikasikan topik subjek dari suatu makalah akademik (simpul) berdasarkan pola kutipannya (sisi).
 
 Evolusi representasi pada graf ini terlihat dari perbandingan tiga tingkatan model:
 
-* **_Baseline_ Fitur Struktural:** Pendekatan awal mengandalkan fitur struktural dasar, yaitu perhitungan *in-degree* dan *out-degree* pada setiap simpul. Pendekatan ini menghasilkan performa yang rendah karena tingginya frekuensi kutipan sebuah makalah tidak selalu mencerminkan rumpun keilmuannya secara akurat.
-* **_Embedding_ dengan _Random Walk_:** Konteks relasi antar-topik mulai tertangkap ketika kita beralih ke representasi yang *dipelajari mesin*. Algoritma seperti *Node2Vec* menelusuri graf dan membangun vektor *embedding*. Setelah kompleksitas topologi diringkas menjadi representasi padat berdimensi rendah, sebuah model klasifikasi linier biasa sudah mampu memetakan makalah ke dalam topik yang tepat.
-* **Pembaruan Representasi dengan GNN:** Akurasi tertinggi dicapai dengan menggunakan arsitektur *Graph Neural Network* (GNN). GNN secara terintegrasi meleburkan fitur teks dari isi makalah dengan struktur jaringan sitasinya. Setiap simpul akan bertukar pesan dengan makalah tetangganya demi memperbarui nilai representasinya sendiri.
+- ***Baseline* Fitur Struktural:** Pendekatan awal mengandalkan fitur struktural dasar, yaitu perhitungan *in-degree* dan *out-degree* pada setiap simpul. Pendekatan ini menghasilkan performa yang rendah karena tingginya frekuensi kutipan sebuah makalah tidak selalu mencerminkan rumpun keilmuannya secara akurat.
+
+- ***Embedding* dengan *Random Walk*:** Konteks relasi antar-topik mulai tertangkap ketika kita beralih ke representasi yang *dipelajari mesin*. Algoritma seperti *Node2Vec* menelusuri graf dan membangun vektor *embedding*. Setelah kompleksitas topologi diringkas menjadi representasi padat berdimensi rendah, sebuah model klasifikasi linier biasa sudah mampu memetakan makalah ke dalam topik yang tepat.
+
+- **Pembaruan Representasi dengan GNN:** Akurasi tertinggi dicapai dengan menggunakan arsitektur *Graph Neural Network* (GNN). GNN secara terintegrasi meleburkan fitur teks dari isi makalah dengan struktur jaringan sitasinya. Setiap simpul akan bertukar pesan dengan makalah tetangganya demi memperbarui nilai representasinya sendiri.
 
 Mekanisme pertukaran pesan untuk pembaruan representasi pada GNN umumnya diformulasikan sebagai berikut:
 
-$$ h_v^{(l)} = \sigma \left( W^{(l)} \cdot \text{AGGREGATE}\left(\{h_u^{(l-1)} : u \in \mathcal{N}(v) \} \right) \right) $$
+$$h_v^{(l)} = \sigma \left( W^{(l)} \cdot \text{AGGREGATE}\left(\{h_u^{(l-1)} : u \in \mathcal{N}(v) \} \right) \right)$$
 
 Di mana:
-* $h_v^{(l)}$ merepresentasikan vektor fitur dari simpul $v$ pada lapisan ke-$l$.
-* $\sigma$ merupakan fungsi aktivasi non-linier (seperti ReLU).
-* $W^{(l)}$ adalah matriks bobot yang dipelajari selama proses pelatihan pada lapisan tersebut.
-* $\mathcal{N}(v)$ menunjukkan himpunan simpul tetangga yang terhubung langsung dengan simpul $v$.
-* $\text{AGGREGATE}$ adalah fungsi matematika (misalnya rata-rata atau penjumlahan) yang meleburkan informasi dari simpul-simpul tetangga.
 
-[GAMBAR 13.6: Skema - Subgraf representasi pada proses pertukaran pesan antar simpul dalam graf sitasi]
+- $h_v^{(l)}$ merepresentasikan vektor fitur dari simpul $v$ pada lapisan ke-$l$.
+
+- $\sigma$ merupakan fungsi aktivasi non-linier (seperti ReLU).
+
+- $W^{(l)}$ adalah matriks bobot yang dipelajari selama proses pelatihan pada lapisan tersebut.
+
+- $\mathcal{N}(v)$ menunjukkan himpunan simpul tetangga yang terhubung langsung dengan simpul $v$.
+
+- $\text{AGGREGATE}$ adalah fungsi matematika (misalnya rata-rata atau penjumlahan) yang meleburkan informasi dari simpul-simpul tetangga.
 
 Persamaan di atas memperjelas bahwa representasi sebuah makalah pada arsitektur GNN tidak berdiri sendiri, melainkan secara aktif dibentuk oleh agregasi informasi dari subgraf tetangganya. Kedua studi kasus ini memberikan benang merah yang sejalan: cara pengekstraksian dan penyajian struktur ketetanggaan ke dalam model memiliki dampak yang sama besarnya dengan pilihan arsitektur algoritmanya.

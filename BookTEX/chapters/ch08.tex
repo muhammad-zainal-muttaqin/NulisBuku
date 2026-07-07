@@ -90,7 +90,7 @@ Dalam persamaan ini, \(W_k\) merupakan matriks dimensi \(d \times k\) yang hanya
 \label{fig:ch08-fig-2}
 \end{figure}
 
-\subsection{Ekstensi dan Varian PCA}\label{ekstensi-dan-varian-pca}
+\textbf{Ekstensi dan Varian PCA.}\label{ekstensi-dan-varian-pca}
 
 Dalam praktik pengembangan \emph{machine learning}, satu versi PCA standar sering kali tidak mencukupi untuk berbagai konstrain komputasi. Implementasi pustaka modern menyediakan variasi dekomposisi linier:
 
@@ -106,7 +106,7 @@ Dalam praktik pengembangan \emph{machine learning}, satu versi PCA standar serin
   \textbf{Randomized SVD:} Saat jumlah target komponen \(k\) jauh lebih kecil ketimbang dimensi fitur asli \(d\), pendekatan stokastik ini memotong waktu komputasi secara drastis sambil memberikan aproksimasi vektor komponen utama yang akurat.
 \end{itemize}
 
-\subsection{Whitening dan Kompresi Embedding Terlatih}\label{whitening-dan-kompresi-embedding-terlatih}
+\textbf{Whitening dan Kompresi Embedding Terlatih.}\label{whitening-dan-kompresi-embedding-terlatih}
 
 Fungsi reduksi dimensi sering menyediakan parameter untuk melakukan penskalaan ulang ruang fitur yang disebut proses \emph{whitening}. Operasi ini memaksa komponen-komponen utama yang dihasilkan memiliki varians satuan yang seragam (isotropik). \emph{Whitening} memfasilitasi perbandingan kemiripan fitur dalam metode pencarian jarak dekat (\emph{retrieval}), namun pemaksaan ini membuang pola variasi anisotropik yang sering kali dibutuhkan oleh model klasifikasi untuk menentukan pemisahan garis batas label.
 
@@ -142,7 +142,7 @@ Pada formulasi tersebut:
 \label{fig:ch08-fig-3}
 \end{figure}
 
-\subsection{\texorpdfstring{Fungsi Kerugian \(\beta\)-divergence}{Fungsi Kerugian \textbackslash beta-divergence}}\label{fungsi-kerugian-beta-divergence}
+\textbf{Fungsi Kerugian \(\beta\)-divergence.}\label{fungsi-kerugian-beta-divergence}
 
 NMF tidak bekerja dengan memutar sumbu orthogonal seperti PCA, melainkan mencari hampiran terdekat dari \(X\) menggunakan optimasi fungsi kerugian matematis. Dalam perwujudan modernnya, kualitas rekonstruksi dievaluasi melalui keluarga jarak pengukuran yang disebut \(\beta\)-divergence (divergensi \(\beta\)).
 
@@ -158,7 +158,7 @@ Nilai \(\beta\) memengaruhi bentuk kompresi dan perlu disesuaikan dengan distrib
   \textbf{\(\beta=0\) (Itakura-Saito divergence):} Pilihan yang didesain secara spesifik untuk menangkap rentang dinamis besar, menjadikannya standar pada spektrum daya audio.
 \end{itemize}
 
-\subsection{Aspek Komputasi dan Skalabilitas}\label{aspek-komputasi-dan-skalabilitas}
+\textbf{Aspek Komputasi dan Skalabilitas.}\label{aspek-komputasi-dan-skalabilitas}
 
 Sebagai representasi yang murni dioptimasi, penerapan NMF memerlukan perhatian pada beberapa aspek teknis implementasi:
 
@@ -172,7 +172,7 @@ Sebagai representasi yang murni dioptimasi, penerapan NMF memerlukan perhatian p
   \textbf{Kontrol sparsitas:} Melalui injeksi nilai penalti (L1 maupun L2) terhadap matriks \(W\) atau \(H\), struktur representasi laten dapat dipaksa untuk lebih renggang (\emph{sparse}), membatasi agar satu dokumen atau sinyal dibangun dari sesedikit mungkin fitur penyusun dasar.
 \end{itemize}
 
-\subsection{Domain Aplikasi Spesifik}\label{domain-aplikasi-spesifik}
+\textbf{Domain Aplikasi Spesifik.}\label{domain-aplikasi-spesifik}
 
 Karakter aditif dari NMF menjadi sangat aplikatif pada domain data yang secara alamiah terbentuk lewat konsep superposisi fisis maupun logis:
 
@@ -190,7 +190,7 @@ Metode reduksi linier seperti PCA merangkum variansi dengan membuat proyeksi sum
 
 Algoritma \emph{manifold learning} memodelkan data dengan asumsi bahwa titik-titik tersebut terletak pada sebuah \emph{manifold} berdimensi rendah yang terlipat di dalam ruang berdimensi tinggi. Untuk keperluan analisis dan reduksi visual, t-SNE dan UMAP menjadi dua metode yang mendominasi.
 
-\subsection{\texorpdfstring{t-SNE (\emph{t-Distributed Stochastic Neighbor Embedding})}{t-SNE (t-Distributed Stochastic Neighbor Embedding)}}\label{t-sne-t-distributed-stochastic-neighbor-embedding}
+\textbf{t-SNE (\emph{t-Distributed Stochastic Neighbor Embedding}).}\label{t-sne-t-distributed-stochastic-neighbor-embedding}
 
 Algoritma t-SNE meminimalkan perbedaan probabilitas kedekatan antar-titik di dimensi asal dengan representasinya di dimensi rendah. Fungsi objektif yang dioptimasi menggunakan formulasi \emph{Kullback-Leibler (KL) divergence}:
 
@@ -210,7 +210,7 @@ Metode t-SNE secara ekstrem memaksa kelompok data yang bertetangga agar terus be
   Luas area sebuah klaster pada plot tidak memiliki makna kepadatan, karena algoritma t-SNE memberlakukan pemerataan densitas (\emph{density-equalizing}) terhadap semua populasi klaster.
 \end{itemize}
 
-\subsection{\texorpdfstring{UMAP (\emph{Uniform Manifold Approximation and Projection})}{UMAP (Uniform Manifold Approximation and Projection)}}\label{umap-uniform-manifold-approximation-and-projection}
+\textbf{UMAP (\emph{Uniform Manifold Approximation and Projection}).}\label{umap-uniform-manifold-approximation-and-projection}
 
 Untuk menutupi kelambatan t-SNE, standar terapan kini beralih pada UMAP. Algoritma ini berlandaskan pada geometri Riemannian dan topologi aljabar untuk membuat perkiraan jaringan dari titik-titik sampel.
 
@@ -222,7 +222,7 @@ Untuk menutupi kelambatan t-SNE, standar terapan kini beralih pada UMAP. Algorit
 
 Keunggulan utama UMAP adalah kecepatan eksekusinya, serta kemampuannya untuk mereduksi ke dimensi yang lebih leluasa dari sekadar format 2D atau 3D. Literatur awal sering menyebut UMAP lebih superior dalam menjaga penataan struktur global dibandingkan t-SNE. Literatur riset terbaru mengoreksi klaim tersebut; UMAP mempertahankan struktur global karena secara bawaan algoritma ini menggunakan inisialisasi awal berbasis PCA. Apabila t-SNE dan UMAP diatur dengan parameter inisialisasi (PCA) yang sama, kemampuan keduanya dalam mempertahankan struktur relasi berskala global berada pada tingkat yang sebanding.
 
-\subsection{Perkembangan Varian Manifold (2019--2026)}\label{perkembangan-varian-manifold-20192026}
+\textbf{Perkembangan Varian Manifold (2019--2026).}\label{perkembangan-varian-manifold-20192026}
 
 Penelitian algoritma \emph{manifold} terus mengejar keseimbangan antara pelestarian lokal dan global, serta mengakomodasi kekurangan algoritma transaksional t-SNE dan UMAP:
 
@@ -250,7 +250,7 @@ Metode linier seperti PCA mencari sumbu varians maksimal, sementara algoritma ma
 \label{fig:ch08-fig-5}
 \end{figure}
 
-\subsection{Arsitektur Dasar: Encoder dan Decoder}\label{arsitektur-dasar-encoder-dan-decoder}
+\textbf{Arsitektur Dasar: Encoder dan Decoder.}\label{arsitektur-dasar-encoder-dan-decoder}
 
 \emph{Autoencoder} standar terdiri dari dua komponen jaringan saraf yang dioptimalkan secara bersamaan:
 
@@ -282,7 +282,7 @@ Di mana:
   \(\| \cdot \|^2\) melambangkan \emph{Mean Squared Error} (MSE) sebagai jarak kesalahan.
 \end{itemize}
 
-\subsection{Varian Autoencoder untuk Fitur Laten}\label{varian-autoencoder-untuk-fitur-laten}
+\textbf{Varian Autoencoder untuk Fitur Laten.}\label{varian-autoencoder-untuk-fitur-laten}
 
 Jaringan \emph{autoencoder} murni berisiko hanya menghafal posisi data pelatihan tanpa memahami strukturnya jika kapasitasnya berlebih. Agar ruang laten menghasilkan representasi fitur yang kokoh untuk pemodelan tahap selanjutnya, arsitektur ini memiliki beberapa modifikasi:
 
@@ -298,7 +298,7 @@ Jaringan \emph{autoencoder} murni berisiko hanya menghafal posisi data pelatihan
   \textbf{Parametric UMAP:} Varian hibrida yang melatih \emph{neural network} menggunakan fungsi objektif penempatan algoritma UMAP. Metode ini memecahkan kelemahan manifold konvensional; jaringan \emph{encoder} yang terbentuk siap mentransformasi geometri laten pada data baru secara langsung saat \emph{inference} (\emph{inductive transform}).
 \end{itemize}
 
-\subsection{Batasan Kompresi: Hanya Data Lokal}\label{batasan-kompresi-hanya-data-lokal}
+\textbf{Batasan Kompresi: Hanya Data Lokal.}\label{batasan-kompresi-hanya-data-lokal}
 
 Di ranah rekayasa fitur, \emph{autoencoder} merupakan pemampat tanpa supervisi atas matriks yang ada di hadapannya. Vektor laten di lapisan \emph{bottleneck} sepenuhnya mendeskripsikan distribusi statistik dari dataset pelatihan itu sendiri. Ketika model dilatih mengompresi sekumpulan citra kendaraan, ia menyusutkan struktur pola piksel seefisien mungkin. Model ini tidak lantas memahami konsep bahasa atau ranah visual umum tentang ``kendaraan bermotor''. Kapasitas pemahaman semantik yang mampu dipindahkan ke tugas berbeda hanya muncul pada arsitektur \emph{pretrained embedding} bervolume besar (yang akan didiskusikan secara khusus di Bab 15).
 
@@ -306,7 +306,7 @@ Di ranah rekayasa fitur, \emph{autoencoder} merupakan pemampat tanpa supervisi a
 
 Keberadaan algoritma pereduksi dimensi sering memicu kebingungan dalam merancang arsitektur data. Kesalahan paling umum bermula dari ketidakmampuan membedakan algoritma untuk proyeksi visual dengan algoritma untuk prapemrosesan fitur prediktif.
 
-\subsection{Kesalahan Umum 1: Menggunakan Koordinat Visualisasi sebagai Fitur}\label{kesalahan-umum-1-menggunakan-koordinat-visualisasi-sebagai-fitur}
+\textbf{Kesalahan Umum 1: Menggunakan Koordinat Visualisasi sebagai Fitur.}\label{kesalahan-umum-1-menggunakan-koordinat-visualisasi-sebagai-fitur}
 
 Metode pemetaan non-linier seperti \emph{t-SNE} dan \emph{UMAP} sangat populer untuk memisahkan klaster observasi pada bidang dua dimensi. Namun, analis sering kali mengambil koordinat hasil reduksi tersebut dan memasukkannya secara langsung sebagai fitur \emph{downstream}. Praktik ini keliru dengan alasan berikut:
 
@@ -326,11 +326,9 @@ Untuk memahami distorsi jarak ini, kita dapat memeriksa fungsi objektif \emph{t-
 
 Di mana \(p_{ij}\) adalah probabilitas kedekatan berpasangan (\emph{pairwise affinity}) antara titik \(i\) dan \(j\) pada ruang dimensi tinggi asli, sementara \(q_{ij}\) adalah probabilitas padanannya di ruang dimensi rendah. Sifat asimetris persamaan ini memberikan penalti tinggi hanya jika titik yang berdekatan di ruang asli (\(p_{ij}\) besar) dipetakan saling berjauhan di ruang visual (\(q_{ij}\) kecil). Sebaliknya, penalti relatif kecil jika titik yang berjarak jauh di ruang asli terpetakan berdekatan. Secara matematis, karakteristik ini membuat algoritma sangat kuat dalam mempertahankan kerumunan lokal, namun terpaksa mengorbankan metrik jarak global antar klaster.
 
-{[}GAMBAR 8.5: Plot Data - Trade-off perplexity pada t-SNE yang memperlihatkan distorsi ukuran klaster dan jarak antar klaster secara artifisial{]}
-
 Untuk kompresi fitur \emph{downstream}, metode proyeksi turunan linier seperti \emph{PCA} jauh lebih disarankan karena menjaga integritas jarak aslinya. Kompresi melalui \emph{PCA} atau variasinya lebih terprediksi dan efisien untuk diintegrasikan jika model Anda memerlukan jumlah fitur masukan yang lebih kecil.
 
-\subsection{Kesalahan Umum 2: Kebocoran Data (Data Leakage)}\label{kesalahan-umum-2-kebocoran-data-data-leakage}
+\textbf{Kesalahan Umum 2: Kebocoran Data (Data Leakage).}\label{kesalahan-umum-2-kebocoran-data-data-leakage}
 
 Kesalahan operasional berikutnya berkaitan langsung dengan pelanggaran praktik \emph{pipeline} yang benar. Beberapa analis mengaplikasikan rotasi \emph{PCA} pada keseluruhan kumpulan observasi, lalu kemudian melakukan pemisahan menjadi \emph{training split} dan \emph{inference split}. Pemrosesan prematur ini menciptakan kebocoran data tersembunyi:
 
@@ -346,7 +344,7 @@ Kesalahan operasional berikutnya berkaitan langsung dengan pelanggaran praktik \
 
 Sama halnya dengan penyesuaian skala, transformer kompresi dimensi harus dipaskan (\emph{fit}) secara terisolasi pada subset \emph{training}. Objek transformasi tersebut kemudian digunakan terpisah untuk memproyeksikan data uji.
 
-\subsection{Batasan Pemrosesan Laten dan Representasi Eksternal (Bab 15)}\label{batasan-pemrosesan-laten-dan-representasi-eksternal-bab-15}
+\textbf{Batasan Pemrosesan Laten dan Representasi Eksternal (Bab 15).}\label{batasan-pemrosesan-laten-dan-representasi-eksternal-bab-15}
 
 Ruang lingkup reduksi laten pada bab ini perlu dipisahkan secara tegas dari representasi semantik yang akan dibahas pada Bab 15.
 

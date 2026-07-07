@@ -8,6 +8,10 @@
 % >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
 \chapter{Rekayasa Fitur Otomatis \& Kolaborasi Manusia--AI}\label{rekayasa-fitur-otomatis-kolaborasi-manusiaai}
 
+Perkembangan pemelajaran mesin modern telah membawa prapemrosesan data ke tahap otomatisasi yang makin kompleks. Pada bab-bab sebelumnya, kita mengekstrak fitur turunan dan memecah variabel kategorikal menggunakan logika manual yang didasarkan pada pengetahuan domain. Namun, ketika kita berhadapan dengan basis data relasional berskala industri yang memiliki puluhan tabel yang saling terhubung, merancang kombinasi fitur satu per satu secara manual menjadi tidak praktis, lambat, dan rentan terhadap kesalahan manusia. Kondisi ini menuntut pendekatan yang dapat menyintesis, mengoptimasi, dan mengevaluasi representasi data secara otomatis.
+
+Bab ini akan mengupas bagaimana menjembatani kecepatan komputasi mesin dengan kebijaksanaan intuisi manusia di era kecerdasan buatan modern. Kita mendalami algoritma \emph{Deep Feature Synthesis} (DFS) untuk merangkai fitur dari relasi tabel secara otomatis, memanfaatkan kerangka kerja \emph{AutoML} untuk pencarian \emph{pipeline} fitur secara Bayesian, serta mengeksplorasi pemanfaatan model bahasa besar (\emph{Large Language Models}) untuk mengusulkan hipotesis representasi data yang kaya konteks. Yang terpenting, bab ini mengunci paradigma kolaborasi \emph{human-in-the-loop} (HITL) untuk memastikan fitur-fitur yang dihasilkan mesin tidak hanya unggul secara statistik, tetapi juga valid secara logis dan aman dari kebocoran informasi (\emph{data leakage}).
+
 \section{\texorpdfstring{Pembentukan Fitur Otomatis: \emph{Deep Feature Synthesis} dan Ruang Pencarian}{Pembentukan Fitur Otomatis: Deep Feature Synthesis dan Ruang Pencarian}}\label{pembentukan-fitur-otomatis-deep-feature-synthesis-dan-ruang-pencarian}
 
 Pada Bab 6, fitur tingkat entitas dibentuk dari riwayat \emph{event} melalui agregasi dan proses \emph{join} lintas tabel. Dalam \emph{dataset} relasional, mengekstrak pola dari banyak tabel secara manual memakan waktu dan rentan terhadap galat. Tantangan ini melahirkan pendekatan rekayasa fitur otomatis, dengan algoritma \emph{Deep Feature Synthesis} (DFS) sebagai metode utamanya. Pustaka standar yang mengimplementasikan DFS adalah FeatureTools, yang menggunakan abstraksi \emph{EntitySet} untuk memetakan tabel dan relasi antarentitas.
@@ -191,3 +195,15 @@ Selama inspeksi, pakar menemukan satu fitur dengan skor performa yang secara jan
 Insiden ini adalah bentuk klasik dari kebocoran temporal (\emph{temporal data leakage}). Agen optimasi matematis menilainya sebagai prediktor ``sempurna'' semata-mata karena korelasi angkanya tinggi. Tanpa intuisi operasional dari kurator manusia, sistem otomatis akan langsung mempromosikan fitur cacat ini ke produksi.
 
 Tindak lanjut atas temuan ini adalah penghapusan fitur tersebut beserta seluruh cabang turunannya. Sebagai langkah mitigasi struktural, pakar mengonfigurasi ulang parameter \emph{cutoff time} pada mesin pencari DFS agar secara algoritmik dilarang menyentuh baris data yang melewati batas waktu kejadian. Proses kurasi ini memfinalisasi 20 fitur tangguh yang 100\% valid secara operasional. Model dengan 20 turunan hasil seleksi kolaboratif ini sukses mengungguli performa \emph{baseline} sebesar 8\%, menggarisbawahi fakta bahwa sekuat apa pun utilitas \emph{automated feature engineering}, kepatuhan terhadap praktik \emph{pipeline} yang benar melalui audit rasional manusia tetap menjadi fondasi utamanya.
+
+\section{Sintesis Keputusan dan Prinsip Akhir}\label{sintesis-keputusan-dan-prinsip-akhir}
+
+Keberhasilan otomatisasi rekayasa fitur bertumpu pada keselarasan antara daya eksplorasi mesin dan kehati-hatian pengawasan manusia.
+
+\textbf{Panduan Pemilihan Metode Otomasi.} Gunakan \emph{Deep Feature Synthesis} (DFS) untuk basis data relasional berskala besar guna merangkai fitur agregasi lintas tabel secara cepat. Terapkan kerangka kerja \emph{AutoML} untuk mencari konfigurasi \emph{pipeline} prapemrosesan yang optimal secara Bayesian ketika keterbatasan waktu menghalangi uji coba manual. Untuk mengekstrak fitur yang kaya konteks semantik tanpa menulis kode prapemrosesan dari nol, manfaatkan agen GenAI (seperti CAAFE atau LLM-FE) sebagai pengusul hipotesis terarah.
+
+\textbf{Risiko dan Regulasi.} Otomatisasi murni yang buta terhadap konteks bisnis rentan memicu ledakan dimensi (\emph{feature space explosion}) dan menghasilkan korelasi semu (\emph{spurious features}). Putaran komputasi otomatis harus selalu dijaga ketat oleh parameter pembatasan (seperti \passthrough{\lstinline!max_depth!} pada DFS), pengecualian variabel administratif, dan penegakan batas waktu (\emph{cutoff time}) yang tegas untuk memblokir kebocoran data.
+
+\textbf{Prinsip Human-in-the-Loop.} Sistem otomatisasi tidak berfungsi sebagai pengambil keputusan otonom, melainkan sebagai mesin pengusul hipotesis. Desain kolaborasi \emph{human-in-the-loop} (HITL) menempatkan pakar domain sebagai kurator akhir untuk memeriksa kegunaan fisis fitur, menolak proksi data sensitif, dan mengaudit kelayakan operasional sebelum fitur dideploy ke lingkungan produksi.
+
+Demonstrasi langsung pengoperasian pustaka FeatureTools dan integrasi agen LLM dalam kurasi fitur otomatis dapat diuji secara interaktif pada panduan praktis di repositori pendamping buku ini.

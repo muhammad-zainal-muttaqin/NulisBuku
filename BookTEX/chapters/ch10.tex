@@ -321,7 +321,7 @@ Perkembangan teknik pemodelan runtun waktu modern semakin mengaburkan batas anta
   \textbf{\emph{Pretrained model} sebagai ekstraktor:} \emph{Foundation model} khusus deret waktu (seperti Chronos atau MOMENT) kini dapat beroperasi sebagai \emph{feature extractor} dalam kondisi beku (\emph{frozen}). Model ini mengubah urutan kronologis mentah menjadi vektor \emph{embedding} padat yang siap ditransfer sebagai input tambahan bernilai tinggi untuk algoritma klasik.
 \end{itemize}
 
-\subsection{Studi Kasus: Prediksi Deret Waktu Multivariat}\label{studi-kasus-prediksi-deret-waktu-multivariat}
+\section{Studi Kasus: Prediksi Deret Waktu Multivariat}\label{studi-kasus-prediksi-deret-waktu-multivariat}
 
 Kasus ini mengintegrasikan pendekatan rekayasa fitur untuk data deret waktu multivariat melalui masalah prediksi beban listrik kota pada satu jam berikutnya. Beban listrik tidak berdiri sendiri; suhu udara, kelembapan, dan pola aktivitas penduduk memengaruhi permintaan secara bersamaan. Karena beberapa variabel berubah beriringan seiring waktu, data ini direpresentasikan sebagai deret waktu multivariat.
 
@@ -356,8 +356,6 @@ Di mana \(MA_t\) adalah nilai rata-rata suhu pada jam \(t\), \(w\) adalah ukuran
 Tahap selanjutnya adalah desain validasi. Mengacak baris data dilarang keras pada deret waktu karena akan merusak kronologi dan menciptakan kebocoran informasi. Sebagai gantinya, teknik \emph{split temporal} murni digunakan: sepuluh bulan pertama dialokasikan eksklusif untuk pelatihan, dan dua bulan terakhir untuk pengujian.
 
 Meskipun batas potong ditarik secara kronologis, sampel pengujian paling awal tetap akan menarik rentang riwayat 24 jam ke belakang yang melewati garis batas. Akibatnya, input set pengujian berisiko menyentuh titik observasi yang statusnya masih menjadi bagian dari jam-jam akhir pelatihan. Untuk mencegah hal tersebut, kita harus menyisipkan \emph{purge gap}.
-
-{[}GAMBAR 10.6: Diagram - Skema validasi temporal dengan pemisahan kronologis dan area purge gap 25 jam di antara set pelatihan dan pengujian{]}
 
 \begin{lstlisting}[language=Python]
 import pandas as pd

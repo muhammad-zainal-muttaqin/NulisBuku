@@ -178,8 +178,6 @@ Data audio secara alamiah terekam dalam wujud \emph{waveform} mentah berdimensi 
 
 Langkah mendasar dalam memproses suara adalah memecahnya menjadi spektrogram. Transformasi ini mengubah fluktuasi satu dimensi menjadi pemetaan visual dua dimensi dari suatu sinyal suara.
 
-{[}GAMBAR 12.1: Perbandingan Visual - Waveform 1D mentah versus Spektrogram 2D{]}
-
 Pada spektrogram, rentang waktu diletakkan pada sumbu horizontal, frekuensi pada sumbu vertikal, dan amplitudo dilambangkan dengan intensitas warna. Pada rekaman wicara, bunyi vokal terlihat sebagai pita horizontal tebal, sedangkan letupan konsonan memunculkan pola garis vertikal tajam. Perubahan format menjadi gambar spektrum ini memungkinkan algoritma \emph{computer vision} diterapkan secara langsung untuk mengevaluasi data audio.
 
 Untuk mengenali pola suara menyerupai telinga biologis, peneliti merancang representasi yang memperhitungkan sifat persepsi pendengaran. Pendengaran manusia bekerja secara non-linear; kita sangat peka terhadap pergeseran nada pada frekuensi rendah, namun kurang sensitif membedakan rentang nada pada frekuensi tinggi. Sifat biologis ini direplikasi secara matematis melalui konversi frekuensi ke dalam skala Mel. Hubungan antara frekuensi asli dengan persepsi skala Mel dinyatakan melalui rumusan:
@@ -204,9 +202,7 @@ Rentetan metode ekstraksi ini merupakan contoh utama dari representasi yang dira
 
 Pemrosesan audio modern telah bergeser dari representasi yang dirancang manusia menuju representasi yang dipelajari mesin. Sebelumnya, audio sering diubah menjadi spektrogram agar dapat diproses menggunakan arsitektur \emph{computer vision}. Kini, pendekatan \emph{state-of-the-art} memproses \emph{raw waveform} secara langsung, menggali pola akustik dari fluktuasi amplitudo tanpa bergantung pada transformasi frekuensi secara paksa.
 
-{[}GAMBAR 12.1: Plot Data - Perbandingan visual antara representasi raw waveform 1D dan spektrogram 2D{]}
-
-\subsection{Arsitektur dan Self-Supervised Learning}\label{arsitektur-dan-self-supervised-learning}
+\textbf{Arsitektur dan Self-Supervised Learning.}\label{arsitektur-dan-self-supervised-learning}
 
 Model \emph{raw-waveform} seperti \textbf{wav2vec 2.0} dan \textbf{HuBERT} menerima masukan berupa deret amplitudo 1D (biasanya sampel audio 16 kHz mono). Blok pertama dari model ini adalah tumpukan konvolusi 1D yang berfungsi sebagai pengekstraksi fitur awal.
 
@@ -218,7 +214,7 @@ Di mana \(m\) adalah nilai dalam skala Mel dan \(f\) adalah frekuensi suara dala
 
 Pencapaian arsitektur ini amat bergantung pada metode \emph{self-supervised learning} (SSL). Pada fase \emph{pretraining}, model dipasok dengan puluhan ribu jam rekaman wicara tanpa label. Sistem kemudian menutupi (\emph{masking}) sebagian segmen dari deret representasi laten, lalu model ditugaskan untuk memprediksi fitur dari bagian yang ditutupi tersebut. Melalui tugas tebakan pemulihan ini, model belajar mengenali hierarki fonetik dan struktur bahasa secara mandiri.
 
-\subsection{Pilihan Pretrained Audio Encoder}\label{pilihan-pretrained-audio-encoder}
+\textbf{Pilihan Pretrained Audio Encoder.}\label{pilihan-pretrained-audio-encoder}
 
 Praktisi saat ini jarang mengandalkan algoritma ekstraksi fitur tradisional untuk tugas kompleks. Alur kerjanya bergeser menjadi meneruskan \emph{waveform} ke \emph{pretrained model} guna mendapatkan vektor fitur representatif. Berikut adalah beberapa arsitektur utama:
 

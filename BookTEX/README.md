@@ -3,7 +3,7 @@
 Jalur naskah **final** buku *Rekayasa Fitur Modern* dalam bentuk LaTeX,
 menghasilkan **PDF ukuran B5** (176 × 250 mm) yang sudah dilayout.
 
-Dibuat atas arahan Bu Fatma (7 Juli 2026):
+Dibuat atas arahan (7 Juli 2026):
 naskah final = PDF terlayout B5, sumber LaTeX, subbab maksimal 1 level,
 satu berkas per bab.
 
@@ -61,7 +61,7 @@ Diagram mermaid tetap hidup di website: sumbernya disimpan di
 
 ## Keputusan tata letak
 
-| Aturan Bu Fatma            | Implementasi |
+| Aturan            | Implementasi |
 |----------------------------|--------------|
 | PDF terlayout, ukuran B5   | `geometry` `b5paper`, kelas `book` `twoside` |
 | Sumber LaTeX               | pandoc `.qmd` → `.tex`, kompilasi Tectonic |

@@ -8,9 +8,13 @@
 % >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
 \chapter{Missing Values \& Outliers (Reproducible, Berbasis Pipeline)}\label{missing-values-outliers-reproducible-berbasis-pipeline}
 
+Ketiadaan data dan kehadiran pencilan (\emph{outlier}) merupakan kenyataan empiris yang tidak terhindarkan saat kita bekerja dengan data mentah di dunia nyata. Algoritma pemelajaran mesin tidak dapat menoleransi nilai kosong pada saat kalkulasi gradien atau jarak, sedangkan pencilan ekstrem yang menyimpang jauh dari pusat distribusi dapat dengan mudah mendistorsi estimasi parameter model. Sayangnya, tindakan pembersihan secara manual dan baris-per-baris sering kali merusak variansi asli, menyembunyikan sinyal anomali berharga, dan yang paling berbahaya, memicu kebocoran data (\emph{data leakage}) jika parameter pengisi dihitung sebelum pemisahan data (\emph{data split}) dilakukan.
+
+Bab ini meletakkan fondasi bagaimana merancang penanganan nilai kosong dan pencilan secara sistematis, \emph{reproducible}, dan berbasis \emph{pipeline}. Kita mendalami mekanisme hilangnya data (MCAR, MAR, MNAR) sebagai asupan diagnostik sebelum otomatisasi, membedakan imputasi sederhana dari imputasi iteratif multivariat berbasis model, menggunakan status kekosongan sebagai fitur baru (\emph{missing indicator}), serta mendeteksi dan mentransformasi pencilan menggunakan parameter statistik yang tangguh (\emph{robust}). Seluruh proses ini dikemas ke dalam alur kerja terstruktur untuk menjamin integritas data dari tahap pelatihan hingga inferensi di produksi.
+
 \section{\texorpdfstring{\emph{Missing Values} \& \emph{Outlier} (Reproducible, Berbasis \emph{pipeline})}{Missing Values \& Outlier (Reproducible, Berbasis pipeline)}}\label{missing-values-outlier-reproducible-berbasis-pipeline}
 
-\subsection{\texorpdfstring{Mekanisme \emph{Missingness}: MCAR, MAR, dan MNAR}{Mekanisme Missingness: MCAR, MAR, dan MNAR}}\label{mekanisme-missingness-mcar-mar-dan-mnar}
+\textbf{Mekanisme \emph{Missingness}: MCAR, MAR, dan MNAR.}\label{mekanisme-missingness-mcar-mar-dan-mnar}
 
 Sebagian besar algoritma \emph{machine learning} tidak dapat memproses nilai kosong secara langsung. Kita wajib menangani data yang tidak lengkap sebelum masuk ke tahap pemodelan. Namun, sebelum menyusun strategi imputasi di dalam \emph{pipeline}, kita perlu memeriksa alasan di balik hilangnya data tersebut. Nilai kosong sering kali merupakan artefak yang membawa informasi spesifik tentang proses pengumpulan observasi. Tahap inspeksi dan diagnostik selalu mendahului otomatisasi.
 
@@ -68,13 +72,13 @@ Meskipun riset menunjukkan bahwa imputasi median sederhana yang dilakukan di lua
 
 Pemilihan algoritma pengisian nilai kosong bergantung pada mekanisme \emph{missingness} (MCAR, MAR, atau MNAR). Pendekatan imputasi terbagi ke dalam dua metode: metode univariat dasar yang memprioritaskan kecepatan kalkulasi dan metode multivariat yang berusaha mempertahankan struktur distribusi data asli.
 
-\subsection{Imputasi Univariat (Sederhana)}\label{imputasi-univariat-sederhana}
+\textbf{Imputasi Univariat (Sederhana).}\label{imputasi-univariat-sederhana}
 
 Imputasi sederhana mengisi sel data kosong menggunakan metrik statistik tunggal dari kolom yang sama, seperti rata-rata (\emph{mean}), median, atau modus.
 
 Karakteristik operasional pendekatan univariat utamanya terletak pada kecepatan komputasi. Metode ini sangat efisien karena hanya memerlukan proses agregasi linier satu arah pada satu kolom. Namun, pendekatan ini mengabaikan korelasi antar-variabel karena nilai penggantinya dihitung secara terisolasi. Jika sel kosong pada kolom berat badan diisi dengan nilai median populasi umum, estimasi tersebut sepenuhnya abai terhadap pengaruh atribut tinggi badan atau kelompok usia pada baris observasi yang sama. Selain itu, metode univariat memicu penyusutan varians yang tidak natural. Menginjeksikan titik data bernilai identik secara massal persis ke tengah distribusi akan langsung menekan penyebaran data asli. Penyusutan buatan ini mendistorsi nilai galat standar (\emph{standard error}) saat tabel dipakai untuk melatih model prediktif pada tahap analitik hilir.
 
-\subsection{Imputasi Multivariat (Berbasis Model)}\label{imputasi-multivariat-berbasis-model}
+\textbf{Imputasi Multivariat (Berbasis Model).}\label{imputasi-multivariat-berbasis-model}
 
 Untuk mempertahankan korelasi struktural antar-fitur, imputasi multivariat memperlakukan kolom berstatus \emph{missing} sebagai variabel target prediksi, sementara lajur kolom utuh difungsikan secara bergantian sebagai matriks penjelas.
 
@@ -88,7 +92,7 @@ Dua algoritma klasik utama di kelas multivariat ini adalah K-Nearest Neighbors (
 
 Secara matematis, prediksi fungsi target pada skema imputasi iteratif dikalkulasikan dengan formula \(\hat{x}_{i,j}^{(t)} = f_j \left( x_{i,1}^{(t)}, \dots, x_{i,j-1}^{(t)}, x_{i,j+1}^{(t-1)}, \dots, x_{i,p}^{(t-1)} \right)\). Dalam persamaan tersebut, \(\hat{x}_{i,j}^{(t)}\) menyatakan angka proyeksi pada sel baris ke-\(i\) di kolom \(j\) untuk siklus ke-\(t\). Variabel \(f_j\) mewakili algoritma pengawasan (contohnya \emph{Random Forest} atau regresi) yang ditugaskan khusus membedah varians kolom \(j\). Model ini mencerna deret data secara kontinu: meminjam pembaruan nilai kelompok indeks \(1\) sampai \(j-1\) dari iterasi terkini \((t)\), lalu memanfaatkan sisa rentang dari \(j+1\) hingga dimensi puncak \(p\) dari siklus masa lalu \((t-1)\). Modul arsitektur pustaka modern seperti \passthrough{\lstinline!IterativeImputer!} umumnya dikonfigurasi untuk memberikan prediksi nilai tunggal (\emph{single imputation}) demi mereduksi kerumitan \emph{pipeline} komputasi inferensi, walau hal ini menghilangkan visibilitas atas ketidakpastian angka penambalan (\emph{imputation uncertainty}) yang biasanya dikelola lewat metodologi MICE murni.
 
-\subsection{Pendekatan Generatif Berbasis Deep Learning}\label{pendekatan-generatif-berbasis-deep-learning}
+\textbf{Pendekatan Generatif Berbasis Deep Learning.}\label{pendekatan-generatif-berbasis-deep-learning}
 
 Ketika merespons matriks fitur berukuran raksasa dengan jejak dependensi non-linier kompleks, \emph{deep learning} menyuguhkan varian imputasi probabilistik representatif. Misalnya, arsitektur \emph{Masked Autoencoder} mensimulasikan bagian data menjadi tutupan tersembunyi (\emph{mask}), kemudian memaksa arsitektur \emph{self-supervised} untuk menebak angka faktual yang sengaja digelapkan guna menggali pola struktur utamanya. Di sisi lain, \emph{Diffusion Models} mengadaptasi kalkulasi pembalikan transmisi difusi sebaran derau ke dalam sel yang hilang untuk menghasilkan tebakan presisi tinggi. Terdapat pula arsitektur sadar-MNAR seperti \passthrough{\lstinline!not-MIWAE!} yang melepas batasan asumsi acak (MAR) secara matematis dan mengintegrasikan mekanisme \emph{missingness} itu sendiri secara eksplisit untuk membaca variabel observasional ganda.
 
@@ -127,7 +131,7 @@ Penggunaan \emph{missing indicator} memiliki konsekuensi komputasional dan arsit
 
 Selain penanganan \emph{missing values}, nilai ekstrem atau \emph{outlier} merupakan tantangan utama dalam merepresentasikan distribusi populasi. \emph{Outlier} kerap diperlakukan sebagai data rusak yang harus segera dihapus. Praktik pembersihan reaktif ini berisiko menghilangkan varians data. Rekayasa fitur yang sistematis membagi manajemen \emph{outlier} ke dalam dua tahap operasional terpisah: deteksi dan penanganan.
 
-\subsection{Deteksi: Mengobservasi Anomali}\label{deteksi-mengobservasi-anomali}
+\textbf{Deteksi: Mengobservasi Anomali.}\label{deteksi-mengobservasi-anomali}
 
 Tahap deteksi murni bertujuan menetapkan batas kenormalan suatu fitur. Algoritma hanya melabeli atau memberikan skor pada nilai yang secara matematis berada di luar distribusi mayoritas, tanpa melakukan modifikasi nilai.
 
@@ -149,7 +153,7 @@ Di mana \(x_i\) merepresentasikan nilai observasi fitur ke-\(i\) dan \(\text{med
 \label{fig:ch05-fig-6}
 \end{figure}
 
-\subsection{Penanganan: Konteks Domain}\label{penanganan-konteks-domain}
+\textbf{Penanganan: Konteks Domain.}\label{penanganan-konteks-domain}
 
 Setelah algoritma menandai nilai-nilai ekstrem, tahap penanganan menentukan bentuk intervensi data. Keputusan ini bertumpu sepenuhnya pada konteks domain permasalahan, bukan semata pada metrik matematis. Anomali umumnya terbentuk oleh dua skenario berbeda. Skenario pertama adalah galat perekaman data. Ini mencakup nilai yang menyalahi hukum realitas, seperti umur manusia 150 tahun atau sensor suhu yang berbunyi angka absolut negatif. Kesalahan instrumen semacam ini sah untuk diperlakukan layaknya \emph{missing value}, yang ditangani dengan memotong nilainya ke batas maksimum logis (\emph{capping}) atau diimputasi ulang. Skenario kedua adalah sinyal nyata. Anomali sering merepresentasikan kejadian ekstrem yang memang valid di dunia nyata, seperti pembelanjaan harian bernilai ratusan juta rupiah. Nilai ini bisa menandakan kehadiran pelanggan korporat besar atau bahkan menjadi deteksi dini aktivitas penipuan. Menghapus atau memotong nilai transaksi ini secara buta justru akan menghilangkan sinyal prediktif yang paling diperlukan oleh algoritma. Pemisahan operasional antara deteksi dan penanganan memastikan praktisi data selalu mengevaluasi asal-usul nilai ekstrem sebelum mengonversinya, mencegah hilangnya informasi berharga secara permanen.
 
@@ -197,8 +201,6 @@ X_{bersih} = C(X_{mentah}) \quad \text{vs} \quad X_{fitur} = T_{\theta}(X_{bersi
 
 Fungsi pembersihan \(C\) diterapkan secara seragam pada seluruh observasi \(X_{mentah}\) tanpa mengamati interaksi antar-baris. Sebaliknya, transformasi fitur \(T\) dikendalikan oleh matriks parameter \(\theta\) (misalnya batas parameter kuartil pada \emph{scaler} atau nilai rata-rata pada imputer) yang secara eksklusif dipelajari hanya dari subset data latih. Menghitung \(\theta\) menggunakan data pengujian adalah asal mula terjadinya \emph{data leakage}.
 
-{[}GAMBAR 5.7: Skema - Perbandingan alur eksekusi \emph{data cleaning} statis melawan transformasi representasi dinamis yang dikurung oleh pembagian \emph{train/test}{]}
-
 Batas operasional ini juga membatasi cakupan materi yang dieksplorasi di dalam bab-bab berikutnya. Buku ini tidak membahas tutorial manipulasi teks mentah, penggunaan fungsi \emph{regex} untuk menyortir format kotor, atau instruksi teknik deduplikasi basis data. Titik berat kita dikhususkan sepenuhnya pada desain dan penerapan operasional \(T_{\theta}\), yakni rekayasa representasi yang berinteraksi langsung dengan mekanisme pembelajaran mesin.
 
 \section{\texorpdfstring{Studi Kasus: \emph{Pipeline} Imputasi dan Penanganan \emph{Robust} yang \emph{Reproducible}}{Studi Kasus: Pipeline Imputasi dan Penanganan Robust yang Reproducible}}\label{studi-kasus-pipeline-imputasi-dan-penanganan-robust-yang-reproducible}
@@ -230,8 +232,6 @@ Berdasarkan diagnosis di atas, kita merancang spesifikasi \emph{pipeline} beruru
 \item
   \textbf{Penyesuaian skala (\emph{scaling}):} Melakukan standardisasi dengan \passthrough{\lstinline!RobustScaler!} menggunakan perhitungan median dan \emph{Interquartile Range} (IQR), sehingga skala fitur akhir tetap stabil terhadap sisa residu \emph{outlier}.
 \end{enumerate}
-
-{[}GAMBAR 5.5: Diagram Blok - Arsitektur pipeline pemrosesan data yang menunjukkan aliran X\_train menuju fungsi fit, dan X\_test menuju fungsi transform dengan parameter terkunci{]}
 
 Secara matematis, \emph{pipeline} mengeksekusi komposisi fungsi transformasi secara berantai pada data observasi (\(X_{\text{in}}\)). Parameter transformasi di setiap tahap akan dikunci dengan mengandalkan statistik yang dipelajari mutlak dari data latih melalui persamaan \(X_{\text{out}} = T_n(T_{n-1}( \dots T_1(X_{\text{in}} \mid \theta_1) \dots \mid \theta_{n-1}) \mid \theta_n)\). Pada perumusan tersebut, \(T_i\) adalah representasi matematis dari fungsi transformasi pada tahap ke-\(i\) (seperti fungsi pemotongan distribusi atau fungsi pergeseran skala), dan \(\theta_i\) mewakili parameter statistik spesifik (seperti batas kuantil, median, atau bobot imputasi) yang dikalkulasi secara eksklusif saat algoritma memproses \emph{split} pelatihan. Pemanggilan fungsi \passthrough{\lstinline!fit()!} pada blok \emph{pipeline} akan merekam pola indikator variabel, distribusi relasional, dan batas persentil tanpa melihat satu pun observasi dari set pengujian. Saat dieksekusi di dalam skema validasi silang (\emph{cross-validation}), struktur ini memaksa prosedur imputasi dan estimasi statistik beroperasi secara terisolasi murni di dalam setiap porsi lipatan (\emph{fold}).
 
@@ -295,3 +295,15 @@ print(f"Dimensi data asli: {X_raw.shape}")
 print(f"Dimensi data terproses (termasuk kolom indikator missing): {X_processed.shape}")
 print(f"Nilai maksimum setelah pemrosesan: {np.max(X_processed):.4f}")
 \end{lstlisting}
+
+\section{Sintesis Keputusan dan Prinsip Akhir}\label{sintesis-keputusan-dan-prinsip-akhir}
+
+Penanganan nilai kosong dan pencilan adalah perpaduan antara kehati-hatian statistik, pemahaman konteks domain, dan kedisiplinan integrasi \emph{pipeline}.
+
+\textbf{Strategi Pengisian Nilai Kosong.} Diagnosis pola kekosongan terlebih dahulu sebelum memilih metode. Pada skenario MCAR, imputasi univariat sederhana (rata-rata/median) cukup memadai dan efisien. Jika korelasi antar-variabel kuat (MAR), terapkan imputasi multivariat (seperti KNN atau MICE) agar struktur distribusi asli tetap terjaga. Pada kondisi MNAR di mana ketiadaan data menyimpan informasi penting, pertahankan sinyal tersebut dengan mengonstruksi fitur biner pendukung berupa \emph{missing indicator}.
+
+\textbf{Manajemen Pencilan.} Deteksi pencilan menggunakan parameter yang kebal terhadap kontaminasi ekstrem (seperti median dan MAD untuk data univariat, atau \emph{Isolation Forest} untuk data berdimensi tinggi). Keputusan intervensi (apakah dipotong lewat \emph{capping/winsorization}, ditransformasi lewat metode \emph{robust}, atau diperlakukan sebagai \emph{missing values}) wajib disesuaikan dengan konteks domain untuk mencegah hilangnya sinyal anomali yang bernilai tinggi (seperti pada deteksi transaksi penipuan).
+
+\textbf{Integrasi Bersih dalam Pipeline.} Seluruh kalkulasi statistik (seperti rata-rata imputasi, median, dan batas kuantil pemotongan) harus diisolasi di dalam objek \emph{pipeline}. Parameter ini dipelajari (\emph{fit}) murni dari himpunan data latih dan diterapkan kembali saat \emph{transform} pada data uji atau data baru di lingkungan produksi. Batasan tegas ini menjamin reproduksibilitas komputasi sekaligus melenyapkan risiko kebocoran data.
+
+Demonstrasi interaktif dan latihan penanganan data renggang secara terstruktur ini dapat diuji secara langsung menggunakan skrip dan data pendamping pada repositori buku ini.

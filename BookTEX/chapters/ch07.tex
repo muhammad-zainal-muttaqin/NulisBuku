@@ -40,7 +40,7 @@ Salah satu cara matematis untuk mengukur relevansi dan redundansi adalah menggun
 
 Di mana \(X\) adalah nilai fitur, \(Y\) adalah variabel target, \(p(x,y)\) merupakan probabilitas gabungan dari keduanya, sedangkan \(p(x)\) dan \(p(y)\) adalah probabilitas marginal masing-masing. Nilai \(I(X; Y)\) yang tinggi menandakan fitur \(X\) sangat relevan untuk memprediksi \(Y\). Sebaliknya, redundansi yang tinggi terjadi ketika dua buah fitur independen, \(X_1\) dan \(X_2\), memiliki nilai \(I(X_1; X_2)\) yang besar. Seleksi fitur yang ideal akan mencari himpunan dimensi dengan nilai relevansi maksimal dan redundansi minimal.
 
-\subsection{\texorpdfstring{Kutukan Dimensi (\emph{Curse of Dimensionality})}{Kutukan Dimensi (Curse of Dimensionality)}}\label{kutukan-dimensi-curse-of-dimensionality}
+\textbf{Kutukan Dimensi (\emph{Curse of Dimensionality}).}\label{kutukan-dimensi-curse-of-dimensionality}
 
 \begin{figure}[htbp]\centering
 \includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch07-fig-1}
@@ -159,8 +159,6 @@ Contoh klasik metode \emph{embedded} adalah regresi LASSO (\emph{Least Absolute 
 
 Di mana \(X\) mewakili matriks fitur, \(y\) adalah vektor target, \(w\) adalah vektor koefisien model, dan \(\alpha\) mengatur tingkat kekuatan penalti. Batas penalti L1 secara geometris memiliki sudut-sudut tajam. Bentuk ini memaksa solusi optimal mendarat tepat di sudut tersebut, yang menyusutkan nilai koefisien fitur kurang relevan hingga tepat menjadi angka nol (\emph{sparse}).
 
-{[}GAMBAR 7.4: Plot Data - Lasso shrinkage path membatasi koefisien fitur menjadi nol seiring peningkatan nilai penalti alpha{]}
-
 Seleksi \emph{embedded} juga lazim digunakan pada algoritma berbasis pohon seperti \emph{Random Forest} melalui metrik \emph{feature importance} bawaan, contohnya metrik penurunan ketidakmurnian (\emph{impurity}). Meskipun cepat, metrik bawaan pohon rentan bias terhadap fitur dengan kardinalitas tinggi. Untuk mengatasi hal ini, pustaka \emph{gradient boosting} modern menyediakan alternatif yang lebih kokoh. Pustaka CatBoost, sebagai contoh, memiliki metrik \passthrough{\lstinline!LossFunctionChange!} yang mengevaluasi perbedaan \emph{loss} model ketika suatu fitur diabaikan.
 
 Dalam penerapan tingkat lanjut, praktisi menghadapi dua filosofi seleksi \emph{embedded} yang berbeda:
@@ -210,8 +208,6 @@ Selain stabilitas, kesalahan metodologi yang paling merusak dalam tahap ini adal
 Satu-satunya cara mencegah kebocoran ini adalah dengan menerapkan praktik \emph{pipeline} yang benar. Karena proses pembuangan atribut dikendalikan langsung oleh perhitungan statistik data, objek penyeleksi wajib dirangkai di dalam \emph{pipeline} model. Fungsi seleksi hanya boleh memanggil \emph{fit} secara eksklusif pada \emph{training split}, kemudian baru memanggil \emph{transform} ke arah data uji.
 
 Kebutuhan akan disiplin pemisahan data ini menjadi jauh lebih kompleks ketika metode seleksi menuntut pencarian hyperparameter, seperti mencari jumlah fitur terbaik (\(k\)) atau menentukan besaran penalti pada regularisasi L1. Memilih parameter optimal pada validasi silang standar akan memicu bias. Solusi untuk mempertahankan objektivitas evaluasi adalah dengan arsitektur \emph{nested cross-validation} (validasi silang bersarang).
-
-{[}GAMBAR 7.5: Skema - Alur validasi silang bersarang (nested cross-validation) memisahkan fase pencarian fitur terbaik dan evaluasi performa{]}
 
 Mekanisme validasi bersarang memisahkan alur pencarian dan pengujian menjadi dua lapis pelipatan independen:
 

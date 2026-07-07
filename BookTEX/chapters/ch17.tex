@@ -198,7 +198,7 @@ Rekayasa fitur berawal dari pemahaman atas masalah operasional, bukan sekadar ek
 
 Berikut adalah prinsip-prinsip yang harus dipenuhi saat merancang fitur untuk produksi:
 
-\subsection{\texorpdfstring{Ketersediaan Data Saat \emph{Inference}}{Ketersediaan Data Saat Inference}}\label{ketersediaan-data-saat-inference}
+\textbf{Ketersediaan Data Saat \emph{Inference}.}\label{ketersediaan-data-saat-inference}
 
 Syarat teknis paling kaku dalam produksi adalah ketersediaan data pada saat prediksi berjalan (\emph{inference}). Fitur wajib tersedia secara komputasional dan faktual pada detik model dipanggil. Metrik evaluasi yang tinggi di fase eksperimen tidak ada artinya jika bahan baku fitur tersebut mengalami hambatan latensi di produksi.
 
@@ -234,7 +234,7 @@ Di mana:
 
 Nilai PSI di atas 0,2 menandakan pergeseran populasi atau \emph{skew} yang besar. Jika ini terjadi, desain ketersediaan fitur tersebut perlu dievaluasi ulang.
 
-\subsection{\texorpdfstring{Transformasi Selalu Mengikuti \emph{Split}}{Transformasi Selalu Mengikuti Split}}\label{transformasi-selalu-mengikuti-split}
+\textbf{Transformasi Selalu Mengikuti \emph{Split}.}\label{transformasi-selalu-mengikuti-split}
 
 Validitas evaluasi menuntut agar semua transformasi data dilakukan setelah penerapan strategi pemisahan (\emph{split}). Praktik \emph{pipeline} yang benar mengatur urutan operasi sebagai berikut:
 
@@ -248,7 +248,7 @@ Validitas evaluasi menuntut agar semua transformasi data dilakukan setelah pener
   \textbf{Pencegahan Data Leakage:} Jika kalkulasi beroperasi pada keseluruhan dataset sebelum pemisahan, distribusi set pengujian akan ikut terhitung ke dalam parameter transformasi. Kebocoran ini menghasilkan akurasi palsu yang terlihat tinggi saat eksperimen namun anjlok saat produksi.
 \end{itemize}
 
-\subsection{\texorpdfstring{Keamanan Operasional dan Fitur \emph{Proxy}}{Keamanan Operasional dan Fitur Proxy}}\label{keamanan-operasional-dan-fitur-proxy}
+\textbf{Keamanan Operasional dan Fitur \emph{Proxy}.}\label{keamanan-operasional-dan-fitur-proxy}
 
 Melanjutkan prinsip privasi dari Bab 9, fakta bahwa sebuah atribut menaikkan akurasi prediksi tidak otomatis membuatnya boleh dipakai. Sistem harus dibangun dengan batas keamanan operasional agar tidak mengeksploitasi atribut yang dilindungi.
 
@@ -310,7 +310,7 @@ Mesin berekspansi sebagai fasilitator hipotesis representasi, sedangkan kepakara
 
 Kita akan merancang dua \emph{pipeline} dari nol untuk mendemonstrasikan bagaimana jenis data dan rumusan masalah memandu penentuan unit observasi hingga pemilihan representasi.
 
-\subsection{Skenario Pertama: Peramalan Permintaan Ritel}\label{skenario-pertama-peramalan-permintaan-ritel}
+\textbf{Skenario Pertama: Peramalan Permintaan Ritel.}\label{skenario-pertama-peramalan-permintaan-ritel}
 
 Sebuah jaringan swalayan memprediksi volume penjualan untuk mengatur stok barang. Desain \emph{pipeline} untuk masalah ini dibangun dengan spesifikasi berikut:
 
@@ -344,7 +344,7 @@ Di mana:
 
 Pergeseran skor PSI yang tinggi menandakan bahwa distribusi fitur telah berubah dan siklus pelatihan ulang kemungkinan diperlukan.
 
-\subsection{Skenario Kedua: Diagnosis Medis Multimodal}\label{skenario-kedua-diagnosis-medis-multimodal}
+\textbf{Skenario Kedua: Diagnosis Medis Multimodal.}\label{skenario-kedua-diagnosis-medis-multimodal}
 
 Skenario kedua melibatkan klasifikasi tingkat keparahan penyakit paru-paru berdasarkan data rumah sakit. Karakteristik perancangan arsitektur multimodal ini meliputi:
 
@@ -361,8 +361,6 @@ Skenario kedua melibatkan klasifikasi tingkat keparahan penyakit paru-paru berda
 \item
   \textbf{Penggabungan (\emph{fusion}):} Aliran \emph{embedding} citra dan aliran fitur tabular digabungkan secara internal sebelum masuk lapisan klasifikasi akhir.
 \end{itemize}
-
-{[}GAMBAR 17.6: Skema - Arsitektur dua sistem prediktif berdampingan: pipeline \emph{forecasting} ritel temporal di sisi kiri dan arsitektur hybrid multimodal medis di sisi kanan{]}
 
 Implementasi kode transformasi merupakan tahapan teknis penutup. Ketepatan dalam merumuskan unit observasi, mengatur logika \emph{split} pengujian, serta menyatukan ragam bentuk representasi adalah pondasi sejati dari pembangunan sistem prediktif yang berhasil.
 

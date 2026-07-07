@@ -8,6 +8,10 @@
 % >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
 \chapter{Pipeline, Validasi, dan Data Leakage}\label{pipeline-validasi-dan-data-leakage}
 
+Mengembangkan model pembelajaran mesin yang akurat di laboratorium komputasi adalah satu hal, namun memastikannya tetap tangguh saat menghadapi aliran data dunia nyata adalah tantangan yang sepenuhnya berbeda. Di lingkungan produksi, model sering kali runtuh bukan karena kelemahan arsitektur algoritmanya, melainkan karena kegagalan menjaga konsistensi prapemrosesan data. Ketika kita menghitung parameter transformasi secara ceroboh, informasi dari masa depan atau dari data uji dapat bocor ke dalam proses pelatihan. Kebocoran data (\emph{data leakage}) ini menciptakan ilusi performa akademis yang luar biasa, namun berujung pada kegagalan total saat model dihadapkan pada kenyataan operasional.
+
+Bab ini membahas bagaimana mengarantina data secara ketat sejak awal. Melalui penguasaan kontrak \emph{fit} dan \emph{transform}, perancangan pemisahan data (\emph{data split}) yang valid secara temporal maupun berkelompok, serta pengikatan seluruh operasi prapemrosesan ke dalam sebuah objek \emph{pipeline}, kita dapat membangun sistem yang kebal terhadap kebocoran informasi. Menguasai kedisiplinan ini adalah langkah pertama yang memisahkan seorang akademisi eksperimental dari seorang praktisi pembelajaran mesin yang andal di industri.
+
 \section{Fit dan Transform: Pipeline sebagai Kontrak Pelatihan dan Inferensi}\label{fit-dan-transform-pipeline-sebagai-kontrak-pelatihan-dan-inferensi}
 
 Transformasi data dalam \emph{machine learning} menuntut konsistensi absolut antara tahap pelatihan dan tahap inferensi. Model mengharapkan fitur dari data masa depan diubah menggunakan aturan dan metrik yang sama persis dengan data pelatihannya. Konsistensi ini adalah inti dari praktik \emph{pipeline} yang benar.
@@ -46,15 +50,15 @@ Setiap operasi modifikasi fitur wajib dikapsulkan ke dalam sebuah \emph{transfor
 \label{fig:ch02-fig-2}
 \end{figure}
 
-\subsection{Serialisasi dan Persistensi Model}\label{serialisasi-dan-persistensi-model}
+\textbf{Serialisasi dan Persistensi Model.}\label{serialisasi-dan-persistensi-model}
 
 Objek \emph{transformer} yang telah menampung parameter dapat disimpan secara permanen. Proses mentransfer wujud komputasi dari memori menuju berkas fisik ini dinamakan serialisasi. Praktik rekayasa fitur modern berpegang pada beberapa standar. Jika bekerja di ekosistem Python, format \emph{native} seperti pustaka \passthrough{\lstinline!joblib!} atau \passthrough{\lstinline!pickle!} merupakan spesifikasi resmi yang dianjurkan. Namun, jika algoritma diproyeksikan untuk beroperasi di luar kerangka Python (misalnya pada arsitektur mesin C++ atau Java), spesifikasi ONNX (\emph{Open Neural Network Exchange}) sebagai format lintas bahasa harus diprioritaskan. Berkas biner hasil serialisasi ini kelak dikirimkan mendampingi model prediktif utama ke \emph{server} produksi, demi menjamin data baru diproses dengan takaran yang mutlak sama dengan tahapan pelatihan.
 
-\subsection{Pipeline Khusus untuk Resampling}\label{pipeline-khusus-untuk-resampling}
+\textbf{Pipeline Khusus untuk Resampling.}\label{pipeline-khusus-untuk-resampling}
 
 Data yang tidak seimbang (\emph{imbalanced data}) memunculkan tantangan struktural terhadap kontrak desain \emph{transformer}. Algoritma \emph{resampling} seperti SMOTE secara aktif mengubah jumlah baris sampel pada titik eksekusinya. Dalam hal ini, kita harus menghindari skema \emph{pipeline} standar karena ia mengasumsikan konsistensi jumlah baris secara persis. Memaksakan penerapan algoritma \emph{resampling} pada kerangka bawaan ini sering kali memicu perubahan matriks inferensi yang keliru. Solusinya adalah menggunakan \emph{pipeline} ekstensi seperti \passthrough{\lstinline!imblearn.pipeline.Pipeline!} yang memastikan penambahan sampel sintetis (\passthrough{\lstinline!fit_resample!}) hanya aktif selama berlangsungnya fase pelatihan. Tahapan tersebut secara otomatis diabaikan pada saat inferensi berjalan tunggal (\passthrough{\lstinline!transform!}). Tanpa penyekatan fungsional ini, sampel tiruan akan meluber ke dalam himpunan data pengujian murni, sehingga memproduksi estimasi performa akurasi yang tidak valid.
 
-\subsection{Pengendalian Keacakan (Random State)}\label{pengendalian-keacakan-random-state}
+\textbf{Pengendalian Keacakan (Random State).}\label{pengendalian-keacakan-random-state}
 
 Keterulangan rekayasa fitur bertumpu pada kontrol elemen keacakan matematis. Generator nomor acak mengoperasikan proses sentral seperti pemisahan dataset awal, dan pengendaliannya (\emph{random state}) menyusun fondasi keakuratan pengujian silang (\emph{cross-validation}). Untuk objek pemisah (\emph{splitter}), memberikan nilai bilangan bulat (\emph{integer}) secara langsung merupakan langkah teraman yang menggaransi struktur lipatan pengujian akan selalu identik ketika teknisi membandingkan kinerja dari beberapa model. Sementara itu, untuk \emph{estimator} atau \emph{transformer}, menyerahkan instans objek \passthrough{\lstinline!RandomState!} memastikan tiap siklus lipatan data menerima urutan acak yang independen serta solid secara statistik. Terakhir, kita wajib menghindari penyetelan angka acak (\emph{seed}) secara global pada tingkat \emph{runtime} pustaka numerik, karena berisiko menimbulkan komplikasi algoritma sekunder yang sulit dilacak pada landasan kode berskala luas.
 
@@ -230,6 +234,16 @@ Secara matematis, jika \(N_{train}\) adalah jumlah observasi valid pada data lat
 
 Pada persamaan tersebut, \(x_i\) mewakili nilai ukuran lahan yang tersedia di dalam data latih. Nilai \(\mu_{train}\) tunggal ini kemudian dipertahankan untuk menambal nilai kosong pada observasi di data uji. Pendekatan ini memastikan data uji tetap terisolasi dan tidak berkontribusi pada komputasi parameter fitur.
 
-{[}GAMBAR 2.4: Skema - Ilustrasi data leakage akibat imputasi global sebelum pemisahan data dibandingkan dengan pipeline tertutup{]}
-
 Saat dievaluasi, performa dari pendekatan kedua umumnya lebih rendah dibandingkan pendekatan pertama. Skor yang menurun ini justru mencerminkan kemampuan prediksi yang realistis saat model menghadapi observasi baru. Tanpa isolasi \emph{pipeline} yang tegas, rekayasa fitur berisiko meloloskan kalkulasi cacat yang membuat validasi model tidak sah. Pada skala produksi, pencegahan kebocoran temporal ini juga dapat diamankan oleh infrastruktur pelengkap seperti \emph{feature store} melalui mekanisme \emph{point-in-time join}, sehingga data dari masa depan terblokir dan tidak memengaruhi perhitungan fitur pelatihan historis.
+
+\section{Sintesis Keputusan dan Prinsip Akhir}\label{sintesis-keputusan-dan-prinsip-akhir}
+
+Keamanan dan konsistensi naskah data sebelum diumpankan ke dalam model ditentukan oleh kedisiplinan kita dalam menerapkan prinsip isolasi data.
+
+\textbf{Panduan Praktis Pencegahan Kebocoran.} Seluruh parameter prapemrosesan (seperti nilai rata-rata imputer, batas kuantil scaling, atau pemetaan kategori) wajib dipelajari (\emph{fit}) murni dari himpunan data latih. Data uji atau data validasi harus diperlakukan sebagai entitas steril yang hanya boleh dimodifikasi lewat operasi \emph{transform} searah tanpa menyumbang nilai statistik apa pun.
+
+\textbf{Pilihan Strategi Pemisahan.} Pemisahan data harus disesuaikan dengan struktur asli informasi. Gunakan \emph{random split} hanya jika setiap observasi bersifat mandiri dan terdistribusi seragam. Jika data memiliki dependensi waktu, terapkan \emph{temporal split} untuk mencegah model mengintip masa depan. Untuk data yang menyimpan beberapa pengamatan berulang dari subjek yang sama, wajib menggunakan \emph{group split} agar karakteristik subjek tidak bocor melintasi batas partisi.
+
+\textbf{Evaluasi dan Validasi.} Setiap keputusan seleksi atau penalaan parameter fitur harus dikurung di dalam skema \emph{cross-validation} yang ketat. Menggunakan model hibrida atau model berbasis pohon tidak membebaskan kita dari keharusan merancang \emph{pipeline} tertutup. Keberhasilan validasi offline yang jujur adalah satu-satunya jaminan bahwa model akan memberikan performa yang konsisten saat melayani prediksi di produksi.
+
+Kode sumber lengkap dan demonstrasi visual bagaimana membandingkan pipeline yang valid dan yang bocor pada skema evaluasi dapat diuji langsung melalui materi di repositori pendamping buku ini.
