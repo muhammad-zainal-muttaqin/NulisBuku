@@ -1,0 +1,105 @@
+{
+ "ch13-fig-1": {
+  "caption": "Transformasi Koordinat Mentah Menjadi Fitur Jarak, Radius, dan Indeks Heksagonal",
+  "src": [
+   "%%| label: fig-ch13-13_1",
+   "%%| fig-cap: \"Transformasi Koordinat Mentah Menjadi Fitur Jarak, Radius, dan Indeks Heksagonal\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A[Koordinat Latitude, Longitude] --> B[Fitur Jarak Geodesik ke Titik Pusat Kota]",
+   "    A --> C[Fitur Jarak Proksimitas Radius Fasilitas]",
+   "    A --> D[Indeks Heksagonal Sel H3 Uber]"
+  ]
+ },
+ "ch13-fig-2": {
+  "caption": "Visualisasi Matriks Bobot Spasial (W) untuk Perhitungan Spatial Lag",
+  "src": [
+   "%%| label: fig-ch13-13_2",
+   "%%| fig-cap: \"Visualisasi Matriks Bobot Spasial (W) untuk Perhitungan Spatial Lag\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A[Entitas Spasial Utama] -->|Identifikasi Tetangga Terdekat| B[Matriks Bobot W: Nilai 1 jika Bertetangga, 0 jika Tidak]",
+   "    B -->|Perkalian Matriks| C[Spatial Lag: Fitur Agregat Nilai Tetangga Sekitar]"
+  ]
+ },
+ "ch13-fig-3": {
+  "caption": "Pemisahan Acak vs Pemisahan Blok Spasial dengan Zona Penyangga (Buffer Zone)",
+  "src": [
+   "%%| label: fig-ch13-13_3",
+   "%%| fig-cap: \"Pemisahan Acak vs Pemisahan Blok Spasial dengan Zona Penyangga (Buffer Zone)\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Blok_Spasial_Benar [\"Spasial Blok - Mencegah Leakage\"]",
+   "        A1[Blok Latih Spasial] -->|Zona Penyangga / Buffer Zone| B1[Blok Uji Spasial]",
+   "    end"
+  ]
+ },
+ "ch13-fig-4": {
+  "caption": "Pengukuran Sentralitas (Degree vs Betweenness) pada Jaringan Graf",
+  "src": [
+   "%%| label: fig-ch13-13_4",
+   "%%| fig-cap: \"Pengukuran Sentralitas (Degree vs Betweenness) pada Jaringan Graf\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A((Simpul A)) --- B((Simpul B))",
+   "    A --- C((Simpul C))",
+   "    B --- C",
+   "    C --- D((Simpul D - Betweenness Tinggi Jembatan Klaster))",
+   "    D --- E((Simpul E))",
+   "    D --- F((Simpul F))"
+  ]
+ },
+ "ch13-fig-5": {
+  "caption": "Proses Agregasi Atribut dari Simpul Tetangga dan Ekstraksi Jalur Struktural",
+  "src": [
+   "%%| label: fig-ch13-13_5",
+   "%%| fig-cap: \"Proses Agregasi Atribut dari Simpul Tetangga dan Ekstraksi Jalur Struktural\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A((Tetangga 1)) -->|Kirim Atribut X| Agg[Fungsi Aggregator]",
+   "    B((Tetangga 2)) -->|Kirim Atribut X| Agg",
+   "    Agg -->|Pembaruan / Update| Target((Simpul Target Utama))"
+  ]
+ },
+ "ch13-fig-6": {
+  "caption": "Skema Random Walk (Node2Vec) dengan Parameter p dan q",
+  "src": [
+   "%%| label: fig-ch13-13_6",
+   "%%| fig-cap: \"Skema Random Walk (Node2Vec) dengan Parameter p dan q\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A((Simpul Asal)) -->|Kembali: Param p| B((Simpul Sebelumnya))",
+   "    A -->|Eksplorasi Mendalam: Param q| C((Simpul Jauh))",
+   "    A -->|Eksplorasi Lokal| D((Simpul Sejajar))"
+  ]
+ },
+ "ch13-fig-7": {
+  "caption": "Pesan Agregasi GNN",
+  "src": [
+   "%%| label: fig-ch13-13_7",
+   "%%| fig-cap: \"Pesan Agregasi GNN\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A[Pesan Fitur Simpul-simpul Tetangga] -->|Kombinasi Relasional| B[Fungsi Agregasi GNN]",
+   "    B --> C[Sinyal Fitur Simpul Terkini]"
+  ]
+ },
+ "ch13-fig-8": {
+  "caption": "Subgraf Mencegah Kebocoran Set Pelatihan dan Set Uji",
+  "src": [
+   "%%| label: fig-ch13-13_8",
+   "%%| fig-cap: \"Subgraf Mencegah Kebocoran Set Pelatihan dan Set Uji\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Subgraf_Latih [\"Subgraf Pelatihan\"]",
+   "        A((Node Latih 1)) --- B((Node Latih 2))",
+   "    end",
+   "    subgraph Subgraf_Uji [\"Subgraf Pengujian\"]",
+   "        C((Node Uji 1)) --- D((Node Uji 2))",
+   "    end",
+   "    subgraph Pemutusan [\"Hubungan Yang Diputus Mencegah Leakage\"]",
+   "        B -.->|Sisi Terputus| C",
+   "    end"
+  ]
+ }
+}

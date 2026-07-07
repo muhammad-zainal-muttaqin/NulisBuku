@@ -1,0 +1,14 @@
+# Artefak build LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+_test.*
+
+# PDF hasil build (regenerasikan dari sumber)
+main.pdf

@@ -1,0 +1,40 @@
+{
+ "ch12-fig-1": {
+  "caption": "Ekstraksi Fitur Histogram of Oriented Gradients (HOG) pada Citra",
+  "src": [
+   "%%| label: fig-ch12-12_1",
+   "%%| fig-cap: \"Ekstraksi Fitur Histogram of Oriented Gradients (HOG) pada Citra\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A[Citra Input] -->|Kalkulasi Gradien Piksel| B[Matriks Arah Gradien]",
+   "    B -->|Pembagian Blok Spasial Fix| C[Histogram Distribusi Orientasi Lokal]",
+   "    C -->|Normalisasi Blok| D[Vektor Fitur HOG Akhir]"
+  ]
+ },
+ "ch12-fig-2": {
+  "caption": "Arsitektur CNN Membuang Lapisan Klasifikasi Akhir Menjadi Feature Extractor",
+  "src": [
+   "%%| label: fig-ch12-12_2",
+   "%%| fig-cap: \"Arsitektur CNN Membuang Lapisan Klasifikasi Akhir Menjadi Feature Extractor\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A[Input Citra] --> B[Blok Konvolusi & Pooling]",
+   "    B --> C[Vektor Lapisan Penat]",
+   "    C -->|Garis Potong Kepala| D[Lapisan Klasifikasi Softmax]",
+   "    C -->|Ekstrak Fitur Visual| E[Matriks Vektor Fitur Citra]"
+  ]
+ },
+ "ch12-fig-3": {
+  "caption": "Pemotongan Citra Menjadi Kisi Patch dan Mekanisme Attention pada Vision Transformer",
+  "src": [
+   "%%| label: fig-ch12-12_3",
+   "%%| fig-cap: \"Pemotongan Citra Menjadi Kisi Patch dan Mekanisme Attention pada Vision Transformer\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A[Citra Input Dua Dimensi] -->|Mekanisme Pemotongan| B[Serangkaian Kisi-kisi Patch Citra]",
+   "    B -->|Proyeksi Linier| C[Vektor Token Patch]",
+   "    C -->|Penambahan Positional Embedding| D[Lapisan Self-Attention Transformer]",
+   "    D --> E[Vektor Representasi Semantik Global]"
+  ]
+ }
+}

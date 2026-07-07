@@ -1,0 +1,117 @@
+{
+ "ch02-fig-1": {
+  "caption": "Ilustrasi Tabel ke Matriks Fitur pada Proses Fit dan Transform",
+  "src": [
+   "%%| label: fig-ch02-2_1",
+   "%%| fig-cap: \"Ilustrasi Tabel ke Matriks Fitur pada Proses Fit dan Transform\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Pelatihan [\"Fase Latih: Fit & Transform\"]",
+   "        A1[Data Mentah Latih] -->|Fit| B1(Menghitung Statistik: e.g. Rata-rata)",
+   "        B1 -->|Transform| C1[Matriks Fitur Latih Berskala]",
+   "    end",
+   "    subgraph Inferensi [\"Fase Uji: Transform Murni\"]",
+   "        A2[Data Mentah Uji] -->|Gunakan Statistik Latih| C1",
+   "        C1 -->|Output| D2[Matriks Fitur Uji Berskala]",
+   "    end"
+  ]
+ },
+ "ch02-fig-2": {
+  "caption": "Siklus Eksplorasi-Ekstraksi-Seleksi dalam Objek Transformer Mandiri",
+  "src": [
+   "%%| label: fig-ch02-2_2",
+   "%%| fig-cap: \"Siklus Eksplorasi-Ekstraksi-Seleksi dalam Objek Transformer Mandiri\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A[Eksplorasi Data] --> B[Transformasi Imputasi & Scaling]",
+   "    B --> C[Ekstraksi Fitur Turunan]",
+   "    C --> D[Seleksi Fitur Relevan]",
+   "    D -->|Bungkus| E[Reusable Pipeline Object]",
+   "    E -->|Iterasi Baru| A"
+  ]
+ },
+ "ch02-fig-3": {
+  "caption": "Mekanisme Data Leakage: Masuknya Informasi Pengujian ke Latih",
+  "src": [
+   "%%| label: fig-ch02-2_3",
+   "%%| fig-cap: \"Mekanisme Data Leakage: Masuknya Informasi Pengujian ke Latih\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Data_Leakage_Path [\"Aliran Bocor\"]",
+   "        A[Dataset Utuh] -->|Langkah Keliru: Scaling Seluruh Data| B(Dataset Ter-scale Secara Global)",
+   "        B -->|Split| C[Set Pelatihan]",
+   "        B -->|Split| D[Set Pengujian]",
+   "        C -->|Melatih| E[Model ML]",
+   "        D -->|Validasi Semu| E",
+   "    end"
+  ]
+ },
+ "ch02-fig-4": {
+  "caption": "Mekanisme Data Leakage Akibat Transformasi Agregasi Sebelum Pemisahan Dataset",
+  "src": [
+   "%%| label: fig-ch02-2_4",
+   "%%| fig-cap: \"Mekanisme Data Leakage Akibat Transformasi Agregasi Sebelum Pemisahan Dataset\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A[Transaksi Log Mentah] -->|Kalkulasi Statistik Agregat Global| B[Rata-rata Pengeluaran Pelanggan]",
+   "    B -->|Pemisahan Dataset| C[Set Pelatihan - Membawa Nilai Rata-rata Uji]",
+   "    B -->|Pemisahan Dataset| D[Set Pengujian]"
+  ]
+ },
+ "ch02-fig-5": {
+  "caption": "Perbandingan Strategi Pemisahan Data: Random, Group, dan Temporal Split",
+  "src": [
+   "%%| label: fig-ch02-2_5",
+   "%%| fig-cap: \"Perbandingan Strategi Pemisahan Data: Random, Group, dan Temporal Split\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A[Dataset Utama] --> B[Random Split - Acak Murni]",
+   "    A --> C[Group Split - Berdasarkan ID Entitas]",
+   "    A --> D[Temporal Split - Kronologis Waktu]"
+  ]
+ },
+ "ch02-fig-6": {
+  "caption": "Aliran Data Cross-Validation yang Salah (Bocor)",
+  "src": [
+   "%%| label: fig-ch02-2_6a",
+   "%%| fig-cap: \"Aliran Data Cross-Validation yang Salah (Bocor)\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A1[Dataset Utuh] -->|Fit & Transform Global| B1[Matriks Fitur Global]",
+   "    B1 -->|Split K-Fold| C1[Folds Latih & Validasi Bocor]"
+  ]
+ },
+ "ch02-fig-7": {
+  "caption": "Aliran Data Cross-Validation yang Benar (Terisolasi)",
+  "src": [
+   "%%| label: fig-ch02-2_6b",
+   "%%| fig-cap: \"Aliran Data Cross-Validation yang Benar (Terisolasi)\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A2[Dataset Utuh] -->|Split K-Fold| B2[Folds Latih & Validasi Steril]",
+   "    B2 -->|Fit & Transform Terisolasi Per Fold| C2[Pelatihan Jujur]"
+  ]
+ },
+ "ch02-fig-8": {
+  "caption": "Aliran Data Imputasi Global yang Salah (Bocor)",
+  "src": [
+   "%%| label: fig-ch02-2_7a",
+   "%%| fig-cap: \"Aliran Data Imputasi Global yang Salah (Bocor)\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A1[Dataset Utuh] -->|Imputasi Rata-rata| B1[Dataset Terimputasi]",
+   "    B1 -->|Split| C1[Train & Test Leakage]"
+  ]
+ },
+ "ch02-fig-9": {
+  "caption": "Aliran Data Imputasi dengan Pipeline Tertutup yang Benar",
+  "src": [
+   "%%| label: fig-ch02-2_7b",
+   "%%| fig-cap: \"Aliran Data Imputasi dengan Pipeline Tertutup yang Benar\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A2[Dataset Utuh] -->|Split| B2[Train & Test Steril]",
+   "    B2 -->|Fit Imputer Hanya pada Train| C2[Pipeline Aman]"
+  ]
+ }
+}

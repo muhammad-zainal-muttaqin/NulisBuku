@@ -1,0 +1,61 @@
+{
+ "ch16-fig-1": {
+  "caption": "Skema Pohon Relasi Entitas pada Deep Feature Synthesis (DFS)",
+  "src": [
+   "%%| label: fig-ch16-16_1",
+   "%%| fig-cap: \"Skema Pohon Relasi Entitas pada Deep Feature Synthesis (DFS)\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Tabel_Transaksi [\"Tabel Transaksi\"]",
+   "        A[Nilai_Belanja]",
+   "    end",
+   "    subgraph Tabel_Pesanan [\"Tabel Pesanan\"]",
+   "        B[Total_Jumlah_Transaksi]",
+   "    end",
+   "    subgraph Tabel_Pelanggan [\"Tabel Pelanggan\"]",
+   "        C[Rata-rata_Belanja_Pelanggan]",
+   "    end",
+   "    A -->|Primitif Agregasi: SUM| B",
+   "    B -->|Primitif Agregasi: MEAN| C"
+  ]
+ },
+ "ch16-fig-2": {
+  "caption": "Arsitektur Pencarian Pipeline AutoML",
+  "src": [
+   "%%| label: fig-ch16-16_2",
+   "%%| fig-cap: \"Arsitektur Pencarian Pipeline AutoML\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A[Dataset Input] -->|Deteksi Skema Otomatis| B[Inisialisasi Transformer Khusus Tipe]",
+   "    B -->|Uji Coba Kombinasi| C[Search Engine Pipeline]",
+   "    C -->|Seleksi & Evaluasi| D[Pipeline ML Final Teroptimal]"
+  ]
+ },
+ "ch16-fig-3": {
+  "caption": "Arsitektur Agen CAAFE (Context-Aware Automated Feature Engineering)",
+  "src": [
+   "%%| label: fig-ch16-16_3",
+   "%%| fig-cap: \"Arsitektur Agen CAAFE (Context-Aware Automated Feature Engineering)\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A[Dataset Skema & Metadata] -->|Kirim Prompt| B[Agen LLM]",
+   "    B -->|Tulis Ide Fitur & Kode Python| C[Modul Transformer Sementara]",
+   "    C -->|Eksekusi & Evaluasi| D{Apakah Performa Naik?}",
+   "    D -->|Tidak: Kirim Feedback Bug/Skor| B",
+   "    D -->|Ya| E[Simpan Kode & Integrasikan ke Pipeline Utama]"
+  ]
+ },
+ "ch16-fig-4": {
+  "caption": "Interaksi Antarmuka Sistem Human-in-the-Loop Analis Memvalidasi Fitur Usulan AI",
+  "src": [
+   "%%| label: fig-ch16-16_4",
+   "%%| fig-cap: \"Interaksi Antarmuka Sistem Human-in-the-Loop Analis Memvalidasi Fitur Usulan AI\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A[Saran Fitur Baru LLM] --> B[Dashboard Analis Manusia]",
+   "    B -->|Analis Mengklik Approve / Reject| C{Tervalidasi?}",
+   "    C -->|Ya| D[Injeksi ke Pipeline Produksi]",
+   "    C -->|Tidak| E[Buang & Tandai sebagai Spurious]"
+  ]
+ }
+}

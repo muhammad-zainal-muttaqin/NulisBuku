@@ -1,0 +1,65 @@
+{
+ "ch08-fig-1": {
+  "caption": "Visualisasi Ruang Fitur dari Dimensi Tinggi (3D) ke Laten 2D",
+  "src": [
+   "%%| label: fig-ch08-8_1",
+   "%%| fig-cap: \"Visualisasi Ruang Fitur dari Dimensi Tinggi (3D) ke Laten 2D\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A[Ruang Fitur Asli: X, Y, Z] -->|SVD / Kompresi Non-Linier| B[Vektor Representasi Laten: Z1, Z2]"
+  ]
+ },
+ "ch08-fig-2": {
+  "caption": "Diagram Vektor Eigen dan Proyeksi Komponen Utama untuk Varians Terbesar",
+  "src": [
+   "%%| label: fig-ch08-8_2",
+   "%%| fig-cap: \"Diagram Vektor Eigen dan Proyeksi Komponen Utama untuk Varians Terbesar\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A[Awan Titik Data] -->|Identifikasi Sumbu Vektor Utama| B[Komponen Utama Pertama PC1 - Menangkap Lebar Varians Terlebar]",
+   "    A -->|Ortogonal Sumbu Pertama| C[Komponen Utama Kedua PC2]"
+  ]
+ },
+ "ch08-fig-3": {
+  "caption": "Dekomposisi Matriks NMF: X = W * H",
+  "src": [
+   "%%| label: fig-ch08-8_3",
+   "%%| fig-cap: \"Dekomposisi Matriks NMF: X = W * H\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    A[Matriks Input X: n x d - Nilai Positif] -->|Dekomposisi NMF| B[Matriks Aktivasi W: n x k]",
+   "    A -->|Dekomposisi NMF| C[Matriks Komponen H: k x d]",
+   "    B -->|Perkalian Matriks Positif| D[Aproksimasi Matriks X']"
+  ]
+ },
+ "ch08-fig-4": {
+  "caption": "Simplicial Complex pada UMAP untuk Membangun Topologi",
+  "src": [
+   "%%| label: fig-ch08-8_4",
+   "%%| fig-cap: \"Simplicial Complex pada UMAP untuk Membangun Topologi\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    A[Titik Data Spasial] -->|Definisikan Radius Ketetanggaan Fuzzy| B[Membentuk Simplex / Garis Penghubung]",
+   "    B -->|Penyusunan Kompleks Geometris Semesta| C[Struktur Topologi Laten Semantik]"
+  ]
+ },
+ "ch08-fig-5": {
+  "caption": "Skema Arsitektur Autoencoder: Encoder, Bottleneck, Decoder",
+  "src": [
+   "%%| label: fig-ch08-8_5",
+   "%%| fig-cap: \"Skema Arsitektur Autoencoder: Encoder, Bottleneck, Decoder\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph LR",
+   "    subgraph En [\"Encoder\"]",
+   "        Input[Vektor Input X] --> H1[Lapisan Padat Tersembunyi]",
+   "    end",
+   "    subgraph BN [\"Bottleneck Laten\"]",
+   "        H1 --> Bottleneck[Vektor Laten Z]",
+   "    end",
+   "    subgraph De [\"Decoder\"]",
+   "        Bottleneck --> H2[Lapisan Padat Tersembunyi]",
+   "        H2 --> Output[Rekonstruksi Vektor X']",
+   "    end"
+  ]
+ }
+}

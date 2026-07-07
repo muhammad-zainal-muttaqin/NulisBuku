@@ -1,0 +1,74 @@
+{
+ "ch07-fig-1": {
+  "caption": "Skema Aliran Data Pada Metode Filter",
+  "src": [
+   "%%| label: fig-ch07-7_2_filter",
+   "%%| fig-cap: \"Skema Aliran Data Pada Metode Filter\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Filter [\"Metode Filter\"]",
+   "        A1[Seluruh Fitur] -->|Uji Korelasi / Informasi Bersama| B1[Subset Fitur]",
+   "        B1 --> C1[Model ML]",
+   "    end"
+  ]
+ },
+ "ch07-fig-2": {
+  "caption": "Skema Aliran Data Pada Metode Wrapper",
+  "src": [
+   "%%| label: fig-ch07-7_2_wrapper",
+   "%%| fig-cap: \"Skema Aliran Data Pada Metode Wrapper\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Wrapper [\"Metode Wrapper\"]",
+   "        A2[Kombinasi Fitur] -->|Uji Iteratif Subset| B2[Latih Model]",
+   "        B2 -->|Evaluasi Performa| C2{Naik?}",
+   "        C2 -->|Ya| A2",
+   "    end"
+  ]
+ },
+ "ch07-fig-3": {
+  "caption": "Skema Aliran Data Pada Metode Embedded",
+  "src": [
+   "%%| label: fig-ch07-7_2_embedded",
+   "%%| fig-cap: \"Skema Aliran Data Pada Metode Embedded\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Embedded [\"Metode Embedded\"]",
+   "        A3[Seluruh Fitur] -->|LASSO / Regularisasi Koefisien| B3[Proses Pelatihan & Seleksi Menyatu]",
+   "    end"
+  ]
+ },
+ "ch07-fig-4": {
+  "caption": "Forward vs Backward Selection Path",
+  "src": [
+   "%%| label: fig-ch07-7_3",
+   "%%| fig-cap: \"Forward vs Backward Selection Path\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Forward [\"Seleksi Maju\"]",
+   "        A1[Kumpulan Kosong] -->|Tambah Fitur Terbaik 1 Per 1| B1[Kumpulan Fitur Optimal]",
+   "    end",
+   "    subgraph Backward [\"Eliminasi Mundur\"]",
+   "        A2[Kumpulan Lengkap Seluruh Fitur] -->|Buang Fitur Terburuk 1 Per 1| B2[Kumpulan Fitur Optimal]",
+   "    end"
+  ]
+ },
+ "ch07-fig-5": {
+  "caption": "Alur Validasi Silang Bersarang (Nested Cross-Validation)",
+  "src": [
+   "%%| label: fig-ch07-7_5",
+   "%%| fig-cap: \"Alur Validasi Silang Bersarang (Nested Cross-Validation)\"",
+   "%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%",
+   "graph TD",
+   "    subgraph Outer_Loop [\"Outer Loop - Evaluasi Performa Akhir\"]",
+   "        A1[Data Utuh] -->|Split| B1[Train Split]",
+   "        A1 -->|Split| C1[Test Split]",
+   "    end",
+   "    subgraph Inner_Loop [\"Inner Loop - Seleksi Fitur & Tuning Hyperparameter\"]",
+   "        B1 -->|Split Fold Baru| A2[Latih Subfold]",
+   "        B1 -->|Split Fold Baru| B2[Validasi Subfold]",
+   "        A2 -->|Uji Kombinasi Fitur| C2[Tuning & Seleksi]",
+   "    end"
+  ]
+ }
+}

@@ -1,0 +1,102 @@
+% ==========================================================================
+% preamble.tex — konfigurasi kelas, tata letak B5, dan paket
+% Mesin kompilasi: XeTeX (via Tectonic). Kompatibel juga dengan pdfLaTeX.
+% ==========================================================================
+
+% --- Bahasa & enkoding -----------------------------------------------------
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
+\usepackage[bahasa]{babel}   % istilah "Bab", "Daftar Isi", "Gambar", dsb.
+
+% --- Tata letak halaman B5 (176 x 250 mm) ----------------------------------
+\usepackage[
+  b5paper,
+  inner=22mm, outer=18mm,
+  top=22mm,  bottom=24mm,
+  headsep=8mm, footskip=12mm
+]{geometry}
+
+% --- Tipografi -------------------------------------------------------------
+\usepackage{microtype}
+\usepackage{csquotes}
+\linespread{1.06}
+\setlength{\parindent}{1.4em}
+\usepackage{emptypage}       % halaman kosong benar-benar kosong
+
+% Batasi kedalaman subbab: hanya Bab + Subbab (1 level) yang bernomor & masuk
+% Daftar Isi. Judul "###" lama tetap tampil sebagai kepala tak bernomor.
+\setcounter{secnumdepth}{1}
+\setcounter{tocdepth}{1}
+
+% --- Header / footer -------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\small\thepage\quad\leftmark}
+\fancyhead[RO]{\small\rightmark\quad\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter.\ #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}
+
+% --- Matematika ------------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+% --- Gambar & tabel --------------------------------------------------------
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[font=small,labelfont=bf,skip=6pt]{caption}
+
+% --- Warna -----------------------------------------------------------------
+\usepackage{xcolor}
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{221,221,221}
+\definecolor{kw}{RGB}{0,70,160}
+\definecolor{str}{RGB}{176,0,64}
+\definecolor{cmt}{RGB}{100,120,100}
+\definecolor{lnum}{RGB}{150,150,150}
+
+% --- Kode (listings) -------------------------------------------------------
+\usepackage{listings}
+\lstdefinestyle{pybook}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{kw}\bfseries,
+  stringstyle=\color{str},
+  commentstyle=\color{cmt}\itshape,
+  numberstyle=\tiny\color{lnum},
+  numbers=left, numbersep=8pt,
+  frame=single, rulecolor=\color{codeframe},
+  breaklines=true, breakatwhitespace=true,
+  showstringspaces=false,
+  tabsize=4,
+  columns=fullflexible,
+  keepspaces=true,
+  upquote=true,
+  aboveskip=10pt, belowskip=10pt,
+  literate=%
+    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+    {->}{{$\rightarrow$}}2
+}
+\lstset{style=pybook}
+
+% --- Makro bantu bawaan pandoc (dibutuhkan fragmen .tex) -------------------
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\passthrough}[1]{#1}
+\providecommand{\pandocbounded}[1]{#1}
+\providecommand{\real}[1]{#1}
+
+% --- Tautan (hyperref selalu terakhir) -------------------------------------
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  bookmarksnumbered=true,
+  pdftitle={Rekayasa Fitur Modern},
+  pdfauthor={Fatma Indriani}
+}
