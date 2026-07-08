@@ -21,11 +21,6 @@ graph TD
         B[44.100 Amplitudo Gelombang Audio] -->|Ekstraksi Parameter Akustik| C
     end
 ```
-Judul: Penyelarasan Waktu pada Data Multimodal
-Tipe: diagram konseptual
-Tampilkan: Menunjukkan aliran data berbeda (video pada 30 frame/detik dan audio pada 44.1 kHz) yang diselaraskan ke dalam jendela waktu selebar satu detik agar menjadi satu unit observasi terpadu.
-Sumber data: -
-
 Untuk menyinkronkan ritme perekaman yang berlainan ini, teknik prapemrosesan yang umum digunakan adalah pembagian jendela waktu (*windowing*). Seluruh titik data dari berbagai modalitas diiris dan dikelompokkan ke dalam satu rentang waktu yang sama. Secara matematis, konstruksi jendela observasi ini didefinisikan sebagai:
 
 $$W_{\tau} = \{ (x_k^{(m)}, t_k) \mid \tau \le t_k < \tau + \Delta t \}$$
@@ -58,9 +53,9 @@ graph TD
     C[Data Citra] -->|Intermediate Fusion| D(Penggabungan Layer Laten Jaringan)
     E[Data Teks] -->|Late Fusion| F(Voting Prediksi Probabilitas Akhir)
 ```
-ekosistem komputasi model bahasa dan visi (*Vision-Language Models*) mutakhir saat ini telah memperluas definisi fusi secara signifikan:
+Ekosistem model bahasa-visual (*Vision-Language Models*) mutakhir memperluas definisi fusi ini:
 
-- ***Attention Bottleneck*:** Arsitektur terobosan seperti *Perceiver IO* mendobrak tradisi penggabungan matriks mentah. Model ini memakai sejumlah vektor laten dengan ukuran tetap sebagai jembatan kemacetan (*bottleneck*). Model kemudian melakukan kueri (*cross-attend*) ke berbagai rentetan input - seperti teks, audio, maupun *point clouds* - tanpa memedulikan perbedaan resolusi asalnya. Skema ini sukses membebaskan kedalaman pemrosesan dari tekanan dimensi input.
+- ***Attention Bottleneck*:** Arsitektur seperti *Perceiver IO* meninggalkan penggabungan matriks mentah. Model ini memakai sejumlah vektor laten dengan ukuran tetap sebagai jembatan kemacetan (*bottleneck*). Model kemudian melakukan kueri (*cross-attend*) ke berbagai rentetan input - seperti teks, audio, maupun *point clouds* - tanpa memedulikan perbedaan resolusi asalnya. Skema ini sukses membebaskan kedalaman pemrosesan dari tekanan dimensi input.
 
 - **Perutean Dinamis (*Mixture-of-Experts*):** Sistem seperti DeepSeek-VL2 dan MoE-LLaVA tidak lagi memaksa fitur dilebur secara kaku ke dalam satu blok kalkulasi yang sama. Arsitektur memecah jaringan menjadi berbagai himpunan modul ahli (*experts*). Rute komputasi diaktifkan secara dinamis dan adaptif menyesuaikan dengan bobot signifikansi fitur pada waktu penarikan kesimpulan. Pola ini memfasilitasi pencampuran miliaran parameter analisis secara instan dengan jejak memori yang sangat efisien.
 
@@ -78,7 +73,7 @@ graph LR
 ```
 Gambar 14.4 memperlihatkan bagaimana sebuah model *deep learning* meratakan (*flattening*) peta fitur spasial citra menjadi sebuah vektor panjang. Dari proses ini, kita mendapatkan vektor citra berukuran 2048 dimensi ($\mathbf{x}_{img} \in \mathbb{R}^{2048}$). Saat kedua vektor dirangkai, kita menghasilkan satu input sepanjang 2058 dimensi. Dalam ruang representasi agregat ini, gambar mendominasi lebih dari 99 persen kapasitas, sementara data tabular mengambil porsi kurang dari setengah persen.
 
-Ketimpangan jumlah dimensi merusak keseimbangan proses pembelajaran model. Terdapat tiga dampak langsung jika kita membiarkan kondisi ini:
+Jika dibiarkan, ketimpangan jumlah dimensi ini merusak keseimbangan pembelajaran model lewat tiga jalur:
 
 - **Dominasi pada kalkulasi jarak:** Algoritma *machine learning* berbasis jarak (seperti k-NN) menghitung kedekatan antar-sampel dengan menjumlahkan selisih nilai pada seluruh dimensi. Jika 2048 dimensi berasal dari piksel, hasil perhitungan jarak sepenuhnya dikendalikan oleh perubahan kecil pada informasi visual, sementara sinyal dari luasan tanah menjadi tidak berarti.
 
@@ -106,7 +101,7 @@ Dalam pengolahan data tabular, ketiadaan data biasanya terjadi pada tingkat sel 
 
 Pendekatan imputasi klasik gagal menangani ketiadaan format utuh ini. Mengisi kekosongan matriks *embedding* berdimensi besar menggunakan nilai rata-rata dari seluruh *dataset* tidak menghasilkan makna turunan apa pun. Langkah tersebut murni menyuntikkan *noise* ke dalam perhitungan matriks representasi.
 
-Berikut adalah pendekatan teknis untuk menangani modalitas yang hilang tanpa mengorbankan integritas *pipeline*:
+Beberapa pendekatan teknis menangani modalitas yang hilang tanpa mengorbankan integritas *pipeline*:
 
 - **Tangguh Secara Bawaan: Arsitektur *Late Fusion***
   Arsitektur *late fusion* aman terhadap *missing modality* karena mengekstraksi dan memproses data secara mandiri sebelum menyatukannya di tingkat prediksi akhir. Jika citra suatu produk tidak ada, proses komputasi pada cabang visual dilewati. Keputusan probabilitas tetap diproduksi menggunakan cabang teks dan tabular murni. Model arsitektur modern seperti Molmo (2024) mengimplementasikan desain modular ini, yang memastikan *backbone* LLM teks tetap merespons walaupun input visual kosong.
@@ -140,13 +135,7 @@ Secara arsitektur, pendekatan ini membutuhkan dua *encoder* yang dilatih secara 
 $$\mathbf{z}_{img} = f_{\theta}(\mathbf{x}_{img})$$
 $$\mathbf{z}_{text} = g_{\phi}(\mathbf{x}_{text})$$
 
-Di mana:
-
-- $f_{\theta}$ adalah *encoder* citra (misalnya ViT atau CNN).
-
-- $g_{\phi}$ adalah *encoder* teks (misalnya arsitektur berbasis Transformer).
-
-- $\mathbf{z}_{img}$ dan $\mathbf{z}_{text}$ adalah vektor representasi keluaran yang keduanya berada di ruang laten berdimensi $d$ yang identik ($\mathbb{R}^d$).
+Dalam formulasi tersebut, $f_{\theta}$ adalah *encoder* citra (misalnya ViT atau CNN) dan $g_{\phi}$ adalah *encoder* teks (misalnya arsitektur berbasis Transformer). Keluaran keduanya, $\mathbf{z}_{img}$ dan $\mathbf{z}_{text}$, sama-sama berada di ruang laten berdimensi $d$ yang identik ($\mathbb{R}^d$).
 ```{mermaid}
 %%| label: fig-ch14-14_5
 %%| fig-cap: "Dua Encoder Terpisah Memproyeksikan Citra dan Teks ke Ruang Semantik Bersilang"
@@ -171,7 +160,7 @@ Dalam praktik perkembangannya, ruang *embedding* lintas-modal ini tidak lagi sek
 
 - **Standar evaluasi spesifik:** Karena tidak melayani kelas prediksi tunggal, kualitas dari ruang vektor lintas-modal ini diukur lewat metrik temu-kembali (*retrieval*) seperti *recall@k* (mengukur seberapa sering padanan yang tepat muncul dalam daftar kandidat teratas) dan *nDCG* (mengukur akurasi perankingan keseluruhan).
 
-Evolusi ini menandai titik ekstrem pergeseran menuju representasi yang dipelajari mesin. Transformasi dan penyesuaian tidak lagi bergantung pada rekayasa fitur oleh manusia yang memadukan dua struktur data berbeda secara paksa. Model menemukan secara otonom ekosistem metrik yang menjahit kesamaan makna antar-modalitas.
+Perkembangan ini menandai pergeseran menuju representasi yang dipelajari mesin. Pemaduan modalitas tidak lagi bergantung pada rekayasa fitur manual yang menggabungkan dua struktur data secara paksa; model belajar sendiri memetakan kesamaan makna antarmodalitas.
 
 ## Model Multimodal Pretrained
 

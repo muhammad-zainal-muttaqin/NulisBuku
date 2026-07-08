@@ -2,19 +2,9 @@
 
 ## Relevansi, Redundansi, dan Kutukan Dimensi
 
-Mengurangi jumlah fitur dalam *dataset* sering kali terasa berlawanan dengan intuisi awal pemodelan. Jika data adalah sumber informasi, membuang dimensi seolah membuang pola yang berharga. Pada praktiknya, seleksi fitur (*feature selection*) dilakukan dengan tujuan spesifik:
+Mengurangi jumlah fitur dalam *dataset* sering kali dirasa berlawanan dengan intuisi awal pemodelan. Jika data adalah sumber informasi, mengurangi dimensi dapat diasumsikan sebagai tindakan membuang pola yang berharga. Pada praktiknya, seleksi fitur (*feature selection*) dilakukan dengan tiga tujuan spesifik. Pertama, proses ini bertujuan untuk meningkatkan interpretabilitas, mengingat model yang mengandalkan belasan fitur utama jauh lebih mudah dianalisis perilakunya dibandingkan model yang menerima ratusan variabel mentah. Kedua, penyeleksian ini berguna untuk menurunkan beban komputasi; ruang fitur yang lebih kecil secara langsung mempercepat waktu pelatihan dan menghemat kebutuhan memori. Ketiga, pengurangan dimensi secara matematis membantu mencegah *overfitting* dengan mengarahkan model untuk mempelajari pola umum yang stabil, alih-alih sekadar menghafal *noise* spesifik pada data pelatihan.
 
-- **Meningkatkan interpretabilitas:** Model yang mengandalkan belasan fitur utama jauh lebih mudah dianalisis perilakunya dibandingkan model kotak hitam yang menerima ratusan variabel mentah.
-
-- **Memangkas beban komputasi:** Ruang fitur yang lebih kecil secara langsung mempercepat waktu pelatihan dan menurunkan kebutuhan memori.
-
-- **Mencegah *overfitting*:** Mengurangi dimensi memaksa model untuk mempelajari pola umum yang stabil, bukan sekadar menghafal *noise* pada data pelatihan.
-
-Untuk melakukan seleksi fitur secara presisi, kita membedakan konsep relevansi dan redundansi.
-
-- **Fitur Relevan:** Mengukur seberapa besar informasi yang dipegang oleh fitur untuk memprediksi variabel target. Fitur disebut relevan jika perubahannya memengaruhi nilai target secara konsisten.
-
-- **Fitur Redundan:** Muncul ketika sebuah fitur menduplikasi informasi yang sudah ditangkap oleh dimensi lain. Fitur redundan tidak menyumbang kemampuan prediktif baru.
+Untuk melakukan seleksi fitur secara presisi, analisis perlu membedakan konsep relevansi dan redundansi secara mendasar. Fitur yang relevan merujuk pada besaran informasi yang dipegang oleh fitur tersebut untuk memprediksi variabel target; atribut dikategorikan relevan apabila perubahannya memengaruhi nilai target secara konsisten. Di sisi lain, fitur yang redundan muncul ketika variabel tersebut sekadar menduplikasi informasi yang sudah ditangkap oleh dimensi lain. Dalam struktur data, kehadiran fitur redundan sama sekali tidak menyumbang kemampuan prediktif baru.
 
 Sebagai contoh pada pemodelan harga properti, sebuah *dataset* mungkin mencatat luas bangunan dalam kolom meter persegi dan kaki persegi. Kedua variabel tersebut sangat relevan terhadap harga. Namun, menyimpan keduanya secara bersamaan menghasilkan redundansi. Jika model sudah menggunakan dimensi meter persegi, variabel kaki persegi menjadi tidak berguna karena nilainya sebatas hasil konversi linier. Mempertahankan variabel redundan justru memperlambat komputasi dan memicu ketidakstabilan pembobotan model.
 
@@ -22,7 +12,7 @@ Salah satu cara matematis untuk mengukur relevansi dan redundansi adalah menggun
 
 $$I(X; Y) = \sum_{y \in Y} \sum_{x \in X} p(x,y) \log \left( \frac{p(x,y)}{p(x)p(y)} \right)$$
 
-Di mana $X$ adalah nilai fitur, $Y$ adalah variabel target, $p(x,y)$ merupakan probabilitas gabungan dari keduanya, sedangkan $p(x)$ dan $p(y)$ adalah probabilitas marginal masing-masing. Nilai $I(X; Y)$ yang tinggi menandakan fitur $X$ sangat relevan untuk memprediksi $Y$. Sebaliknya, redundansi yang tinggi terjadi ketika dua buah fitur independen, $X_1$ dan $X_2$, memiliki nilai $I(X_1; X_2)$ yang besar. Seleksi fitur yang ideal akan mencari himpunan dimensi dengan nilai relevansi maksimal dan redundansi minimal.
+Dalam persamaan tersebut, variabel $X$ mewakili nilai fitur, $Y$ adalah variabel target, dan $p(x,y)$ merupakan probabilitas gabungan dari keduanya. Sementara itu, $p(x)$ dan $p(y)$ menunjukkan probabilitas marginal masing-masing. Nilai $I(X; Y)$ yang tinggi menandakan fitur $X$ sangat relevan untuk memprediksi $Y$. Sebaliknya, redundansi yang tinggi terjadi ketika dua buah fitur independen, $X_1$ dan $X_2$, memiliki nilai $I(X_1; X_2)$ yang besar. Seleksi fitur yang ideal akan mencari himpunan dimensi dengan nilai relevansi maksimal dan redundansi minimal.
 
 **Kutukan Dimensi (*Curse of Dimensionality*).**
 ```{mermaid}
@@ -55,19 +45,13 @@ graph TD
         A3[Seluruh Fitur] -->|LASSO / Regularisasi Koefisien| B3[Proses Pelatihan & Seleksi Menyatu]
     end
 ```
-Motivasi matematis lain di balik perlunya membuang fitur adalah menghindari fenomena *curse of dimensionality* (kutukan dimensi). Semakin banyak sumbu fitur yang digunakan, volume ruang representasi membengkak secara eksponensial. Konsekuensi dari membesarnya volume ini antara lain:
-
-- **Kerenggangan observasi (*sparsity*):** Kumpulan sampel yang awalnya padat pada satu atau dua dimensi akan tersebar sangat jauh satu sama lain saat disebar ke ratusan dimensi. Gambar 7.1 memperlihatkan bagaimana penambahan sumbu membuat pola data secara alami saling menjauh.
-
-- **Kebutuhan data eksponensial:** Untuk mempertahankan kepadatan ruang sampel yang sama saat jumlah dimensi ditambah, ukuran *dataset* pelatihan harus diperbanyak secara eksponensial.
-
-- **Hilangnya daya diskriminatif jarak:** Kekosongan ruang berdimensi tinggi merusak algoritma yang bekerja berdasarkan proksimitas, seperti *k-Nearest Neighbors* (k-NN).
+Motivasi matematis di balik perlunya mereduksi dimensi adalah menghindari fenomena *curse of dimensionality*. Semakin banyak sumbu fitur yang disertakan, volume ruang representasi akan bertambah secara eksponensial. Konsekuensi pertama dari penambahan volume ini adalah timbulnya kerenggangan observasi (*sparsity*); kumpulan sampel yang awalnya padat pada satu atau dua dimensi akan tersebar sangat renggang satu sama lain saat didistribusikan ke dalam ratusan dimensi (Gambar 7.1 memperlihatkan bagaimana penambahan sumbu menyebabkan pola data secara alami saling menjauh). Konsekuensi kedua berdampak pada kebutuhan data pelatihan. Untuk mempertahankan tingkat kepadatan ruang sampel yang setara saat jumlah dimensi diperbanyak, jumlah baris observasi *dataset* pelatihan harus dilipatgandakan secara eksponensial. Konsekuensi terakhir adalah menurunnya daya diskriminatif metrik spasial; kerenggangan di dalam ruang berdimensi tinggi mendistorsi metrik perhitungan algoritma yang bekerja berdasarkan nilai proksimitas jarak, seperti metode *k-Nearest Neighbors* (k-NN).
 
 Di dalam ruang dengan ratusan dimensi, rasio selisih jarak absolut antara tetangga terdekat dan tetangga terjauh menyusut tajam. Seluruh sampel akan terlihat berjarak hampir sama dari titik mana pun yang sedang dievaluasi. Akibatnya, fungsi jarak kehilangan maknanya dan model gagal mengenali kemiripan antar observasi. Seleksi fitur memotong dimensi untuk menjaga kepadatan ruang sehingga komputasi jarak matematis tetap relevan.
 
 ## Metode Filter
 
-Pendekatan paling dasar untuk menyeleksi fitur adalah metode filter. Metode ini mengevaluasi kualitas setiap atribut secara mandiri berdasarkan sifat statistiknya, terpisah dari algoritma *machine learning* yang akan digunakan di tahap akhir. Evaluasi ini bertindak sebagai penyaring awal (*pre-processing*). Karena tidak memerlukan proses pelatihan model yang komputasionalnya mahal, metode filter beroperasi sangat cepat dan menjadi pilihan standar untuk memangkas *dataset* berdimensi ekstrem (misalnya puluhan ribu variabel).
+Pendekatan paling dasar untuk menyeleksi fitur adalah metode filter. Metode ini mengevaluasi kualitas setiap atribut secara mandiri berdasarkan sifat statistiknya, terpisah dari algoritma *machine learning* yang akan digunakan di tahap akhir. Metode ini bertindak sebagai mekanisme penyaring awal (*pre-processing*). Karena eksekusinya tidak memerlukan proses pelatihan model yang membutuhkan komputasi berat, metode *filter* beroperasi sangat cepat dan menjadi pilihan standar untuk memangkas ukuran *dataset* yang berdimensi ekstrem (misalnya puluhan ribu variabel).
 ```{mermaid}
 %%| label: fig-ch07-7_3
 %%| fig-cap: "Forward vs Backward Selection Path"
@@ -84,7 +68,7 @@ Dalam mengevaluasi kelayakan fitur, metode filter menggunakan metrik yang disesu
 
 - **Korelasi Pearson:** Digunakan untuk fitur numerik dan target numerik. Mengukur kekuatan hubungan linear. Fitur dengan skor mendekati 1 atau -1 dipertahankan. Rumus dasarnya mengukur kovarians yang dinormalisasi:
   $$r = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum (x_i - \bar{x})^2 \sum (y_i - \bar{y})^2}}$$
-  *Titik buta:* Jika hubungan antara fitur dan target berbentuk huruf U (non-linear), korelasi Pearson akan menghasilkan skor mendekati nol, sehingga fitur penting tersebut berisiko terbuang secara keliru.
+  **Kelemahan matematis:** Jika hubungan antara fitur dan target bersifat non-linear (misalnya berbentuk huruf U), korelasi Pearson akan menghasilkan skor mendekati nol, sehingga fitur penting tersebut berisiko terbuang secara keliru.
 
 - ***Mutual Information* (MI):** Teori informasi entropi yang mengatasi kelemahan asumsi linearitas pada Pearson. MI mengukur seberapa besar porsi ketidakpastian target $Y$ berkurang jika kita mengetahui nilai fitur $X$. Semakin besar nilai MI, semakin informatif fitur tersebut:
   $$I(X; Y) = \sum_{y \in Y} \sum_{x \in X} p(x,y) \log \left( \frac{p(x,y)}{p(x)p(y)} \right)$$
@@ -105,17 +89,11 @@ Algoritma ini jarang beroperasi menggunakan pencarian menyeluruh (*exhaustive se
 
 $$\max_{S \subset F} \text{Performa}(M, S)$$
 
-Variabel $F$ melambangkan himpunan seluruh fitur awal, $S$ adalah *subset* fitur yang sedang dievaluasi, $M$ adalah algoritma *machine learning* yang dilatih, dan $\text{Performa}$ mewakili skor metrik (misalnya akurasi atau RMSE) pada data validasi. Beban komputasi $2^n$ sangat berat dan tidak praktis pada dataset berdimensi tinggi. Oleh karena itu, metode *wrapper* mengadopsi algoritma heuristik untuk memilah susunan fitur secara bertahap.
+Dalam perumusan tersebut, variabel $F$ melambangkan himpunan seluruh fitur awal, $S$ adalah *subset* fitur yang sedang dievaluasi, $M$ adalah algoritma *machine learning* yang dilatih, dan fungsi $\text{Performa}$ mewakili skor metrik (misalnya akurasi atau RMSE) pada data validasi. Beban komputasi untuk menjalankan model sebanyak $2^n$ iterasi ini sangat berat dan tidak praktis bila diaplikasikan pada *dataset* berdimensi tinggi. Oleh karena itu, metode *wrapper* mengadopsi prosedur heuristik untuk memilah kombinasi *subset* secara bertahap.
 
-Dua implementasi lazim dari metode *wrapper* adalah sebagai berikut:
+Terdapat dua mekanisme lazim dalam penerapan metode *wrapper*, yaitu metode eliminasi rekursif dan seleksi sekuensial. Metode pertama, *Recursive Feature Elimination* (RFE), mengurangi jumlah fitur secara mundur dengan memanfaatkan model algoritma yang memiliki koefisien bobot parameter internal bawaan, seperti model perhitungan regresi linier atau *Support Vector Machine*. Pada putaran tahap awal, metode RFE akan melatih arsitektur model dengan menggunakan seluruh himpunan variabel lalu memetakan skor metrik koefisien di setiap atribut tersebut. Algoritma lantas mengeliminasi fitur yang bernilai absolut bobot terkecil lalu melatih ulang struktur model menggunakan sisa *subset* fitur yang masih dipertahankan. Rotasi pengeliminasian atribut ini berulang terus-menerus hingga total ketersediaan atribut mengecil dan tersisa sejumlah fitur ke batas yang ditargetkan.
 
-- ***Recursive Feature Elimination* (RFE):** Pendekatan ini menyisihkan fitur secara mundur dari model algoritma yang memiliki koefisien bobot bawaan, seperti model regresi atau *Support Vector Machine*. Pada tahap pertama, algoritma melatih model dengan seluruh fitur dan memetakan skor koefisien tiap atribut. RFE kemudian membuang fitur dengan nilai absolut bobot terkecil. Setelah itu, RFE melatih ulang model memakai sisa fitur yang bertahan guna mengevaluasi bobot baru. Proses reduksi ini berulang sampai menyentuh batas target jumlah fitur yang ditetapkan.
-
-- **Seleksi Sekuensial (*Sequential Feature Selection* / SFS):** Seleksi sekuensial bersifat *model-agnostic* karena tidak bertumpu pada bobot internal model, sehingga dapat membungkus jenis algoritma apa pun. SFS bergerak melalui dua arah pencarian:
-
-- ***Forward selection*:** Seleksi berawal dari himpunan fitur kosong. Algoritma melatih model pada setiap variabel secara tunggal lalu mempertahankan satu fitur dengan performa tertinggi. Di putaran kedua, fitur terpilih pertama dipasangkan dengan fitur sisa secara bergiliran demi menemukan pasangan terbaik. Fitur ditambahkan satu demi satu hingga evaluasi performa model berhenti membaik.
-
-- ***Backward elimination*:** Algoritma bermula dengan memakai seluruh fitur yang tersedia. Seleksi bekerja dengan membuang fitur tunggal yang pencopotannya menimbulkan kerugian prediksi paling sedikit, dan berjalan mundur terus-menerus hingga ukuran fitur menyusut ke batas tertentu.
+Pendekatan kedua adalah *Sequential Feature Selection* (SFS). Berbeda dengan RFE, metode SFS bersifat *model-agnostic* karena tidak bertumpu pada bobot internal model, sehingga mampu membungkus algoritma apa pun. SFS umumnya bergerak melalui salah satu dari dua arah pencarian. Arah pencarian maju (*forward selection*) bermula dari himpunan fitur kosong; algoritma melatih model pada setiap variabel tunggal, memilih satu fitur berkinerja terbaik, lalu secara iteratif memasangkannya dengan fitur-fitur tersisa hingga metrik performa berhenti membaik. Sebaliknya, arah pencarian mundur (*backward elimination*) bermula dari penggabungan seluruh fitur yang tersedia; seleksi bekerja dengan mencopot satu per satu fitur yang kehilangannya menimbulkan kerugian performa paling minimal.
 ```{mermaid}
 %%| label: fig-ch07-7_5
 %%| fig-cap: "Alur Validasi Silang Bersarang (Nested Cross-Validation)"
@@ -131,33 +109,25 @@ graph TD
         A2 -->|Uji Kombinasi Fitur| C2[Tuning & Seleksi]
     end
 ```
-Pemakaian metode *wrapper* menghadirkan keuntungan dan kendala komputasi tersendiri dibandingkan metode filter:
+Pemakaian metode *wrapper* menghadirkan profil kinerja komputasi yang kontras dibandingkan metode filter. Keunggulan utama pendekatan ini terletak pada kemampuannya menangkap interaksi fitur yang kompleks; pengujian secara berkelompok memastikan bahwa dua variabel yang tampak tidak relevan saat dievaluasi secara individual dapat diidentifikasi kepentingannya ketika disatukan. Di samping itu, optimalisasi fitur bersifat terikat model, sehingga *subset* yang dihasilkan dipastikan sangat kompatibel dengan algoritma *machine learning* yang mengeksekusi pencarian.
 
-- **Menangkap interaksi fitur:** Pengujian fitur secara berkelompok memungkinkan metode ini melacak interaksi variabel yang kompleks. Dua fitur yang terlihat tidak berguna saat dievaluasi secara individual bisa membuktikan akurasi prediksi tinggi ketika disatukan.
-
-- **Optimisasi terikat model:** Kumpulan fitur hasil proses *wrapper* hanya spesifik dan optimal untuk algoritma yang dipakai pada sesi pencarian.
-
-- **Beban komputasi berat:** Kecepatan metode *wrapper* sangat lambat karena mewajibkan perangkat untuk berulang kali melatih ratusan model *machine learning* menggunakan formasi variabel berbeda.
-
-- **Risiko tinggi terhadap *overfitting*:** Fokus keras algoritma dalam mengejar nilai akurasi teratas sering kali memicu model sekadar menghafal fluktuasi acak (*noise*) di himpunan data latih. Kerentanan ini bertambah saat pencarian dioperasikan pada dataset sampel kecil tanpa validasi data yang tangguh.
+Kendati demikian, implementasi operasional dari prosedur pencarian \*wrapper\* ini memicu dua kendala spesifik yang perlu dievaluasi. Pertama, rotasi iteratif penugasannya memberikan beban komputasi yang tinggi; metode *wrapper* berjalan relatif lambat akibat keharusan melatih ulang banyak siklus model dengan menggunakan variasi formasi parameter atribut. Kedua, proses pencarian iteratif yang terlampau spesifik rentan mendatangkan kemungkinan \*overfitting\*. Prosedur seleksi model saat memaksimalkan nilai metrik skor prediksi bisa menjadikan hasil pilihan *subset* fitur sekadar mengidentifikasi angka kebetulan dari sebaran distribusi \*noise\* sampel himpunan data pelatihan; efek bias dari keteledoran komputasi seleksi ini kerap makin eskalatif dan memburuk tatkala sistem diinstruksikan menyeleksi sebaran partisi variabel *dataset* dengan kapasitas observasi berukuran minim tanpa difilter sistem perlindungan evaluasi berantai.
 
 ## Metode Embedded
 
-Metode *embedded* mengintegrasikan proses seleksi fitur langsung ke dalam fase pelatihan model. Pemilihan atribut terjadi bersamaan dengan optimasi parameter algoritma. Pendekatan ini lebih efisien secara komputasi dibandingkan metode *wrapper* dan lebih terarah pada performa prediksi akhir dibandingkan metode *filter*.
+Metode *embedded* mengintegrasikan kerangka perhitungan penyeleksian matriks fitur agar melekat langsung ke tahap kalibrasi proses pembelajaran model algoritma. Proses evaluasi parameter atribut dilakukan paralel pada tahapan pengoptimalan konvergensi perhitungan bobot model tersebut. Rangkaian mekanisme seleksi terpadu *embedded* mengonsumsi sumber daya komputasi secara jauh lebih minimalis dari skema putaran manual *wrapper* dan lebih merujuk relevansi akurasi nilai akhir hasil prediksi jika dibandingkan operasi metode *filter*.
 
 Contoh klasik metode *embedded* adalah regresi LASSO (*Least Absolute Shrinkage and Selection Operator*). LASSO menerapkan regularisasi L1 dengan menambahkan fungsi penalti absolut ke dalam objektif pelatihan:
 
 $$\min_w \left( \frac{1}{2n_{samples}} ||Xw - y||_2^2 + \alpha ||w||_1 \right)$$
 
-Di mana $X$ mewakili matriks fitur, $y$ adalah vektor target, $w$ adalah vektor koefisien model, dan $\alpha$ mengatur tingkat kekuatan penalti. Batas penalti L1 secara geometris memiliki sudut-sudut tajam. Bentuk ini memaksa solusi optimal mendarat tepat di sudut tersebut, yang menyusutkan nilai koefisien fitur kurang relevan hingga tepat menjadi angka nol (*sparse*).
+Pada perhitungan komputasi objektif tersebut, komponen metrik $X$ berwujud susunan variabel parameter observasi *dataset*, parameter $y$ memproyeksikan target sasaran *machine learning*, $w$ mewakili perumusan matematis matriks angka skala penugasan model tersebut, sedangkan konstanta pembobot $\alpha$ diimplementasikan mengontrol probabilitas seberapa dominan persentase modifikasi penalti diterapkan. Ruang topologi penalti linear metode L1 dikonstruksikan membentuk geometri sudut ekstrem. Geometri batas dari penalti yang memotong bersiku memaksa probabilitas skor prediksi algoritma mengarah menyudut absolut pada sudut persimpangan. Hal tersebut mengikis rasio penalti fitur dimensi dari variabel yang sekiranya tak cukup berkontribusi nilai prediksi tepat pada angka desimal *nol* (*sparse*).
 
 Seleksi *embedded* juga lazim digunakan pada algoritma berbasis pohon seperti *Random Forest* melalui metrik *feature importance* bawaan, contohnya metrik penurunan ketidakmurnian (*impurity*). Meskipun cepat, metrik bawaan pohon rentan bias terhadap fitur dengan kardinalitas tinggi. Untuk mengatasi hal ini, pustaka *gradient boosting* modern menyediakan alternatif yang lebih kokoh. Pustaka CatBoost, sebagai contoh, memiliki metrik `LossFunctionChange` yang mengevaluasi perbedaan *loss* model ketika suatu fitur diabaikan.
 
-Dalam penerapan tingkat lanjut, praktisi menghadapi dua filosofi seleksi *embedded* yang berbeda:
+Dalam tahapan eksperimen tingkat lanjut, perancangan ruang fitur mematuhi salah satu dari dua filosofi seleksi *embedded* yang berlawanan. Filosofi pertama berpusat pada ekstraksi himpunan minimal-optimal; pada pendekatan ini, algoritma difokuskan untuk menemukan *subset* fitur sekecil mungkin yang tetap mampu mempertahankan akurasi prediksi tertinggi. Regresi LASSO mewakili prinsip ini lewat kompresi matriks, selaras dengan algoritma MRMR (*Minimum Redundancy Maximum Relevance*) yang secara eksplisit meminimalkan redundansi antar-fitur secara matematis.
 
-- **Pencarian himpunan minimal-optimal:** Pendekatan ini menyeleksi subset fitur terkecil yang menghasilkan prediksi paling akurat. LASSO bekerja secara linier menghapus fitur yang saling berkorelasi. Algoritma MRMR (*Minimum Redundancy Maximum Relevance*) menggunakan prinsip serupa untuk secara eksplisit meminimalkan redundansi antar-fitur.
-
-- **Pencarian seluruh fitur relevan (*all-relevant*):** Pendekatan ini mengidentifikasi semua fitur yang memiliki sinyal prediktif, termasuk mendeteksi pola non-linier kompleks. Algoritma Boruta menggunakan pendekatan ini dengan cara membuat variabel bayangan (*shadow features*) berupa salinan acak dari fitur asli. Boruta membandingkan fitur asli terhadap fitur bayangan dan menyeleksi fitur yang terbukti memberikan informasi lebih baik dari sekadar keacakan.
+Sebaliknya, filosofi kedua memprioritaskan pencarian seluruh fitur relevan (*all-relevant*). Alih-alih mengejar kekompakan data, pendekatan ini bertujuan memetakan setiap sumbu informasi yang membawa sinyal prediktif, termasuk pola non-linier yang samar. Algoritma Boruta, misalnya, beroperasi di bawah payung filosofi ini dengan menginjeksi variabel bayangan (*shadow features*) berupa salinan acak data asli. Melalui uji statistik, Boruta membandingkan fitur orisinal dengan versi bayangannya, lalu menyeleksi seluruh atribut yang terbukti mendistribusikan sinyal lebih valid daripada tebakan acak.
 
 Pemilihan metode bergantung pada tujuan akhir analisis. LASSO atau MRMR dipilih saat model dituntut memiliki jumlah fitur yang ringkas, efisien, dan minimalis. Sebaliknya, Boruta digunakan apabila praktisi ingin memetakan seluruh sinyal prediktif tanpa membuang fitur terkait struktur data yang rumit.
 
@@ -169,43 +139,27 @@ Ketidakstabilan seleksi sering muncul pada himpunan data berdimensi tinggi, teru
 
 $$J(A, B) = \frac{|A \cap B|}{|A \cup B|}$$
 
-Di mana:
+Dalam persamaan tersebut, variabel $A$ mewakili himpunan fitur yang terpilih dari porsi data latih pertama, sedangkan $B$ mewakili himpunan fitur yang terpilih dari porsi data latih kedua. Nilai metrik $J$ yang mendekati angka 1 menunjukkan tingkat stabilitas seleksi yang tinggi. Sebaliknya, nilai yang mendekati 0 mengindikasikan bahwa pilihan fitur sangat sensitif terhadap perubahan sampel data.
 
-- $A$ mewakili himpunan fitur yang terpilih dari porsi data latih pertama.
-
-- $B$ mewakili himpunan fitur yang terpilih dari porsi data latih kedua.
-
-- Nilai $J$ yang mendekati $1$ menunjukkan stabilitas seleksi yang tinggi, sedangkan nilai mendekati $0$ mengindikasikan pilihan fitur yang sangat sensitif terhadap sampel data.
-
-Selain stabilitas, kesalahan metodologi yang paling merusak dalam tahap ini adalah *data leakage* atau kebocoran informasi seleksi. Kebocoran terjadi saat proses penapisan fitur dijalankan pada seluruh himpunan data sebelum pemisahan *training split* dan data uji. Dampak dari kesalahan urutan ini sangat fatal:
+Selain stabilitas metrik fitur, kesalahan algoritmis metodologis berisiko dalam urutan parameter seleksi fitur mendatangkan efek kerusakan serius, di mana model gagal membendung indikasi intrusi informasi anomali (*data leakage*). Kekeliruan desain berakibat dari komputasi algoritma pemilahan data dan seleksi atribut (*feature selection*) yang dipaksakan diterapkan mendahului tahap penugasan rotasi observasi untuk blok himpunan komputasi kelompok evaluasi dari pelatihan (*training split*) serta blok pemisah untuk proses pengetesan sampel (*test data*). Dampak teknis dari rotasi penyelesaian kerangka yang membaurkan informasi fitur di blok distribusi \*dataset\* sangat merugikan:
 
 - **Estimasi optimis semu:** Metode seleksi menggunakan distribusi target dari data uji untuk mencari fitur dengan korelasi terkuat.
 
 - **Kehilangan objektivitas:** Model pada dasarnya telah "melihat" sebagian representasi label data uji sebelum fase pelatihan dimulai.
 
-- **Kegagalan saat inferensi:** Performa model saat diuji silang terlihat meyakinkan, namun akan anjlok drastis saat menghadapi data yang baru.
+- **Kegagalan saat inferensi:** Performa model saat pengujian silang (*cross-validation*) terlihat meyakinkan, namun akan menurun drastis saat menghadapi data riil yang baru.
 
-Satu-satunya cara mencegah kebocoran ini adalah dengan menerapkan praktik *pipeline* yang benar. Karena proses pembuangan atribut dikendalikan langsung oleh perhitungan statistik data, objek penyeleksi wajib dirangkai di dalam *pipeline* model. Fungsi seleksi hanya boleh memanggil *fit* secara eksklusif pada *training split*, kemudian baru memanggil *transform* ke arah data uji.
+Satu-satunya prosedur pencegahan indikasi *data leakage* adalah menggunakan pendekatan komputasi fungsionalisasi prapemrosesan observasi dan implementasi kerangka rancangan arsitektur terintegrasi, yang akrab dipandu melalui instruksi konsep *pipeline* parameter yang tertata benar. Prosedur pencoretan nilai dimensi *feature* mutlak dikomandoi dari kalkulasi varians statistik di struktur sampel matriks pelatihan saja, maka modul kelas penyeleksi wajib dibungkus kokoh berurutan di dalam objek pelaksana alur kerja model (*pipeline*). Logika penyusunan komputasi seleksi wajib ditugaskan pada mode pelatihan kalkulasi nilai eksklusif *fit* hanya mengeksekusi observasi blok pemisahan uji coba komputasi (*training split*), selanjutnya sesudah terkunci model menyortir dan menyesuaikan *dataset* dengan fitur *transform* lurus mengeksekusi kerangka pemecahan porsi blok kelompok dimensi data masa uji.
 
 Kebutuhan akan disiplin pemisahan data ini menjadi jauh lebih kompleks ketika metode seleksi menuntut pencarian hyperparameter, seperti mencari jumlah fitur terbaik ($k$) atau menentukan besaran penalti pada regularisasi L1. Memilih parameter optimal pada validasi silang standar akan memicu bias. Solusi untuk mempertahankan objektivitas evaluasi adalah dengan arsitektur *nested cross-validation* (validasi silang bersarang).
 
-Mekanisme validasi bersarang memisahkan alur pencarian dan pengujian menjadi dua lapis pelipatan independen:
-
-1.  **Inner loop (Perulangan dalam):** Beroperasi memecah subset data latih untuk mencari kombinasi parameter seleksi terbaik (misalnya mencari nilai $k$ paling optimal).
-
-2.  **Outer loop (Perulangan luar):** Mengevaluasi satu *pipeline* secara utuh (termasuk langkah *transform* awal dengan parameter terbaik dari *inner loop*) di atas lipatan data uji luar yang sama sekali tidak tersentuh proses sebelumnya.
+Secara operasional, mekanisme validasi bersarang memisahkan alur pencarian dan pengujian menjadi dua lapis pelipatan yang independen. Lapisan pertama berwujud perulangan dalam (*inner loop*) yang secara eksklusif memecah *subset* data latih demi mencari kombinasi parameter seleksi terbaik, contohnya saat menentukan batas nilai $k$ paling optimal. Setelah parameter ideal ditemukan, lapisan kedua berupa perulangan luar (*outer loop*) mengambil alih proses evaluasi. Perulangan luar ini bertugas mengeksekusi *pipeline* pemodelan secara utuh---termasuk langkah *transform* yang mengadopsi parameter dari putaran dalam---langsung di atas lipatan data uji yang sama sekali belum tersentuh observasi sebelumnya.
 
 Pemisahan struktural ini menjamin estimasi akurasi akhir merepresentasikan kemampuan generalisasi yang realistis, tanpa kontaminasi sekecil apa pun dari tahapan seleksi fitur.
 
 ## Studi Kasus: Membandingkan Metode Seleksi pada Satu Dataset
 
-Kita menggunakan satu *dataset* klasifikasi berdimensi tinggi untuk melihat cara kerja metode *filter*, *wrapper*, dan *embedded* secara langsung. Data sintetis ini memiliki 1.000 fitur dengan rincian berikut:
-
-- **10 fitur inti:** membawa sinyal prediktif sesungguhnya.
-
-- **100 fitur redundan:** salinan yang berkorelasi sangat tinggi dengan fitur inti.
-
-- **890 fitur *noise*:** variabel acak tanpa hubungan dengan target.
+Kita menggunakan satu *dataset* klasifikasi berdimensi tinggi untuk melihat cara kerja metode *filter*, *wrapper*, dan *embedded* secara langsung. Data sintetis ini dikonfigurasi memiliki 1.000 dimensi yang terpecah ke dalam tiga klasifikasi spesifik. Matriks awal memuat 10 fitur inti pembawa sinyal prediktif utama, yang secara mendampingi diikuti oleh 100 fitur redundan sebagai salinan dengan derajat korelasi teramat tinggi terhadap sinyal asli. Di luar kelompok observasi berharga tersebut, sisa matriks disesaki oleh 890 fitur *noise*, yakni variabel buatan serampangan yang sepenuhnya hampa korelasi terhadap vektor target.
 
 Tujuan seleksi adalah mencari *subset* fitur sekecil mungkin tanpa menurunkan akurasi prediksi, sekaligus menjaga efisiensi komputasi.
 
@@ -267,18 +221,12 @@ print(f"   - Waktu Eksekusi: {time_embedded:.4f} detik\n")
 Setiap pendekatan menunjukkan karakteristik kinerja yang berbeda saat dihadapkan pada kombinasi sinyal, redundansi, dan *noise*:
 
 **1. Metode Filter (Mutual Information)**
-Algoritma ini menilai setiap atribut secara independen terhadap target.
 
-- **Kelebihan:** Eksekusi sangat cepat. Metode ini menyingkirkan 890 fitur *noise* dalam hitungan detik karena skor informasinya mendekati nol.
-
-- **Kelemahan:** Gagal menangani redundansi. Karena dievaluasi satu per satu tanpa melihat atribut lain, 100 fitur redundan mendapat skor tinggi dan tetap lolos seleksi bersama 10 fitur inti. Hasil akhirnya adalah *subset* yang masih terlalu besar.
+Algoritma ini menilai setiap atribut secara independen terhadap target. Keunggulan utamanya adalah eksekusi yang sangat cepat; metode ini mampu menyingkirkan 890 fitur *noise* dalam hitungan detik karena skor informasinya mendekati nol. Namun, kelemahan terbesarnya adalah kegagalan dalam menangani redundansi. Karena dievaluasi satu per satu tanpa melihat atribut lain, 100 fitur redundan mendapat skor tinggi dan tetap lolos seleksi bersama 10 fitur inti. Hasil akhirnya adalah ukuran *subset* yang masih terlalu besar.
 
 **2. Metode Wrapper (Recursive Feature Elimination / RFE)**
-RFE mengevaluasi kumpulan fitur secara kolektif dengan melatih ulang model secara berulang.
 
-- **Kelebihan:** Sangat efektif menyingkirkan redundansi. Ketika satu fitur sudah berhasil mewakili sebuah sinyal, fitur kembarannya seketika tidak berguna dan terbuang pada putaran berikutnya. RFE sukses menemukan *subset* fitur yang paling ringkas.
-
-- **Kelemahan:** Biaya komputasi mahal. Proses pelatihan ulang model hingga ratusan kali membuat metode ini berjalan paling lambat.
+RFE mengevaluasi kumpulan fitur secara kolektif dengan melatih ulang model secara berulang. Pendekatan ini sangat efektif untuk menyingkirkan redundansi. Ketika satu fitur sudah berhasil mewakili sebuah sinyal prediktif, fitur kembarannya seketika menjadi tidak relevan dan terbuang pada putaran berikutnya, sehingga RFE sukses menemukan *subset* fitur yang paling ringkas. Kendala utamanya adalah biaya komputasi yang mahal, mengingat proses pelatihan ulang model hingga ratusan kali membuat metode ini berjalan sangat lambat.
 
 **3. Metode Embedded (Regresi LASSO)**
 Metode *embedded* menyatukan pelatihan model dan seleksi fitur melalui penalti L1. Fungsi objektif LASSO dirumuskan sebagai berikut:
@@ -289,12 +237,6 @@ Pada persamaan tersebut, $n$ adalah jumlah sampel, $X$ mewakili matriks fitur, $
 
 \[GAMBAR 7.6: Plot Jalur - Pergerakan koefisien fitur (shrinkage path) pada regresi LASSO seiring peningkatan nilai penalti L1, menunjukkan koefisien fitur redundan yang ditekan menjadi nol\]
 
-- **Kelebihan:** Memberikan jalan tengah terbaik. LASSO membuang fitur *noise* dan fitur redundan seakurat RFE, tetapi menuntaskan komputasi hampir secepat metode *filter*.
+Pendekatan *embedded* ini memberikan jalan tengah yang optimal. LASSO mampu membuang fitur *noise* dan meminimalkan fitur redundan dengan akurasi yang sebanding dengan RFE, sekaligus menyelesaikan komputasi hampir secepat metode *filter*.
 
-Ketiga profil ini memperlihatkan bahwa pemilihan metode seleksi bergantung pada prioritas alur kerja:
-
-- Jadikan metode *filter* sebagai saringan awal pada data berdimensi sangat tinggi untuk membuang *noise* dengan cepat.
-
-- Pilih metode *wrapper* jika tujuan utama proyek adalah mendapatkan *subset* sekecil mungkin (minimal-optimal) dan tersedia daya komputasi yang memadai.
-
-- Terapkan metode *embedded* untuk skenario produksi standar, karena menawarkan keseimbangan terbaik antara efisiensi komputasi dan kontrol terhadap redundansi.
+Berdasarkan perbandingan profil komputasi ketiga instrumen tersebut, proses pemilihan algoritma seleksi jelas bergantung pada prioritas alur kerja eksperimen. Metode *filter* sangat ideal diposisikan sebagai saringan tahap pertama pada data berdimensi ekstrem demi menekan fitur *noise* dengan segera. Di lain skenario, metode *wrapper* patut diadopsi jika tujuan spesifik eksperimen adalah mengekstraksi ukuran *subset* sekecil mungkin yang memenuhi kriteria minimal-optimal, dengan catatan bahwa infrastruktur pemrosesan sanggup memfasilitasi beban pelatihan model iteratif. Sebagai konklusi praktis, penerapan metode *embedded* merupakan jalan tengah paling direkomendasikan untuk skenario pemodelan pada umumnya, mengingat teknik ini merumuskan titik temu paling stabil antara kapabilitas penyingkiran redundansi dan rasionalitas efisiensi memori.

@@ -30,11 +30,6 @@ Masalah penyelarasan makin kompleks ketika berhadapan dengan aliran data sekuens
 \label{fig:ch14-fig-1}
 \end{figure}
 
-Judul: Penyelarasan Waktu pada Data Multimodal
-Tipe: diagram konseptual
-Tampilkan: Menunjukkan aliran data berbeda (video pada 30 frame/detik dan audio pada 44.1 kHz) yang diselaraskan ke dalam jendela waktu selebar satu detik agar menjadi satu unit observasi terpadu.
-Sumber data: -
-
 Untuk menyinkronkan ritme perekaman yang berlainan ini, teknik prapemrosesan yang umum digunakan adalah pembagian jendela waktu (\emph{windowing}). Seluruh titik data dari berbagai modalitas diiris dan dikelompokkan ke dalam satu rentang waktu yang sama. Secara matematis, konstruksi jendela observasi ini didefinisikan sebagai:
 
 \[ W_{\tau} = \{ (x_k^{(m)}, t_k) \mid \tau \le t_k < \tau + \Delta t \} \]
@@ -74,12 +69,12 @@ Setelah berbagai modalitas diselaraskan, rekayasawan harus menentukan titik pers
 \label{fig:ch14-fig-2}
 \end{figure}
 
-ekosistem komputasi model bahasa dan visi (\emph{Vision-Language Models}) mutakhir saat ini telah memperluas definisi fusi secara signifikan:
+Ekosistem model bahasa-visual (\emph{Vision-Language Models}) mutakhir memperluas definisi fusi ini:
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\emph{Attention Bottleneck}:} Arsitektur terobosan seperti \emph{Perceiver IO} mendobrak tradisi penggabungan matriks mentah. Model ini memakai sejumlah vektor laten dengan ukuran tetap sebagai jembatan kemacetan (\emph{bottleneck}). Model kemudian melakukan kueri (\emph{cross-attend}) ke berbagai rentetan input - seperti teks, audio, maupun \emph{point clouds} - tanpa memedulikan perbedaan resolusi asalnya. Skema ini sukses membebaskan kedalaman pemrosesan dari tekanan dimensi input.
+  \textbf{\emph{Attention Bottleneck}:} Arsitektur seperti \emph{Perceiver IO} meninggalkan penggabungan matriks mentah. Model ini memakai sejumlah vektor laten dengan ukuran tetap sebagai jembatan kemacetan (\emph{bottleneck}). Model kemudian melakukan kueri (\emph{cross-attend}) ke berbagai rentetan input - seperti teks, audio, maupun \emph{point clouds} - tanpa memedulikan perbedaan resolusi asalnya. Skema ini sukses membebaskan kedalaman pemrosesan dari tekanan dimensi input.
 \item
   \textbf{Perutean Dinamis (\emph{Mixture-of-Experts}):} Sistem seperti DeepSeek-VL2 dan MoE-LLaVA tidak lagi memaksa fitur dilebur secara kaku ke dalam satu blok kalkulasi yang sama. Arsitektur memecah jaringan menjadi berbagai himpunan modul ahli (\emph{experts}). Rute komputasi diaktifkan secara dinamis dan adaptif menyesuaikan dengan bobot signifikansi fitur pada waktu penarikan kesimpulan. Pola ini memfasilitasi pencampuran miliaran parameter analisis secara instan dengan jejak memori yang sangat efisien.
 \end{itemize}
@@ -98,7 +93,7 @@ Sebagai contoh pada kasus prediksi harga properti, kita mungkin memiliki 10 fitu
 
 Gambar 14.4 memperlihatkan bagaimana sebuah model \emph{deep learning} meratakan (\emph{flattening}) peta fitur spasial citra menjadi sebuah vektor panjang. Dari proses ini, kita mendapatkan vektor citra berukuran 2048 dimensi (\(\mathbf{x}_{img} \in \mathbb{R}^{2048}\)). Saat kedua vektor dirangkai, kita menghasilkan satu input sepanjang 2058 dimensi. Dalam ruang representasi agregat ini, gambar mendominasi lebih dari 99 persen kapasitas, sementara data tabular mengambil porsi kurang dari setengah persen.
 
-Ketimpangan jumlah dimensi merusak keseimbangan proses pembelajaran model. Terdapat tiga dampak langsung jika kita membiarkan kondisi ini:
+Jika dibiarkan, ketimpangan jumlah dimensi ini merusak keseimbangan pembelajaran model lewat tiga jalur:
 
 \begin{itemize}
 \tightlist
@@ -135,7 +130,7 @@ Dalam pengolahan data tabular, ketiadaan data biasanya terjadi pada tingkat sel 
 
 Pendekatan imputasi klasik gagal menangani ketiadaan format utuh ini. Mengisi kekosongan matriks \emph{embedding} berdimensi besar menggunakan nilai rata-rata dari seluruh \emph{dataset} tidak menghasilkan makna turunan apa pun. Langkah tersebut murni menyuntikkan \emph{noise} ke dalam perhitungan matriks representasi.
 
-Berikut adalah pendekatan teknis untuk menangani modalitas yang hilang tanpa mengorbankan integritas \emph{pipeline}:
+Beberapa pendekatan teknis menangani modalitas yang hilang tanpa mengorbankan integritas \emph{pipeline}:
 
 \begin{itemize}
 \item
@@ -175,17 +170,7 @@ Secara arsitektur, pendekatan ini membutuhkan dua \emph{encoder} yang dilatih se
 \[ \mathbf{z}_{img} = f_{\theta}(\mathbf{x}_{img}) \]
 \[ \mathbf{z}_{text} = g_{\phi}(\mathbf{x}_{text}) \]
 
-Di mana:
-
-\begin{itemize}
-\tightlist
-\item
-  \(f_{\theta}\) adalah \emph{encoder} citra (misalnya ViT atau CNN).
-\item
-  \(g_{\phi}\) adalah \emph{encoder} teks (misalnya arsitektur berbasis Transformer).
-\item
-  \(\mathbf{z}_{img}\) dan \(\mathbf{z}_{text}\) adalah vektor representasi keluaran yang keduanya berada di ruang laten berdimensi \(d\) yang identik (\(\mathbb{R}^d\)).
-\end{itemize}
+Dalam formulasi tersebut, \(f_{\theta}\) adalah \emph{encoder} citra (misalnya ViT atau CNN) dan \(g_{\phi}\) adalah \emph{encoder} teks (misalnya arsitektur berbasis Transformer). Keluaran keduanya, \(\mathbf{z}_{img}\) dan \(\mathbf{z}_{text}\), sama-sama berada di ruang laten berdimensi \(d\) yang identik (\(\mathbb{R}^d\)).
 
 \begin{figure}[htbp]\centering
 \includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch14-fig-5}
@@ -211,7 +196,7 @@ Dalam praktik perkembangannya, ruang \emph{embedding} lintas-modal ini tidak lag
   \textbf{Standar evaluasi spesifik:} Karena tidak melayani kelas prediksi tunggal, kualitas dari ruang vektor lintas-modal ini diukur lewat metrik temu-kembali (\emph{retrieval}) seperti \emph{recall@k} (mengukur seberapa sering padanan yang tepat muncul dalam daftar kandidat teratas) dan \emph{nDCG} (mengukur akurasi perankingan keseluruhan).
 \end{itemize}
 
-Evolusi ini menandai titik ekstrem pergeseran menuju representasi yang dipelajari mesin. Transformasi dan penyesuaian tidak lagi bergantung pada rekayasa fitur oleh manusia yang memadukan dua struktur data berbeda secara paksa. Model menemukan secara otonom ekosistem metrik yang menjahit kesamaan makna antar-modalitas.
+Perkembangan ini menandai pergeseran menuju representasi yang dipelajari mesin. Pemaduan modalitas tidak lagi bergantung pada rekayasa fitur manual yang menggabungkan dua struktur data secara paksa; model belajar sendiri memetakan kesamaan makna antarmodalitas.
 
 \section{Model Multimodal Pretrained}\label{model-multimodal-pretrained}
 

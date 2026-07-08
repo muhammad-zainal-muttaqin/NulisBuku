@@ -2,23 +2,23 @@
 
 ## Mengapa Mereduksi Dimensi? Kompresi vs. Visualisasi
 
-Matriks data berdimensi tinggi sering kali memicu *curse of dimensionality* (kutukan dimensionalitas). Ruang fitur yang terlalu luas dan renggang memperlambat komputasi, membebani memori, serta menaikkan risiko *overfitting* akibat parameter model yang berlebih.
+Matriks data berdimensi tinggi sering kali memicu *curse of dimensionality* (kutukan dimensionalitas). Ruang *feature* yang terlalu luas dan renggang memperlambat komputasi, membebani memori, serta menaikkan risiko *overfitting* akibat parameter model yang berlebih.
 
-Seleksi fitur mengatasi masalah ini dengan membuang kolom fitur secara diskret. Reduksi dimensi mengambil pendekatan berbeda. Alih-alih membuang atribut, metode ini memadatkan seluruh matriks observasi ke dalam susunan baru yang jauh lebih ringkas. Hasil transformasi ini membentuk ruang berdimensi rendah yang disebut *latent representation* (representasi laten).
+Seleksi *feature* mengatasi masalah ini dengan membuang kolom *feature* secara diskret. Reduksi dimensi mengambil pendekatan berbeda. Alih-alih membuang atribut, metode ini memadatkan seluruh matriks observasi ke dalam susunan baru yang jauh lebih ringkas. Hasil transformasi ini membentuk ruang berdimensi rendah yang disebut *latent representation* (representasi laten).
 
-Representasi laten menangkap inti struktur sebaran observasi data. Pada ruang baru ini, fitur tereduksi tidak lagi menyimpan makna fisis aslinya. Sumbu fitur awal seperti "suhu ruang" tidak lagi berdiri mandiri; atribut baru muncul sebagai paduan matematis yang mendeskripsikan kondisi sistem secara keseluruhan.
+Representasi laten menangkap inti struktur sebaran observasi data. Pada ruang baru ini, *feature* tereduksi tidak lagi menyimpan makna fisis aslinya. Sumbu *feature* awal seperti "suhu ruang" tidak lagi berdiri mandiri; atribut baru muncul sebagai paduan matematis yang mendeskripsikan kondisi sistem secara keseluruhan.
 
 Secara matematis, algoritma reduksi mencari fungsi transformasi yang memetakan matriks berdimensi tinggi ke matriks berdimensi rendah:
 
 $$X_{laten} = f(X)$$
 
-Di mana $X \in \mathbb{R}^{n \times d}$ adalah matriks fitur asli dengan $n$ observasi dan $d$ dimensi mentah, $f(\cdot)$ adalah fungsi transformasi reduksi, dan $X_{laten} \in \mathbb{R}^{n \times k}$ adalah representasi laten dengan dimensi baru $k$, yang memenuhi syarat $k \ll d$.
+Dalam persamaan ini, $X \in \mathbb{R}^{n \times d}$ mewakili matriks *feature* asli dengan $n$ observasi dan $d$ dimensi mentah, $f(\cdot)$ merupakan fungsi transformasi reduksi, dan $X_{laten} \in \mathbb{R}^{n \times k}$ adalah representasi laten dengan dimensi baru $k$, yang memenuhi syarat $k \ll d$.
 
 Transformasi ke ruang laten diterapkan dalam siklus *machine learning* untuk melayani dua fungsi utama dengan target yang spesifik:
 
-- **Kompresi (Prapemrosesan Model):** Transformasi dirancang untuk menekan *noise* dan membuang redundansi antarfitur, sambil tetap mengamankan struktur informasi utama. Contohnya, algoritma memampatkan 100 fitur sensor mentah menjadi 10 dimensi laten yang solid. Matriks 10 dimensi inilah yang diteruskan ke model pengklasifikasi. Kompresi membantu model mempelajari struktur data asli secara efisien tanpa terdistorsi observasi semu.
+- **Kompresi (Prapemrosesan Model):** Transformasi dirancang untuk menekan *noise* dan membuang redundansi antar-*feature*, sambil tetap mengamankan struktur informasi utama. Contohnya, algoritma memampatkan 100 *feature* sensor mentah menjadi 10 dimensi laten yang solid. Matriks 10 dimensi inilah yang diteruskan ke model pengklasifikasi. Kompresi membantu model mempelajari struktur data asli secara efisien tanpa terdistorsi observasi semu.
 
-- **Visualisasi Analitis:** Ditujukan murni bagi persepsi penglihatan manusia. Matriks ditarik dan ditekan ke kanvas spasial dua atau tiga dimensi agar sebaran pola data dapat diinspeksi. Plot ruang laten membantu analis melihat formasi klaster alami atau mempermudah lokalisasi data pencilan (*outlier*).
+- **Visualisasi Analitis:** Ditujukan murni bagi persepsi penglihatan manusia. Matriks diproyeksikan dan dipadatkan ke kanvas spasial dua atau tiga dimensi agar sebaran pola data dapat diinspeksi. Plot ruang laten membantu analis melihat formasi klaster alami atau mempermudah lokalisasi *outlier*.
 ```{mermaid}
 %%| label: fig-ch08-8_1
 %%| fig-cap: "Visualisasi Ruang Fitur dari Dimensi Tinggi (3D) ke Laten 2D"
@@ -26,7 +26,7 @@ Transformasi ke ruang laten diterapkan dalam siklus *machine learning* untuk mel
 graph TD
     A[Ruang Fitur Asli: X, Y, Z] -->|SVD / Kompresi Non-Linier| B[Vektor Representasi Laten: Z1, Z2]
 ```
-Kedua fungsi ini tidak dapat saling dipertukarkan. Menggunakan matriks visualisasi 2D sebagai prapemrosesan langsung untuk melatih model klasifikasi akan menurunkan kinerja prediksi secara tajam, karena bingkai 2D memotong terlalu banyak detail keragaman data. Sebaliknya, kompresi 10 dimensi sangat ideal untuk komputasi model, tetapi mustahil diinspeksi secara geometris oleh mata. Pemilihan algoritma transformasi bergantung langsung pada tujuan akhir fungsinya.
+Kedua fungsi ini tidak dapat saling dipertukarkan. Menggunakan matriks visualisasi 2D sebagai prapemrosesan langsung untuk melatih model klasifikasi akan menurunkan kinerja prediksi secara tajam, karena bingkai 2D mengeliminasi terlalu banyak detail keragaman data. Sebaliknya, kompresi 10 dimensi sangat ideal untuk komputasi model, tetapi mustahil dievaluasi secara visual geometris oleh mata. Pemilihan algoritma transformasi bergantung langsung pada tujuan akhir fungsinya.
 
 Eksplorasi reduksi dimensi modern tersebar ke dalam beberapa taksonomi metode:
 
@@ -38,27 +38,19 @@ Eksplorasi reduksi dimensi modern tersebar ke dalam beberapa taksonomi metode:
 
 Implementasi taksonomi metode reduksi di atas membawa konsekuensi operasional lanjutan. Tantangan terbesarnya adalah memilih target kuantitatif dimensi laten ($k$). Pendekatan usang menggunakan ukuran proporsi varians yang disederhanakan (misalnya memotong di 95% varians). Praktik modern menuntut landasan teknis yang lebih kuat, baik dengan pendekatan penaksiran dimensi intrinsik (*intrinsic-dimensionality estimation*), pengujian komparatif *parallel analysis* terhadap matriks acak, atau optimasi murni melalui skema *cross-validation* yang terikat selaras pada skor performa model akhir.
 
-Tantangan kedua berada pada area privasi. Kompresi matriks melalui metode linier seperti PCA maupun dekomposisi berlapis pada *autoencoder* merupakan operasi transformasi *reversible* (sebagian data dapat dikonstruksi ulang ke ruang asalnya). Matriks fitur yang diklaim terkompresi secara anonim masih menahan struktur geometri asli observasi. Sisa struktur ini berpotensi membocorkan identitas tersembunyi atau menyebarkan *bias* dari atribut *proxy* yang dilindungi. Konsekuensi keamanan privasi pada teknik fitur ini akan diurai lebih lanjut pada Bab 9.
+Tantangan kedua berada pada area privasi. Kompresi matriks melalui metode linier seperti PCA maupun dekomposisi berlapis pada *autoencoder* merupakan operasi transformasi *reversible* (sebagian data dapat dikonstruksi ulang ke ruang asalnya). Matriks *feature* yang diklaim terkompresi secara anonim masih menahan struktur geometri asli observasi. Sisa struktur ini berpotensi membocorkan identitas tersembunyi atau menyebarkan *bias* dari atribut *proxy* yang dilindungi. Konsekuensi keamanan privasi pada teknik *feature* ini akan diurai lebih lanjut pada Bab 9.
 
 ## PCA dan Keluarga Reduksi Linier
 
-*Principal Component Analysis* (PCA) adalah metode reduksi dimensi linier yang paling luas penggunaannya. Pendekatan ini bekerja dengan mencari sumbu-sumbu koordinat baru yang dinamakan komponen utama. Komponen pertama diposisikan pada arah yang menangkap varians terbesar dari kumpulan data, dan komponen-komponen selanjutnya ditarik tegak lurus (ortogonal) terhadap satu sama lain, menangkap sisa varians secara berurutan.
+*Principal Component Analysis* (PCA) adalah metode reduksi dimensi linier yang paling luas penggunaannya. Pendekatan ini bekerja dengan mencari sumbu-sumbu koordinat baru yang dinamakan komponen utama. Komponen pertama diposisikan pada arah yang menangkap varians terbesar dari *dataset*, dan komponen-komponen selanjutnya ditarik tegak lurus (ortogonal) terhadap satu sama lain, menangkap sisa varians secara berurutan.
 
 Sebagian besar implementasi modern menghitung PCA tidak melalui dekomposisi matriks kovarians, melainkan menggunakan algoritma *Singular Value Decomposition* (SVD) yang lebih stabil secara numerik. SVD memfaktorkan matriks data masukan $X \in \mathbb{R}^{n \times d}$ menjadi tiga elemen penyusun:
 
 $$X = U \Sigma V^T$$
 
-Di mana:
+Pada faktorisasi ini, $X$ mewakili matriks data yang telah dipusatkan, yaitu setiap kolom dikurangi dengan nilai rata-ratanya. Matriks $U$ merupakan matriks ortogonal yang berisi kumpulan vektor singular kiri, sedangkan $\Sigma$ adalah matriks diagonal yang menyimpan nilai-nilai singular sebagai representasi besaran varians tiap sumbu. Terakhir, $V^T$ melambangkan *transpose* dari matriks vektor singular kanan, yang bertindak sebagai komponen utama matriks tersebut.
 
-- $X$ mewakili matriks data yang telah dipusatkan (setiap kolom dikurangi dengan nilai rata-ratanya).
-
-- $U$ adalah matriks ortogonal yang berisi kumpulan vektor singular kiri.
-
-- $\Sigma$ adalah matriks diagonal yang menyimpan nilai-nilai singular sebagai representasi besaran varians tiap sumbu.
-
-- $V^T$ adalah *transpose* dari matriks vektor singular kanan, yang bertindak sebagai komponen utama matriks tersebut.
-
-Untuk mereduksi dimensi data dari $d$ menjadi dimensi target $k$, proyeksi fitur yang baru dihasilkan dengan memotong matriks transformasi tersebut:
+Untuk mereduksi dimensi data dari $d$ menjadi dimensi target $k$, proyeksi *feature* yang baru dihasilkan dengan memotong matriks transformasi tersebut:
 
 $$X_{reduced} = X W_k$$
 
@@ -75,39 +67,33 @@ graph LR
 
 Dalam praktik pengembangan *machine learning*, satu versi PCA standar sering kali tidak mencukupi untuk berbagai konstrain komputasi. Implementasi pustaka modern menyediakan variasi dekomposisi linier:
 
-- **Penskalaan Wajib:** PCA memusatkan fitur ke titik nol, namun tidak mengubah skalanya. Skala asli yang besar akan mendominasi perhitungan varians. Penskalaan (misalnya menggunakan fungsi `StandardScaler`) wajib dilakukan sebelum transformasi PCA beroperasi.
+- **Penskalaan Wajib:** PCA memusatkan *feature* ke titik nol, namun tidak mengubah skalanya. Skala asli yang asimetris akan mendominasi perhitungan varians. Penskalaan (misalnya menggunakan fungsi `StandardScaler`) wajib dilakukan sebelum transformasi PCA beroperasi.
 
-- **Truncated SVD:** Mengurangkan rata-rata pada matriks yang sangat *sparse* (seperti vektor teks TF-IDF) akan mengubah nilai-nilai nol menjadi non-nol, sehingga langsung menghancurkan struktur efisiensi matriks dan berisiko memenuhi kapasitas memori. *Truncated SVD* menyelesaikan faktorisasi tanpa proses pemusatan rata-rata sebelumnya, menjadikannya pilihan teknis untuk data tekstual.
+- **Truncated SVD:** Mengurangkan rata-rata pada matriks yang sangat *sparse* (seperti vektor teks TF-IDF) akan mengubah nilai-nilai nol menjadi non-nol, sehingga secara langsung mendistorsi struktur efisiensi matriks dan berisiko memenuhi kapasitas memori. *Truncated SVD* menyelesaikan faktorisasi tanpa proses pemusatan rata-rata sebelumnya, menjadikannya pilihan teknis untuk representasi tekstual.
 
-- **Incremental PCA:** Ketika volume data terlampau besar untuk ditampung memori sistem secara penuh (*out-of-core*), metode ini memperbarui proses dekomposisi secara bertahap menggunakan potongan-potongan *mini-batch*.
+- **Incremental PCA:** Ketika volume data terlampau masif untuk ditampung memori sistem secara penuh (*out-of-core*), metode ini memperbarui proses dekomposisi secara bertahap menggunakan potongan-potongan *mini-batch*.
 
-- **Randomized SVD:** Saat jumlah target komponen $k$ jauh lebih kecil ketimbang dimensi fitur asli $d$, pendekatan stokastik ini memotong waktu komputasi secara drastis sambil memberikan aproksimasi vektor komponen utama yang akurat.
+- **Randomized SVD:** Saat jumlah target komponen $k$ jauh lebih kecil ketimbang dimensi *feature* asli $d$, pendekatan stokastik ini mempercepat waktu komputasi secara tajam sambil mempertahankan efektivitas aproksimasi vektor komponen utama.
 
 **Whitening dan Kompresi Embedding Terlatih.**
 
-Fungsi reduksi dimensi sering menyediakan parameter untuk melakukan penskalaan ulang ruang fitur yang disebut proses *whitening*. Operasi ini memaksa komponen-komponen utama yang dihasilkan memiliki varians satuan yang seragam (isotropik). *Whitening* memfasilitasi perbandingan kemiripan fitur dalam metode pencarian jarak dekat (*retrieval*), namun pemaksaan ini membuang pola variasi anisotropik yang sering kali dibutuhkan oleh model klasifikasi untuk menentukan pemisahan garis batas label.
+Fungsi reduksi dimensi sering menyediakan parameter untuk melakukan penskalaan ulang ruang *feature* yang disebut proses *whitening*. Operasi ini memaksa komponen-komponen utama yang dihasilkan memiliki varians satuan yang seragam (isotropik). *Whitening* memfasilitasi perbandingan kemiripan *feature* dalam metode pencarian jarak dekat (*retrieval*), namun pemaksaan ini membuang pola variasi anisotropik yang sering kali dibutuhkan oleh model klasifikasi untuk menentukan pemisahan garis batas label.
 
-Meskipun algoritma non-linier memiliki visualisasi yang lebih padat, metode linier tetap relevan dalam kompresi *embedding* pra-latih (seperti representasi Transformer yang akan dibahas pada Bab 15). PCA linier mampu mereduksi hingga 50% dimensi awal *sentence embedding* tanpa degradasi metrik sistem kompresi secara bermakna. Proses PCA menahan distorsi performa representasi fitur jauh lebih baik ketimbang kompresi menggunakan *autoencoder* maupun proyeksi UMAP.
+Meskipun algoritma non-linier memiliki visualisasi yang lebih padat, metode linier tetap relevan dalam kompresi *embedding* pra-latih (seperti representasi Transformer yang akan dibahas pada Bab 15). PCA linier mampu mereduksi hingga 50% dimensi awal *sentence embedding* tanpa degradasi metrik sistem secara signifikan. Proses PCA menahan distorsi performa representasi *feature* jauh lebih baik ketimbang kompresi menggunakan *autoencoder* maupun proyeksi UMAP.
 
 ## Representasi Berbasis Bagian: Non-negative Matrix Factorization (NMF)
 
-Pendekatan dekomposisi linier seperti PCA sering menghasilkan komponen laten yang mengandung percampuran nilai positif dan negatif. Representasi padat semacam ini menyulitkan proses interpretasi. Secara alamiah, manusia kesulitan menafsirkan fitur gabungan yang dibangun melalui proses pengurangan matematis. Sebagai contoh, mustahil membayangkan rekonstruksi citra wajah dengan cara merangkai komponen bentuk dasar lalu "mengurangi" bagian mata secara aljabar.
+Pendekatan dekomposisi linier seperti PCA sering menghasilkan komponen laten yang mengandung percampuran nilai positif dan negatif. Representasi padat semacam ini menyulitkan proses interpretasi. Secara alamiah, analis kesulitan menafsirkan *feature* gabungan yang dibangun melalui proses pengurangan matematis. Sebagai contoh, hampir tidak mungkin untuk membayangkan rekonstruksi citra wajah dengan cara merangkai komponen bentuk dasar lalu menghilangkan bagian mata menggunakan operasi aljabar murni.
 
 Jika interpretabilitas merupakan tuntutan utama dan observasi data orisinil memuat nilai tak-negatif, pendekatan *Non-negative Matrix Factorization* (NMF) menawarkan model ekstraksi yang jauh lebih natural. Algoritma ini memberlakukan batasan ketat: matriks input maupun kedua matriks luarannya sama sekali tidak diizinkan memiliki angka di bawah nol.
 
-Ketentuan aljabar tersebut memaksa algoritma merangkai ruang dimensi baru secara murni melalui operasi penambahan. Sifat seratus persen aditif ini melahirkan *parts-based representation* (representasi berbasis bagian). Setiap fitur laten bertindak layaknya kepingan blok independen yang saling melengkapi untuk membangun wujud data utuh.
+Ketentuan aljabar tersebut memaksa algoritma merangkai ruang dimensi baru secara murni melalui operasi penambahan. Sifat seratus persen aditif ini melahirkan *parts-based representation* (representasi berbasis bagian). Setiap *feature* laten bertindak layaknya kepingan blok independen yang saling melengkapi untuk membangun wujud data utuh.
 
 Proses dekomposisi NMF didefinisikan secara formal melalui hampiran perkalian matriks:
 
 $$X \approx W H$$
 
-Pada formulasi tersebut:
-
-- $X \in \mathbb{R}_{+}^{n \times d}$ adalah matriks observasi tak-negatif yang terdiri dari $n$ sampel dan $d$ fitur.
-
-- $W \in \mathbb{R}_{+}^{n \times k}$ mewakili matriks aktivasi, menampung bobot koefisien yang mengendalikan seberapa besar porsi setiap komponen digunakan untuk membangun ulang tiap sampel observasi.
-
-- $H \in \mathbb{R}_{+}^{k \times d}$ bertindak sebagai matriks komponen laten ($k$), menyimpan kamus pola dasar yang merepresentasikan elemen penyusun data.
+Pada formulasi tersebut, $X \in \mathbb{R}_{+}^{n \times d}$ melambangkan matriks observasi tak-negatif yang terdiri dari $n$ sampel dan $d$ *feature*. Variabel $W \in \mathbb{R}_{+}^{n \times k}$ mewakili matriks aktivasi yang menampung bobot koefisien untuk mengendalikan seberapa besar porsi setiap komponen digunakan dalam membangun ulang tiap sampel observasi. Sementara itu, $H \in \mathbb{R}_{+}^{k \times d}$ bertindak sebagai matriks komponen laten dengan dimensi $k$, yang berfungsi menyimpan kamus pola dasar sebagai representasi elemen penyusun data.
 ```{mermaid}
 %%| label: fig-ch08-8_3
 %%| fig-cap: "Dekomposisi Matriks NMF: X = W * H"
@@ -135,21 +121,21 @@ Sebagai representasi yang murni dioptimasi, penerapan NMF memerlukan perhatian p
 
 - **Sensitivitas inisialisasi:** Fungsi kerugian NMF tidak memiliki titik minimum global tunggal. Inisialisasi secara acak membuat performanya tidak stabil. Pendekatan inisialisasi matematis deterministik, seperti NNDSVD (*Nonnegative Double Singular Value Decomposition*), mempercepat konvergensi secara signifikan pada data berdimensi jarang (*sparse*).
 
-- **Efisiensi pemrosesan:** Algoritma NMF konvensional membutuhkan ketersediaan seluruh data di memori. Untuk himpunan data bervolume raksasa, metode seperti *MiniBatchNMF* mengadopsi partisi data kecil, mengizinkan pembaharuan model tanpa memuat keseluruhan matriks secara serentak.
+- **Efisiensi pemrosesan:** Algoritma NMF konvensional membutuhkan ketersediaan seluruh observasi di memori. Untuk himpunan matriks bervolume ekstrem, metode seperti *MiniBatchNMF* mengadopsi partisi data skala kecil, mengizinkan pembaharuan model algoritma tanpa harus memuat keseluruhan matriks komputasi secara bersamaan.
 
-- **Kontrol sparsitas:** Melalui injeksi nilai penalti (L1 maupun L2) terhadap matriks $W$ atau $H$, struktur representasi laten dapat dipaksa untuk lebih renggang (*sparse*), membatasi agar satu dokumen atau sinyal dibangun dari sesedikit mungkin fitur penyusun dasar.
+- **Kontrol sparsitas:** Melalui injeksi nilai penalti (L1 maupun L2) terhadap matriks $W$ atau $H$, struktur representasi laten dapat dipaksa untuk lebih renggang (*sparse*), membatasi agar satu dokumen atau sinyal dibangun dari sesedikit mungkin *feature* penyusun dasar.
 
 **Domain Aplikasi Spesifik.**
 
 Karakter aditif dari NMF menjadi sangat aplikatif pada domain data yang secara alamiah terbentuk lewat konsep superposisi fisis maupun logis:
 
-- **Pemodelan teks dan dokumen:** Sebuah tulisan logisnya merupakan gabungan proporsional dari beberapa topik, bukan "pengurangan" antar topik. Melalui perpaduan fungsi $\beta=1$, NMF memfasilitasi algoritma mengelompokkan kosakata yang sering muncul bersama menjadi klaster fitur topik yang langsung bisa dibaca dan ditafsirkan manusia.
+- **Pemodelan teks dan dokumen:** Sebuah tulisan logisnya merupakan gabungan proporsional dari beberapa topik, bukan "pengurangan" antar topik. Melalui perpaduan fungsi $\beta=1$, NMF memfasilitasi algoritma mengelompokkan kosakata yang sering muncul bersama menjadi klaster *feature* topik yang langsung bisa dibaca dan ditafsirkan manusia.
 
-- **Dekomposisi sinyal audio:** Perpaduan harmonis berbagai instrumen pada satu rekaman muncul melalui penjumlahan getaran frekuensi. Sebuah instrumen perkusi murni menyuntikkan energi getaran ke udara. Penggunaan NMF dengan divergensi $\beta=0$ meniru perilaku superposisi dunia nyata ini dengan akurasi tinggi, menjadikannya ekstraktor fitur standar sebagai pendamping representasi *spectrogram*.
+- **Dekomposisi sinyal audio:** Perpaduan harmonis berbagai instrumen pada satu rekaman muncul melalui penjumlahan getaran frekuensi. Sebuah instrumen perkusi murni menyuntikkan energi getaran ke udara. Penggunaan NMF dengan divergensi $\beta=0$ meniru perilaku superposisi dunia nyata ini dengan akurasi tinggi, menjadikannya ekstraktor *feature* standar sebagai pendamping representasi *spectrogram*.
 
 ## Manifold Learning: t-SNE dan UMAP
 
-Metode reduksi linier seperti PCA merangkum variansi dengan membuat proyeksi sumbu ortogonal. Pendekatan ini gagal memisahkan data yang memiliki geometri lipatan non-linier, seperti pada bentuk *Swiss roll*. Pada struktur tersebut, jarak lurus (Euclidean) antar-titik menembus ruang kosong antar-lipatan sehingga tidak merepresentasikan kedekatan spasial yang sebenarnya. Jarak relasional ini hanya dapat dihitung dengan mengikuti kelengkungan permukaan data yang disebut sebagai *manifold*.
+Metode reduksi linier seperti PCA merangkum variansi dengan membuat proyeksi sumbu ortogonal. Pendekatan ini gagal memisahkan data yang memiliki geometri lipatan non-linier, seperti pada bentuk *Swiss roll*. Pada struktur tersebut, jarak lurus (Euclidean) antar-titik melewati ruang kosong antar-lipatan sehingga tidak merepresentasikan kedekatan spasial yang sebenarnya. Jarak relasional ini hanya dapat dihitung dengan mengikuti kelengkungan permukaan data yang disebut sebagai *manifold*.
 
 Algoritma *manifold learning* memodelkan data dengan asumsi bahwa titik-titik tersebut terletak pada sebuah *manifold* berdimensi rendah yang terlipat di dalam ruang berdimensi tinggi. Untuk keperluan analisis dan reduksi visual, t-SNE dan UMAP menjadi dua metode yang mendominasi.
 
@@ -159,9 +145,9 @@ Algoritma t-SNE meminimalkan perbedaan probabilitas kedekatan antar-titik di dim
 
 $$KL(P || Q) = \sum_{i} \sum_{j \neq i} p_{ij} \log \frac{p_{ij}}{q_{ij}}$$
 
-Di mana $p_{ij}$ merupakan probabilitas ketetanggaan pasangan data di dimensi tinggi yang diukur menggunakan distribusi Gaussian, sedangkan $q_{ij}$ mewakili probabilitas pada dimensi sasaran menggunakan distribusi *Student-t* untuk mencegah penumpukan titik data (*crowding problem*).
+Dalam persamaan ini, $p_{ij}$ merupakan probabilitas ketetanggaan pasangan observasi di dimensi berukuran masif yang diukur menggunakan fungsi distribusi Gaussian, sedangkan komponen $q_{ij}$ mewakili persentase perhitungan probabilitas pada matriks sasaran berbekal distribusi fungsi *Student-t*. Komputasi fungsi ini didesain spesifik untuk mendispersi observasi guna mencegah anomali penumpukan data (*crowding problem*).
 
-Metode t-SNE secara ekstrem memaksa kelompok data yang bertetangga agar terus berdampingan di koordinat visual. Karakteristik ini menghasilkan separasi klaster lokal yang baik, namun membawa tiga kelemahan praktis:
+Metode t-SNE secara ketat memaksa kelompok data yang bertetangga agar terus berdampingan di koordinat visual. Karakteristik ini menghasilkan separasi klaster lokal yang baik, namun membawa tiga kelemahan praktis:
 
 - Waktu komputasi sangat lambat akibat pencarian ketetanggaan pada dataset berskala besar.
 
@@ -194,7 +180,7 @@ Penelitian algoritma *manifold* terus mengejar keseimbangan antara pelestarian l
 
 - **DREAMS dan PCC:** Pendekatan modern tahun 2025--2026 yang secara paralel memfasilitasi optimalisasi jarak korelasi metrik dengan pemisahan margin layaknya t-SNE.
 
-Meskipun tangguh untuk membuat segmentasi, fungsionalitas murni metode ini berpusat pada penelusuran gambaran visual kelompok klaster, bukan teknik *preprocessing* data yang ideal bagi *machine learning*. Algoritma *manifold* awal ini sepenuhnya transduktif; mereka memerlukan populasi matriks penuh guna membentangkan topologi, sehingga sulit diintegrasikan pada lingkungan arsitektur *inference* otomatis untuk mentransformasikan fitur pada baris data tunggal.
+Meskipun tangguh untuk membuat segmentasi, fungsionalitas murni metode ini berpusat pada penelusuran gambaran visual kelompok klaster, bukan teknik *preprocessing* data yang ideal bagi *machine learning*. Algoritma *manifold* awal ini sepenuhnya transduktif; mereka memerlukan populasi matriks penuh guna membentangkan topologi, sehingga sulit diintegrasikan pada lingkungan arsitektur *inference* otomatis untuk mentransformasikan *feature* pada baris data tunggal.
 
 ## Autoencoder sebagai Kompresi yang Dipelajari
 
@@ -219,7 +205,7 @@ graph LR
 
 *Autoencoder* standar terdiri dari dua komponen jaringan saraf yang dioptimalkan secara bersamaan:
 
-- **Encoder:** Fungsi parametrik $f_{\theta}$ yang memadatkan matriks fitur masukan $X$ menjadi representasi laten $Z$ berdimensi lebih rendah.
+- **Encoder:** Fungsi parametrik $f_{\theta}$ yang memadatkan matriks *feature* masukan $X$ menjadi representasi laten $Z$ berdimensi lebih rendah.
 
 - **Decoder:** Fungsi parametrik $g_{\phi}$ yang memetakan ruang laten $Z$ menjadi tebakan matriks asli, dilambangkan dengan $\hat{X}$.
 
@@ -229,23 +215,15 @@ Pembaruan bobot jaringan dilakukan dengan meminimalkan *reconstruction loss*, ya
 
 $$\mathcal{L}(X, \hat{X}) = \|X - g_{\phi}(f_{\theta}(X))\|^2$$
 
-Di mana:
+Dalam perhitungan kerugian ini, $X$ melambangkan vektor *feature* masukan, sedangkan $\hat{X}$ mewakili vektor hasil rekonstruksi oleh *decoder*. Fungsi $f_{\theta}$ dan $g_{\phi}$ masing-masing merupakan fungsi *neural network* dengan bobot $\theta$ dan $\phi$. Adapun $\| \cdot \|^2$ mengindikasikan perhitungan *Mean Squared Error* (MSE) yang digunakan sebagai metrik jarak kesalahan.
 
-- $X$ adalah vektor fitur masukan.
+**Varian Autoencoder untuk *Feature* Laten.**
 
-- $\hat{X}$ adalah vektor hasil rekonstruksi oleh *decoder*.
+Jaringan *autoencoder* murni berisiko hanya menghafal posisi data pelatihan tanpa memahami strukturnya jika kapasitasnya berlebih. Agar ruang laten menghasilkan representasi *feature* yang kokoh untuk pemodelan tahap selanjutnya, arsitektur ini memiliki beberapa modifikasi:
 
-- $f_{\theta}$ dan $g_{\phi}$ adalah fungsi *neural network* dengan bobot $\theta$ dan $\phi$.
+- **Denoising Autoencoder:** Masukan diberi gangguan (misalnya dengan injeksi *noise* atau nilai dikosongkan sebagian), sementara target rekonstruksinya tetap matriks data yang bersih. Model dituntut mencari *feature* tersembunyi yang kebal terhadap variasi acak.
 
-- $\| \cdot \|^2$ melambangkan *Mean Squared Error* (MSE) sebagai jarak kesalahan.
-
-**Varian Autoencoder untuk Fitur Laten.**
-
-Jaringan *autoencoder* murni berisiko hanya menghafal posisi data pelatihan tanpa memahami strukturnya jika kapasitasnya berlebih. Agar ruang laten menghasilkan representasi fitur yang kokoh untuk pemodelan tahap selanjutnya, arsitektur ini memiliki beberapa modifikasi:
-
-- **Denoising Autoencoder:** Masukan diberi gangguan (misalnya dengan injeksi *noise* atau nilai dikosongkan sebagian), sementara target rekonstruksinya tetap matriks data yang bersih. Model dituntut mencari fitur tersembunyi yang kebal terhadap variasi acak.
-
-- **Sparse Autoencoder:** Fungsi objektif jaringan ditambah dengan penalti agar hanya sebagian kecil neuron laten yang aktif untuk setiap sampel. Mekanisme ini menajamkan ekstraksi fitur sehingga representasi yang terbentuk menjadi lebih terpilah.
+- **Sparse Autoencoder:** Fungsi objektif jaringan ditambah dengan penalti agar hanya sebagian kecil neuron laten yang aktif untuk setiap sampel. Mekanisme ini menajamkan ekstraksi *feature* sehingga representasi yang terbentuk menjadi lebih terpilah.
 
 - **Variational Autoencoder (VAE):** *Encoder* memetakan masukan menjadi parameter distribusi probabilitas (rata-rata dan varians), bukan titik koordinat deterministik. VAE menghasilkan ruang laten yang kontinu dan lazim dipakai untuk mengurai variabel-variabel pengubah data (*disentangled representation*).
 
@@ -253,17 +231,17 @@ Jaringan *autoencoder* murni berisiko hanya menghafal posisi data pelatihan tanp
 
 **Batasan Kompresi: Hanya Data Lokal.**
 
-Di ranah rekayasa fitur, *autoencoder* merupakan pemampat tanpa supervisi atas matriks yang ada di hadapannya. Vektor laten di lapisan *bottleneck* sepenuhnya mendeskripsikan distribusi statistik dari dataset pelatihan itu sendiri. Ketika model dilatih mengompresi sekumpulan citra kendaraan, ia menyusutkan struktur pola piksel seefisien mungkin. Model ini tidak lantas memahami konsep bahasa atau ranah visual umum tentang "kendaraan bermotor". Kapasitas pemahaman semantik yang mampu dipindahkan ke tugas berbeda hanya muncul pada arsitektur *pretrained embedding* bervolume besar (yang akan didiskusikan secara khusus di Bab 15).
+Di ranah rekayasa *feature*, *autoencoder* merupakan pemampat tanpa supervisi atas matriks yang ada di hadapannya. Vektor laten di lapisan *bottleneck* sepenuhnya mendeskripsikan distribusi statistik dari dataset pelatihan itu sendiri. Ketika model dilatih mengompresi sekumpulan citra kendaraan, ia menyusutkan struktur pola piksel seefisien mungkin. Model ini tidak lantas memahami konsep bahasa atau ranah visual umum tentang "kendaraan bermotor". Kapasitas pemahaman semantik yang mampu dipindahkan ke tugas berbeda hanya muncul pada arsitektur *pretrained embedding* bervolume besar (yang akan didiskusikan secara khusus di Bab 15).
 
 ## Penggunaan Representasi Laten: Visualisasi, Prapemrosesan, Kesalahan Umum, dan Batasan dengan Bab 15
 
-Keberadaan algoritma pereduksi dimensi sering memicu kebingungan dalam merancang arsitektur data. Kesalahan paling umum bermula dari ketidakmampuan membedakan algoritma untuk proyeksi visual dengan algoritma untuk prapemrosesan fitur prediktif.
+Keberadaan algoritma pereduksi dimensi sering memicu kebingungan dalam merancang arsitektur data. Kesalahan paling umum bermula dari ketidakmampuan membedakan algoritma untuk proyeksi visual dengan algoritma untuk prapemrosesan *feature* prediktif.
 
-**Kesalahan Umum 1: Menggunakan Koordinat Visualisasi sebagai Fitur.**
+**Kesalahan Umum 1: Menggunakan Koordinat Visualisasi sebagai *Feature*.**
 
-Metode pemetaan non-linier seperti *t-SNE* dan *UMAP* sangat populer untuk memisahkan klaster observasi pada bidang dua dimensi. Namun, analis sering kali mengambil koordinat hasil reduksi tersebut dan memasukkannya secara langsung sebagai fitur *downstream*. Praktik ini keliru dengan alasan berikut:
+Metode pemetaan non-linier seperti *t-SNE* dan *UMAP* sangat populer untuk memisahkan klaster observasi pada bidang dua dimensi. Namun, analis sering kali mengambil koordinat hasil reduksi tersebut dan memasukkannya secara langsung sebagai *feature* *downstream*. Praktik ini keliru dengan alasan berikut:
 
-- **Distorsi Jarak Global:** Algoritma visualisasi sengaja merusak struktur jarak asli untuk memuat titik-titik data pada bidang datar. Jarak visual antar klaster di atas layar tidak mewakili jarak matematis sesungguhnya.
+- **Distorsi Jarak Global:** Algoritma visualisasi sengaja mendistorsi struktur jarak asli untuk memuat titik-titik data pada bidang datar. Jarak visual antar klaster di atas layar tidak mewakili jarak matematis sesungguhnya.
 
 - **Ukuran Klaster Semu:** Algoritma menyamakan kerapatan (*equalize density*) untuk kemudahan observasi visual. Klaster padat direnggangkan dan ruang kosong dimampatkan, sehingga ukuran klaster pada plot menjadi tidak bermakna secara prediktif.
 
@@ -273,19 +251,19 @@ Untuk memahami distorsi jarak ini, kita dapat memeriksa fungsi objektif *t-SNE* 
 
 $$KL(P || Q) = \sum_{i} \sum_{j} p_{ij} \log \frac{p_{ij}}{q_{ij}}$$
 
-Di mana $p_{ij}$ adalah probabilitas kedekatan berpasangan (*pairwise affinity*) antara titik $i$ dan $j$ pada ruang dimensi tinggi asli, sementara $q_{ij}$ adalah probabilitas padanannya di ruang dimensi rendah. Sifat asimetris persamaan ini memberikan penalti tinggi hanya jika titik yang berdekatan di ruang asli ($p_{ij}$ besar) dipetakan saling berjauhan di ruang visual ($q_{ij}$ kecil). Sebaliknya, penalti relatif kecil jika titik yang berjarak jauh di ruang asli terpetakan berdekatan. Secara matematis, karakteristik ini membuat algoritma sangat kuat dalam mempertahankan kerumunan lokal, namun terpaksa mengorbankan metrik jarak global antar klaster.
+Berdasarkan rumusan fungsi tersebut, nilai penalti asimetris yang dihasilkan berpersentase dominan hanya manakala posisi titik perhitungan awal bersampingan di matriks asli ($p_{ij}$ rasio atas) diproyeksikan dengan margin batas berjauhan di komputasi visual ($q_{ij}$ rasio bawah). Arah kebalikan matriks ini meredam parameter kerugian menjadi marginal jika titik berdimensi lebar di fungsi matriks orisinil direpresentasikan saling bersebelahan. Secara logis hitungan matematis, prosedur ini membuat kalkulasi *t-SNE* tangguh menjaga keterikatan topologi wilayah sampel proksimal, namun merelakan perhitungan matriks spasial yang menghubungkan antar batasan entitas secara makro.
 
-Untuk kompresi fitur *downstream*, metode proyeksi turunan linier seperti *PCA* jauh lebih disarankan karena menjaga integritas jarak aslinya. Kompresi melalui *PCA* atau variasinya lebih terprediksi dan efisien untuk diintegrasikan jika model Anda memerlukan jumlah fitur masukan yang lebih kecil.
+Untuk kompresi *feature* *downstream*, metode proyeksi turunan linier seperti *PCA* jauh lebih disarankan karena menjaga integritas jarak aslinya. Kompresi melalui *PCA* atau variasinya lebih terprediksi dan efisien untuk diintegrasikan jika model Anda memerlukan jumlah *feature* masukan yang lebih kecil.
 
-**Kesalahan Umum 2: Kebocoran Data (Data Leakage).**
+**Kesalahan Umum 2: *Data Leakage*.**
 
-Kesalahan operasional berikutnya berkaitan langsung dengan pelanggaran praktik *pipeline* yang benar. Beberapa analis mengaplikasikan rotasi *PCA* pada keseluruhan kumpulan observasi, lalu kemudian melakukan pemisahan menjadi *training split* dan *inference split*. Pemrosesan prematur ini menciptakan kebocoran data tersembunyi:
+Kesalahan operasional berikutnya berkaitan langsung dengan pelanggaran praktik *pipeline* yang benar. Beberapa analis mengaplikasikan rotasi *PCA* pada keseluruhan kumpulan observasi, lalu kemudian melakukan pemisahan menjadi *training split* dan *inference split*. Pemrosesan prematur ini menyebabkan *data leakage* tersembunyi:
 
 - Algoritma *PCA* menghitung arah penyebaran komponen utama berdasarkan variansi matriks masukan secara keseluruhan.
 
 - Jika observasi dari set pengujian diikutsertakan, distribusi statistik dari kelompok tersebut diam-diam ikut memengaruhi penyelarasan komponen utama.
 
-- Akibatnya, fitur turunan latih (*training features*) secara implisit memuat informasi distribusi struktur masa depan.
+- Akibatnya, *feature* turunan latih (*training features*) secara implisit memuat informasi distribusi struktur masa depan.
 
 Sama halnya dengan penyesuaian skala, transformer kompresi dimensi harus dipaskan (*fit*) secara terisolasi pada subset *training*. Objek transformasi tersebut kemudian digunakan terpisah untuk memproyeksikan data uji.
 
@@ -293,7 +271,7 @@ Sama halnya dengan penyesuaian skala, transformer kompresi dimensi harus dipaska
 
 Ruang lingkup reduksi laten pada bab ini perlu dipisahkan secara tegas dari representasi semantik yang akan dibahas pada Bab 15.
 
-- **Reduksi Dimensi Internal (Bab 8):** Berfokus eksklusif pada metode peringkasan tanpa supervisi terhadap matriks internal. Model pereduksi dimensi memetakan variansi lokal hingga *autoencoder* yang sepenuhnya mengekstraksi informasi berbekal kumpulan *dataset* proyek. Fitur yang dirangkum murni bersifat matematis lokal tanpa ada rujukan konteks luar.
+- **Reduksi Dimensi Internal (Bab 8):** Berfokus eksklusif pada metode peringkasan tanpa supervisi terhadap matriks internal. Model pereduksi dimensi memetakan variansi lokal hingga *autoencoder* yang sepenuhnya mengekstraksi informasi berbekal kumpulan *dataset* proyek. *Feature* yang dirangkum murni bersifat matematis lokal tanpa ada rujukan konteks luar.
 
 - **Transfer Representasi Eksternal (Bab 15):** Menghubungkan *dataset* analitik dengan korpus dunia nyata menggunakan metode *pretrained embedding*. Mekanisme transfer tersebut membantu sistem mengimpor pemahaman bahasa, konteks spasial, dan susunan citra global ke dalam matriks *pipeline* Anda.
 
@@ -303,7 +281,7 @@ Pemisahan secara lugas ini memosisikan algoritma yang digunakan dalam Bab 8 murn
 
 Bagian ini membandingkan reduksi linier (PCA) dan kompresi non-linier (*autoencoder*) pada data berdimensi tinggi seperti piksel citra. Karakteristik reduksi dari kedua metode ini berdampak langsung pada performa klasifikasi lanjutan.
 
-Pendekatan pertama menggunakan PCA, metode linier yang memproyeksikan data ke sumbu ortogonal baru. Kita mengatur PCA untuk mempertahankan 95% *variance* dari data awal, lalu meneruskan representasi baru tersebut ke algoritma klasifikasi. Guna menegakkan praktik pipeline yang benar, `StandardScaler`, modul PCA, dan *classifier* disatukan dalam sebuah *pipeline*. Langkah ini memastikan standardisasi dan proyeksi dihitung murni dari set pelatihan, sehingga mencegah kebocoran informasi (*data leakage*) ke set pengujian.
+Pendekatan pertama menggunakan PCA, metode linier yang memproyeksikan data ke sumbu ortogonal baru. Kita mengatur PCA untuk mempertahankan 95% *variance* dari data awal, lalu meneruskan representasi baru tersebut ke algoritma klasifikasi. Guna menegakkan praktik pipeline yang benar, `StandardScaler`, modul PCA, dan *classifier* disatukan dalam sebuah *pipeline*. Langkah ini memastikan standardisasi dan proyeksi dihitung murni dari set pelatihan, sehingga mencegah *data leakage* ke set pengujian.
 
 ``` {.python language="Python"}
 from sklearn.datasets import make_classification
@@ -314,7 +292,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report
 
-# 1. Membuat dataset berdimensi tinggi (1000 sampel, 50 fitur)
+# 1. Membuat dataset berdimensi tinggi (1000 sampel, 50 feature)
 X, y = make_classification(n_samples=1000, n_features=50, n_informative=15, random_state=42)
 
 # 2. Pembagian data menjadi data latih dan uji secara ketat
@@ -338,7 +316,7 @@ n_features_original = X_train.shape[1]
 n_features_reduced = pca_pipeline.named_steps['pca'].n_components_
 explained_variance = sum(pca_pipeline.named_steps['pca'].explained_variance_ratio_)
 
-print(f"Jumlah fitur asli sebelum kompresi: {n_features_original}")
+print(f"Jumlah \emph{feature} asli sebelum kompresi: {n_features_original}")
 print(f"Jumlah komponen PCA terpilih (meretensi 95% variansi): {n_features_reduced}")
 print(f"Total persentase akumulasi variansi yang dipertahankan: {explained_variance * 100:.2f}%\n")
 print("--- Laporan Klasifikasi Model ---")
@@ -351,13 +329,13 @@ Fungsi objektif *autoencoder* meminimalkan jarak antara data awal dan hasil reko
 
 $$L = \frac{1}{n} \sum_{i=1}^{n} \| \mathbf{x}_i - D(E(\mathbf{x}_i)) \|^2$$
 
-Di mana $\mathbf{x}_i$ adalah vektor fitur asli, $E(\cdot)$ merupakan fungsi *encoder* yang memetakan data ke ruang laten, dan $D(\cdot)$ adalah fungsi *decoder* yang merekonstruksi vektor kembali ke dimensi asalnya.
+Dalam persamaan ini, $\mathbf{x}_i$ adalah vektor *feature* asli, $E(\cdot)$ merupakan fungsi *encoder* yang memetakan data ke ruang laten, dan $D(\cdot)$ adalah fungsi *decoder* yang merekonstruksi vektor kembali ke dimensi asalnya.
 
-Draf awal studi kasus sering berasumsi *autoencoder* selalu mengalahkan PCA. Namun, performa keduanya bergantung pada karakteristik set data. Berikut perbandingan dan kondisi optimal bagi masing-masing pendekatan:
+Draf awal studi kasus sering berasumsi *autoencoder* selalu mengalahkan PCA. Namun, performa keduanya bergantung pada karakteristik *dataset*. Berikut perbandingan dan kondisi optimal bagi masing-masing pendekatan:
 
-- **Ukuran data:** PCA unggul atau setara pada set data yang kecil. Karena *autoencoder* mensyaratkan pelatihan jaringan saraf berparameter besar, metode ini mudah mengalami *overfitting* jika volume data terbatas.
+- **Ukuran data:** PCA unggul atau setara pada *dataset* yang kecil. Karena *autoencoder* mensyaratkan pelatihan jaringan saraf berparameter besar, metode ini mudah mengalami *overfitting* jika volume data terbatas.
 
-- **Struktur geometris:** PCA bekerja efisien untuk menangkap pola yang mendekati linier. *Autoencoder* baru mendominasi saat sebaran data membentuk struktur *manifold* melengkung atau memuat interaksi fitur non-linier yang rumit.
+- **Struktur geometris:** PCA bekerja efisien untuk menangkap pola yang mendekati linier. *Autoencoder* baru mendominasi saat sebaran data membentuk struktur *manifold* melengkung atau memuat interaksi *feature* non-linier yang rumit.
 
 - **Komputasi dan interpretabilitas:** Proses proyeksi PCA berjalan sangat cepat dan matematis transparan. Pelatihan *autoencoder* memakan siklus komputasi yang jauh lebih besar dan sulit diinterpretasikan.
 

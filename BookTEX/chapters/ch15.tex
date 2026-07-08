@@ -22,7 +22,7 @@ Secara matematis, prediksi model pada tugas baru diformulasikan sebagai fungsi k
 
 \[ \min_{\theta, \phi} \sum_{i=1}^{N} \mathcal{L}(y_i, f_\theta(g_\phi(x_i))) \]
 
-Di mana \(x_i\) adalah input, \(y_i\) adalah label, \(\phi\) mewakili bobot model \emph{pretrained}, dan \(\theta\) merupakan bobot lapisan klasifikasi. Pendekatan adaptasi ditentukan oleh perlakuan terhadap parameter \(\phi\) selama proses optimasi. Terdapat empat titik utama pada spektrum adaptasi ini:
+Di mana \(x_i\) adalah input, \(y_i\) adalah label, \(\phi\) mewakili bobot model \emph{pretrained}, dan \(\theta\) merupakan bobot lapisan klasifikasi. Pendekatan adaptasi ditentukan oleh perlakuan terhadap parameter \(\phi\) selama proses optimasi. Spektrum ini memiliki empat titik utama:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -113,19 +113,9 @@ Metrik ini mengukur kosinus sudut antara dua vektor tanpa memedulikan panjang (m
 \text{Cosine Similarity}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\| \|\mathbf{v}\|}
 \]
 
-Notasi pada persamaan tersebut memiliki definisi:
+Pada persamaan tersebut, \(\mathbf{u}\) dan \(\mathbf{v}\) adalah dua vektor \emph{embedding} berdimensi \(d\) yang diukur kemiripannya, \(\mathbf{u} \cdot \mathbf{v}\) adalah \emph{dot product} (perkalian titik) keduanya, sedangkan \(\|\mathbf{u}\|\) dan \(\|\mathbf{v}\|\) adalah norma L2 (panjang atau magnitudo) masing-masing vektor.
 
-\begin{itemize}
-\tightlist
-\item
-  \(\mathbf{u}\) dan \(\mathbf{v}\) merepresentasikan dua vektor \emph{embedding} berdimensi \(d\) yang diukur tingkat kemiripannya.
-\item
-  \(\mathbf{u} \cdot \mathbf{v}\) melambangkan \emph{dot product} (perkalian titik) antara kedua vektor.
-\item
-  \(\|\mathbf{u}\|\) dan \(\|\mathbf{v}\|\) merupakan norma L2 (panjang atau magnitudo) dari masing-masing vektor.
-\end{itemize}
-
-Terdapat tiga pendekatan evaluasi jarak yang biasanya dipilih sesuai tuntutan arsitektur dan jenis data:
+Pemilihan metrik jarak biasanya menimbang tiga pendekatan berikut, sesuai arsitektur dan jenis data:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -162,17 +152,7 @@ Secara matematis, \emph{linear probing} mencari nilai matriks bobot linier \(W\)
 
 \[ L(W) = -\frac{1}{N} \sum_{i=1}^{N} \sum_{c=1}^{C} y_{i,c} \log \left( \frac{\exp(W_c^T f(x_i))}{\sum_{k=1}^{C} \exp(W_k^T f(x_i))} \right) \]
 
-Di mana:
-
-\begin{itemize}
-\tightlist
-\item
-  \(f(x_i)\) adalah representasi yang dipelajari mesin dan parameter asalnya dibiarkan tetap (\emph{frozen}).
-\item
-  \(W_c\) adalah vektor bobot lapisan klasifikasi untuk kelas \(c\).
-\item
-  \(y_{i,c}\) adalah label bernilai 1 jika sampel \(i\) berada di kelas \(c\), dan 0 jika tidak.
-\end{itemize}
+Dalam persamaan tersebut, \(f(x_i)\) adalah representasi yang dipelajari mesin dengan parameter asal yang dibiarkan tetap (\emph{frozen}), \(W_c\) adalah vektor bobot lapisan klasifikasi untuk kelas \(c\), dan \(y_{i,c}\) bernilai 1 jika sampel \(i\) berada di kelas \(c\) serta 0 jika tidak.
 
 Jika model linier sederhana mampu meminimalkan fungsi kerugian ini dan meraih akurasi tinggi, model \emph{pretrained} terbukti sukses menyusun data dan memisahkan kelas target di ruang vektor. Sebaliknya, jika akurasi tinggi baru didapat setelah kita mengganti model linier dengan algoritma non-linier yang lebih rumit, berarti representasi dasar tersebut gagal menstrukturkan data dengan baik.
 
@@ -181,10 +161,6 @@ Jika model linier sederhana mampu meminimalkan fungsi kerugian ini dan meraih ak
 \caption{Arsitektur Linear Probing}
 \label{fig:ch15-fig-3}
 \end{figure}
-
-Judul: Evaluasi Linear Probing
-Tipe: skema
-Tampilkan: Model pre-trained dalam keadaan beku (frozen) yang mengeluarkan vektor fitur (embedding) ke layer klasifikasi linier sederhana.
 
 \textbf{Mengidentifikasi Domain Shift.}\label{mengidentifikasi-domain-shift}
 
@@ -230,17 +206,7 @@ Secara matematis, perbedaan tersebut terlihat dari fungsi objektif yang digunaka
 
 \[ \mathcal{L}_{CE} = - \sum_{i=1}^{C} y_i \log(\hat{y}_i) \]
 
-Di mana:
-
-\begin{itemize}
-\tightlist
-\item
-  \(C\) adalah jumlah total kelas target pada dataset eksternal.
-\item
-  \(y_i\) merupakan label kelas aktual dari sebuah observasi.
-\item
-  \(\hat{y}_i\) mewakili probabilitas prediksi yang dihasilkan oleh model.
-\end{itemize}
+Dalam persamaan tersebut, \(C\) adalah jumlah total kelas target pada dataset eksternal, \(y_i\) adalah label kelas aktual sebuah observasi, dan \(\hat{y}_i\) adalah probabilitas prediksi yang dihasilkan model.
 
 Bobot jaringan yang telah mengoptimalkan \(\mathcal{L}_{CE}\) pada distribusi eksternal tersebut kemudian dibekukan (\emph{frozen}) dan digunakan sebagai ekstraktor fitur tetap untuk masalah lokal. Konsep ini berbeda dengan kompresi internal yang meminimalkan fungsi kerugian rekonstruksi (seperti \emph{mean squared error} pada \emph{autoencoder}) tanpa mengandalkan label klasifikasi dari luar \emph{pipeline}.
 
@@ -342,19 +308,7 @@ Agar dapat diproses bersama, setiap nilai numerik dan kategorikal harus diubah m
 
 \[ T_{num}^{(j)} = \mathbf{w}_j x_j + \mathbf{b}_j \]
 
-Keterangan:
-
-\begin{itemize}
-\tightlist
-\item
-  \(T_{num}^{(j)}\) adalah \emph{embedding} berwujud vektor padat untuk fitur numerik tersebut.
-\item
-  \(\mathbf{w}_j\) adalah vektor bobot yang dipelajari mesin.
-\item
-  \(\mathbf{b}_j\) adalah vektor bias.
-\item
-  \(x_j\) adalah nilai skalar numerik asli.
-\end{itemize}
+Dalam persamaan tersebut, \(T_{num}^{(j)}\) adalah \emph{embedding} vektor padat untuk fitur numerik itu, \(\mathbf{w}_j\) adalah vektor bobot yang dipelajari mesin, \(\mathbf{b}_j\) adalah vektor bias, dan \(x_j\) adalah nilai skalar numerik aslinya.
 
 Setelah tokenisasi, arsitektur \emph{transformer} menyisipkan token khusus (biasa disebut token \passthrough{\lstinline![CLS]!}) di awal barisan fitur. Lapisan \emph{attention} kemudian mempelajari interaksi antar-fitur. Token \passthrough{\lstinline![CLS]!} ini bertugas menghimpun informasi dari seluruh fitur lain untuk menjadi \emph{embedding} final dari baris data tersebut.
 
@@ -417,19 +371,7 @@ Secara matematis, operasi fusi ini diformulasikan sebagai:
 
 \[ \mathbf{x}_{hybrid} = [\mathbf{x}_{engineered} \parallel \mathbf{e}_{learned}] \]
 
-Di mana:
-
-\begin{itemize}
-\tightlist
-\item
-  \(\mathbf{x}_{hybrid}\) adalah vektor gabungan akhir yang diteruskan ke algoritma penyelesaian klasifikasi atau regresi.
-\item
-  \(\mathbf{x}_{engineered} \in \mathbb{R}^d\) adalah vektor fitur tabular rancangan manusia yang telah diskalakan.
-\item
-  \(\mathbf{e}_{learned} \in \mathbb{R}^k\) adalah representasi padat yang diekstraksi dari model \emph{pretrained} (misalnya dari representasi \emph{bottleneck} pada ResNet atau ekstrasi token CLS pada arsitektur Transformer).
-\item
-  \(\parallel\) melambangkan operasi konkatenasi vektor.
-\end{itemize}
+Dalam persamaan tersebut, \(\mathbf{x}_{hybrid}\) adalah vektor gabungan akhir yang diteruskan ke algoritma klasifikasi atau regresi, \(\mathbf{x}_{engineered} \in \mathbb{R}^d\) adalah vektor fitur tabular rancangan manusia yang telah diskalakan, dan \(\mathbf{e}_{learned} \in \mathbb{R}^k\) adalah representasi padat dari model \emph{pretrained} (misalnya representasi \emph{bottleneck} pada ResNet atau token CLS pada Transformer). Notasi \(\parallel\) melambangkan operasi konkatenasi vektor.
 
 Kasus pemodelan harga perumahan menggambarkan interaksi ini secara konkret. Model \emph{hybrid} memproses data melalui dua jalur paralel:
 
@@ -460,6 +402,6 @@ Konstruksi arsitektur ini membelah aliran pemrosesan matriks ke dalam dua jalur 
 
 Kedua arus fitur ini berujung pada tahap penggabungan matriks (\emph{concatenation}). Di dalam ekosistem pengembangan \emph{machine learning}, fusi ini diorkestrasi secara elegan menggunakan kelas fungsional \passthrough{\lstinline!FeatureUnion!} dari pustaka \emph{Scikit-Learn}. Metode ini menumpuk vektor \emph{embedding} teks dan fitur rekayasa tabular menjadi satu kesatuan vektor gabungan berdimensi 778 untuk setiap baris observasi.
 
-Matriks raksasa hasil perpaduan tersebut kemudian diserahkan kepada algoritma pengklasifikasi akhir seperti \emph{XGBoost}. Validitas arsitektur ini sangat bergantung pada kepatuhan terhadap aturan pencegahan kebocoran data (\emph{data leakage}): seluruh operasi kalkulasi rata-rata tabular dan pemetaan vektorisasi teks harus murni dipelajari pasca-partisi data (\emph{data split}).
+Vektor gabungan berdimensi 778 tersebut kemudian diserahkan kepada algoritma pengklasifikasi akhir seperti \emph{XGBoost}. Validitas arsitektur ini sangat bergantung pada kepatuhan terhadap aturan pencegahan kebocoran data (\emph{data leakage}): seluruh operasi kalkulasi rata-rata tabular dan pemetaan vektorisasi teks harus murni dipelajari pasca-partisi data (\emph{data split}).
 
-Model \emph{hybrid} secara konsisten mengalahkan pendekatan yang memaksakan seluruh data masuk secara buta ke dalam kerangka \emph{deep learning}. Pendekatan ini berhasil mengawinkan intuisi mesin dalam mencerna abstraksi linguistik tak terstruktur dengan perhitungan logika numerik transparan yang dirancang khusus oleh pakar industri. Rekayasa parameter tabular di sini masih dipandu oleh perhitungan manual, sebuah rintangan efisiensi iterasi yang akan dipecahkan lewat mekanisme eksplorasi fitur secara otomatis pada pembahasan bab berikutnya.
+Model \emph{hybrid} secara konsisten mengalahkan pendekatan yang memaksakan seluruh data masuk secara buta ke dalam kerangka \emph{deep learning}. Pendekatan ini memadukan kemampuan mesin mencerna teks tak terstruktur dengan logika numerik transparan yang dirancang pakar industri. Rekayasa parameter tabular di sini masih dipandu oleh perhitungan manual, sebuah rintangan efisiensi iterasi yang akan dipecahkan lewat mekanisme eksplorasi fitur secara otomatis pada pembahasan bab berikutnya.

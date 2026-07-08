@@ -10,6 +10,10 @@
 website/.quarto/
 website/_book/
 website/index.tex
+# Artefak render lama di root website/ (output kini pindah ke _book/)
+website/index.html
+website/chapters/*.html
+website/site_libs/
 **/*_files/
 /.quarto/
 _build/

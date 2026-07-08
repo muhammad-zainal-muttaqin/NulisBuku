@@ -39,13 +39,7 @@ Satu elemen utama dalam perancangan ini adalah memastikan fitur yang dihasilkan 
 
 $$PSI = \sum_{i=1}^{k} \left( P_{aktual, i} - P_{ekspektasi, i} \right) \times \ln \left( \frac{P_{aktual, i}}{P_{ekspektasi, i}} \right)$$
 
-Di mana:
-
-- $k$ mewakili jumlah kelompok (atau *bin*) dari variabel yang dievaluasi.
-
-- $P_{aktual, i}$ menunjukkan proporsi sampel pada *bin* ke-$i$ di dalam data aktual (*inference*).
-
-- $P_{ekspektasi, i}$ menunjukkan proporsi sampel pada *bin* ke-$i$ di dalam data yang diharapkan (pelatihan).
+Dalam persamaan tersebut, $k$ adalah jumlah kelompok (*bin*) dari variabel yang dievaluasi, $P_{aktual, i}$ adalah proporsi sampel pada *bin* ke-$i$ di data aktual (*inference*), dan $P_{ekspektasi, i}$ adalah proporsi sampel pada *bin* yang sama di data yang diharapkan (pelatihan).
 
 Sebagai contoh penerapan kerangka ini, mari kita tinjau sistem persetujuan kredit. Tujuannya adalah memprediksi risiko gagal bayar. Unit observasinya berupa aplikasi pinjaman individu, dan targetnya adalah kegagalan bayar dalam horizon dua belas bulan ke depan. Untuk menjaga praktik *pipeline* yang benar, strategi *split* yang paling valid adalah pemisahan temporal berdasarkan tanggal pengajuan aplikasi. Ketika struktur awal ini sudah solid, barulah fitur turunan direkayasa dari riwayat transaksi dan diuji terhadap *baseline* regresi logistik. Jika tahap desain awal keliru, tingkat PSI akan bergeser drastis saat produksi, dan rekayasa fitur sekompleks apa pun tidak akan mampu menyelamatkan performa model.
 
@@ -53,7 +47,7 @@ Sebagai contoh penerapan kerangka ini, mari kita tinjau sistem persetujuan kredi
 
 Sebuah *pipeline machine learning* pada dasarnya adalah kontrak komputasional. Kontrak ini menjamin bahwa distribusi dan logika kalkulasi fitur yang dilihat oleh model saat pelatihan (*training*) harus identik secara struktural dengan fitur yang masuk saat *inference*. Apabila kontrak ini tercederai, sistem akan menderita *training-serving skew*, yaitu degradasi performa model di lingkungan produksi akibat ketidakselarasan transformasi data.
 
-*Training-serving skew* merupakan ancaman paling mematikan karena ia bersifat *silent failure* (gagal tanpa suara). Kode tidak akan meledak atau mengeluarkan pesan *error*, namun kualitas akurasi probabilitas merosot drastis. Fenomena ini sering dipicu oleh hal-hal operasional:
+*Training-serving skew* merupakan ancaman yang paling sulit terdeteksi karena bersifat *silent failure* (gagal tanpa suara). Kode tidak menghasilkan galat atau pesan *error*, namun akurasi probabilitasnya merosot drastis. Fenomena ini sering dipicu oleh hal-hal operasional:
 
 - Insinyur perangkat lunak menulis ulang kueri Python eksperimen ke dalam bahasa Java/Go di *backend* dengan pembulatan yang berbeda.
 
@@ -83,7 +77,7 @@ graph TD
         Online -->|Latensi Rendah Real-time Retrieve| Serving[Aplikasi Inference]
     end
 ```
-Fungsi penting dari *Feature Store* adalah jaminan *Point-in-Time Correctness* (*Time Travel*). Ketika analis menarik miliaran baris data latih historis, sistem secara otomatis memastikan bahwa nilai fitur yang digabungkan (*join*) ke sebuah observasi adalah nilai yang eksis secara kronologis sesaat *sebelum* waktu kejadian. Hal ini melindungi *pipeline* dari kebocoran waktu (*temporal leakage*). Pada tahap inferensi, aplikasi *backend* cukup memanggil antarmuka seragam `get_online_features()` dengan menyetor *ID Entitas* (seperti ID Pelanggan), dan sistem akan merespons dengan vektor utuh tanpa memaksa tim *backend* mengulangi logika kalkulasi rekayasa. Pendekatan terpusat ini merupakan benteng terkuat komunitas *machine learning* untuk menghapus ilusi antara kehebatan laboratorium dengan ketangguhan dunia nyata.
+Fungsi penting dari *Feature Store* adalah jaminan *Point-in-Time Correctness* (*Time Travel*). Ketika analis menarik miliaran baris data latih historis, sistem secara otomatis memastikan bahwa nilai fitur yang digabungkan (*join*) ke sebuah observasi adalah nilai yang eksis secara kronologis sesaat *sebelum* waktu kejadian. Hal ini melindungi *pipeline* dari kebocoran waktu (*temporal leakage*). Pada tahap inferensi, aplikasi *backend* cukup memanggil antarmuka seragam `get_online_features()` dengan menyetor *ID Entitas* (seperti ID Pelanggan), dan sistem akan merespons dengan vektor utuh tanpa memaksa tim *backend* mengulangi logika kalkulasi rekayasa. Pendekatan terpusat ini menjadi mekanisme paling andal untuk menyelaraskan performa model di laboratorium dengan kondisinya di produksi.
 
 ## Validasi Skema, *Versioning* Transformasi, dan Fenomena *Drift*
 
@@ -96,7 +90,7 @@ Validasi skema memverifikasi keutuhan data mentah sebelum membiarkannya masuk ke
 
 - **Rentang Batas Wajar:** Mesin mengetes nilai observasi terhadap limit batas ekspektasi, serta memvalidasi keselarasan entitas kategorikal terhadap kamus referensi guna menangkal intrusi dari label asing yang tak dikenal model.
 
-Jika tumpukan data harian melanggar batasan validasi ini, proses akan ditolak (*rejected*) dan peringatan diaktifkan. Tanpa palang pintu ini, nilai pengamatan cacat akan meracuni *pipeline* dan memaksa model menghasilkan prediksi manipulatif.
+Jika tumpukan data harian melanggar batasan validasi ini, proses akan ditolak (*rejected*) dan peringatan diaktifkan. Tanpa palang pintu ini, nilai pengamatan cacat akan mencemari *pipeline* dan membuat model menghasilkan prediksi yang keliru.
 
 **Manajemen Versi (*Data Version Control*)**
 Siklus komputasi rekayasa fitur secara rutin dimodifikasi seiring eksperimentasi. Seluruh berkas transformasi memerlukan kontrol manajemen versi (*Data Version Control* / DVC) yang mengikat jejak skrip rekayasa fitur dengan *checkpoint* modelnya. Fiksasi historis ini merupakan kunci untuk operasi pemulihan (*rollback*). Apabila probabilitas prediksi mendadak menyimpang di produksi, teknisi dapat langsung merestorasi status *pipeline* ke versi kode ekstraksi yang stabil.
@@ -117,7 +111,7 @@ Dalam memitigasi anomali ini, ekosistem pemantauan telah beralih pada pemanfaata
 
 - ***Evidently AI*:** Bekerja dominan pada deteksi pergeseran *univariate* (variabel tunggal), yang memberikan panel kontrol visual mengenai fitur apa yang nilai rata-rata populasinya paling parah terdistorsi.
 
-- ***NannyML*:** Menutup kelemahan utama dari pemantauan konvensional, yakni ketiadaan label *ground truth* di lingkungan produksi *real-time*. *NannyML* memelopori algoritma seperti *Confidence-Based Performance Estimation* (CBPE) dan *Direct Loss Estimation* (DLE). Algoritma tersebut secara matematis mengestimasi seberapa besar *drift* fitur saat ini telah menggerus performa prediksi riil model (seperti kejatuhan skor AUC), murni bermodalkan pergerakan fitur fitur input tanpa menunggu kedatangan label hasil observasi aslinya.
+- ***NannyML*:** Menutup kelemahan utama dari pemantauan konvensional, yakni ketiadaan label *ground truth* di lingkungan produksi *real-time*. *NannyML* memelopori algoritma seperti *Confidence-Based Performance Estimation* (CBPE) dan *Direct Loss Estimation* (DLE). Algoritma tersebut secara matematis mengestimasi seberapa besar *drift* fitur saat ini telah menggerus performa prediksi riil model (seperti kejatuhan skor AUC), murni bermodalkan pergerakan fitur input tanpa menunggu kedatangan label hasil observasi aslinya.
 
 Saat degradasi terdeteksi, rantai mitigasi standar tidak menyarankan model langsung dimatikan. Praktisi harus memverifikasi apakah ini isu integritas mekanis (seperti disfungsi pemancar sensor) atau transformasi populasi organik. Bila terbukti pergeseran populasi riil, dan ambang degradasi (berdasarkan parameter *NannyML*) melewati toleransi komersial, *pipeline* kemudian dijadwalkan ulang untuk proses *retraining* parsial menggunakan irisan data termutakhir.
 
@@ -164,7 +158,7 @@ Kerangka keputusan ini memastikan sinkronisasi antara teknik komputasi dan atura
 
 Rekayasa fitur berawal dari pemahaman atas masalah operasional, bukan sekadar eksperimen algoritmik. Praktisi kerap menghabiskan waktu mencoba berbagai transformasi rumit pada data historis, padahal fitur yang kuat justru lahir dari pemahaman mendalam tentang mekanisme domain. Pendekatan berbasis masalah (*problem-driven*) memastikan setiap operasi komputasi terarah pada sinyal yang relevan dengan tujuan sistem.
 
-Berikut adalah prinsip-prinsip yang harus dipenuhi saat merancang fitur untuk produksi:
+Perancangan fitur untuk produksi tunduk pada tiga prinsip berikut.
 
 **Ketersediaan Data Saat *Inference*.**
 
@@ -188,13 +182,7 @@ Untuk mendeteksi seberapa jauh pergeseran distribusi yang terjadi akibat perbeda
 
 $$PSI = \sum_{i=1}^{k} \left( P_{inference,i} - P_{train,i} \right) \ln \left( \frac{P_{inference,i}}{P_{train,i}} \right)$$
 
-Di mana:
-
-- $k$ adalah jumlah partisi (*bin*) dari suatu fitur.
-
-- $P_{inference,i}$ adalah proporsi sampel pada *bin* ke-$i$ di lingkungan produksi.
-
-- $P_{train,i}$ adalah proporsi sampel pada *bin* ke-$i$ di set pelatihan.
+Dalam persamaan tersebut, $k$ adalah jumlah partisi (*bin*) dari suatu fitur, $P_{inference,i}$ adalah proporsi sampel pada *bin* ke-$i$ di lingkungan produksi, dan $P_{train,i}$ adalah proporsi sampel pada *bin* yang sama di set pelatihan.
 
 Nilai PSI di atas 0,2 menandakan pergeseran populasi atau *skew* yang besar. Jika ini terjadi, desain ketersediaan fitur tersebut perlu dievaluasi ulang.
 
@@ -228,15 +216,7 @@ Integrasi kedua spektrum tersebut diformulasikan secara matematis melalui teknik
 
 $$\mathbf{x}_{final} = \big[ \phi_{learned}(\mathbf{x}_{unstructured}) \parallel \phi_{designed}(\mathbf{x}_{tabular}) \big]$$
 
-Di mana:
-
-- $\mathbf{x}_{final}$ adalah vektor fitur gabungan yang diteruskan ke layer model prediktif akhir.
-
-- $\phi_{learned}$ adalah fungsi ekstraksi otomatis (misalnya *pretrained model* jaringan saraf) yang memproses input non-tabular $\mathbf{x}_{unstructured}$ (contoh: matriks piksel citra sinar-X).
-
-- $\phi_{designed}$ adalah fungsi transformasi manual berbasis keilmuan yang memproses atribut terstruktur $\mathbf{x}_{tabular}$ (contoh: rentang kategori usia atau riwayat penyakit).
-
-- $\parallel$ menandakan operator konkatenasi untuk menyatukan kedua bentuk vektor.
+Dalam persamaan tersebut, $\mathbf{x}_{final}$ adalah vektor fitur gabungan yang diteruskan ke lapisan prediktif akhir. Fungsi $\phi_{learned}$ adalah ekstraktor otomatis (misalnya *pretrained model* jaringan saraf) yang memproses input non-tabular $\mathbf{x}_{unstructured}$, seperti matriks piksel citra sinar-X, sedangkan $\phi_{designed}$ adalah transformasi manual berbasis keilmuan yang memproses atribut terstruktur $\mathbf{x}_{tabular}$, seperti kategori usia atau riwayat penyakit. Notasi $\parallel$ menandakan operator konkatenasi yang menyatukan kedua vektor.
 ```{mermaid}
 %%| label: fig-ch17-17_7
 %%| fig-cap: "Arsitektur Dua Sistem Prediktif Berdampingan: Peramalan Ritel & Hybrid Multimodal Medis"
@@ -260,7 +240,7 @@ Masa depan rekayasa fitur bertumpu penuh pada kolaborasi antara komputasi mesin 
 
 - **Tugas Manusia:** Memverifikasi kewajaran logis dari penambahan atribut, mendeteksi jalur jebakan *data leakage* di level operasional, dan menakar beban latensi komputasi terhadap efisiensi infrastruktur.
 
-Mesin berekspansi sebagai fasilitator hipotesis representasi, sedangkan kepakaran manusia bertindak sebagai pengawas gerbang validasi akhir.
+Mesin berperan sebagai pengusul hipotesis representasi, sedangkan kepakaran manusia menjadi penentu validasi akhir.
 
 ## Studi Kasus: Merancang *Pipeline* dari Nol untuk Berbagai Skenario
 
@@ -282,13 +262,7 @@ Setelah *pipeline* fitur ritel beroperasi di produksi, stabilitas datanya perlu 
 
 $$\text{PSI} = \sum_{i=1}^{k} (A_i - E_i) \times \ln\left(\frac{A_i}{E_i}\right)$$
 
-Di mana:
-
-- $k$ adalah jumlah kategori atau *bin* pembagian fitur numerik.
-
-- $A_i$ adalah proporsi observasi pada *bin* $i$ saat data masuk fase produksi (*inference*).
-
-- $E_i$ adalah proporsi observasi pada *bin* $i$ saat data berada di fase pelatihan (*training*).
+Dalam persamaan tersebut, $k$ adalah jumlah kategori atau *bin* pembagian fitur numerik, $A_i$ adalah proporsi observasi pada *bin* $i$ saat produksi (*inference*), dan $E_i$ adalah proporsi observasi pada *bin* yang sama saat pelatihan (*training*).
 
 Pergeseran skor PSI yang tinggi menandakan bahwa distribusi fitur telah berubah dan siklus pelatihan ulang kemungkinan diperlukan.
 

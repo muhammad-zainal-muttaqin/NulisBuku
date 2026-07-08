@@ -16,7 +16,7 @@ Bab ini akan mengupas bagaimana menjembatani kecepatan komputasi mesin dengan ke
 
 Pada Bab 6, fitur tingkat entitas dibentuk dari riwayat \emph{event} melalui agregasi dan proses \emph{join} lintas tabel. Dalam \emph{dataset} relasional, mengekstrak pola dari banyak tabel secara manual memakan waktu dan rentan terhadap galat. Tantangan ini melahirkan pendekatan rekayasa fitur otomatis, dengan algoritma \emph{Deep Feature Synthesis} (DFS) sebagai metode utamanya. Pustaka standar yang mengimplementasikan DFS adalah FeatureTools, yang menggunakan abstraksi \emph{EntitySet} untuk memetakan tabel dan relasi antarentitas.
 
-DFS menelusuri hubungan antartabel untuk menghasilkan fitur baru secara otomatis. Algoritma ini bekerja dengan menumpuk operasi matematika dasar yang disebut \emph{primitive}. Terdapat dua kelompok utama \emph{primitive}:
+DFS menelusuri hubungan antartabel untuk menghasilkan fitur baru secara otomatis. Algoritma ini bekerja dengan menumpuk operasi matematika dasar yang disebut \emph{primitive}. \emph{Primitive} ini terbagi menjadi dua kelompok utama:
 
 \begin{itemize}
 \tightlist
@@ -187,8 +187,6 @@ Siklus penemuan fitur yang baru dijalankan melalui tiga etape utama:
 \item
   \textbf{Verifikasi Konteks Domain oleh Manusia:} Meskipun agen evolusioner telah merampingkan matriks secara empiris, agen tersebut tidak memiliki konteks hukum bisnis. Pakar domain manusia turun tangan untuk menginspeksi 50 fitur unggulan tersebut.
 \end{enumerate}
-
-{[}GAMBAR 16.5: Bar Chart - Perbandingan metrik performa evaluasi antara \emph{baseline} fitur manual, ekstraksi murni algoritma AutoFE, dan \emph{pipeline} hasil kurasi akhir manusia{]}
 
 Selama inspeksi, pakar menemukan satu fitur dengan skor performa yang secara janggal melesat jauh di atas fitur lainnya: atribut ``waktu sejak \emph{login} terakhir''. Analisis terhadap arsitektur tabel membuktikan bahwa parameter log tersebut baru ditulis oleh sistem \emph{backend} \emph{setelah} akun pelanggan secara resmi diblokir atau ditandai \emph{churn}. Karena peristiwa tersebut direkam pada masa depan relatif terhadap titik prediksi, fitur tersebut memuat informasi yang belum ada pada saat inferensi riil.
 

@@ -55,17 +55,7 @@ Satu elemen utama dalam perancangan ini adalah memastikan fitur yang dihasilkan 
 PSI = \sum_{i=1}^{k} \left( P_{aktual, i} - P_{ekspektasi, i} \right) \times \ln \left( \frac{P_{aktual, i}}{P_{ekspektasi, i}} \right)
 \]
 
-Di mana:
-
-\begin{itemize}
-\tightlist
-\item
-  \(k\) mewakili jumlah kelompok (atau \emph{bin}) dari variabel yang dievaluasi.
-\item
-  \(P_{aktual, i}\) menunjukkan proporsi sampel pada \emph{bin} ke-\(i\) di dalam data aktual (\emph{inference}).
-\item
-  \(P_{ekspektasi, i}\) menunjukkan proporsi sampel pada \emph{bin} ke-\(i\) di dalam data yang diharapkan (pelatihan).
-\end{itemize}
+Dalam persamaan tersebut, \(k\) adalah jumlah kelompok (\emph{bin}) dari variabel yang dievaluasi, \(P_{aktual, i}\) adalah proporsi sampel pada \emph{bin} ke-\(i\) di data aktual (\emph{inference}), dan \(P_{ekspektasi, i}\) adalah proporsi sampel pada \emph{bin} yang sama di data yang diharapkan (pelatihan).
 
 Sebagai contoh penerapan kerangka ini, mari kita tinjau sistem persetujuan kredit. Tujuannya adalah memprediksi risiko gagal bayar. Unit observasinya berupa aplikasi pinjaman individu, dan targetnya adalah kegagalan bayar dalam horizon dua belas bulan ke depan. Untuk menjaga praktik \emph{pipeline} yang benar, strategi \emph{split} yang paling valid adalah pemisahan temporal berdasarkan tanggal pengajuan aplikasi. Ketika struktur awal ini sudah solid, barulah fitur turunan direkayasa dari riwayat transaksi dan diuji terhadap \emph{baseline} regresi logistik. Jika tahap desain awal keliru, tingkat PSI akan bergeser drastis saat produksi, dan rekayasa fitur sekompleks apa pun tidak akan mampu menyelamatkan performa model.
 
@@ -73,7 +63,7 @@ Sebagai contoh penerapan kerangka ini, mari kita tinjau sistem persetujuan kredi
 
 Sebuah \emph{pipeline machine learning} pada dasarnya adalah kontrak komputasional. Kontrak ini menjamin bahwa distribusi dan logika kalkulasi fitur yang dilihat oleh model saat pelatihan (\emph{training}) harus identik secara struktural dengan fitur yang masuk saat \emph{inference}. Apabila kontrak ini tercederai, sistem akan menderita \emph{training-serving skew}, yaitu degradasi performa model di lingkungan produksi akibat ketidakselarasan transformasi data.
 
-\emph{Training-serving skew} merupakan ancaman paling mematikan karena ia bersifat \emph{silent failure} (gagal tanpa suara). Kode tidak akan meledak atau mengeluarkan pesan \emph{error}, namun kualitas akurasi probabilitas merosot drastis. Fenomena ini sering dipicu oleh hal-hal operasional:
+\emph{Training-serving skew} merupakan ancaman yang paling sulit terdeteksi karena bersifat \emph{silent failure} (gagal tanpa suara). Kode tidak menghasilkan galat atau pesan \emph{error}, namun akurasi probabilitasnya merosot drastis. Fenomena ini sering dipicu oleh hal-hal operasional:
 
 \begin{itemize}
 \tightlist
@@ -102,7 +92,7 @@ Berdasarkan hierarki kebutuhan yang dirumuskan oleh praktisi industri (Eugene Ya
 \label{fig:ch17-fig-2}
 \end{figure}
 
-Fungsi penting dari \emph{Feature Store} adalah jaminan \emph{Point-in-Time Correctness} (\emph{Time Travel}). Ketika analis menarik miliaran baris data latih historis, sistem secara otomatis memastikan bahwa nilai fitur yang digabungkan (\emph{join}) ke sebuah observasi adalah nilai yang eksis secara kronologis sesaat \emph{sebelum} waktu kejadian. Hal ini melindungi \emph{pipeline} dari kebocoran waktu (\emph{temporal leakage}). Pada tahap inferensi, aplikasi \emph{backend} cukup memanggil antarmuka seragam \passthrough{\lstinline!get_online_features()!} dengan menyetor \emph{ID Entitas} (seperti ID Pelanggan), dan sistem akan merespons dengan vektor utuh tanpa memaksa tim \emph{backend} mengulangi logika kalkulasi rekayasa. Pendekatan terpusat ini merupakan benteng terkuat komunitas \emph{machine learning} untuk menghapus ilusi antara kehebatan laboratorium dengan ketangguhan dunia nyata.
+Fungsi penting dari \emph{Feature Store} adalah jaminan \emph{Point-in-Time Correctness} (\emph{Time Travel}). Ketika analis menarik miliaran baris data latih historis, sistem secara otomatis memastikan bahwa nilai fitur yang digabungkan (\emph{join}) ke sebuah observasi adalah nilai yang eksis secara kronologis sesaat \emph{sebelum} waktu kejadian. Hal ini melindungi \emph{pipeline} dari kebocoran waktu (\emph{temporal leakage}). Pada tahap inferensi, aplikasi \emph{backend} cukup memanggil antarmuka seragam \passthrough{\lstinline!get_online_features()!} dengan menyetor \emph{ID Entitas} (seperti ID Pelanggan), dan sistem akan merespons dengan vektor utuh tanpa memaksa tim \emph{backend} mengulangi logika kalkulasi rekayasa. Pendekatan terpusat ini menjadi mekanisme paling andal untuk menyelaraskan performa model di laboratorium dengan kondisinya di produksi.
 
 \section{\texorpdfstring{Validasi Skema, \emph{Versioning} Transformasi, dan Fenomena \emph{Drift}}{Validasi Skema, Versioning Transformasi, dan Fenomena Drift}}\label{validasi-skema-versioning-transformasi-dan-fenomena-drift}
 
@@ -119,7 +109,7 @@ Validasi skema memverifikasi keutuhan data mentah sebelum membiarkannya masuk ke
   \textbf{Rentang Batas Wajar:} Mesin mengetes nilai observasi terhadap limit batas ekspektasi, serta memvalidasi keselarasan entitas kategorikal terhadap kamus referensi guna menangkal intrusi dari label asing yang tak dikenal model.
 \end{itemize}
 
-Jika tumpukan data harian melanggar batasan validasi ini, proses akan ditolak (\emph{rejected}) dan peringatan diaktifkan. Tanpa palang pintu ini, nilai pengamatan cacat akan meracuni \emph{pipeline} dan memaksa model menghasilkan prediksi manipulatif.
+Jika tumpukan data harian melanggar batasan validasi ini, proses akan ditolak (\emph{rejected}) dan peringatan diaktifkan. Tanpa palang pintu ini, nilai pengamatan cacat akan mencemari \emph{pipeline} dan membuat model menghasilkan prediksi yang keliru.
 
 \textbf{Manajemen Versi (\emph{Data Version Control})}
 Siklus komputasi rekayasa fitur secara rutin dimodifikasi seiring eksperimentasi. Seluruh berkas transformasi memerlukan kontrol manajemen versi (\emph{Data Version Control} / DVC) yang mengikat jejak skrip rekayasa fitur dengan \emph{checkpoint} modelnya. Fiksasi historis ini merupakan kunci untuk operasi pemulihan (\emph{rollback}). Apabila probabilitas prediksi mendadak menyimpang di produksi, teknisi dapat langsung merestorasi status \emph{pipeline} ke versi kode ekstraksi yang stabil.
@@ -142,7 +132,7 @@ Dalam memitigasi anomali ini, ekosistem pemantauan telah beralih pada pemanfaata
 \item
   \textbf{\emph{Evidently AI}:} Bekerja dominan pada deteksi pergeseran \emph{univariate} (variabel tunggal), yang memberikan panel kontrol visual mengenai fitur apa yang nilai rata-rata populasinya paling parah terdistorsi.
 \item
-  \textbf{\emph{NannyML}:} Menutup kelemahan utama dari pemantauan konvensional, yakni ketiadaan label \emph{ground truth} di lingkungan produksi \emph{real-time}. \emph{NannyML} memelopori algoritma seperti \emph{Confidence-Based Performance Estimation} (CBPE) dan \emph{Direct Loss Estimation} (DLE). Algoritma tersebut secara matematis mengestimasi seberapa besar \emph{drift} fitur saat ini telah menggerus performa prediksi riil model (seperti kejatuhan skor AUC), murni bermodalkan pergerakan fitur fitur input tanpa menunggu kedatangan label hasil observasi aslinya.
+  \textbf{\emph{NannyML}:} Menutup kelemahan utama dari pemantauan konvensional, yakni ketiadaan label \emph{ground truth} di lingkungan produksi \emph{real-time}. \emph{NannyML} memelopori algoritma seperti \emph{Confidence-Based Performance Estimation} (CBPE) dan \emph{Direct Loss Estimation} (DLE). Algoritma tersebut secara matematis mengestimasi seberapa besar \emph{drift} fitur saat ini telah menggerus performa prediksi riil model (seperti kejatuhan skor AUC), murni bermodalkan pergerakan fitur input tanpa menunggu kedatangan label hasil observasi aslinya.
 \end{itemize}
 
 Saat degradasi terdeteksi, rantai mitigasi standar tidak menyarankan model langsung dimatikan. Praktisi harus memverifikasi apakah ini isu integritas mekanis (seperti disfungsi pemancar sensor) atau transformasi populasi organik. Bila terbukti pergeseran populasi riil, dan ambang degradasi (berdasarkan parameter \emph{NannyML}) melewati toleransi komersial, \emph{pipeline} kemudian dijadwalkan ulang untuk proses \emph{retraining} parsial menggunakan irisan data termutakhir.
@@ -196,7 +186,7 @@ Kerangka keputusan ini memastikan sinkronisasi antara teknik komputasi dan atura
 
 Rekayasa fitur berawal dari pemahaman atas masalah operasional, bukan sekadar eksperimen algoritmik. Praktisi kerap menghabiskan waktu mencoba berbagai transformasi rumit pada data historis, padahal fitur yang kuat justru lahir dari pemahaman mendalam tentang mekanisme domain. Pendekatan berbasis masalah (\emph{problem-driven}) memastikan setiap operasi komputasi terarah pada sinyal yang relevan dengan tujuan sistem.
 
-Berikut adalah prinsip-prinsip yang harus dipenuhi saat merancang fitur untuk produksi:
+Perancangan fitur untuk produksi tunduk pada tiga prinsip berikut.
 
 \textbf{Ketersediaan Data Saat \emph{Inference}.}\label{ketersediaan-data-saat-inference}
 
@@ -220,17 +210,7 @@ Untuk mendeteksi seberapa jauh pergeseran distribusi yang terjadi akibat perbeda
 
 \[ PSI = \sum_{i=1}^{k} \left( P_{inference,i} - P_{train,i} \right) \ln \left( \frac{P_{inference,i}}{P_{train,i}} \right) \]
 
-Di mana:
-
-\begin{itemize}
-\tightlist
-\item
-  \(k\) adalah jumlah partisi (\emph{bin}) dari suatu fitur.
-\item
-  \(P_{inference,i}\) adalah proporsi sampel pada \emph{bin} ke-\(i\) di lingkungan produksi.
-\item
-  \(P_{train,i}\) adalah proporsi sampel pada \emph{bin} ke-\(i\) di set pelatihan.
-\end{itemize}
+Dalam persamaan tersebut, \(k\) adalah jumlah partisi (\emph{bin}) dari suatu fitur, \(P_{inference,i}\) adalah proporsi sampel pada \emph{bin} ke-\(i\) di lingkungan produksi, dan \(P_{train,i}\) adalah proporsi sampel pada \emph{bin} yang sama di set pelatihan.
 
 Nilai PSI di atas 0,2 menandakan pergeseran populasi atau \emph{skew} yang besar. Jika ini terjadi, desain ketersediaan fitur tersebut perlu dievaluasi ulang.
 
@@ -272,19 +252,7 @@ Integrasi kedua spektrum tersebut diformulasikan secara matematis melalui teknik
 
 \[ \mathbf{x}_{final} = \big[ \phi_{learned}(\mathbf{x}_{unstructured}) \parallel \phi_{designed}(\mathbf{x}_{tabular}) \big] \]
 
-Di mana:
-
-\begin{itemize}
-\tightlist
-\item
-  \(\mathbf{x}_{final}\) adalah vektor fitur gabungan yang diteruskan ke layer model prediktif akhir.
-\item
-  \(\phi_{learned}\) adalah fungsi ekstraksi otomatis (misalnya \emph{pretrained model} jaringan saraf) yang memproses input non-tabular \(\mathbf{x}_{unstructured}\) (contoh: matriks piksel citra sinar-X).
-\item
-  \(\phi_{designed}\) adalah fungsi transformasi manual berbasis keilmuan yang memproses atribut terstruktur \(\mathbf{x}_{tabular}\) (contoh: rentang kategori usia atau riwayat penyakit).
-\item
-  \(\parallel\) menandakan operator konkatenasi untuk menyatukan kedua bentuk vektor.
-\end{itemize}
+Dalam persamaan tersebut, \(\mathbf{x}_{final}\) adalah vektor fitur gabungan yang diteruskan ke lapisan prediktif akhir. Fungsi \(\phi_{learned}\) adalah ekstraktor otomatis (misalnya \emph{pretrained model} jaringan saraf) yang memproses input non-tabular \(\mathbf{x}_{unstructured}\), seperti matriks piksel citra sinar-X, sedangkan \(\phi_{designed}\) adalah transformasi manual berbasis keilmuan yang memproses atribut terstruktur \(\mathbf{x}_{tabular}\), seperti kategori usia atau riwayat penyakit. Notasi \(\parallel\) menandakan operator konkatenasi yang menyatukan kedua vektor.
 
 \begin{figure}[htbp]\centering
 \includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch17-fig-6}
@@ -304,7 +272,7 @@ Masa depan rekayasa fitur bertumpu penuh pada kolaborasi antara komputasi mesin 
   \textbf{Tugas Manusia:} Memverifikasi kewajaran logis dari penambahan atribut, mendeteksi jalur jebakan \emph{data leakage} di level operasional, dan menakar beban latensi komputasi terhadap efisiensi infrastruktur.
 \end{itemize}
 
-Mesin berekspansi sebagai fasilitator hipotesis representasi, sedangkan kepakaran manusia bertindak sebagai pengawas gerbang validasi akhir.
+Mesin berperan sebagai pengusul hipotesis representasi, sedangkan kepakaran manusia menjadi penentu validasi akhir.
 
 \section{\texorpdfstring{Studi Kasus: Merancang \emph{Pipeline} dari Nol untuk Berbagai Skenario}{Studi Kasus: Merancang Pipeline dari Nol untuk Berbagai Skenario}}\label{studi-kasus-merancang-pipeline-dari-nol-untuk-berbagai-skenario}
 
@@ -330,17 +298,7 @@ Setelah \emph{pipeline} fitur ritel beroperasi di produksi, stabilitas datanya p
 
 \[ \text{PSI} = \sum_{i=1}^{k} (A_i - E_i) \times \ln\left(\frac{A_i}{E_i}\right) \]
 
-Di mana:
-
-\begin{itemize}
-\tightlist
-\item
-  \(k\) adalah jumlah kategori atau \emph{bin} pembagian fitur numerik.
-\item
-  \(A_i\) adalah proporsi observasi pada \emph{bin} \(i\) saat data masuk fase produksi (\emph{inference}).
-\item
-  \(E_i\) adalah proporsi observasi pada \emph{bin} \(i\) saat data berada di fase pelatihan (\emph{training}).
-\end{itemize}
+Dalam persamaan tersebut, \(k\) adalah jumlah kategori atau \emph{bin} pembagian fitur numerik, \(A_i\) adalah proporsi observasi pada \emph{bin} \(i\) saat produksi (\emph{inference}), dan \(E_i\) adalah proporsi observasi pada \emph{bin} yang sama saat pelatihan (\emph{training}).
 
 Pergeseran skor PSI yang tinggi menandakan bahwa distribusi fitur telah berubah dan siklus pelatihan ulang kemungkinan diperlukan.
 
