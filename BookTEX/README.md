@@ -1,78 +1,108 @@
-# BookTEX — Rekayasa Fitur Modern (naskah LaTeX, B5)
+# BookTEX — Rekayasa Fitur Modern (naskah LaTeX)
 
 Jalur naskah **final** buku *Rekayasa Fitur Modern* dalam bentuk LaTeX,
-menghasilkan **PDF ukuran B5** (176 × 250 mm) yang sudah dilayout.
-
-Dibuat atas arahan (7 Juli 2026):
-naskah final = PDF terlayout B5, sumber LaTeX, subbab maksimal 1 level,
-satu berkas per bab.
+menghasilkan PDF ukuran 155×230mm yang sudah dilayout.
 
 ## Struktur
 
 ```
 BookTEX/
-├── main.tex           # berkas induk: \input semua bab
-├── preamble.tex       # kelas, tata letak B5, paket, gaya kode
-├── metadata.tex       # judul, penulis, halaman judul
-├── chapters/          # ch01.tex … ch17.tex (SUMBER naskah, satu berkas per bab)
-├── figures/           # PNG diagram
-│   └── _src/          # sumber mermaid per bab (chNN.json) untuk reverse-sync
-├── tools/
-│   ├── convert.py     # .qmd → .tex (arah balik / bootstrap)
-│   └── reverse.py     # .tex → .qmd (arah utama, untuk website)
-├── build.ps1          # skrip kompilasi PDF saja
+├── main.tex              # berkas induk: \input semua bab + lampiran
+├── preamble.tex          # kelas, tata letak, paket, gaya kode/tabel
+├── metadata.tex          # judul, penulis, halaman judul
+├── prakata.tex           # Prakata (dihasilkan tools/make_prakata.py)
+├── panduan.tex           # Cara Menggunakan Buku Ini (tools/make_panduan.py)
+├── daftar-pustaka.tex    # Daftar pustaka (tools/make_biblio.py)
+├── tentang-penulis.tex   # Tentang Penulis (tools/make_tentang_penulis.py)
+├── chapters/             # ch01.tex … ch17.tex + lampiran-{A,B,C}.tex
+├── figures/               # PNG/JPG ilustrasi + PDF vektor (mermaid/matplotlib)
+│   ├── sizes.json         # manifest lebar-cetak lama dari tools/size_figs.py
+│   ├── image-version-comparison.md
+│   ├── _originals_precrop/  # backup lokal, tak masuk git (lihat .gitignore)
+│   └── _replaced_mermaid/   # arsip diagram mermaid lama, tak masuk git
+├── cover-front.png, cover-back.png   # sampul (dipakai main-review.pdf)
+├── tools/                 # skrip generator .tex dari sumber v2/drafts
+├── build.ps1              # kompilasi main.pdf
 └── .gitignore
 ```
 
+Sumber naskah per bab ada di `v2/drafts/chNN/chNN_draft_v2.md` (satu level
+di atas `NulisBuku/`). `tools/md2tex.py` mengonversinya menjadi
+`chapters/chNN.tex`. File `.tex` boleh disunting manual — menjalankan ulang
+`md2tex.py` pada bab yang sudah disunting akan **dilewati** kecuali dipaksa,
+jadi suntingan manual di `chapters/*.tex` aman.
+
 ## Kompilasi
 
-Butuh **Tectonic** (mesin LaTeX mandiri; paket diunduh saat pertama dipakai —
-tak perlu instalasi TeX Live besar).
+Butuh **Tectonic** (mesin LaTeX mandiri; paket diunduh saat pertama dipakai)
+dan `mmdc` (Mermaid CLI, untuk merender ulang diagram jika sumber `.mmd`
+berubah).
 
 ```powershell
-./build.ps1                # kompilasi -> main.pdf
-./build.ps1 -Convert       # regen .tex dari .qmd dulu, lalu kompilasi
+./build.ps1
+# atau langsung:
+tectonic -X compile main.tex
 ```
 
-atau langsung:
+### main-review.pdf (versi ringan untuk editor/kolega)
 
-```powershell
-tectonic main.tex
-```
+`main.pdf` memakai gambar resolusi penuh (cocok cetak, tapi besar — puluhan
+MB). `main-review.pdf` adalah versi sekunder dengan semua gambar
+di-downsample ke 300dpi pada ukuran cetak aktualnya lalu dikonversi JPEG
+kualitas 88 (kecuali `qr-fe-m.png`, tetap PNG lossless karena pola biner
+tajamnya rusak oleh kompresi JPEG), plus sampul depan/belakang disisipkan
+sebagai halaman pembuka/penutup. Tidak ada skrip tunggal untuk ini — alurnya:
 
-## Menyunting
+1. Salin seluruh sumber (`*.tex`, `chapters/`, `tools/`, `figures/*.png|*.pdf`)
+   ke folder scratch.
+2. Di folder scratch, untuk tiap `figures/*.png`: baca lebar-cetak dari
+   `\includegraphics[width=...]{}` di `chapters/*.tex`, resize ke 300dpi pada
+   lebar itu, simpan sebagai `.jpg` kualitas 88, hapus `.png` lama.
+3. `tectonic -X compile main.tex` di folder scratch → PDF dasar.
+4. Sisipkan `cover-front.png`/`cover-back.png` (dikonversi JPEG kualitas 90)
+   sebagai halaman pertama/terakhir lewat PyMuPDF, simpan dengan
+   `garbage=4, deflate=True, clean=True` (kompresi ulang, penting — tanpa ini
+   PyMuPDF menyisipkan gambar tanpa kompresi dan ukurannya membengkak).
 
-`chapters/chNN.tex` adalah **sumber utama naskah** — sunting langsung di sini.
-Setelah menyunting, jalankan `../sync.ps1` (dari root repo) untuk:
+## Gambar
 
-1. build PDF B5 (`tectonic`),
-2. update `website/chapters/*.qmd` (`tools/reverse.py`),
-3. render website (`quarto render`).
+- **Ilustrasi** (`figures/chNN-fig-M.png`, sebagian besar bab): dibuat di
+  luar repo ini, dipasang langsung. `\includegraphics[width=111.6mm]{...}`
+  (90% lebar teks) dipakai seragam supaya semua gambar cukup besar untuk
+  dibaca saat dicetak.
+- **Diagram vektor** (`figures/chNN-fig-M.pdf`): mermaid via `mmdc`, atau
+  matplotlib. Render ulang diagram mermaid dari `.mmd` (di
+  `v2/drafts/figures/`) dengan:
 
-Diagram mermaid tetap hidup di website: sumbernya disimpan di
-`figures/_src/chNN.json` saat konversi awal, lalu dipasang kembali oleh
-`reverse.py`. Kalau kamu menambah gambar baru langsung di `.tex`
-(`\includegraphics`), website memakainya sebagai PNG biasa.
+  ```powershell
+  mmdc -i "../../v2/drafts/figures/chNN-fig-M.mmd" `
+       -o "figures/chNN-fig-M.pdf" `
+       -c "tools/mermaid-book.json" -f
+  ```
 
-- `tools/convert.py` = arah balik (`.qmd → .tex`), dipakai untuk bootstrap awal
-  atau menarik perubahan dari website. Ada pengaman hash: bab yang `.tex`-nya
-  sudah disunting manual **dilewati** (kecuali `--force`). Cek: `../sync.ps1 -Status`.
-- `tools/reverse.py` = arah utama (`.tex → .qmd`).
+  Flag `-f` (`--pdfFit`) **wajib** — tanpa itu mmdc menghasilkan PDF
+  berukuran kertas penuh (mis. Letter) dengan diagram kecil di dalamnya
+  alih-alih PDF yang pas dengan bounding box diagram.
+- `tools/size_figs.py` — heuristik lama yang menghitung lebar-cetak per
+  diagram mermaid dari ukuran font aslinya (target ~9.5pt tercetak). Manifest
+  hasilnya (`figures/sizes.json`) sudah tak dipakai sejak semua gambar
+  diseragamkan ke `width=111.6mm`; skrip ini tinggal untuk referensi bila
+  perlu menimbang ulang satu diagram yang aspect ratio-nya sangat curam.
 
 ## Keputusan tata letak
 
-| Aturan            | Implementasi |
-|----------------------------|--------------|
-| PDF terlayout, ukuran B5   | `geometry` `b5paper`, kelas `book` `twoside` |
-| Sumber LaTeX               | pandoc `.qmd` → `.tex`, kompilasi Tectonic |
-| Subbab maksimal 1 level    | `secnumdepth=1`, `tocdepth=1` → hanya Bab + Subbab bernomor; `###` lama jadi kepala tak bernomor |
-| Satu berkas per bab        | `chapters/chNN.tex`, dirangkai `\input` di `main.tex` |
-| Rumus & kode enak dibaca   | `amsmath`; `listings` gaya Python |
+| Aturan                      | Implementasi |
+|------------------------------|--------------|
+| PDF terlayout, ukuran 155×230mm | `geometry` (`paperwidth=155mm,paperheight=230mm`), kelas `book` `twoside` |
+| Sumber LaTeX per bab          | `v2/drafts/chNN/*.md` → pandoc/`md2tex.py` → `chapters/chNN.tex` |
+| Lampiran (A/B/C)              | `\appendix` + `\titleformat{\chapter}` lokal (kicker "LAMPIRAN X") |
+| Gambar selebar mungkin        | `width=111.6mm` (0.90×lebar teks) seragam di semua figure |
+| Rumus & kode enak dibaca      | `amsmath`; `listings` gaya Python |
 
-## Catatan / perlu dicek
+## Catatan
 
-- **Gambar ch01, ch02, ch05**: jumlah PNG hasil render lama lebih banyak dari
-  jumlah diagram di `.qmd` (kemungkinan sisa render lama). Pemetaan memakai urutan
-  kemunculan (fig-1, fig-2, …); **cek visual** apakah gambar cocok dengan caption.
-- Peringatan *overfull/underfull hbox* saat kompilasi bersifat kosmetik
-  (baris/kotak sedikit meluber) — dirapikan saat penyeliaan tata letak.
+- Peringatan *overfull/underfull hbox* saat kompilasi sebagian besar bersifat
+  kosmetik (baris/kotak meluber beberapa poin) — sudah diperiksa, bukan
+  regresi baru.
+- `suggested-codes-to-add.md` — usulan RA untuk menambah listing kode Python
+  ke beberapa bab; belum diterapkan, masih rencana terbuka.

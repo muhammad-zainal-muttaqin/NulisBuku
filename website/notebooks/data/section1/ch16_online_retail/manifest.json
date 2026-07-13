@@ -1,0 +1,6 @@
+[
+"autofe_candidate_scores.csv",
+"autofe_feature_matrix.parquet",
+"autofe_summary_metrics.csv",
+"verified_stats.json"
+]

@@ -1,0 +1,308 @@
+% ==========================================================================
+% lampiran-B.tex — dihasilkan dari lampiran/lampiran-B-glosarium.md oleh tools/lampiran2tex.py
+% Boleh disunting manual; menjalankan lampiran2tex.py lagi akan menimpa.
+% ==========================================================================
+\chapter{Glosarium}\label{glosarium}
+
+Daftar istilah beserta padanan Inggris dan penjelasan ringkas. Mengikuti kebijakan istilah buku: pakai kata Indonesia yang memang lazim di komunitas TI/ilmu komputer; bila tidak ada, pertahankan istilah Inggris (dicetak \emph{miring}). Definisi di sini sengaja singkat --- untuk pembahasan penuh, lihat bab yang dirujuk.
+
+Format tiap entri: \textbf{istilah (Indonesia / Inggris)} --- penjelasan ringkas \emph{(Bab)}.
+
+\glosletter{A}
+
+\textbf{Agregasi berjendela / \emph{windowed aggregation}} --- meringkas banyak event menjadi
+satu nilai fitur dalam rentang waktu tertentu sebelum titik acuan (mis. total
+transaksi 90 hari terakhir). \emph{(Bab 6, 10)}
+
+\textbf{Anti-kebocoran / \emph{leakage prevention}} --- praktik memastikan tidak ada
+informasi dari masa depan atau dari data uji yang bocor ke fitur saat pelatihan.
+\emph{(Bab 2)}
+
+\textbf{\emph{As-of join}} --- penggabungan tabel yang hanya mengambil informasi yang tersedia
+\emph{sebelum} waktu acuan, menjaga kausalitas. \emph{(Bab 6)}
+
+\textbf{Atribut / \emph{attribute}} --- kolom mentah pada data sebelum diolah menjadi fitur.
+\emph{(Bab 1)}
+
+\textbf{\emph{Autoencoder}} --- jaringan yang belajar memampatkan data ke representasi laten
+lalu merekonstruksinya; dipakai untuk reduksi dimensi non-linear. \emph{(Bab 8)}
+
+\textbf{Autokorelasi spasial / \emph{spatial autocorrelation}} --- kecenderungan nilai di
+lokasi berdekatan lebih mirip daripada lokasi berjauhan (hukum pertama geografi
+Tobler). \emph{(Bab 13)}
+
+\glosletter{B}
+
+\textbf{\emph{Bag-of-words} (BoW)} --- representasi teks sebagai hitungan kemunculan kata,
+mengabaikan urutan. \emph{(Bab 11)}
+
+\textbf{\emph{Baseline}} --- model atau representasi pembanding sederhana yang menjadi tolok
+ukur; kenaikan skor diukur relatif terhadapnya. \emph{(Bab 9)}
+
+\textbf{\emph{Batch}} --- sekumpulan sampel yang diproses bersama dalam satu langkah
+pelatihan. \emph{(Bab 15)}
+
+\textbf{\emph{Binning}} --- mengubah fitur numerik kontinu menjadi kategori bertingkat
+(\emph{bin}); dapat menghilangkan sebagian informasi. \emph{(Bab 3)}
+
+\glosletter{C}
+
+\textbf{\emph{Clipping}} --- memotong nilai ekstrem ke batas atas/bawah yang ditetapkan untuk
+meredam pengaruh \emph{outlier}. \emph{(Bab 3, 5)}
+
+\textbf{\emph{Cross-fitting}} --- menghitung \emph{encoding} atau statistik pada lipatan data yang
+berbeda dari yang diterapkan, mencegah kebocoran pada \emph{target encoding}. \emph{(Bab 4)}
+
+\textbf{\emph{Cutoff} (waktu prediksi)} --- titik waktu acuan yang memisahkan informasi yang
+boleh dipakai (masa lalu) dari yang harus diprediksi (masa depan). \emph{(Bab 6, 10)}
+
+\glosletter{D}
+
+\textbf{\emph{Data leakage}} --- masuknya informasi yang seharusnya tak tersedia saat
+\emph{inference} ke dalam fitur pelatihan, membuat skor validasi terlalu optimistis.
+\emph{(Bab 2)}
+
+\textbf{\emph{Deep learning}} --- pembelajaran dengan jaringan saraf berlapis banyak yang
+mampu belajar representasi bertingkat dari data. \emph{(Bab 15)}
+
+\textbf{Deret waktu / \emph{time series}} --- data yang terurut menurut waktu, dengan
+ketergantungan antar-waktu yang harus dijaga saat validasi. \emph{(Bab 10)}
+
+\textbf{Dimensi / \emph{dimension}} --- jumlah fitur (kolom) yang merepresentasikan tiap
+sampel. \emph{(Bab 8)}
+
+\textbf{Distribusi / \emph{distribution}} --- pola sebaran nilai sebuah fitur; bentuknya
+(\emph{skew}, ekor tebal) memengaruhi pilihan transformasi. \emph{(Bab 3)}
+
+\glosletter{E}
+
+\textbf{\emph{Embedding}} --- representasi padat berdimensi rendah yang menempatkan objek
+serupa saling berdekatan dalam ruang vektor. \emph{(Bab 11, 15)}
+
+\textbf{\emph{Encoding}} --- proses mengubah kategori menjadi angka yang dapat diolah model.
+\emph{(Bab 4)}
+
+\textbf{\emph{Entity embedding}} --- \emph{embedding} yang dipelajari untuk nilai-nilai kategori,
+alternatif padat bagi \emph{one-hot} pada kardinalitas tinggi. \emph{(Bab 4, 15)}
+
+\textbf{\emph{Epoch}} --- satu kali lintasan penuh atas seluruh data pelatihan. \emph{(Bab 15)}
+
+\textbf{\emph{Expanding window}} --- jendela agregasi yang tumbuh dari awal riwayat sampai
+titik acuan (berbeda dari \emph{rolling} yang lebarnya tetap). \emph{(Bab 10)}
+
+\glosletter{F}
+
+\textbf{\emph{Feature extractor}} --- model \emph{pretrained} yang lapisan-lapisannya dipakai untuk
+menghasilkan fitur, tanpa dilatih ulang. \emph{(Bab 15)}
+
+\textbf{\emph{Feature store}} --- sistem penyimpanan fitur terpusat agar konsisten antara
+pelatihan dan \emph{inference}. \emph{(Bab 17)}
+
+\textbf{\emph{Fine-tuning}} --- melanjutkan pelatihan model \emph{pretrained} pada data tugas
+tertentu untuk mengadaptasinya. \emph{(Bab 15)}
+
+\textbf{Fitur / \emph{feature}} --- besaran hasil rekayasa yang menjadi masukan model;
+istilah rumah buku ini. \emph{(Bab 1)}
+
+\textbf{Fitur turunan / \emph{derived feature}} --- fitur baru yang dibentuk dari satu atau
+lebih atribut mentah (rasio, selisih, agregat). \emph{(Bab 6)}
+
+\glosletter{G}
+
+\textbf{\emph{Gradient}} --- arah dan besar perubahan galat terhadap parameter; dasar
+optimasi model. \emph{(Bab 15)}
+
+\textbf{\emph{Gradient boosting}} --- ansambel pohon yang dibangun bertahap; kuat pada data
+tabular dan tahan terhadap skala serta \emph{outlier}. \emph{(Bab 6, 15)}
+
+\textbf{Graf / \emph{graph}} --- data berupa simpul (\emph{node}) dan sisi (\emph{edge}) yang
+merepresentasikan relasi. \emph{(Bab 13)}
+
+\textbf{\emph{Graph neural network} (GNN)} --- jaringan yang belajar representasi simpul lewat
+\emph{message passing} dari tetangga di graf. \emph{(Bab 13)}
+
+\glosletter{H}
+
+\textbf{\emph{Hashing (trick)}} --- memetakan kategori ke indeks tetap lewat fungsi \emph{hash},
+menekan dimensi pada kardinalitas sangat tinggi dengan risiko kolisi. \emph{(Bab 4)}
+
+\textbf{HOG (\emph{Histogram of Oriented Gradients})} --- deskriptor citra berbasis distribusi
+arah gradien lokal. \emph{(Bab 12)}
+
+\textbf{\emph{Horizon}} --- rentang waktu ke depan yang menjadi sasaran prediksi, dihitung
+dari \emph{cutoff}. \emph{(Bab 10)}
+
+\glosletter{I}
+
+\textbf{Imputasi / \emph{imputation}} --- mengisi nilai hilang dengan estimasi (rata-rata,
+median, model); harus dihitung di dalam \emph{pipeline} agar tak bocor. \emph{(Bab 5)}
+
+\textbf{\emph{Inference}} --- tahap pemakaian model pada data baru; fitur harus tersedia pada
+saat ini. \emph{(Bab 2, 17)}
+
+\textbf{\emph{Input}} --- data yang masuk ke model; bentuknya ditentukan oleh rekayasa fitur.
+\emph{(Bab 1)}
+
+\textbf{Interpretabilitas / \emph{interpretability}} --- sejauh mana keputusan model dapat
+dijelaskan; sering bergantung pada kebermaknaan fitur. \emph{(Bab 9)}
+
+\glosletter{K}
+
+\textbf{Kardinalitas / \emph{cardinality}} --- banyaknya nilai unik pada fitur kategorikal;
+menentukan strategi \emph{encoding}. \emph{(Bab 4)}
+
+\textbf{Kebocoran} --- lihat \textbf{\emph{Data leakage}}.
+
+\glosletter{L}
+
+\textbf{\emph{Lag}} --- nilai fitur atau target dari langkah waktu sebelumnya, dipakai sebagai
+fitur pada deret waktu. \emph{(Bab 10)}
+
+\textbf{\emph{Lasso} (regularisasi L1)} --- regularisasi yang menyusutkan sebagian koefisien
+tepat ke nol, sekaligus menyeleksi fitur. \emph{(Bab 7)}
+
+\textbf{\emph{Late fusion} / fusi terlambat} --- menggabungkan keluaran (skor) dari model
+per-modalitas, bukan menyatukan fiturnya lebih awal. \emph{(Bab 14)}
+
+\textbf{\emph{Machine learning}} --- pembelajaran pola dari data untuk membuat prediksi tanpa
+aturan yang diprogram eksplisit. \emph{(Bab 1)}
+
+\glosletter{M}
+
+\textbf{MFCC (\emph{Mel-Frequency Cepstral Coefficients})} --- fitur audio ringkas yang lazim
+untuk pengenalan suara. \emph{(Bab 12)}
+
+\textbf{\emph{Missing value} / nilai hilang} --- sel data yang tidak terisi; polanya (acak
+atau terstruktur) memengaruhi penanganan. \emph{(Bab 5)}
+
+\textbf{Multimodal} --- data yang memadukan lebih dari satu modalitas (mis. teks +
+citra + tabular). \emph{(Bab 14)}
+
+\glosletter{N}
+
+\textbf{NMF (\emph{Non-negative Matrix Factorization})} --- pemfaktoran matriks non-negatif
+menjadi komponen aditif yang sering lebih mudah ditafsir. \emph{(Bab 8)}
+
+\textbf{\emph{Noise} / \emph{derau}} --- variasi acak tak bermakna pada data; buku memakai istilah
+\emph{noise}. \emph{(Bab 3)}
+
+\glosletter{O}
+
+\textbf{\emph{One-hot encoding}} --- merepresentasikan kategori sebagai vektor biner dengan
+satu posisi bernilai 1; menjaga kategori terpisah tetapi memperlebar matriks.
+\emph{(Bab 4)}
+
+\textbf{\emph{Ordinal encoding}} --- memberi kategori kode angka berurut; hemat dimensi tetapi
+memaksakan asumsi urutan. \emph{(Bab 4)}
+
+\textbf{\emph{Outlier}} --- nilai yang menyimpang jauh dari sebaran umum; dapat mengganggu
+model sensitif skala. \emph{(Bab 5)}
+
+\textbf{\emph{Overfitting}} --- model terlalu menyesuaikan data latih hingga gagal
+menggeneralisasi ke data baru. \emph{(Bab 7, 9)}
+
+\glosletter{P}
+
+\textbf{\emph{Pipeline}} --- rangkaian langkah praproses dan model yang dijalankan sebagai satu
+kesatuan; kunci agar transformasi mengikuti pembagian data. \emph{(Bab 2)}
+
+\textbf{Praktik pipeline yang benar / \emph{pipeline discipline}} --- kebiasaan memasang
+semua transformasi di dalam \emph{pipeline} sehingga di-\emph{fit} hanya pada data latih.
+\emph{(Bab 2)}
+
+\textbf{\emph{Pretrained} (model)} --- model yang sudah dilatih pada data besar dan dipakai
+kembali sebagai sumber representasi. \emph{(Bab 15)}
+
+\textbf{\emph{Purge gap}} --- jeda yang sengaja dikosongkan antara periode latih dan uji pada
+\emph{split} temporal untuk mencegah kebocoran lewat \emph{horizon}. \emph{(Bab 10)}
+
+\glosletter{R}
+
+\textbf{\emph{Recency}} --- fitur yang mengukur seberapa baru event terakhir relatif terhadap
+\emph{cutoff}. \emph{(Bab 6)}
+
+\textbf{Reduksi dimensi / \emph{dimensionality reduction}} --- memampatkan banyak fitur
+menjadi sedikit sambil mempertahankan informasi penting. \emph{(Bab 8)}
+
+\textbf{Regularisasi / \emph{regularization}} --- penalti pada kompleksitas model untuk
+menekan \emph{overfitting}. \emph{(Bab 7)}
+
+\textbf{Rekayasa fitur / \emph{feature engineering}} --- disiplin merancang representasi data
+yang sah, bermanfaat, dan dapat digunakan kembali; tema utama buku ini. \emph{(Bab 1)}
+
+\textbf{Representasi / \emph{representation}} --- bentuk data yang disajikan kepada model;
+menentukan pola apa yang dapat dipelajari. \emph{(Bab 1)}
+
+\textbf{Representasi yang dipelajari mesin / \emph{learned representation}} --- fitur yang
+dipelajari otomatis oleh model (mis. \emph{embedding}), bukan dirancang tangan.
+\emph{(Bab 15)}
+
+\textbf{Representasi yang dirancang manusia / \emph{designed representation}} --- fitur yang
+dibentuk secara sengaja oleh perancang berdasarkan pemahaman domain. \emph{(Bab 1, 6)}
+
+\textbf{\emph{Rolling window}} --- jendela agregasi berlebar tetap yang bergeser di sepanjang
+waktu. \emph{(Bab 10)}
+
+\glosletter{S}
+
+\textbf{Sarat informasi / \emph{information-rich}} --- sifat data/log/tabel yang memuat
+banyak sinyal berguna. \emph{(Bab 1)}
+
+\textbf{Seleksi fitur / \emph{feature selection}} --- memilih himpunan bagian fitur yang
+relevan (metode \emph{filter}, \emph{wrapper}, \emph{embedded}). \emph{(Bab 7)}
+
+\textbf{Skala / \emph{scale}} --- rentang nilai sebuah fitur; perbedaan skala antar-fitur
+merusak model berbasis jarak bila tak disamakan. \emph{(Bab 3)}
+
+\textbf{\emph{Spatial lag}} --- rata-rata berbobot nilai tetangga sebuah lokasi, dipakai
+sebagai fitur spasial. \emph{(Bab 13)}
+
+\textbf{\emph{Spectral embedding}} --- representasi simpul graf dari vektor eigen matriks graf.
+\emph{(Bab 13)}
+
+\textbf{Standardisasi / \emph{standardization}} --- penskalaan agar fitur bermean 0 dan
+berdeviasi baku 1. \emph{(Bab 3)}
+
+\glosletter{T}
+
+\textbf{\emph{Target encoding}} --- menggantikan kategori dengan statistik target (mis.
+rata-rata) yang terkait; kuat pada kardinalitas tinggi tetapi rawan bocor tanpa
+\emph{cross-fitting}. \emph{(Bab 4)}
+
+\textbf{\emph{Target} / sasaran} --- besaran yang ingin diprediksi model. \emph{(Bab 1)}
+
+\textbf{TF-IDF (\emph{Term Frequency--Inverse Document Frequency})} --- pembobotan kata yang
+menaikkan istilah khas dokumen dan menurunkan istilah umum. \emph{(Bab 11)}
+
+\textbf{\emph{Tokenization} / tokenisasi} --- memecah teks menjadi satuan (\emph{token}) sebelum
+divektorkan. \emph{(Bab 11, 15)}
+
+\textbf{\emph{Training--inference skew} / \emph{training--serving skew}} --- ketidaksesuaian cara
+fitur dihitung saat pelatihan versus saat \emph{inference}. \emph{(Bab 17)}
+
+\textbf{Transformasi (fitur numerik)} --- pengubahan bentuk distribusi (mis. \emph{log},
+\emph{Box--Cox}) agar lebih sesuai untuk model. \emph{(Bab 3)}
+
+\glosletter{V}
+
+\textbf{Validasi silang / \emph{cross-validation}} --- membagi data menjadi beberapa lipatan
+untuk menilai generalisasi; variannya (\emph{Group}, \emph{TimeSeries}) menjaga struktur
+data. \emph{(Bab 2, 9)}
+
+\textbf{Vektor \emph{sparse} / \emph{sparse vector}} --- vektor yang sebagian besar elemennya nol,
+khas representasi teks \emph{bag-of-words}/TF-IDF. \emph{(Bab 11)}
+
+\glosletter{W}
+
+\textbf{\emph{Winsorizing}} --- mengganti nilai ekstrem dengan persentil tertentu alih-alih
+membuangnya. \emph{(Bab 5)}
+
+\textbf{\emph{Word embedding}} --- \emph{embedding} untuk kata yang menangkap kedekatan makna
+(mis. \emph{word2vec}). \emph{(Bab 11, 15)}
+
+\begin{quote}
+\textbf{Catatan penggunaan istilah.} Beberapa padanan Indonesia purist sengaja
+dihindari karena tidak lazim di komunitas: \emph{derau} (dipakai: \emph{noise}), \emph{larik}
+(\emph{array}), \emph{daring} (\emph{online}), \emph{masukan} untuk input model (dipakai: \emph{input}).
+Kata \textbf{fitur} dipakai konsisten sebagai padanan \emph{feature}.
+\end{quote}

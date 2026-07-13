@@ -1,0 +1,180 @@
+{
+  "source_snapshot": "data/section1/ch07_wdbc/wdbc.parquet",
+  "rows": 569,
+  "feature_count": 30,
+  "target_counts": {
+    "benign": 357,
+    "malignant": 212
+  },
+  "missing_cells": 0,
+  "groups": {
+    "mean": [
+      "mean radius",
+      "mean texture",
+      "mean perimeter",
+      "mean area",
+      "mean smoothness",
+      "mean compactness",
+      "mean concavity",
+      "mean concave points",
+      "mean symmetry",
+      "mean fractal dimension"
+    ],
+    "error": [
+      "radius error",
+      "texture error",
+      "perimeter error",
+      "area error",
+      "smoothness error",
+      "compactness error",
+      "concavity error",
+      "concave points error",
+      "symmetry error",
+      "fractal dimension error"
+    ],
+    "worst": [
+      "worst radius",
+      "worst texture",
+      "worst perimeter",
+      "worst area",
+      "worst smoothness",
+      "worst compactness",
+      "worst concavity",
+      "worst concave points",
+      "worst symmetry",
+      "worst fractal dimension"
+    ]
+  },
+  "group_sizes": {
+    "mean": 10,
+    "error": 10,
+    "worst": 10
+  },
+  "split_protocol": "train_test_split(test_size=0.3, stratify=y, random_state=42)",
+  "fixed_model": "RandomForestClassifier(n_estimators=400, min_samples_leaf=2, random_state=42)",
+  "dummy_most_frequent_roc_auc": 0.5,
+  "all_features_roc_auc": 0.9962032710280374,
+  "group_ablation": [
+    {
+      "removed_group": "mean",
+      "remaining_features": 20,
+      "roc_auc": 0.9962032710280374,
+      "auc_drop": 0.0
+    },
+    {
+      "removed_group": "error",
+      "remaining_features": 20,
+      "roc_auc": 0.9963492990654206,
+      "auc_drop": -0.00014602803738317238
+    },
+    {
+      "removed_group": "worst",
+      "remaining_features": 20,
+      "roc_auc": 0.9848130841121495,
+      "auc_drop": 0.01139018691588789
+    }
+  ],
+  "permutation_group_importance_sum": {
+    "mean": 5.1109813084349105e-05,
+    "error": -0.000795852803738134,
+    "worst": 0.017092581775701273
+  },
+  "model_importance_group_sum": {
+    "mean": 0.348640436439645,
+    "error": 0.08889230255095061,
+    "worst": 0.5624672610094046
+  },
+  "top_permutation_features": [
+    {
+      "feature": "worst area",
+      "importance_mean": 0.006103971962616861,
+      "importance_std": 0.003394201768880742,
+      "group": "worst"
+    },
+    {
+      "feature": "worst concave points",
+      "importance_mean": 0.00454147196261685,
+      "importance_std": 0.002100926846045203,
+      "group": "worst"
+    },
+    {
+      "feature": "worst perimeter",
+      "importance_mean": 0.003825934579439266,
+      "importance_std": 0.0028483329252558002,
+      "group": "worst"
+    },
+    {
+      "feature": "worst texture",
+      "importance_mean": 0.0018837616822430236,
+      "importance_std": 0.0005201960610559927,
+      "group": "worst"
+    },
+    {
+      "feature": "worst radius",
+      "importance_mean": 0.0013215537383178045,
+      "importance_std": 0.0016665599712323634,
+      "group": "worst"
+    },
+    {
+      "feature": "mean concave points",
+      "importance_mean": 0.0013069509345794872,
+      "importance_std": 0.002297088795929847,
+      "group": "mean"
+    },
+    {
+      "feature": "mean texture",
+      "importance_mean": 0.0007520443925233711,
+      "importance_std": 0.0004137389476199482,
+      "group": "mean"
+    },
+    {
+      "feature": "worst concavity",
+      "importance_mean": 0.0002993574766355367,
+      "importance_std": 0.00040645927744500433,
+      "group": "worst"
+    }
+  ],
+  "top_model_importance_features": [
+    {
+      "feature": "worst area",
+      "importance": 0.1456782007269995,
+      "group": "worst"
+    },
+    {
+      "feature": "worst perimeter",
+      "importance": 0.13652706555169927,
+      "group": "worst"
+    },
+    {
+      "feature": "mean concave points",
+      "importance": 0.10558058151374991,
+      "group": "mean"
+    },
+    {
+      "feature": "worst radius",
+      "importance": 0.09036303047334655,
+      "group": "worst"
+    },
+    {
+      "feature": "worst concave points",
+      "importance": 0.08964338396222477,
+      "group": "worst"
+    },
+    {
+      "feature": "mean radius",
+      "importance": 0.0551922876455049,
+      "group": "mean"
+    },
+    {
+      "feature": "mean perimeter",
+      "importance": 0.05202247465335375,
+      "group": "mean"
+    },
+    {
+      "feature": "mean area",
+      "importance": 0.04806565481764987,
+      "group": "mean"
+    }
+  ],
+  "shap_available_in_local_env": false
+}

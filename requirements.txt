@@ -1,20 +1,19 @@
 # Dependensi notebook praktik "Rekayasa Fitur Modern"
 # ---------------------------------------------------------------
-# BASE (Bab 1-10): ringan, cukup untuk laptop tanpa GPU.
+# Semua notebook (Bab 1-17) memakai stack Python standar, TANPA GPU dan
+# TANPA pretrained model. Ekstraksi fitur yang berat (embedding teks/citra/
+# audio, dsb.) sudah diprakomputasi dan disimpan sebagai snapshot di
+# data/section1/, sehingga bab modalitas lanjutan pun ringan dijalankan.
+
 numpy>=1.26
 pandas>=2.0
 scikit-learn>=1.4
 scipy>=1.11
 matplotlib>=3.8
+pyarrow>=15.0        # wajib: membaca snapshot .parquet
+pillow>=10.0         # Bab 14 (menampilkan thumbnail produk)
+networkx>=3.2        # Bab 13 (fitur graf)
 
-# ---------------------------------------------------------------
-# LANJUTAN (Bab 11+): pakai pretrained model, paling nyaman di Google Colab.
-# Di Colab cukup jalankan sel "%pip install ..." yang sudah ada di tiap notebook,
-# jadi tidak perlu memasang semuanya sekaligus di sini. Daftar acuan per bab:
-#
-#   Bab 11 (Teks)        : sentence-transformers>=3.0  transformers>=4.40  torch>=2.2
-#   Bab 12 (Citra&Audio) : torchvision  torchaudio  scikit-image  librosa
-#   Bab 13 (Spasial&Graf): networkx  node2vec  torch-geometric
-#   Bab 14 (Multimodal)  : transformers  torchvision
-#   Bab 15 (Pretrained)  : transformers  timm
-#   Bab 16 (AutoFE)      : featuretools  flaml
+# Catatan: di Google Colab semua paket di atas sudah tersedia secara default,
+# jadi tidak ada sel "pip install" khusus di dalam notebook. Data Section 1
+# terunduh otomatis dari repo saat notebook dijalankan (lihat README).

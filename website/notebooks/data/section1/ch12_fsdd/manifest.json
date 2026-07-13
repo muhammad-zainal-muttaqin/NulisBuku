@@ -1,0 +1,5 @@
+[
+"fsdd_features.parquet",
+"fsdd_speaker_holdout_scores.csv",
+"verified_stats.json"
+]

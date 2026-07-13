@@ -1,0 +1,58 @@
+{
+  "source_snapshot": "data/section1/ch01_online_retail/online_retail.parquet",
+  "line_item_rows_known_customer": 406829,
+  "invoice_rows_known_customer": 22190,
+  "customer_rows": 4372,
+  "cutoff_feature_rows": 20603,
+  "cutoffs": [
+    "2011-04-01",
+    "2011-05-01",
+    "2011-06-01",
+    "2011-07-01",
+    "2011-08-01",
+    "2011-09-01",
+    "2011-10-01"
+  ],
+  "train_cutoffs": [
+    "2011-04-01",
+    "2011-05-01",
+    "2011-06-01",
+    "2011-07-01",
+    "2011-08-01"
+  ],
+  "test_cutoffs": [
+    "2011-09-01",
+    "2011-10-01"
+  ],
+  "future_active_60d_rate_all": 0.4275105567150415,
+  "future_active_60d_rate_train": 0.414497867960594,
+  "future_active_60d_rate_test": 0.45279245822025427,
+  "baseline_feature_count": 5,
+  "derived_feature_count": 14,
+  "roc_auc_base_90d": 0.7224268729203155,
+  "roc_auc_derived": 0.7306635969061952,
+  "roc_auc_delta": 0.008236723985879713,
+  "base_features": [
+    "invoice_count_90d",
+    "gross_value_90d",
+    "item_count_90d",
+    "unique_stock_90d",
+    "days_since_last_invoice"
+  ],
+  "derived_features": [
+    "invoice_count_90d",
+    "gross_value_90d",
+    "item_count_90d",
+    "unique_stock_90d",
+    "days_since_last_invoice",
+    "avg_order_value_90d",
+    "items_per_invoice_90d",
+    "unique_stock_per_invoice_90d",
+    "value_per_item_90d",
+    "return_rate_180d",
+    "recent_value_share_30_180",
+    "recency_weighted_gross_180d",
+    "index_month_sin",
+    "index_month_cos"
+  ]
+}

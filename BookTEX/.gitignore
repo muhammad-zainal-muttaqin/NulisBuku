@@ -10,5 +10,14 @@
 *.synctex.gz
 _test.*
 
-# PDF hasil build (regenerasikan dari sumber)
-main.pdf
+# Cache Python
+__pycache__/
+*.pyc
+
+# Backup/arsip lokal (gambar asli sebelum crop/edit, diagram mermaid lama
+# yang sudah digantikan ilustrasi) -- disimpan di disk untuk jaga-jaga, tak
+# perlu ikut masuk repo git.
+cover-front.orig.png
+cover-back.orig.png
+figures/_originals_precrop/
+figures/_replaced_mermaid/

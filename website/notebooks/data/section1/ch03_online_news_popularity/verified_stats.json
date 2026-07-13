@@ -1,0 +1,280 @@
+{
+  "rows": 39644,
+  "columns": [
+    "url",
+    "timedelta",
+    "n_tokens_title",
+    "n_tokens_content",
+    "n_unique_tokens",
+    "n_non_stop_words",
+    "n_non_stop_unique_tokens",
+    "num_hrefs",
+    "num_self_hrefs",
+    "num_imgs",
+    "num_videos",
+    "average_token_length",
+    "num_keywords",
+    "data_channel_is_lifestyle",
+    "data_channel_is_entertainment",
+    "data_channel_is_bus",
+    "data_channel_is_socmed",
+    "data_channel_is_tech",
+    "data_channel_is_world",
+    "kw_min_min",
+    "kw_max_min",
+    "kw_avg_min",
+    "kw_min_max",
+    "kw_max_max",
+    "kw_avg_max",
+    "kw_min_avg",
+    "kw_max_avg",
+    "kw_avg_avg",
+    "self_reference_min_shares",
+    "self_reference_max_shares",
+    "self_reference_avg_sharess",
+    "weekday_is_monday",
+    "weekday_is_tuesday",
+    "weekday_is_wednesday",
+    "weekday_is_thursday",
+    "weekday_is_friday",
+    "weekday_is_saturday",
+    "weekday_is_sunday",
+    "is_weekend",
+    "LDA_00",
+    "LDA_01",
+    "LDA_02",
+    "LDA_03",
+    "LDA_04",
+    "global_subjectivity",
+    "global_sentiment_polarity",
+    "global_rate_positive_words",
+    "global_rate_negative_words",
+    "rate_positive_words",
+    "rate_negative_words",
+    "avg_positive_polarity",
+    "min_positive_polarity",
+    "max_positive_polarity",
+    "avg_negative_polarity",
+    "min_negative_polarity",
+    "max_negative_polarity",
+    "title_subjectivity",
+    "title_sentiment_polarity",
+    "abs_title_subjectivity",
+    "abs_title_sentiment_polarity",
+    "shares"
+  ],
+  "column_count": 61,
+  "predictive_feature_count": 58,
+  "missing_cells": 0,
+  "target": "shares",
+  "shares_mean": 3395.3801836343455,
+  "shares_median": 1400.0,
+  "shares_max": 843300,
+  "shares_skew": 33.963884875714164,
+  "shares_iqr_outliers": 4541,
+  "feature_range_examples": {
+    "kw_avg_max": {
+      "min": 0.0,
+      "max": 843300.0,
+      "range": 843300.0
+    },
+    "kw_min_max": {
+      "min": 0.0,
+      "max": 843300.0,
+      "range": 843300.0
+    },
+    "kw_max_max": {
+      "min": 0.0,
+      "max": 843300.0,
+      "range": 843300.0
+    },
+    "self_reference_avg_sharess": {
+      "min": 0.0,
+      "max": 843300.0,
+      "range": 843300.0
+    },
+    "self_reference_max_shares": {
+      "min": 0.0,
+      "max": 843300.0,
+      "range": 843300.0
+    },
+    "self_reference_min_shares": {
+      "min": 0.0,
+      "max": 843300.0,
+      "range": 843300.0
+    },
+    "kw_max_avg": {
+      "min": 0.0,
+      "max": 298400.0,
+      "range": 298400.0
+    },
+    "kw_max_min": {
+      "min": 0.0,
+      "max": 298400.0,
+      "range": 298400.0
+    },
+    "kw_avg_avg": {
+      "min": 0.0,
+      "max": 43567.6599458,
+      "range": 43567.6599458
+    },
+    "kw_avg_min": {
+      "min": -1.0,
+      "max": 42827.8571429,
+      "range": 42828.8571429
+    },
+    "n_tokens_content": {
+      "min": 0.0,
+      "max": 8474.0,
+      "range": 8474.0
+    },
+    "kw_min_avg": {
+      "min": -1.0,
+      "max": 3613.0398195,
+      "range": 3614.0398195
+    }
+  },
+  "top_skewed_columns": {
+    "n_non_stop_words": 198.7924453768874,
+    "n_unique_tokens": 198.6551155982559,
+    "n_non_stop_unique_tokens": 198.4432944092651,
+    "kw_max_min": 35.328433731154306,
+    "shares": 33.963884875714164,
+    "kw_avg_min": 31.306108102660584,
+    "self_reference_min_shares": 26.264364160300094,
+    "self_reference_avg_sharess": 17.9140933776756,
+    "kw_max_avg": 16.41166955537124,
+    "self_reference_max_shares": 13.870849049433598,
+    "kw_min_max": 10.38637163478277,
+    "num_videos": 7.0195327862958665,
+    "kw_avg_avg": 5.7601772916185565,
+    "num_self_hrefs": 5.1727511057576345,
+    "num_hrefs": 4.013494828201318
+  },
+  "knn_raw_shares_benchmark": [
+    {
+      "k": 5,
+      "representation": "StandardScaler",
+      "rmse_mean": 12737.329734947474,
+      "rmse_std": 1442.1072762953816,
+      "mae_mean": 3241.5521809315624
+    },
+    {
+      "k": 5,
+      "representation": "raw",
+      "rmse_mean": 12858.717574151813,
+      "rmse_std": 1469.618289025808,
+      "mae_mean": 3403.018261308223
+    },
+    {
+      "k": 10,
+      "representation": "StandardScaler",
+      "rmse_mean": 12327.075055565572,
+      "rmse_std": 1565.1227315443898,
+      "mae_mean": 3106.8542962838405
+    },
+    {
+      "k": 10,
+      "representation": "raw",
+      "rmse_mean": 12363.144772951771,
+      "rmse_std": 1624.8962854264628,
+      "mae_mean": 3254.5434269379516
+    },
+    {
+      "k": 25,
+      "representation": "StandardScaler",
+      "rmse_mean": 12106.062219996873,
+      "rmse_std": 1616.8173705681043,
+      "mae_mean": 3028.320797713133
+    },
+    {
+      "k": 25,
+      "representation": "raw",
+      "rmse_mean": 12123.907202948407,
+      "rmse_std": 1636.1308673447647,
+      "mae_mean": 3152.6312258281487
+    },
+    {
+      "k": 50,
+      "representation": "StandardScaler",
+      "rmse_mean": 12032.250243223685,
+      "rmse_std": 1646.776458540242,
+      "mae_mean": 2980.1085468303345
+    },
+    {
+      "k": 50,
+      "representation": "raw",
+      "rmse_mean": 12048.163311708791,
+      "rmse_std": 1656.5646163029526,
+      "mae_mean": 3104.5161590718008
+    }
+  ],
+  "knn_log1p_shares_benchmark": [
+    {
+      "k": 5,
+      "representation": "StandardScaler",
+      "rmse_mean": 0.9371986526076516,
+      "rmse_std": 0.004474511043083775,
+      "mae_mean": 0.6901981292389432
+    },
+    {
+      "k": 5,
+      "representation": "raw",
+      "rmse_mean": 0.9625496786624517,
+      "rmse_std": 0.005006824481271711,
+      "mae_mean": 0.7223877196346236
+    },
+    {
+      "k": 10,
+      "representation": "StandardScaler",
+      "rmse_mean": 0.9031539371096053,
+      "rmse_std": 0.005816948234072953,
+      "mae_mean": 0.6608745216009141
+    },
+    {
+      "k": 10,
+      "representation": "raw",
+      "rmse_mean": 0.9274540758968941,
+      "rmse_std": 0.004923562817380885,
+      "mae_mean": 0.692117146769683
+    },
+    {
+      "k": 25,
+      "representation": "StandardScaler",
+      "rmse_mean": 0.885755077213159,
+      "rmse_std": 0.005754451680717621,
+      "mae_mean": 0.6462432308448852
+    },
+    {
+      "k": 25,
+      "representation": "raw",
+      "rmse_mean": 0.9085968476846068,
+      "rmse_std": 0.005368463240992105,
+      "mae_mean": 0.6771498193411996
+    },
+    {
+      "k": 50,
+      "representation": "StandardScaler",
+      "rmse_mean": 0.8823918274469632,
+      "rmse_std": 0.0057865628038511596,
+      "mae_mean": 0.6430784681904811
+    },
+    {
+      "k": 50,
+      "representation": "raw",
+      "rmse_mean": 0.9033185989049208,
+      "rmse_std": 0.005509545781393152,
+      "mae_mean": 0.6724998840362544
+    }
+  ],
+  "decision_boundary_demo": {
+    "features": [
+      "num_hrefs",
+      "kw_avg_avg"
+    ],
+    "target": "shares >= upper quartile",
+    "raw_accuracy": 0.7426433495880276,
+    "standard_scaled_accuracy": 0.7460063897763578
+  },
+  "source_page_rows_note": "UCI web metadata currently displays 39,797 instances, while the downloaded CSV contains 39,644 data rows."
+}

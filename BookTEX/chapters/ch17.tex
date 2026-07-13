@@ -1,388 +1,239 @@
 % ==========================================================================
-% ch17.tex — dihasilkan otomatis dari website/chapters/ch17.qmd
-% Boleh disunting manual. 'sync' hanya menimpa bila .qmd berubah DAN .tex
-% belum disunting; kalau keduanya berubah, dilewati (pakai --force).
-% qmd-sha1: 5044cb0fce05
-% tex-sha1: 398ea7348273
+% ch17.tex — dihasilkan dari v2/drafts oleh tools/md2tex.py
+% Sumber: v2\drafts\ch17\ch17_draft_v2.md
+% Boleh disunting manual; menjalankan md2tex.py lagi akan menimpa.
 % ==========================================================================
-% >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
-\chapter{Sintesis: Merancang Pipeline \& Prinsip yang Bertahan Lama}\label{sintesis-merancang-pipeline-prinsip-yang-bertahan-lama}
+\chapter{Sintesis: Merancang Pipeline dan Prinsip yang Bertahan Lama}\label{sintesis-merancang-pipeline-dan-prinsip-yang-bertahan-lama}
 
-\section{\texorpdfstring{Kerangka Perancangan: Dari Tujuan Prediksi ke \emph{Pipeline} Final}{Kerangka Perancangan: Dari Tujuan Prediksi ke Pipeline Final}}\label{kerangka-perancangan-dari-tujuan-prediksi-ke-pipeline-final}
+Rekayasa fitur sering tampak seperti kumpulan teknik yang terpisah, mulai dari penskalaan, pengodean, lag, embedding, centrality graf, hingga AutoML. Setelah enam belas bab, gambaran yang lebih penting seharusnya terlihat. Fitur adalah keputusan representasi yang hidup di dalam pipeline. Keputusan itu harus cocok dengan tujuan prediksi, tersedia pada waktu prediksi, mengikuti pemisahan data, dapat dipelihara, dan terbukti membantu melalui validasi.
 
-Rekayasa fitur tidak berdiri sendiri sebagai langkah terisolasi. Transformasi data yang rumit akan menjadi sia-sia jika tidak selaras dengan tujuan awal pemodelan. Kita memerlukan kerangka perancangan terstruktur untuk memastikan setiap keputusan memiliki pijakan konseptual yang kokoh. Kerangka ini memastikan \emph{pipeline} dapat dieksekusi secara konsisten pada saat \emph{inference}.
+Bab penutup ini mengubah isi buku menjadi kerangka kerja, dimulai dari pertanyaan paling awal, yaitu apa yang akan diprediksi dan kapan informasi tersedia, menuju pertanyaan operasional tentang konsistensi pelatihan-inferensi, validasi skema, versioning, dan pemantauan perubahan data (drift). Peta keputusan representasi, kebocoran, dan validasi lintas tipe data disajikan sebagai rujukan cepat. Bab ini menguraikan dua prinsip penutup, yaitu mulai dari masalah, ketersediaan, dan pemisahan data sebelum membuat fitur, serta validasi mengalahkan jumlah fitur.
 
-Tahap pertama yang menentukan adalah membangun tulang punggung masalah. Pada fase ini, kita belum menulis kode transformasi sama sekali. Kita berfokus merumuskan empat definisi dasar. Kesalahan pada tahap awal dapat memicu \emph{data leakage} dan merusak seluruh validitas rekayasa fitur. Keempat definisi tersebut meliputi:
+\section{\texorpdfstring{Kerangka Desain: dari Tujuan Prediksi ke \emph{Pipeline} Final}{Kerangka Desain: dari Tujuan Prediksi ke Pipeline Final}}\label{kerangka-desain-dari-tujuan-prediksi-ke-pipeline-final}
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Tujuan prediksi:} Sasaran akhir yang ingin diselesaikan oleh model saat diterapkan di lingkungan produksi.
-\item
-  \textbf{Unit observasi:} Representasi spesifik dari satu baris di dalam data pelatihan. Unit ini dapat berupa satu pelanggan, satu transaksi tunggal, atau pengukuran sensor per menit.
-\item
-  \textbf{Target:} Label yang diprediksi beserta batas horizon waktunya.
-\item
-  \textbf{Strategi \emph{split}:} Cara pemisahan data untuk menyimulasikan kondisi \emph{inference} seobjektif mungkin.
-\end{itemize}
+Proyek rekayasa fitur yang baik tidak dimulai dari teknik favorit. Ia dimulai dari tujuan prediksi. Apa keputusan yang akan dibantu model? Apa konsekuensi salah prediksi? Kapan prediksi dibuat? Data apa yang benar-benar tersedia pada waktu itu?
 
-Setelah fondasi ditetapkan, perancangan bergerak ke tahap pengolahan data. Alur kerja ini mencakup langkah operasional yang dieksekusi secara berurutan:
+Empat definisi menjadi tulang punggung masalah sebelum satu baris transformasi dibuat: unit analisis, target, horizon, dan \emph{cutoff}. Unit menjawab satu baris mewakili apa: pelanggan per bulan, transaksi, sesi pemeriksaan, produk per minggu, atau node dalam graf. Target menjawab apa yang diprediksi. Horizon menjawab seberapa jauh ke depan. \emph{Cutoff} menjawab batas informasi yang sah sebelum prediksi.
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{Pengumpulan sumber data:} Menarik data historis yang tersedia secara sah sebelum titik prediksi.
-\item
-  \textbf{Transformasi:} Mengubah data mentah menjadi representasi yang siap diproses oleh model.
-\item
-  \textbf{Seleksi:} Membuang atribut yang redundan atau tidak relevan demi menjaga dimensi data tetap terkendali.
-\item
-  \textbf{Pembuatan \emph{baseline}:} Mengembangkan model sederhana sebagai pembanding utama sebelum menguji fitur-fitur yang lebih kompleks.
-\item
-  \textbf{Evaluasi:} Menguji fitur baru terhadap \emph{baseline} untuk mengukur peningkatan performa prediksi sekaligus memonitor stabilitasnya.
-\end{enumerate}
+Kesalahan di tahap ini tidak dapat diperbaiki oleh fitur yang canggih. Jika target salah dirumuskan, model mengoptimalkan masalah yang salah. Jika \emph{cutoff} kabur, leakage masuk lewat pintu belakang. Jika unit terlalu kasar atau terlalu halus, fitur menjadi tidak stabil.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch17-fig-1}
-\caption{Monitoring Drift Fitur (Data Drift Diagram) Pasca-Produksi}
+Setelah itu, pilih \emph{split} yang meniru deployment. \emph{Random split} cocok ketika baris dapat dipertukarkan di bawah protokol penggunaan. Entitas berulang bukan otomatis \emph{leakage}: untuk memprediksi masa depan pelanggan yang sudah dikenal, gunakan evaluasi temporal dan fitur \emph{point-in-time}; gunakan \emph{group split} jika deployment menuntut generalisasi ke pelanggan baru. Demikian pula, kedekatan lokasi atau \emph{edge} lintas \emph{train-test} tidak otomatis bocor. Gunakan \emph{spatial block}, buffer, evaluasi \emph{transductive}, \emph{inductive split}, atau \emph{temporal graph split} sesuai lokasi, hubungan, dan informasi yang benar-benar tersedia saat inferensi. Pada masalah nyata, \emph{split} bisa \emph{hybrid}.
+
+Baru setelah itu kita memilih sumber fitur dan struktur representasi: tabular, sequence, teks, citra, audio, spasial, graf, atau multimodal. Dari struktur itu muncul transformasi yang sesuai: \emph{scaling}, \emph{encoding}, \emph{derived features}, \emph{selection}, \emph{dimensionality reduction}, \emph{embeddings}, \emph{pretrained encoders}, atau \emph{automated feature proposals}. \emph{Baseline} harus hadir sebelum kompleksitas bertambah.
+
+Gambar 17.1 merangkum seluruh kerangka buku sebagai satu band desain. Diagram ini dapat dibaca sebagai checklist awal setiap proyek.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch17-fig-1}
+\caption{Kerangka desain rekayasa fitur dari awal sampai produksi}
 \label{fig:ch17-fig-1}
 \end{figure}
 
-Satu elemen utama dalam perancangan ini adalah memastikan fitur yang dihasilkan stabil saat menghadapi data baru. Saat mengevaluasi fitur pada tahap \emph{baseline} atau memantau \emph{data drift} di lingkungan produksi, kita mengukur pergeseran distribusi antara data pelatihan dan data \emph{inference}. Pengukuran stabilitas ini lazim menggunakan \emph{Population Stability Index} (PSI). Secara matematis, metrik ini dihitung melalui persamaan berikut:
+Contoh mikro: sistem credit approval. Tujuannya memperkirakan default risk. Unitnya satu loan application. Targetnya default dalam 12 bulan. \emph{Split}-nya temporal berdasarkan tanggal aplikasi. Hanya setelah ini agregat histori pembayaran, rasio pendapatan, dan fitur perilaku diuji terhadap \emph{baseline} logistic regression. Urutan ini tampak sederhana, tetapi ia mencegah banyak kesalahan yang tidak terlihat jika proyek dimulai dari teknik.
 
-\[
-PSI = \sum_{i=1}^{k} \left( P_{aktual, i} - P_{ekspektasi, i} \right) \times \ln \left( \frac{P_{aktual, i}}{P_{ekspektasi, i}} \right)
-\]
+\emph{Pipeline} final harus mereproduksi transformasi pelatihan pada \emph{inference}. Ia menyimpan \emph{fitted state}, urutan transformasi, daftar fitur, versi encoder, dan keputusan \emph{cutoff}. Dokumentasi bukan pekerjaan administratif belakangan; ia adalah cara agar representasi dapat dipercaya ulang. Kerangka desain ini baru kuat jika definisi yang sama bertahan saat model masuk ke \emph{inference}.
 
-Dalam persamaan tersebut, \(k\) adalah jumlah kelompok (\emph{bin}) dari variabel yang dievaluasi, \(P_{aktual, i}\) adalah proporsi sampel pada \emph{bin} ke-\(i\) di data aktual (\emph{inference}), dan \(P_{ekspektasi, i}\) adalah proporsi sampel pada \emph{bin} yang sama di data yang diharapkan (pelatihan).
+\section{Konsistensi Training-Inference dan Training-Serving Skew}\label{konsistensi-training-inference-dan-training-serving-skew}
 
-Sebagai contoh penerapan kerangka ini, mari kita tinjau sistem persetujuan kredit. Tujuannya adalah memprediksi risiko gagal bayar. Unit observasinya berupa aplikasi pinjaman individu, dan targetnya adalah kegagalan bayar dalam horizon dua belas bulan ke depan. Untuk menjaga praktik \emph{pipeline} yang benar, strategi \emph{split} yang paling valid adalah pemisahan temporal berdasarkan tanggal pengajuan aplikasi. Ketika struktur awal ini sudah solid, barulah fitur turunan direkayasa dari riwayat transaksi dan diuji terhadap \emph{baseline} regresi logistik. Jika tahap desain awal keliru, tingkat PSI akan bergeser drastis saat produksi, dan rekayasa fitur sekompleks apa pun tidak akan mampu menyelamatkan performa model.
+Kerangka desain baru sah jika definisi yang dibuat saat pelatihan bertahan saat model melayani prediksi (Sculley et al. 2015). \emph{Training-inference consistency} berarti definisi fitur dan logika transformasi sama saat pelatihan, validasi, dan \emph{serving}. Ini kontrak Bab 2, tetapi pada skala sistem. Jika pelatihan memakai satu cara menghitung fitur dan produksi memakai cara lain, model tidak lagi melihat distribusi yang sama.
 
-\section{\texorpdfstring{Konsistensi Pelatihan dan \emph{Inference}: Mencegah \emph{Skew} di Produksi}{Konsistensi Pelatihan dan Inference: Mencegah Skew di Produksi}}\label{konsistensi-pelatihan-dan-inference-mencegah-skew-di-produksi}
+\emph{Training-serving skew} sering muncul diam-diam. \emph{Reimplementation drift} terjadi ketika logika eksperimen di Python ditulis ulang di backend lain dengan aturan rounding, null handling, atau timezone yang berbeda. \emph{Live recomputation} terjadi ketika produksi menghitung ulang statistik dari \emph{streaming} data, padahal pelatihan memakai statistik beku dari \emph{training split}. Tidak selalu ada error log. Prediksi hanya menurun diam-diam.
 
-Sebuah \emph{pipeline machine learning} pada dasarnya adalah kontrak komputasional. Kontrak ini menjamin bahwa distribusi dan logika kalkulasi fitur yang dilihat oleh model saat pelatihan (\emph{training}) harus identik secara struktural dengan fitur yang masuk saat \emph{inference}. Apabila kontrak ini tercederai, sistem akan menderita \emph{training-serving skew}, yaitu degradasi performa model di lingkungan produksi akibat ketidakselarasan transformasi data.
+\emph{Fitted transformation} harus menyimpan state: rata-rata dan standard deviation scaler, nilai imputasi, kategori encoder, \emph{vocabulary}, \emph{selected features}, version model, version tokenizer, dan version \emph{embedding}. \emph{Feature availability} juga tidak bisa ditawar. Jika fitur hanya ada setelah keputusan dibuat, fitur itu invalid meskipun sangat prediktif.
 
-\emph{Training-serving skew} merupakan ancaman yang paling sulit terdeteksi karena bersifat \emph{silent failure} (gagal tanpa suara). Kode tidak menghasilkan galat atau pesan \emph{error}, namun akurasi probabilitasnya merosot drastis. Fenomena ini sering dipicu oleh hal-hal operasional:
+Gambar 17.2 memperlihatkan pola \emph{feature store}. Definisi fitur berada di pusat, lalu mengalir ke \emph{offline store} untuk pelatihan historis dan \emph{online store} untuk \emph{serving} rendah latency.
 
-\begin{itemize}
-\tightlist
-\item
-  Insinyur perangkat lunak menulis ulang kueri Python eksperimen ke dalam bahasa Java/Go di \emph{backend} dengan pembulatan yang berbeda.
-\item
-  Pelanggaran status \emph{fit/transform}. (Sistem produksi menghitung rata-rata bergerak dari aliran data \emph{real-time} alih-alih menggunakan konstanta pelatih historis yang dibekukan).
-\end{itemize}
-
-Pada praktik industri lampau, solusi standar untuk mencegah \emph{skew} adalah membungkus seluruh tahap transformasi ke dalam satu objek (\emph{pipeline serialization}) seperti modul \emph{pickle}. Namun, pendekatan ini gagal menangani ekosistem skala raksasa yang mewajibkan komputasi silang-platform. Solusi definitif untuk tantangan ini terwujud dalam arsitektur \textbf{\emph{Feature Store}} (seperti pustaka \emph{open-source} Feast).
-
-Berdasarkan hierarki kebutuhan yang dirumuskan oleh praktisi industri (Eugene Yan, 2021), sistem \emph{Feature Store} menyediakan tingkat ``Integritas'' dengan memusatkan definisi fitur ke dalam satu basis kode dan membelah penyimpanan menjadi dua mesin sinkron:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{\emph{Offline Store}:} Basis data pergudangan (seperti BigQuery atau Snowflake) yang dirancang secara optimal untuk ekstraksi \emph{batch} besar data historis guna pelatihan model.
-\item
-  \textbf{\emph{Online Store}:} Basis data kunci-nilai berlatensi sangat rendah (seperti Redis atau DynamoDB) yang menyajikan nilai fitur terbaru secara \emph{real-time} kepada layanan \emph{inference}.
-\end{enumerate}
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch17-fig-2}
-\caption{Arsitektur Feature Store (Feast) Offline dan Online Store}
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch17-fig-2}
+\caption{\emph{Feature store}: definisi fitur untuk pelatihan dan \emph{serving}}
 \label{fig:ch17-fig-2}
 \end{figure}
 
-Fungsi penting dari \emph{Feature Store} adalah jaminan \emph{Point-in-Time Correctness} (\emph{Time Travel}). Ketika analis menarik miliaran baris data latih historis, sistem secara otomatis memastikan bahwa nilai fitur yang digabungkan (\emph{join}) ke sebuah observasi adalah nilai yang eksis secara kronologis sesaat \emph{sebelum} waktu kejadian. Hal ini melindungi \emph{pipeline} dari kebocoran waktu (\emph{temporal leakage}). Pada tahap inferensi, aplikasi \emph{backend} cukup memanggil antarmuka seragam \passthrough{\lstinline!get_online_features()!} dengan menyetor \emph{ID Entitas} (seperti ID Pelanggan), dan sistem akan merespons dengan vektor utuh tanpa memaksa tim \emph{backend} mengulangi logika kalkulasi rekayasa. Pendekatan terpusat ini menjadi mekanisme paling andal untuk menyelaraskan performa model di laboratorium dengan kondisinya di produksi.
+Pada skala kecil, \emph{pipeline} yang diserialisasi dengan baik sudah mewakili gagasan yang sama: satu definisi, satu urutan transformasi, satu state yang dipakai ulang. Pada skala besar, definisi fitur dipusatkan agar tim pelatihan dan tim backend tidak menghitung fitur dengan logika berbeda.
 
-\section{\texorpdfstring{Validasi Skema, \emph{Versioning} Transformasi, dan Fenomena \emph{Drift}}{Validasi Skema, Versioning Transformasi, dan Fenomena Drift}}\label{validasi-skema-versioning-transformasi-dan-fenomena-drift}
+Contohnya sederhana. Pelatihan memakai CSV yang sudah dibersihkan, tetapi produksi membaca database live dengan kode \emph{missing value} yang berbeda. \emph{Text vectorizer} di-\emph{fit} pada korpus pelatihan, lalu \emph{vocabulary} dan IDF yang sama harus dipakai ulang di produksi. Istilah ``korpus lengkap'' dalam konteks ini hanya boleh berarti seluruh korpus pelatihan yang sah, bukan validasi atau \emph{test}. Kedua kasus ini bukan masalah model; ini masalah representasi yang tidak konsisten. Konsistensi juga perlu dijaga setelah sistem berjalan, melalui \emph{schema validation}, \emph{versioning}, dan \emph{drift monitoring}.
 
-Stabilitas fitur di lingkungan produksi membutuhkan pengamanan teknis berlapis di luar kerangka arsitektur \emph{pipeline} itu sendiri. Distribusi data riil bergerak dinamis seiring bergantinya waktu. Desain sistem analitik mutlak memfasilitasi tiga lapisan perlindungan operasional yang umumnya didukung oleh perkakas spesialis pihak ketiga: validasi skema, manajemen versi, dan pemantauan pergeseran.
+\begin{pendalaman}{\emph{Feature store}: satu definisi, dua mesin}
+\emph{Feature store} memusatkan definisi fitur dan membagi penyimpanan menjadi \emph{offline store} untuk histori skala warehouse dan \emph{online store} untuk \emph{inference} rendah latency. Dua jaminan utamanya adalah \emph{point-in-time-correct historical joins}, yaitu aturan \emph{cutoff} Bab 1 dan Bab 6 yang dilembagakan, serta satu \emph{serving interface} agar tim backend tidak mengimplementasikan ulang logika fitur. Untuk proyek kelas atau riset kecil, \emph{pipeline} yang disimpan rapi adalah versi sederhana dari prinsip yang sama: definisi fitur tidak boleh bercabang diam-diam.
+\end{pendalaman}
 
-\textbf{Validasi Skema Berbasis \emph{Runtime}}
-Validasi skema memverifikasi keutuhan data mentah sebelum membiarkannya masuk ke mesin instruksi transformasi. Industri modern umumnya mengandalkan pustaka khusus seperti \emph{Pandera} untuk menegakkan validasi statistik berlapis:
+\section{Schema Validation, Versioning, dan Drift}\label{schema-validation-versioning-dan-drift}
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Tipe Data dan Kelengkapan:} Sistem otomatis memblokir injeksi matriks jika mendeteksi anomali struktural akibat sistem hulu, seperti bergesernya struktur kolom numerik menjadi format teks (\emph{string}).
-\item
-  \textbf{Rentang Batas Wajar:} Mesin mengetes nilai observasi terhadap limit batas ekspektasi, serta memvalidasi keselarasan entitas kategorikal terhadap kamus referensi guna menangkal intrusi dari label asing yang tak dikenal model.
-\end{itemize}
+Konsistensi tidak cukup dijaga sekali saat model dikirim. \emph{Pipeline} yang baik perlu gerbang produksi (Breck et al. 2017). \emph{Schema validation} memeriksa apakah data masuk memiliki kolom, tipe, rentang, kategori, pola \emph{missingness}, dan hubungan yang diharapkan. Tooling seperti TFDV, Great Expectations, atau pemeriksaan runtime bergaya Pandera berada dalam keluarga ini. Jika input melanggar kontrak, sistem sebaiknya memberi alert atau menolak \emph{batch}, bukan diam-diam mengubah data menjadi bentuk yang salah.
 
-Jika tumpukan data harian melanggar batasan validasi ini, proses akan ditolak (\emph{rejected}) dan peringatan diaktifkan. Tanpa palang pintu ini, nilai pengamatan cacat akan mencemari \emph{pipeline} dan membuat model menghasilkan prediksi yang keliru.
+\emph{Transformation versioning} mencatat logika fitur, \emph{fitted parameters}, model atau encoder version, dan data contract yang menghasilkan feature set. Nilai operasionalnya adalah rollback. Jika prediksi produksi tiba-tiba menyimpang, tim dapat kembali ke versi \emph{pipeline} fitur terakhir yang stabil sambil menyelidiki penyebab. Tooling bergaya DVC mengikat code, data, dan model checkpoint agar perubahan dapat ditelusuri.
 
-\textbf{Manajemen Versi (\emph{Data Version Control})}
-Siklus komputasi rekayasa fitur secara rutin dimodifikasi seiring eksperimentasi. Seluruh berkas transformasi memerlukan kontrol manajemen versi (\emph{Data Version Control} / DVC) yang mengikat jejak skrip rekayasa fitur dengan \emph{checkpoint} modelnya. Fiksasi historis ini merupakan kunci untuk operasi pemulihan (\emph{rollback}). Apabila probabilitas prediksi mendadak menyimpang di produksi, teknisi dapat langsung merestorasi status \emph{pipeline} ke versi kode ekstraksi yang stabil.
+\emph{Data drift} atau \emph{covariate drift} berarti \(P(X)\) berubah, sedangkan \emph{concept drift} (Gama et al. 2014) berarti \(P(Y\mid X)\) berubah. \emph{Population shift} menamai perubahan komposisi populasi; dampaknya dapat terlihat sebagai perubahan \(P(X)\) atau prevalensi label \(P(Y)\) dan tidak otomatis berarti \emph{concept drift}. Jika sensor baru mengganti rentang nilai, itu mungkin \emph{data drift} mekanis. Jika komposisi pelanggan berubah setelah kebijakan baru, itu dapat menjadi \emph{population shift}. Jika hubungan perilaku dengan target atau definisi target berubah, pemeriksaannya lebih mendasar.
 
-\textbf{Pemantauan \emph{Data Drift}}
-\emph{Data drift} mendeskripsikan bergesernya sebaran distribusi atribut masukan produksi menjauhi distribusi sampel pelatihan aslinya. Pergeseran diam-diam ini mereduksi akurasi tanpa memicu peringatan \emph{error} sama sekali. Simpangan ini dikalkulasi menggunakan ukuran geometri probabilitas matematis, di mana \emph{Population Stability Index} (PSI) dan jarak \emph{Wasserstein} menjadi standar pengukuran yang paling lazim digunakan. Secara formal, perhitungan PSI diformulasikan sebagai:
-\[ \text{PSI} = \sum_{i=1}^{B} \left( P_{\text{actual}, i} - P_{\text{expected}, i} \right) \times \ln \left( \frac{P_{\text{actual}, i}}{P_{\text{expected}, i}} \right) \]
-Di mana sebaran nilai numerik dibagi ke dalam \(B\) buah bin interval, \(P_{\text{actual}, i}\) melambangkan proporsi populasi data produksi pada interval ke-\(i\), dan \(P_{\text{expected}, i}\) mewakili persentase populasi dari distribusi data latih referensi pada interval yang identik. Ambang batas umum menetapkan bahwa jika PSI \(> 0.2\), maka \emph{drift} yang terjadi bersifat masif dan wajib ditangani.
+Bab 9 sudah membahas PSI; di sini cukup diingat bahwa nilai besar, misalnya konvensi investigasi di atas 0,25, memicu pemeriksaan, bukan keputusan otomatis. Untuk \emph{drift} multivariat pada fitur kontinu, ukuran jarak seperti \emph{Wasserstein distance} dapat dipakai. Monitoring harus memprioritaskan fitur penting dan rapuh, bukan semua statistik dengan bobot sama.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch17-fig-3}
-\caption{Jalur Ekstraksi Fitur Batch vs Streaming Features}
+Gambar 17.3 merangkum tiga \emph{guardrail}. \emph{Schema gate} menolak input cacat, \emph{versioned transformation layer} menjaga rollback, dan \emph{drift monitor} memberi alert yang harus diselidiki.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch17-fig-3}
+\caption{Guardrail produksi untuk fitur}
 \label{fig:ch17-fig-3}
 \end{figure}
 
-Dalam memitigasi anomali ini, ekosistem pemantauan telah beralih pada pemanfaatan alat spesialis:
+Respons terhadap \emph{drift} harus bertahap. Pertama, bedakan sebab mekanis dari perubahan populasi organik: sensor rusak, sync gagal, kategori baru, atau format input berubah. Teks masukan pengguna juga dapat berubah setelah kebijakan baru atau migrasi platform, misalnya formulir \emph{online} yang diganti formatnya. Kedua, jika perubahan organik terbukti melewati toleransi dan memengaruhi performa, jadwalkan retraining dengan data terbaru. Jangan mematikan model otomatis hanya karena satu alert \emph{drift} menyala. Dengan \emph{guardrail} ini, kita dapat kembali ke pertanyaan desain: representasi apa yang wajar untuk tipe data dan batas operasional tertentu?
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{\emph{Evidently AI}:} Bekerja dominan pada deteksi pergeseran \emph{univariate} (variabel tunggal), yang memberikan panel kontrol visual mengenai fitur apa yang nilai rata-rata populasinya paling parah terdistorsi.
-\item
-  \textbf{\emph{NannyML}:} Menutup kelemahan utama dari pemantauan konvensional, yakni ketiadaan label \emph{ground truth} di lingkungan produksi \emph{real-time}. \emph{NannyML} memelopori algoritma seperti \emph{Confidence-Based Performance Estimation} (CBPE) dan \emph{Direct Loss Estimation} (DLE). Algoritma tersebut secara matematis mengestimasi seberapa besar \emph{drift} fitur saat ini telah menggerus performa prediksi riil model (seperti kejatuhan skor AUC), murni bermodalkan pergerakan fitur input tanpa menunggu kedatangan label hasil observasi aslinya.
-\end{itemize}
+\begin{pendalaman}{Memantau performa tanpa label: estimasi berbasis keyakinan}
+Masalah monitoring paling sulit adalah label produksi sering terlambat minggu atau bulan. Estimator modern mencoba memprediksi dampak performa dari \emph{drift} yang terlihat, memakai distribusi input dan \emph{confidence} model sebelum label tiba. \emph{Confidence-based performance estimation} dan \emph{direct loss estimation}, misalnya, memperkirakan apakah AUC atau loss sedang memburuk. Ini estimasi dengan asumsi, bukan pengukuran; salah satu asumsi pentingnya adalah \emph{concept drift} tidak dominan. Nilainya adalah peringatan dini. Evaluasi berbasis label tetap menjadi penyelesaian akhir ketika ground truth tiba.
+\end{pendalaman}
 
-Saat degradasi terdeteksi, rantai mitigasi standar tidak menyarankan model langsung dimatikan. Praktisi harus memverifikasi apakah ini isu integritas mekanis (seperti disfungsi pemancar sensor) atau transformasi populasi organik. Bila terbukti pergeseran populasi riil, dan ambang degradasi (berdasarkan parameter \emph{NannyML}) melewati toleransi komersial, \emph{pipeline} kemudian dijadwalkan ulang untuk proses \emph{retraining} parsial menggunakan irisan data termutakhir.
+\section{Peta Rute Lintas Tipe Data}\label{peta-rute-lintas-tipe-data}
 
-\section{Kerangka Keputusan Lintas Tipe Data}\label{kerangka-keputusan-lintas-tipe-data}
+Sebelum memilih modalitas, cabang pertama sering bersifat operasional: \emph{batch} atau \emph{streaming}. Agregat histori satu bulan mungkin wajar untuk scoring malam hari, tetapi mustahil untuk \emph{serving} milidetik jika data harus dihitung ulang live. \emph{Latency}, \emph{freshness}, dan biaya sering memangkas menu fitur sebelum teknik dipilih.
 
-Setiap tipe data menuntut perlakuan yang spesifik. Pemilihan teknik rekayasa fitur sangat bergantung pada modalitas data, batasan latensi saat \emph{inference}, serta tingkat interpretasi yang disyaratkan oleh proyek. Kerangka keputusan lintas tipe data bertindak sebagai alat navigasi utama bagi perancang sebelum menyusun satu baris kode pun. Peta utuh dari panduan ini dapat ditelusuri pada Lampiran A.
+Peta rute pada bagian ini melengkapi peta operasi yang sudah dibangun sejak awal buku. Bab 3-9 membantu menjawab apa yang dilakukan terhadap fitur: \emph{scaling}, \emph{encoding}, imputasi, agregasi, seleksi, reduksi, dan evaluasi. Bagian ini membantu menjawab bentuk data apa yang sedang dihadapi: tabular, deret waktu, teks, citra, audio, spasial, graf, atau multimodal. Dalam proyek nyata, dua peta ini dipakai bersama.
 
-Cabang pertama dalam pohon keputusan berawal dari kendala produksi. Merujuk pada pedoman pembingkaian masalah \emph{machine learning}, perancang harus menetapkan target latensi prediksi sejak awal:
+Setelah itu, cocokkan representasi dengan tipe data, model, ukuran data, interpretabilitas, compute, dan deployment constraint. Tabel 17.1 adalah router lintas bab. Ia tidak memilihkan model secara otomatis, tetapi membantu pembaca bertanya: representasi awal apa yang wajar, \emph{leakage} apa yang paling mungkin, dan kapan representasi yang dipelajari mesin layak dicoba? Bacalah tabel ini dari kiri ke kanan: mulai dari situasi data, pilih representasi awal yang tidak berlebihan, lalu cek risiko evaluasi sebelum mencoba representasi yang lebih kompleks atau lebih bergantung pada pembelajaran mesin.
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Pemrosesan \emph{batch}:} Pendekatan untuk inferensi periodik dengan volume data masif dan toleransi waktu komputasi yang longgar.
-\item
-  \textbf{Pemrosesan \emph{streaming}:} Pendekatan untuk merespons permintaan secara seketika berdasarkan arus data waktu nyata.
-\end{itemize}
+\tabeljudul{Tabel 17.1 — Peta rute lintas tipe data}
 
-Batasan arsitektur ini mendikte jenis fitur yang bisa diimplementasikan. Fitur agregasi kompleks yang mencakup riwayat transaksi sebulan penuh mungkin valid beroperasi pada sistem \emph{batch}, tetapi memakan durasi komputasi yang terlalu lambat untuk melayani kebutuhan sistem \emph{streaming}.
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.153}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.182}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.204}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.176}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.285}}@{}}
+\toprule
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch17-fig-4}
-\caption{Skema Training-Serving Skew Akibat Perbedaan Ketersediaan Fitur}
+Situasi data
+ & 
+Representasi awal yang wajar
+ & 
+Risiko leakage utama
+ & 
+Catatan evaluasi
+ & 
+Kapan representasi dipelajari membantu
+ \\
+\midrule
+\endhead
+
+
+
+
+Tabular klasik & Numeric\slash{}categorical \emph{encoding}, \emph{missing indicators}, \emph{derived features} & \emph{Preprocessing} di-\emph{fit} sebelum \emph{split}, \emph{target leakage} & \emph{Baseline} sederhana dan \emph{ablation} kelompok fitur & Jika \emph{row embedding} diperlukan atau data sangat besar \\
+Deret waktu\slash{}sensor & Window, lag, rolling, differencing, frequency features & \emph{Look-ahead}, target-window overlap, label belum tersedia & \emph{Temporal split}; gap hanya jika overlap\slash{}availability memerlukannya & Jika pola sekuensial kompleks dan data cukup \\
+Teks & \emph{TF-IDF baseline}, \emph{embedding}, \emph{frozen extractor} & \emph{Vocabulary} atau IDF di-\emph{fit} pada seluruh corpus & Bandingkan \emph{baseline sparse} dan \emph{embedding} & Jika semantik, sinonim, dan konteks penting \\
+Citra\slash{}audio & Penskalaan input, augmentasi, HOG\slash{}spectrogram, \emph{pretrained encoder} & Near duplicate, source \emph{leakage}, augmentation invalid & \emph{Source-aware} atau \emph{group split} & Jika data visual\slash{}audio kaya dan label terbatas \\
+Spasial & Jarak, region, proximity count, spatial lag & Label tetangga atau konteks ruang yang tidak tersedia; klaim wilayah baru dari \emph{random split} & \emph{Spatial block}\slash{}buffer untuk wilayah baru; split lokal bila sesuai deployment & Jika \emph{encoder} spasial pada citra\slash{}geometri besar diperlukan, atau jika hubungan spasial kompleks memerlukan representasi yang dipelajari dari koordinat \\
+Graf & Degree, centrality, aggregation, \emph{node embedding} & Label tersembunyi, \emph{future edge}, atau atribut yang tidak tersedia & \emph{Transductive}, \emph{inductive}, atau temporal sesuai protokol deployment & Jika struktur graf memberikan informasi prediktif yang sulit ditangkap oleh fitur \emph{centrality} dan agregasi manual, misalnya melalui \emph{node embedding} atau \emph{message passing} pada GNN \\
+Multimodal & \emph{Alignment}, \emph{fusion}, \emph{missing-modality strategy} & Modalitas satu entitas terpisah antar-\emph{split}, \emph{future modality} & Group\slash{}entity split, \emph{ablation} per modalitas & Jika \emph{shared embedding} atau \emph{fusion} yang dipelajari menambah nilai \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+Dua skenario menunjukkan cara membaca router. Pada retail demand forecasting, unitnya store x product x week. \emph{Split} temporal menahan minggu terakhir sebagai test. Fitur rolling dihitung dari minggu \(T{-}4\) sampai \(T{-}1\), bukan minggu target. Risiko utamanya \emph{look-ahead leakage}. Representasi sekuensial mungkin dicoba jika \emph{baseline} lag dan rolling tidak cukup.
+
+Pada multimodal medical severity, unitnya satu sesi pemeriksaan. X-ray masuk lewat \emph{frozen CNN embedding}, dengan catatan bahwa encoder \emph{pretrained} dari citra alami tidak selalu cocok untuk citra medis; verifikasi \emph{domain fit} tetap diperlukan. \emph{Lab features} diimputasi dan diberi \emph{robust scaling}. Jika deployment menuntut generalisasi ke pasien baru, gunakan \emph{patient-level group split} agar pasien yang sama tidak muncul di \emph{train} dan \emph{test}. Di domain seperti ini, auditability dapat membatasi penggunaan \emph{black-box embeddings}, walaupun benchmark terlihat kuat. Pada credit dan health, governance dapat menjadi veto desain, bukan catatan tambahan. Dari router ini, prinsip akhirnya dapat diringkas menjadi dua kelompok: mulai dari masalah dan \emph{split}, lalu buktikan bahwa representasi yang dipilih benar-benar bernilai.
+
+\section{\texorpdfstring{Prinsip I: Mulai dari Masalah, Ketersediaan, dan \emph{Split}}{Prinsip I: Mulai dari Masalah, Ketersediaan, dan Split}}\label{prinsip-i-mulai-dari-masalah-ketersediaan-dan-split}
+
+Setelah router lintas tipe data memberi peta pilihan, prinsip payung pertama mengembalikan proyek ke awal: mulai dari masalah prediksi, bukan teknik favorit. Unit, target, horizon, \emph{cutoff}, dan \emph{split} harus jelas sebelum fitur dibuat. Jika pertanyaan salah, model yang akurat pun tidak membantu keputusan yang benar. Tiga subprinsip berikutnya merinci ketersediaan, batas \emph{split}, dan tata kelola di bawah prinsip payung ini.
+
+Subprinsip ketersediaan: fitur hanya valid jika tersedia saat prediksi. Availability tidak hanya berarti kolom itu ada di suatu tabel. Ia juga berarti segar, cukup cepat, dan sah untuk dipakai pada waktu keputusan. ``Waktu login terakhir'' yang disinkronkan malam hari dapat stale pada siang hari. Agregat yang butuh query mahal mungkin tersedia secara teoritis tetapi gagal latency produksi.
+
+Subprinsip batas \emph{split}: setiap transformasi atau statistik yang dipelajari dalam evaluasi terawasi harus mengikuti \emph{split}. Bentuk finalnya singkat: \emph{estimate on train, freeze, apply everywhere else}. Scaler, imputer, encoder yang dilatih lokal, \emph{vocabulary}, \emph{selected features}, PCA, dan threshold dipelajari dari sisi pelatihan yang sah, lalu diterapkan ke validasi, \emph{test}, dan inferensi. \emph{Retrieval index} berbeda dari transformasi tersebut: indeks boleh memuat korpus apa pun yang memang tersedia saat inferensi, termasuk item tak berlabel di luar \emph{training split}, tetapi tidak boleh memuat dokumen masa depan atau metadata yang belum tersedia dalam protokol deployment.
+
+Subprinsip tata kelola: privacy, proxy, dan data minimization adalah bagian dari kualitas fitur. Menghapus kolom sensitif tidak cukup jika postcode, delivery route, sekolah, atau perangkat dapat merekonstruksi atribut yang sama. Akurasi tidak otomatis membenarkan fitur. Jika sebuah fitur berisiko merugikan kelompok tertentu, menambah skor bukan akhir argumen; itu awal governance.
+
+Contoh yang tampak kecil sering paling berbahaya. Fitur yang sangat prediktif tetapi tiba setelah keputusan harus ditolak. Fitur atribut kependudukan atau proxy-nya mungkin meningkatkan ranking model, tetapi memerlukan aturan penggunaan yang jelas, dokumentasi, dan kadang penolakan. Feature importance tinggi tidak sama dengan legitimasi.
+
+Prinsip-prinsip ini terdengar sederhana karena diulang sepanjang buku. Justru karena sederhana, mereka mudah dilanggar ketika proyek mengejar skor. Dalam praktik, banyak kegagalan model bukan karena algoritmanya kurang modern, tetapi karena \emph{cutoff} salah, \emph{split} bocor, fitur tidak tersedia, atau transformasi tidak sama antara pelatihan dan \emph{inference}. Kelompok prinsip berikutnya menutup sisi lain: bagaimana menilai jumlah fitur, kompleksitas, dan kombinasi representasi.
+
+\section{Prinsip II: Validasi, Kombinasi Representasi, dan Jalan ke Depan}\label{prinsip-ii-validasi-kombinasi-representasi-dan-jalan-ke-depan}
+
+Setelah masalah dan \emph{split} dikunci, prinsip payung kedua menahan godaan menambah fitur tanpa bukti. Lebih banyak fitur tidak otomatis lebih baik. Fitur tambahan dapat menambah \emph{noise}, \emph{leakage}, biaya, latency, dan risiko kebijakan. Validasi mengalahkan jumlah fitur. Setiap fitur kompleks atau representasi yang dipelajari mesin harus membayar tempatnya dengan bukti: peningkatan stabil terhadap \emph{baseline}, ketersediaan yang jelas, biaya yang masuk akal, dan risiko yang dapat diterima.
+
+Representasi yang dirancang manusia dan representasi yang dipelajari mesin bukan lawan. Bentuk hybrid dari Bab 15, \(\mathbf{x}_{\text{final}} = [\phi_{\text{learned}} \parallel \phi_{\text{designed}}]\), dapat dibaca sebagai simbol penutup buku. Di sini \(\phi_{\text{learned}}\) adalah vektor fitur dari representasi yang dipelajari mesin, \(\phi_{\text{designed}}\) dari representasi yang dirancang manusia, dan \(\parallel\) menyatakan operasi penggabungan vektor menjadi satu vektor fitur akhir \(\mathbf{x}_{\text{final}}\). Mesin mengekstrak pola yang sulit dienumerasi manusia; fitur yang dirancang manusia mengikat model pada logika domain, batas waktu, dan pengetahuan yang jelas.
+
+Automation juga bukan pengganti judgment. Bab 16 memberi rumus sosialnya: machine proposes, human disposes. Mesin memperluas kandidat, menjalankan evaluasi, dan memberi ranking. Manusia mendefinisikan target, \emph{cutoff}, constraint, metric, dan alasan penerimaan. Tanpa dokumentasi, keputusan itu hilang; tanpa monitoring, keputusan itu membusuk.
+
+Gambar 17.4 menutup sumbu buku. Di kiri ada representasi yang dirancang manusia, di kanan representasi yang dipelajari mesin. Keduanya dipertemukan oleh validasi dan dokumentasi.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch17-fig-4}
+\caption{Representasi yang dirancang manusia dan representasi yang dipelajari mesin dalam satu \emph{pipeline}}
 \label{fig:ch17-fig-4}
 \end{figure}
 
-Gambar 17.3 mengilustrasikan perbedaan jalur ekstraksi fitur dalam arsitektur sistem untuk memenuhi batasan waktu respons \emph{inference}.
+Tabel 17.2 adalah checklist akhir. Ia dirancang untuk dibaca sebelum proyek dimulai, saat feature review, dan sebelum model masuk produksi. Setiap baris memaksa satu pertanyaan yang harus bisa dijawab dengan bukti, bukan rasa yakin.
 
-Setelah arsitektur dasar ditetapkan, kerangka keputusan membagi perlakuan fitur berdasarkan modalitas input:
+\tabeljudul{Tabel 17.2 — Daftar periksa prinsip yang bertahan lama}
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Data Tabular (Representasi yang Dirancang Manusia):} Pemrosesan bertumpu pada manipulasi skala, reduksi kardinalitas, dan injeksi atribut interaksi antar kolom. Pendekatan ini membangun representasi eksplisit yang sangat transparan bagi keperluan audit bisnis. Transparansi ini sangat membantu saat sistem perlu melacak \emph{data drift}. Evaluasi pergeseran distribusi populasi pada fitur tabular umumnya diukur melalui perhitungan \emph{Population Stability Index} (PSI):
-\end{itemize}
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-2\tabcolsep)*\real{0.480}} >{\raggedright\arraybackslash}p{(\linewidth-2\tabcolsep)*\real{0.520}}@{}}
+\toprule
 
-\[ PSI = \sum_{i=1}^{k} (A_i - E_i) \times \ln\left(\frac{A_i}{E_i}\right) \]
+Prinsip
+ & 
+Pertanyaan yang harus bisa dijawab
+ \\
+\midrule
+\endhead
 
-Di mana \(A_i\) mewakili proporsi sampel aktual pada \emph{bin} ke-\(i\) saat \emph{inference}, \(E_i\) mewakili proporsi ekspektasi dari kumpulan data latih, dan \(k\) adalah jumlah total \emph{bin}. Atribut eksplisit rancangan manusia memungkinkan kalibrasi yang terarah ketika nilai PSI melewati batas aman.
 
-\begin{itemize}
-\item
-  \textbf{Deret Waktu dan Spasial (Struktur dan Konteks):} Kehadiran dimensi temporal atau koordinat lokasi mewajibkan perancang untuk berfokus pada isolasi konteks. Implementasi teknis membutuhkan aturan \emph{windowing} ketat guna merekam riwayat historis tanpa terekspos kejadian masa depan. Pada area ini, penerapan praktik \emph{pipeline} yang benar menjadi penangkal utama terhadap kebocoran data spesifik modalitas.
-\item
-  \textbf{Teks, Citra, dan Audio (Representasi yang Dipelajari Mesin):} Modalitas tidak terstruktur memaksa perancang untuk memotong jalur rekayasa manual. Sistem langsung mengandalkan vektor \emph{embedding} berdensitas tinggi dari \emph{pretrained model}. Beban kerja beralih dari merancang fitur individual menjadi menyusun arsitektur integrasi, memastikan gabungan representasi dari mesin saling melengkapi struktur prediksi akhir.
-\end{itemize}
 
-Kerangka keputusan ini memastikan sinkronisasi antara teknik komputasi dan aturan operasional di lapangan. Regulasi industri finansial yang menuntut rekam jejak audit penuh akan menolak \emph{embedding} kotak hitam dan mengunci pilihan pada representasi rancangan manusia, meskipun \emph{pretrained model} terbaru tersedia. Pemetaan arsitektur di awal mencegah perancang membangun sistem teknis yang pada akhirnya ditolak oleh lingkungan produksi.
 
-\section{Prinsip Dasar: Masalah, Ketersediaan, dan Aturan Split}\label{prinsip-dasar-masalah-ketersediaan-dan-aturan-split}
+Mulai dari masalah & Apa unit, target, horizon, dan \emph{cutoff}? \\
+Ketersediaan & Apakah fitur ini ada, segar, dan cukup cepat saat prediksi? \\
+Transformasi mengikuti \emph{split} & Di mana transformasi ini di-fit, kapan dibekukan, dan ke mana diterapkan? \\
+Kualitas melampaui importance & Apakah fitur tersedia, stabil, terjangkau, dan sah? \\
+Validasi mengalahkan jumlah fitur & Apa \emph{baseline}-nya, dan apa bukti fitur ini menambah nilai? \\
+Privasi dan proxy & Siapa yang bisa dirugikan, dan lewat jalur proxy apa? \\
+Dokumentasi dan monitoring & Siapa pemilik fitur, versinya apa, dan bagaimana kita tahu ia masih bekerja? \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
 
-Rekayasa fitur berawal dari pemahaman atas masalah operasional, bukan sekadar eksperimen algoritmik. Praktisi kerap menghabiskan waktu mencoba berbagai transformasi rumit pada data historis, padahal fitur yang kuat justru lahir dari pemahaman mendalam tentang mekanisme domain. Pendekatan berbasis masalah (\emph{problem-driven}) memastikan setiap operasi komputasi terarah pada sinyal yang relevan dengan tujuan sistem.
+}
 
-Perancangan fitur untuk produksi tunduk pada tiga prinsip berikut.
+Dokumentasi membuat rekayasa fitur tahan lama: definisi, sumber, \emph{cutoff}, risiko, versi, pemilik, dan monitor. Tanpa itu, fitur yang bagus hari ini menjadi hutang teknis besok. Dengan itu, fitur dapat dievaluasi ulang ketika data berubah, model berganti, atau aturan bisnis bergerak.
 
-\textbf{Ketersediaan Data Saat \emph{Inference}.}\label{ketersediaan-data-saat-inference}
+Jalan ke depan bersifat hybrid. Manusia merumuskan masalah, memilih batas, dan menilai konsekuensi. Mesin belajar representasi, mengusulkan kandidat, dan mempercepat pencarian. \emph{Pipeline} yang baik menyatukan keduanya di bawah validasi yang jujur. Dengan bahasa Bab 1, pekerjaan ini tetap tentang merancang \(\phi(x_{\text{raw}})\): transformasi dari data mentah ke representasi yang sah, berguna, dan dapat dipelihara. Setiap proyek ML/DL seharusnya dapat menjawab: representasi apa yang kita pilih, mengapa, dan bagaimana kita tahu ia bekerja?
 
-Syarat teknis paling kaku dalam produksi adalah ketersediaan data pada saat prediksi berjalan (\emph{inference}). Fitur wajib tersedia secara komputasional dan faktual pada detik model dipanggil. Metrik evaluasi yang tinggi di fase eksperimen tidak ada artinya jika bahan baku fitur tersebut mengalami hambatan latensi di produksi.
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Kasus Sinkronisasi Data:} Model prediksi \emph{churn} sering menggunakan fitur waktu interaksi terakhir (\emph{last login date}). Jika saluran data menyinkronkan log interaksi setiap 24 jam sekali pada tengah malam, fitur tersebut akan usang saat model mengeksekusi prediksi di siang hari.
-\item
-  \textbf{Risiko \emph{Training-Serving Skew}:} Perbedaan jalur ketersediaan data antara lingkungan eksperimen (tersedia semua) dan produksi (tersedia sebagian atau tertunda) menyebabkan model menerima distribusi data yang berbeda saat bekerja di lapangan.
-\end{itemize}
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch17-fig-5}
-\caption{Arsitektur Hibrida Menggabungkan Ekstraksi Fitur Visual DL \& Tabular Rancangan Manusia}
-\label{fig:ch17-fig-5}
-\end{figure}
-
-Untuk mendeteksi seberapa jauh pergeseran distribusi yang terjadi akibat perbedaan fase ini, kita dapat mengukur \emph{Population Stability Index} (PSI):
-
-\[ PSI = \sum_{i=1}^{k} \left( P_{inference,i} - P_{train,i} \right) \ln \left( \frac{P_{inference,i}}{P_{train,i}} \right) \]
-
-Dalam persamaan tersebut, \(k\) adalah jumlah partisi (\emph{bin}) dari suatu fitur, \(P_{inference,i}\) adalah proporsi sampel pada \emph{bin} ke-\(i\) di lingkungan produksi, dan \(P_{train,i}\) adalah proporsi sampel pada \emph{bin} yang sama di set pelatihan.
-
-Nilai PSI di atas 0,2 menandakan pergeseran populasi atau \emph{skew} yang besar. Jika ini terjadi, desain ketersediaan fitur tersebut perlu dievaluasi ulang.
-
-\textbf{Transformasi Selalu Mengikuti \emph{Split}.}\label{transformasi-selalu-mengikuti-split}
-
-Validitas evaluasi menuntut agar semua transformasi data dilakukan setelah penerapan strategi pemisahan (\emph{split}). Praktik \emph{pipeline} yang benar mengatur urutan operasi sebagai berikut:
+\begin{bacaan}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Estimasi Parameter pada Data Latih:} Operasi penyusunan fitur (seperti perhitungan rata-rata untuk imputasi, penyesuaian skala, atau \emph{target encoding}) harus dihitung murni menggunakan observasi dari set pelatihan.
+  scikit-learn --- Common Pitfalls \& Pipelines --- \url{https://scikit-learn.org/stable/common_pitfalls.html}. Disiplin pipeline untuk produksi.
 \item
-  \textbf{Pembekuan Transformer:} Parameter transformasi yang telah diperoleh kemudian dibekukan dan dipakai apa adanya untuk mentransformasi set pengujian.
+  Sculley dkk. (2015), Hidden Technical Debt in ML Systems (NeurIPS) --- \url{https://papers.nips.cc/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html}. Sumber sintesis utama untuk utang teknis ML.
 \item
-  \textbf{Pencegahan Data Leakage:} Jika kalkulasi beroperasi pada keseluruhan dataset sebelum pemisahan, distribusi set pengujian akan ikut terhitung ke dalam parameter transformasi. Kebocoran ini menghasilkan akurasi palsu yang terlihat tinggi saat eksperimen namun anjlok saat produksi.
+  Gebru dkk. (2021), Datasheets for Datasets --- \url{https://arxiv.org/abs/1803.09010}. Dokumentasi asal dan batasan data.
+\item
+  TensorFlow Data Validation --- \url{https://www.tensorflow.org/tfx/data_validation}. Validasi skema dan deteksi drift.
+\item
+  Great Expectations --- \url{https://greatexpectations.io/}. Uji kualitas data sebagai kode.
+\item
+  Evidently AI --- \url{https://docs.evidentlyai.com/}. Pemantauan drift data dan model.
+\item
+  Feast --- \url{https://docs.feast.dev/}. Feature store: konsistensi latih--saji.
+\item
+  ICO --- Data minimisation --- \url{https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/data-protection-principles/a-guide-to-the-data-protection-principles/the-principles/data-minimisation/}. Prinsip minimisasi data (privasi).
 \end{itemize}
 
-\textbf{Keamanan Operasional dan Fitur \emph{Proxy}.}\label{keamanan-operasional-dan-fitur-proxy}
+\end{bacaan}
 
-Melanjutkan prinsip privasi dari Bab 9, fakta bahwa sebuah atribut menaikkan akurasi prediksi tidak otomatis membuatnya boleh dipakai. Sistem harus dibangun dengan batas keamanan operasional agar tidak mengeksploitasi atribut yang dilindungi.
+\rujukanheading
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Penghapusan Atribut Sensitif:} Variabel demografi atau data pribadi yang dilindungi wajib dibuang dari \emph{pipeline} pemodelan.
-\item
-  \textbf{Bahaya Fitur \emph{Proxy}:} Model amat rentan menyerap fitur \emph{proxy}, yaitu atribut yang terkesan netral namun berkorelasi kuat dengan variabel sensitif. Misalnya, atribut ``kode pos domisili'' atau ``rute pengiriman harian'' sering kali menyimpan profil status sosial-ekonomi secara terselubung.
-\item
-  \textbf{Mengunci Bias Historis:} Membiarkan sistem mengakses variabel \emph{proxy} sama dengan menginstruksikan model untuk mempelajari dan mereplikasi bias historis yang sudah berurat akar pada data mentah.
-\end{itemize}
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-breck2017mltest}
+Breck, Eric, Shanqing Cai, Eric Nielsen, Michael Salib, and D. Sculley. 2017. {``The {ML} Test Score: A Rubric for {ML} Production Readiness and Technical Debt Reduction.''} \emph{IEEE International Conference on Big Data}.
 
-\section{Prinsip Dasar Bagian II: Validasi, Sinergi Representasi, dan Arah ke Depan}\label{prinsip-dasar-bagian-ii-validasi-sinergi-representasi-dan-arah-ke-depan}
+\bibitem[\citeproctext]{ref-gama2014driftsurvey}
+Gama, João, Indrė Žliobaitė, Albert Bifet, Mykola Pechenizkiy, and Abdelhamid Bouchachia. 2014. {``A Survey on Concept Drift Adaptation.''} \emph{ACM Computing Surveys} 46 (4): 1--37.
 
-Menambahkan ratusan atribut baru ke dalam \emph{dataset} sering dianggap sebagai metode cepat untuk meningkatkan akurasi. Namun, penambahan variabel tanpa dasar keilmuan justru memperbesar risiko \emph{overfitting}, di mana model menghafal \emph{noise} dari data pelatihan. Sistem prediksi yang andal selalu dibangun dari stabilitas fitur yang teruji melalui skema validasi silang yang ketat, bukan sekadar dari lonjakan dimensi matriks.
+\bibitem[\citeproctext]{ref-sculley2015debt}
+Sculley, D., Gary Holt, Daniel Golovin, et al. 2015. {``Hidden Technical Debt in Machine Learning Systems.''} \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
 
-Buku ini telah mengeksplorasi spektrum pemrosesan data yang membentang luas, dari representasi yang dirancang manusia di satu sisi, hingga representasi yang dipelajari mesin di sisi lain. Kedua pendekatan tersebut tidak dirancang untuk saling berkompetisi. Sinergi keduanya justru bekerja maksimal saat diimplementasikan pada sistem prediksi berarsitektur hibrida. Algoritma \emph{deep learning} menangani beban ekstraksi pola rumit dari data tidak terstruktur, sementara tenaga ahli mengamankan pemahaman konteks logis melalui variabel tabular konvensional.
-
-Integrasi kedua spektrum tersebut diformulasikan secara matematis melalui teknik penggabungan matriks representasi:
-
-\[ \mathbf{x}_{final} = \big[ \phi_{learned}(\mathbf{x}_{unstructured}) \parallel \phi_{designed}(\mathbf{x}_{tabular}) \big] \]
-
-Dalam persamaan tersebut, \(\mathbf{x}_{final}\) adalah vektor fitur gabungan yang diteruskan ke lapisan prediktif akhir. Fungsi \(\phi_{learned}\) adalah ekstraktor otomatis (misalnya \emph{pretrained model} jaringan saraf) yang memproses input non-tabular \(\mathbf{x}_{unstructured}\), seperti matriks piksel citra sinar-X, sedangkan \(\phi_{designed}\) adalah transformasi manual berbasis keilmuan yang memproses atribut terstruktur \(\mathbf{x}_{tabular}\), seperti kategori usia atau riwayat penyakit. Notasi \(\parallel\) menandakan operator konkatenasi yang menyatukan kedua vektor.
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch17-fig-6}
-\caption{Arsitektur Dua Sistem Prediktif Berdampingan: Peramalan Ritel \& Hybrid Multimodal Medis}
-\label{fig:ch17-fig-6}
-\end{figure}
-
-Validasi simultan terhadap \(\mathbf{x}_{final}\) menjamin model belajar membedakan pola general yang sesungguhnya. Model tercegah dari sekadar menghafal temuan individu karena dikunci oleh batasan fisik yang diatur oleh logika representasi desain manusia.
-
-Masa depan rekayasa fitur bertumpu penuh pada kolaborasi antara komputasi mesin dan evaluasi rasional manusia. Walaupun perangkat otomasi AutoFE sanggup memproduksi usulan transformasi dalam hitungan detik, ekuilibrium operasional tetap mengandalkan pembagian tugas yang definitif:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Tugas Mesin:} Menemukan pola laten berskala besar, memproses input data dimensi tinggi, serta membuat kombinasi iterasi turunan atribut secara komprehensif tanpa henti.
-\item
-  \textbf{Tugas Manusia:} Memverifikasi kewajaran logis dari penambahan atribut, mendeteksi jalur jebakan \emph{data leakage} di level operasional, dan menakar beban latensi komputasi terhadap efisiensi infrastruktur.
-\end{itemize}
-
-Mesin berperan sebagai pengusul hipotesis representasi, sedangkan kepakaran manusia menjadi penentu validasi akhir.
-
-\section{\texorpdfstring{Studi Kasus: Merancang \emph{Pipeline} dari Nol untuk Berbagai Skenario}{Studi Kasus: Merancang Pipeline dari Nol untuk Berbagai Skenario}}\label{studi-kasus-merancang-pipeline-dari-nol-untuk-berbagai-skenario}
-
-Kita akan merancang dua \emph{pipeline} dari nol untuk mendemonstrasikan bagaimana jenis data dan rumusan masalah memandu penentuan unit observasi hingga pemilihan representasi.
-
-\textbf{Skenario Pertama: Peramalan Permintaan Ritel.}\label{skenario-pertama-peramalan-permintaan-ritel}
-
-Sebuah jaringan swalayan memprediksi volume penjualan untuk mengatur stok barang. Desain \emph{pipeline} untuk masalah ini dibangun dengan spesifikasi berikut:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Unit observasi dan target:} Kombinasi spesifik antara toko, produk, dan minggu. Target prediksinya adalah volume penjualan pada minggu \(T+1\).
-\item
-  \textbf{Strategi pembagian data (\emph{split}):} Prediksi bergantungan pada waktu, sehingga pembagian data menaati kronologi secara ketat. Pemisahan temporal menyisihkan blok minggu terakhir khusus untuk pengujian guna menyimulasikan kondisi di lingkungan produksi.
-\item
-  \textbf{Ekstraksi fitur:} Data tabular membutuhkan jendela waktu (\emph{windowing}) terstruktur. Contoh representasinya adalah nilai rata-rata historis (\emph{rolling average}) dari minggu \(T-1\) hingga \(T-4\).
-\item
-  \textbf{Pencegahan \emph{leakage}:} Perhitungan fitur tidak boleh menyertakan informasi dari target di minggu \(T+1\). Praktik \emph{pipeline} yang benar wajib diterapkan sejak awal pembentukan sampel pembelajaran demi menghindari \emph{look-ahead leakage}.
-\end{itemize}
-
-Setelah \emph{pipeline} fitur ritel beroperasi di produksi, stabilitas datanya perlu dipantau. Metrik yang lazim dipakai untuk mendeteksi \emph{data drift} adalah \emph{Population Stability Index} (PSI):
-
-\[ \text{PSI} = \sum_{i=1}^{k} (A_i - E_i) \times \ln\left(\frac{A_i}{E_i}\right) \]
-
-Dalam persamaan tersebut, \(k\) adalah jumlah kategori atau \emph{bin} pembagian fitur numerik, \(A_i\) adalah proporsi observasi pada \emph{bin} \(i\) saat produksi (\emph{inference}), dan \(E_i\) adalah proporsi observasi pada \emph{bin} yang sama saat pelatihan (\emph{training}).
-
-Pergeseran skor PSI yang tinggi menandakan bahwa distribusi fitur telah berubah dan siklus pelatihan ulang kemungkinan diperlukan.
-
-\textbf{Skenario Kedua: Diagnosis Medis Multimodal.}\label{skenario-kedua-diagnosis-medis-multimodal}
-
-Skenario kedua melibatkan klasifikasi tingkat keparahan penyakit paru-paru berdasarkan data rumah sakit. Karakteristik perancangan arsitektur multimodal ini meliputi:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Unit observasi:} Satu sesi pemeriksaan pasien individual tanpa horizon waktu prediktif ke depan.
-\item
-  \textbf{Strategi \emph{split}:} Pemisahan data diacak, namun seluruh rekam medis dari satu pasien harus selalu masuk ke blok \emph{split} yang sama. Ini membatasi model agar tidak sekadar menghafal karakteristik individu pasien.
-\item
-  \textbf{Pemrosesan citra:} Citra sinar-X melewati augmentasi dan masuk ke \emph{pretrained model} jaringan konvolusional (CNN). Model ini sengaja dibekukan untuk mengabdi sebagai ekstraktor fitur yang memproduksi vektor \emph{embedding}. Bagian ini memakai representasi yang dipelajari mesin.
-\item
-  \textbf{Pemrosesan tabular:} Hasil tes darah dan sensor numerik diproses terpisah. Fitur-fitur tersebut diimputasi lalu diseragamkan dengan metode \emph{robust scaling}.
-\item
-  \textbf{Penggabungan (\emph{fusion}):} Aliran \emph{embedding} citra dan aliran fitur tabular digabungkan secara internal sebelum masuk lapisan klasifikasi akhir.
-\end{itemize}
-
-Implementasi kode transformasi merupakan tahapan teknis penutup. Ketepatan dalam merumuskan unit observasi, mengatur logika \emph{split} pengujian, serta menyatukan ragam bentuk representasi adalah pondasi sejati dari pembangunan sistem prediktif yang berhasil.
-
-\begin{lstlisting}[language=Python]
-import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.preprocessing import RobustScaler
-from sklearn.impute import SimpleImputer
-from sklearn.decomposition import PCA
-from sklearn.ensemble import RandomForestClassifier
-
-# 1. Transformer kustom untuk melakukan pemilihan (seleksi) kolom spesifik
-class ColumnSelector(BaseEstimator, TransformerMixin):
-    def __init__(self, columns):
-        self.columns = columns
-    def fit(self, X, y=None):
-        return self
-    def transform(self, X):
-        return pd.DataFrame(X)[self.columns].values
-
-# 2. Simulasi Dataset Medis: Gabungan data tabular & embedding citra rontgen
-np.random.seed(42)
-df_medis = pd.DataFrame({
-    'tensi_darah': np.random.normal(120.0, 15.0, 100),
-    'kadar_hemoglobin': np.random.normal(14.0, 2.0, 100),
-    'img_feat_1': np.random.normal(0.0, 1.0, 100),
-    'img_feat_2': np.random.normal(0.0, 1.0, 100)
-})
-df_medis.iloc[10:20, 0] = np.nan  # Sisipkan nilai kosong
-y_diagnosis = np.random.randint(0, 2, size=100)
-
-# 3. Aliran pemrosesan fitur tabular numerik
-tabular_flow = Pipeline([
-    ('select_tab', ColumnSelector(columns=['tensi_darah', 'kadar_hemoglobin'])),
-    ('impute', SimpleImputer(strategy='median')),
-    ('scale', RobustScaler())
-])
-
-# 4. Aliran pemrosesan fitur embedding citra (pre-extracted CNN)
-image_flow = Pipeline([
-    ('select_img', ColumnSelector(columns=['img_feat_1', 'img_feat_2'])),
-    ('pca', PCA(n_components=1, random_state=42))
-])
-
-# 5. Peleburan (fusion) fitur secara paralel menggunakan FeatureUnion
-fusion_layer = FeatureUnion([
-    ('tab_pipeline', tabular_flow),
-    ('img_pipeline', image_flow)
-])
-
-# 6. Merangkai pipeline utama tingkat tinggi secara menyeluruh
-main_pipeline = Pipeline([
-    ('union', fusion_layer),
-    ('classifier', RandomForestClassifier(random_state=42))
-])
-
-# 7. Menjalankan proses fitting terintegrasi
-main_pipeline.fit(df_medis, y_diagnosis)
-
-# Verifikasi dimensi output hasil gabungan
-features_transformed = fusion_layer.fit_transform(df_medis)
-print(f"Dimensi data masukan awal : {df_medis.shape}")
-print(f"Dimensi fitur gabungan akhir: {features_transformed.shape}")
-print("Status: Arsitektur Pipeline FeatureUnion berhasil dieksekusi.")
-\end{lstlisting}
+\end{CSLReferences}

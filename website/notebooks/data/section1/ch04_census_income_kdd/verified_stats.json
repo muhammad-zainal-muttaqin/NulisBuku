@@ -1,0 +1,118 @@
+{
+  "train_rows": 199523,
+  "test_rows": 99762,
+  "total_rows": 299285,
+  "columns": [
+    "age",
+    "class_of_worker",
+    "detailed_industry_recode",
+    "detailed_occupation_recode",
+    "education",
+    "wage_per_hour",
+    "enroll_in_edu_inst_last_wk",
+    "marital_stat",
+    "major_industry_code",
+    "major_occupation_code",
+    "race",
+    "hispanic_origin",
+    "sex",
+    "member_of_labor_union",
+    "reason_for_unemployment",
+    "employment_status",
+    "capital_gains",
+    "capital_losses",
+    "dividends_from_stocks",
+    "tax_filer_stat",
+    "region_of_previous_residence",
+    "state_of_previous_residence",
+    "detailed_household_and_family_stat",
+    "detailed_household_summary",
+    "instance_weight",
+    "migration_msa",
+    "migration_region",
+    "migration_within_region",
+    "live_in_house_1_year_ago",
+    "migration_prev_res_sunbelt",
+    "num_persons_worked_for_employer",
+    "family_members_under_18",
+    "country_of_birth_father",
+    "country_of_birth_mother",
+    "country_of_birth_self",
+    "citizenship",
+    "own_business_or_self_employed",
+    "fill_veterans_admin_questionnaire",
+    "veterans_benefits",
+    "weeks_worked_in_year",
+    "year",
+    "income_label",
+    "income_gt_50k",
+    "source_split"
+  ],
+  "column_count_raw": 42,
+  "positive_rate_total": 0.062041198189017155,
+  "positive_rate_by_year": {
+    "94": 0.058125004176606994,
+    "95": 0.06595741837184747
+  },
+  "year_counts": {
+    "94": 149643,
+    "95": 149642
+  },
+  "selected_cardinality": {
+    "sex": 2,
+    "race": 5,
+    "education": 17,
+    "state_of_previous_residence": 51,
+    "country_of_birth_father": 43,
+    "country_of_birth_mother": 43,
+    "country_of_birth_self": 43,
+    "detailed_household_and_family_stat": 38,
+    "detailed_industry_recode": 52,
+    "detailed_occupation_recode": 47,
+    "major_industry_code": 24,
+    "major_occupation_code": 15,
+    "year": 2
+  },
+  "cardinality_by_year_selected": {
+    "94": {
+      "state_of_previous_residence": 51,
+      "country_of_birth_self": 42,
+      "education": 17,
+      "detailed_household_and_family_stat": 38
+    },
+    "95": {
+      "state_of_previous_residence": 1,
+      "country_of_birth_self": 43,
+      "education": 17,
+      "detailed_household_and_family_stat": 35
+    }
+  },
+  "unseen_levels_year_95_vs_94": {
+    "employment_status": [
+      "Full-time schedules",
+      "Not in labor force",
+      "PT for econ reasons usually FT",
+      "PT for econ reasons usually PT",
+      "PT for non-econ reasons usually FT",
+      "Unemployed full-time",
+      "Unemployed part- time"
+    ],
+    "country_of_birth_father": [
+      "Holand-Netherlands",
+      "Panama"
+    ],
+    "country_of_birth_mother": [
+      "Holand-Netherlands",
+      "Panama"
+    ],
+    "country_of_birth_self": [
+      "Panama"
+    ],
+    "year": [
+      "95"
+    ]
+  },
+  "unseen_levels_uci_test_vs_train": {},
+  "derived_combo_cardinality": 14198,
+  "missing_cells_parsed": 625375
+}

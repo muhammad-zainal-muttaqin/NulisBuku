@@ -1,0 +1,42 @@
+% ==========================================================================
+% panduan.tex -- dihasilkan dari v2/drafts/Cara menggunakan buku.txt oleh
+% tools/make_panduan.py. Jangan sunting manual; sunting draf lalu jalankan
+% ulang skrip ini.
+% ==========================================================================
+\chapter*{Cara Menggunakan Buku Ini}
+\addcontentsline{toc}{chapter}{Cara Menggunakan Buku Ini}
+\markboth{Cara Menggunakan Buku Ini}{}
+
+Buku ini disusun secara modular. Konsep representasi, \emph{pipeline}, dan validasi yang dipakai di seluruh buku diperkenalkan di Bab 1 dan Bab 2, sehingga kedua bab tersebut sebaiknya dibaca lebih dahulu. Setelah itu, urutan bab tidak lagi mengikat. Pembaca dapat langsung menuju bab yang sesuai dengan data yang sedang dihadapi, mulai dari tabular, deret waktu, teks, citra dan audio, spasial dan graf, hingga multimodal, tanpa kehilangan konteks. Sebelum melaporkan hasil eksperimen, ada baiknya menengok Bab 9 tentang evaluasi kualitas fitur. Bab tersebut menjelaskan cara memastikan bahwa fitur yang dirancang benar-benar berkontribusi, bukan hanya menambah kerumitan.
+
+\textbf{Peta baca.} Lima bagian menuntun pembaca dari fondasi menuju sintesis.
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Bagian I -- Fondasi} (Bab 1--2): representasi, \emph{pipeline}, dan validasi.
+\item
+  \textbf{Bagian II -- Transformasi Tabular} (Bab 3--6): fitur numerik, kategorikal, \emph{missing values} dan \emph{outlier}, fitur turunan.
+\item
+  \textbf{Bagian III -- Seleksi dan Evaluasi} (Bab 7--9): seleksi fitur, reduksi dimensi, evaluasi kualitas fitur.
+\item
+  \textbf{Bagian IV -- Representasi Menurut Struktur Data} (Bab 10--14): deret waktu dan sensor, teks, citra dan audio, spasial dan graf, multimodal.
+\item
+  \textbf{Bagian V -- Mesin, Otomatisasi, dan Sintesis} (Bab 15--17): representasi yang dipelajari mesin, otomatisasi, sintesis \emph{pipeline} produksi.
+\end{itemize}
+
+\textbf{Konvensi dalam buku ini.} Beberapa elemen berulang muncul di sepanjang bab dan sengaja ditampilkan secara berbeda agar mudah dikenali. Kotak \emph{Pendalaman} menyisipkan pembahasan tambahan yang memperluas topik utama tanpa memutus alur bacaan. Kotak tersebut boleh dilewati pada pembacaan pertama. \emph{Sintesis Bab} menutup setiap bab dengan ringkasan gagasan inti dan cocok dibaca lebih dahulu bila pembaca ingin menilai relevansi bab tersebut sebelum membacanya penuh. \emph{Bacaan Lanjutan} mengumpulkan tautan dan rujukan di luar buku untuk pendalaman mandiri, sedangkan \emph{Rujukan} di akhir bab memuat literatur yang benar-benar dikutip. Istilah berbahasa Inggris dicetak \emph{miring}, sementara nama kolom, kode, dan \emph{identifier} dicetak \texttt{monospace}.
+
+\begin{sumberdaring}
+\noindent\begin{minipage}[t]{24mm}\vspace{0pt}
+\includegraphics[width=22mm]{qr-fe-m}
+\end{minipage}\hfill
+\begin{minipage}[t]{\linewidth-28mm}\vspace{0pt}
+\noindent Versi daring buku ini tersedia di \href{https://fe-m.pages.dev/}{\texttt{https://fe-m.pages.dev/}}, lengkap dengan notebook Jupyter interaktif untuk Bab 1 sampai Bab 16. Setiap notebook memperlihatkan penerapan langsung teknik yang dibahas pada babnya menggunakan data nyata, dilengkapi mini-proyek pendalaman yang dapat dikerjakan pembaca untuk menguji pemahaman.
+\end{minipage}
+\end{sumberdaring}
+
+Notebook bersifat pelengkap, bukan pengganti. Penjelasan konseptual dan alasan di balik setiap keputusan representasi tetap disampaikan di buku, sementara notebook menunjukkan bagaimana keputusan tersebut diterjemahkan menjadi kode yang berjalan.
+
+Selamat menjelajah, dan selamat merancang representasi yang baik.
+

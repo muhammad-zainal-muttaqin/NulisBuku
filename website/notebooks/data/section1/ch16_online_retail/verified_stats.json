@@ -1,0 +1,81 @@
+{
+  "source_snapshot": "data/section1/ch06_online_retail/customer_cutoff_features.parquet",
+  "rows": 20603,
+  "train_rows": 13602,
+  "test_rows": 7001,
+  "target": "future_active_60d",
+  "target_rate_all": 0.4275105567150415,
+  "train_cutoffs": [
+    "2011-04-01",
+    "2011-05-01",
+    "2011-06-01",
+    "2011-07-01",
+    "2011-08-01"
+  ],
+  "test_cutoffs": [
+    "2011-09-01",
+    "2011-10-01"
+  ],
+  "base_features": [
+    "invoice_count_90d",
+    "gross_value_90d",
+    "item_count_90d",
+    "unique_stock_90d",
+    "days_since_last_invoice"
+  ],
+  "candidate_count": 15,
+  "accepted_candidate_count": 6,
+  "fixed_ruler": "SimpleImputer + StandardScaler + LogisticRegression(class_weight='balanced')",
+  "cv_protocol": "Train-only expanding cutoff CV over 2011-06-01, 2011-07-01, and 2011-08-01 validation cutoffs",
+  "holdout_protocol": "Fit on 2011-04-01 through 2011-08-01 cutoffs; test on 2011-09-01 and 2011-10-01 cutoffs",
+  "summary_metrics": [
+    {
+      "representation": "base_manual_90d",
+      "feature_count": 5,
+      "cv_roc_auc": 0.7277616463421883,
+      "cv_delta_vs_base": 0.0,
+      "holdout_roc_auc": 0.71622736483955,
+      "holdout_delta_vs_base": 0.0,
+      "fold_scores": "[0.7248216952521381, 0.7260069272450033, 0.7324563165294236]"
+    },
+    {
+      "representation": "curated_auto_candidates",
+      "feature_count": 12,
+      "cv_roc_auc": 0.7296733270260928,
+      "cv_delta_vs_base": 0.0019116806839044598,
+      "holdout_roc_auc": 0.7215259953871249,
+      "holdout_delta_vs_base": 0.005298630547574956,
+      "fold_scores": "[0.7248314172830704, 0.730655684887469, 0.7335328789077391]"
+    },
+    {
+      "representation": "broad_nonleaky_auto_candidates",
+      "feature_count": 19,
+      "cv_roc_auc": 0.7296272969555934,
+      "cv_delta_vs_base": 0.0018656506134050455,
+      "holdout_roc_auc": 0.7202457619931045,
+      "holdout_delta_vs_base": 0.004018397153554565,
+      "fold_scores": "[0.72324888669243, 0.732950021360819, 0.7326829828135312]"
+    },
+    {
+      "representation": "unsafe_with_future_leakage",
+      "feature_count": 21,
+      "cv_roc_auc": 0.9997069885440091,
+      "cv_delta_vs_base": 0.27194534220182076,
+      "holdout_roc_auc": 1.0,
+      "holdout_delta_vs_base": 0.28377263516045004,
+      "fold_scores": "[1.0, 0.9991209656320271, 1.0]"
+    }
+  ],
+  "top_candidate_by_cv_delta": {
+    "candidate": "future_positive_invoices_60d",
+    "columns": "future_positive_invoices_60d",
+    "family": "leakage",
+    "decision": "reject_leakage",
+    "reason": "Directly counts the future event used to define the target.",
+    "cv_roc_auc": 1.0,
+    "cv_delta_vs_base": 0.2722383536578117,
+    "holdout_roc_auc": 1.0,
+    "holdout_delta_vs_base": 0.28377263516045004,
+    "fold_scores": "[1.0, 1.0, 1.0]"
+  }
+}

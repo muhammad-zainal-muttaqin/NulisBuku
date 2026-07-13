@@ -1,0 +1,7 @@
+source,modality,representation,metric,score
+SMS Spam,text,char_wb TF-IDF,average_precision,0.9857705722319199
+SMS Spam,text,char_wb TF-IDF,f1,0.964769647696477
+Fashion-MNIST,image,HOG,accuracy,0.809
+Fashion-MNIST,image,PCA pixel embedding,accuracy,0.83
+FSDD,audio,MFCC,accuracy,0.95
+FSDD,audio,log-mel PCA,accuracy,0.8933333333333333

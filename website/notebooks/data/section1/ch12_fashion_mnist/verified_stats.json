@@ -1,0 +1,52 @@
+{
+  "source": "Fashion-MNIST official direct IDX files",
+  "source_url": "https://github.com/zalandoresearch/fashion-mnist",
+  "license": "MIT",
+  "md5": {
+    "train-images-idx3-ubyte.gz": "8d4fb7e6c68d591d4c3dfef9ec88bf0d",
+    "train-labels-idx1-ubyte.gz": "25c81989df183df01b3e8a0aad5dffbe",
+    "t10k-images-idx3-ubyte.gz": "bef4ecab320f06d8554ea6380940ec79",
+    "t10k-labels-idx1-ubyte.gz": "bb300cfdad3c16e7a12a480ee83cd310"
+  },
+  "train_images": 60000,
+  "test_images": 10000,
+  "image_shape": [
+    28,
+    28
+  ],
+  "train_label_counts": {
+    "0": 6000,
+    "1": 6000,
+    "2": 6000,
+    "3": 6000,
+    "4": 6000,
+    "5": 6000,
+    "6": 6000,
+    "7": 6000,
+    "8": 6000,
+    "9": 6000
+  },
+  "test_label_counts": {
+    "0": 1000,
+    "1": 1000,
+    "2": 1000,
+    "3": 1000,
+    "4": 1000,
+    "5": 1000,
+    "6": 1000,
+    "7": 1000,
+    "8": 1000,
+    "9": 1000
+  },
+  "demo_train_per_class": 600,
+  "demo_test_per_class": 200,
+  "hog_feature_count": 128,
+  "pca_components": 60,
+  "pca_explained_variance_ratio_sum": 0.8785434365272522,
+  "demo_accuracy": {
+    "hog_logistic": 0.809,
+    "pca60_logistic": 0.83,
+    "raw_pixels_logistic": 0.813
+  },
+  "note": "The notebook uses train-fitted PCA as a lightweight learned image embedding stand-in so it runs offline without torch/torchvision."
+}

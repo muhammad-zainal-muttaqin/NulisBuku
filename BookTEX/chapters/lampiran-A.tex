@@ -1,0 +1,207 @@
+% ==========================================================================
+% lampiran-A.tex — dihasilkan dari lampiran/lampiran-A-peta-pemilihan-teknik.md oleh tools/lampiran2tex.py
+% Boleh disunting manual; menjalankan lampiran2tex.py lagi akan menimpa.
+% ==========================================================================
+\chapter{Panduan Pemilihan Teknik}\label{panduan-pemilihan-teknik}
+
+Lampiran ini merangkum keputusan rekayasa fitur yang tersebar di seluruh buku menjadi satu peta rujukan cepat. Lampiran tersebut tidak menggantikan pembahasan tiap bab, melainkan menjadi titik masuk. Temukan baris yang cocok dengan persoalan Anda, lalu buka bab yang dirujuk untuk memahami alasan di baliknya.
+
+Pemilihan teknik representasi data pada praktiknya jarang ditentukan oleh satu faktor saja.
+Empat sumbu berikut biasanya bekerja bersamaan: \textbf{tipe data} yang dihadapi,
+\textbf{jenis model} yang akan dipakai, \textbf{ukuran data} yang tersedia, dan
+\textbf{kebutuhan interpretabilitas} dari hasil akhir. Panduan ini memecah keempatnya
+menjadi tabel terpisah agar mudah dibaca, dan ditutup dengan beberapa aturan
+gabungan yang sering muncul.
+
+\section{Berdasarkan tipe data}\label{berdasarkan-tipe-data}
+
+Faktor paling menentukan. Tipe data menetapkan jenis representasi yang sesuai lebih dari faktor lainnya.
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.203}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.374}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.355}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.068}}@{}}
+\toprule
+
+Tipe data
+ & 
+Representasi awal yang lazim
+ & 
+Teknik lanjutan
+ & 
+Bab
+ \\
+\midrule
+\endhead
+
+
+
+
+Numerik kontinu & penskalaan (\emph{standardize}\slash{}\emph{min--max}), transformasi (\emph{log}, Box--Cox) & \emph{binning}, interaksi polinomial, \emph{clipping} & 3 \\
+Kategorikal kardinalitas rendah & \emph{one-hot encoding} & \emph{ordinal} (bila ada urutan) & 4 \\
+Kategorikal kardinalitas tinggi & \emph{target encoding} (dengan \emph{cross-fitting}), \emph{hashing} & \emph{entity embedding} & 4, 15 \\
+Nilai hilang \slash{} \emph{outlier} & imputasi (di dalam \emph{pipeline}), penanda hilang & \emph{winsorizing}, model tahan-\emph{outlier} & 5 \\
+Fitur turunan dari log\slash{}event & agregasi berjendela, \emph{as-of join} & rasio, \emph{recency}, fitur siklik & 6 \\
+Deret waktu \slash{} sensor & \emph{lag}, \emph{rolling window}, fitur kalender & \emph{expanding window}, dekomposisi musiman & 10 \\
+Teks \slash{} dokumen & \emph{bag-of-words}, TF-IDF & \emph{word\slash{}document embedding}, model \emph{pretrained} & 11, 15 \\
+Citra & statistik piksel, HOG & fitur dari CNN \emph{pretrained}, \emph{patch embedding} & 12, 15 \\
+Audio & MFCC, log-mel & \emph{embedding} audio \emph{pretrained} & 12 \\
+Spasial (koordinat) & jarak geodesik, fitur radius, indeks grid (H3) & \emph{spatial lag}, autokorelasi & 13 \\
+Graf \slash{} relasional & derajat, sentralitas & \emph{spectral embedding}, GNN & 13 \\
+Multimodal & konkatenasi fitur per-modalitas & fusi terlambat (\emph{late fusion}), \emph{joint embedding} & 14 \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+\section{Berdasarkan jenis model}\label{berdasarkan-jenis-model}
+
+Model yang berbeda menuntut prapemrosesan yang berbeda. Salah satu kolom yang utamanya perlu diperhatikan adalah ``sensitif skala'' dan ``butuh encoding''. Keduanya menentukan apakah prapemrosesan wajib atau bisa dilewati.
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.171}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.160}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.160}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.443}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.066}}@{}}
+\toprule
+
+Keluarga model
+ & 
+Sensitif skala?
+ & 
+Butuh encoding kategori?
+ & 
+Catatan rekayasa fitur
+ & 
+Bab
+ \\
+\midrule
+\endhead
+
+
+
+
+Linear \slash{} logistik & Ya & Ya (\emph{one-hot}\slash{}\emph{target}) & untung dari interaksi \& transformasi eksplisit; regularisasi (\emph{lasso}) sekaligus menyeleksi & 3, 4, 7 \\
+k-NN, SVM (RBF) & Ya (kritis) & Ya & jarak rusak tanpa penskalaan; hati-hati dimensi tinggi & 3, 8 \\
+Pohon \slash{} \emph{gradient boosting} & Tidak & Sebagian (bisa terima \emph{ordinal}) & tahan skala \& \emph{outlier}; fitur turunan tetap membantu & 6, 10 \\
+Jaringan saraf (tabular) & Ya & \emph{embedding} untuk kategori & \emph{entity embedding} menggantikan \emph{one-hot} lebar & 15 \\
+Model \emph{pretrained} (teks\slash{}citra) & ditangani model & tidak relevan & rekayasa fitur bergeser ke \emph{input representation} \& \emph{tokenization} & 15 \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+\section{Berdasarkan ukuran data}\label{berdasarkan-ukuran-data}
+
+Jumlah baris menentukan seberapa ``mahal'' sebuah representasi terwujud, dan
+kapan representasi yang dipelajari mesin mulai unggul dibandingkan fitur manual.
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.181}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.466}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.353}}@{}}
+\toprule
+
+Ukuran data
+ & 
+Panduan representasi
+ & 
+Yang dihindari
+ \\
+\midrule
+\endhead
+
+
+
+
+Kecil (ratusan--ribuan baris) & fitur ringkas \& dirancang manusia; regularisasi kuat; validasi silang & \emph{one-hot} kardinalitas tinggi; model dalam tanpa regularisasi \\
+Menengah (puluhan ribu) & \emph{gradient boosting} + fitur turunan sering jadi \emph{baseline} kuat & \emph{embedding} mahal yang tak terbukti menang \\
+Besar (ratusan ribu ke atas) & representasi yang dipelajari mesin mulai kompetitif; \emph{hashing} untuk kardinalitas tinggi & fitur manual yang tak terskala; kebocoran akibat pipeline manual \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+\begin{quote}
+Heuristik ``puluhan ribu baris'' (Bab 15) diilustrasikan pada Covertype: pada
+subset 50k, \emph{gradient boosting} masih mengungguli MLP terskala. Ukuran bukan
+satu-satunya penentu, tetapi ukuran data menggeser titik keseimbangan antara fitur
+dirancang manusia dan dipelajari mesin.
+\end{quote}
+
+\section{Berdasarkan kebutuhan interpretabilitas}\label{berdasarkan-kebutuhan-interpretabilitas}
+
+Bila keputusan harus dijelaskan (regulasi, audit, kepercayaan pemangku
+kepentingan), representasi yang lebih transparan lebih penting daripada
+sedikit kenaikan performa.
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.226}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.520}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.254}}@{}}
+\toprule
+
+Kebutuhan interpretabilitas
+ & 
+Representasi yang cocok
+ & 
+Representasi yang dihindari
+ \\
+\midrule
+\endhead
+
+
+
+
+Tinggi (harus dijelaskan) & fitur bermakna \& bernama; \emph{one-hot}\slash{}\emph{ordinal}; koefisien linear; \emph{importance} fitur & \emph{embedding} laten; komponen PCA tanpa makna \\
+Sedang & fitur turunan terdokumentasi + model pohon dengan \emph{importance} & fusi multimodal buram \\
+Rendah (skor diutamakan) & \emph{embedding} padat, representasi \emph{pretrained}, komponen laten & --- \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+\section{Aturan gabungan yang sering muncul}\label{aturan-gabungan-yang-sering-muncul}
+
+Beberapa kombinasi lintas-faktor juga layak dijadikan perhatian:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{k-NN atau model berbasis jarak + fitur berskala beragam → wajib penskalaan
+  lebih dahulu.} Tanpa itu, satu fitur berskala besar mendominasi jarak (Bab 3).
+\item
+  \textbf{Kategori kardinalitas tinggi + model linear → \emph{target encoding} dengan
+  \emph{cross-fitting}, bukan \emph{one-hot} lebar.} Tanpa \emph{cross-fitting}, muncul
+  kebocoran halus (Bab 4).
+\item
+  \textbf{Data event/log + target masa depan → agregasi berjendela dengan \emph{cutoff}
+  eksplisit dan \emph{as-of join}.} Ini penjaga kausalitas sekaligus anti-kebocoran
+  (Bab 6, 10).
+\item
+  \textbf{Deret waktu → selalu \emph{split} menurut waktu, bukan acak.} \emph{Purge gap} bila
+  ada \emph{horizon} target (Bab 10).
+\item
+  \textbf{Interpretabilitas tinggi + kardinalitas tinggi → pertimbangkan \emph{hashing}
+  atau pengelompokan bermakna, dan dokumentasikan.} Hindari \emph{embedding} laten
+  yang sulit dijelaskan (Bab 4, 9).
+\item
+  \textbf{Data besar + banyak kandidat fitur → otomasi pembangkitan fitur (DFS/AutoML)
+  tetap butuh kurasi manusia.} Fitur yang plausibel bisa tetap \emph{spurious}
+  (Bab 16).
+\end{enumerate}
+
+\begin{quote}
+\textbf{Prasyarat lintas jalur:} apa pun tipe data Anda, Bab 2 (\emph{pipeline},
+validasi, \emph{leakage}) dan Bab 9 (evaluasi kualitas fitur) tetap berlaku.
+Panduan ini memilih \emph{representasi}. Kedua bab itu memastikan representasi tersebut sah dan terukur. Istilah asing pada tabel di atas dijelaskan ringkas di
+\textbf{Lampiran B (Glosarium)}.
+\end{quote}

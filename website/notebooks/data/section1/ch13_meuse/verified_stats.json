@@ -1,0 +1,43 @@
+{
+  "source": "CRAN sp::meuse data extracted from the official sp source package",
+  "source_url": "https://search.r-project.org/CRAN/refmans/sp/html/meuse.html",
+  "source_tarball_url": "https://cran.r-project.org/src/contrib/sp_2.2-1.tar.gz",
+  "sp_version": "2.2-1",
+  "license": "GPL (>= 2) via CRAN sp package",
+  "rows": 155,
+  "columns": [
+    "sample_id",
+    "x",
+    "y",
+    "cadmium",
+    "copper",
+    "lead",
+    "zinc",
+    "elev",
+    "dist",
+    "om",
+    "ffreq",
+    "soil",
+    "lime",
+    "landuse",
+    "dist.m",
+    "log_zinc"
+  ],
+  "target": "log_zinc",
+  "x_range": [
+    178605.0,
+    181390.0
+  ],
+  "y_range": [
+    329714.0,
+    333611.0
+  ],
+  "zinc_min": 113.0,
+  "zinc_median": 326.0,
+  "zinc_max": 1839.0,
+  "log_zinc_morans_i_k8": 0.44336895967452195,
+  "near_8nn_median_abs_log_zinc_diff": 0.4214695470281238,
+  "far_top_quartile_median_abs_log_zinc_diff": 0.685147009886725,
+  "coordinate_knn_random_cv_rmse": 0.4896973036904021,
+  "coordinate_knn_spatial_block_cv_rmse": 0.6620916943966707
+}

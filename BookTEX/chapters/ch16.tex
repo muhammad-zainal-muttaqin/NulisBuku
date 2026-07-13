@@ -1,207 +1,222 @@
 % ==========================================================================
-% ch16.tex — dihasilkan otomatis dari website/chapters/ch16.qmd
-% Boleh disunting manual. 'sync' hanya menimpa bila .qmd berubah DAN .tex
-% belum disunting; kalau keduanya berubah, dilewati (pakai --force).
-% qmd-sha1: 03ed7d5c5202
-% tex-sha1: 6a0835d77b67
+% ch16.tex — dihasilkan dari v2/drafts oleh tools/md2tex.py
+% Sumber: v2\drafts\ch16\ch16_draft_v2.md
+% Boleh disunting manual; menjalankan md2tex.py lagi akan menimpa.
 % ==========================================================================
-% >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
-\chapter{Rekayasa Fitur Otomatis \& Kolaborasi Manusia--AI}\label{rekayasa-fitur-otomatis-kolaborasi-manusiaai}
+\chapter{Rekayasa Fitur Otomatis dan Kolaborasi Manusia-AI}\label{rekayasa-fitur-otomatis-dan-kolaborasi-manusia-ai}
 
-Perkembangan pemelajaran mesin modern telah membawa prapemrosesan data ke tahap otomatisasi yang makin kompleks. Pada bab-bab sebelumnya, kita mengekstrak fitur turunan dan memecah variabel kategorikal menggunakan logika manual yang didasarkan pada pengetahuan domain. Namun, ketika kita berhadapan dengan basis data relasional berskala industri yang memiliki puluhan tabel yang saling terhubung, merancang kombinasi fitur satu per satu secara manual menjadi tidak praktis, lambat, dan rentan terhadap kesalahan manusia. Kondisi ini menuntut pendekatan yang dapat menyintesis, mengoptimasi, dan mengevaluasi representasi data secara otomatis.
+Rekayasa fitur otomatis berbeda dari representasi yang dipelajari mesin. Pada otomasi, manusia masih menentukan skema data, operasi primitif yang boleh dipakai, batas waktu, metrik evaluasi, dan kriteria penerimaan. Mesin memperluas ruang kandidat, tetapi tidak menggantikan keputusan desain. Otomasi dapat mempercepat pembentukan fitur dari tabel relasional dan log peristiwa, tetapi juga dapat mempercepat kesalahan jika kandidat tidak dikurasi. Fitur yang tampak kuat secara numerik dapat ditolak karena tidak tersedia pada waktu prediksi, terlalu mahal dihitung, atau membawa kebocoran.
 
-Bab ini akan mengupas bagaimana menjembatani kecepatan komputasi mesin dengan kebijaksanaan intuisi manusia di era kecerdasan buatan modern. Kita mendalami algoritma \emph{Deep Feature Synthesis} (DFS) untuk merangkai fitur dari relasi tabel secara otomatis, memanfaatkan kerangka kerja \emph{AutoML} untuk pencarian \emph{pipeline} fitur secara Bayesian, serta mengeksplorasi pemanfaatan model bahasa besar (\emph{Large Language Models}) untuk mengusulkan hipotesis representasi data yang kaya konteks. Yang terpenting, bab ini mengunci paradigma kolaborasi \emph{human-in-the-loop} (HITL) untuk memastikan fitur-fitur yang dihasilkan mesin tidak hanya unggul secara statistik, tetapi juga valid secara logis dan aman dari kebocoran informasi (\emph{data leakage}).
+Bab ini membahas tiga keluarga otomasi. Deep Feature Synthesis menyusun fitur dari tabel relasional dengan pengendali \emph{cutoff} dan kedalaman maksimum. AutoML mencari pipeline, model, dan hyperparameter secara otomatis. Model bahasa generatif mengusulkan fitur semantik dari metadata domain. Bab ini menguraikan bahwa keterampilan yang bertahan adalah merancang ruang pencarian, memasang batas, membaca hasil, dan mengkurasi kandidat. Otomasi memperbesar ruang kandidat, bukan menghapus tanggung jawab desain.
 
-\section{\texorpdfstring{Pembentukan Fitur Otomatis: \emph{Deep Feature Synthesis} dan Ruang Pencarian}{Pembentukan Fitur Otomatis: Deep Feature Synthesis dan Ruang Pencarian}}\label{pembentukan-fitur-otomatis-deep-feature-synthesis-dan-ruang-pencarian}
+\section{Deep Feature Synthesis dan Ruang Pencarian Fitur}\label{deep-feature-synthesis-dan-ruang-pencarian-fitur}
 
-Pada Bab 6, fitur tingkat entitas dibentuk dari riwayat \emph{event} melalui agregasi dan proses \emph{join} lintas tabel. Dalam \emph{dataset} relasional, mengekstrak pola dari banyak tabel secara manual memakan waktu dan rentan terhadap galat. Tantangan ini melahirkan pendekatan rekayasa fitur otomatis, dengan algoritma \emph{Deep Feature Synthesis} (DFS) sebagai metode utamanya. Pustaka standar yang mengimplementasikan DFS adalah FeatureTools, yang menggunakan abstraksi \emph{EntitySet} untuk memetakan tabel dan relasi antarentitas.
+Contoh kerja pertama pada bab ini memakai Online Retail, yaitu catatan transaksi sebuah toko \emph{online}. Setiap baris mencatat satu item dalam \emph{invoice}, dengan identitas pelanggan, waktu transaksi, jumlah barang, dan harga unit. Struktur relasional ini membuat fitur dapat diringkas dari transaksi ke pelanggan.
 
-DFS menelusuri hubungan antartabel untuk menghasilkan fitur baru secara otomatis. Algoritma ini bekerja dengan menumpuk operasi matematika dasar yang disebut \emph{primitive}. \emph{Primitive} ini terbagi menjadi dua kelompok utama:
+Contoh ini paling langsung masuk ke keluarga pertama: fitur relasional yang disusun dari transaksi ke pelanggan. Deep Feature Synthesis, atau DFS (Kanter and Veeramachaneni 2015), menghasilkan fitur dengan menyusun primitive di atas data relasional dan temporal. Dalam ekosistem seperti Featuretools, beberapa tabel dipetakan ke dalam EntitySet: pada Online Retail, entitas dapat berupa pelanggan, invoice, dan baris item. Relasi antar tabel menentukan bagaimana informasi anak diringkas ke entitas induk.
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{\emph{Transformation primitive}}: Beroperasi pada satu tabel tunggal tanpa mengubah jumlah baris. Contohnya mengekstrak hari dari variabel tanggal atau menghitung nilai absolut numerik.
-\item
-  \textbf{\emph{Aggregation primitive}}: Merangkum banyak baris dari tabel anak (\emph{child}) ke dalam satu baris di tabel induk (\emph{parent}). Contohnya menghitung rata-rata, jumlah total, atau modus dari kelompok observasi.
-\end{itemize}
+Aggregation primitives merangkum banyak record anak menjadi satu nilai untuk entitas induk. Contohnya, jumlah invoice per pelanggan, total nilai pembelian, rata-rata nilai invoice, jumlah stok unik, atau jumlah invoice dalam 90 hari terakhir. Transform primitives mengubah nilai dalam konteks satu entitas atau waktu, seperti mengambil bulan dari \passthrough{\lstinline!InvoiceDate!} atau menghitung selisih hari sejak pembelian terakhir.
 
-Kekuatan utama DFS terletak pada kemampuannya menumpuk operasi secara rekursif melalui konsep kedalaman (\emph{depth}). Penumpukan ini dapat diformalkan sebagai:
+Kekuatan DFS muncul ketika primitive ditumpuk. Kolom mentah dapat dibaca sebagai depth 0. Pada depth 1, sistem dapat menghasilkan \passthrough{\lstinline!SUM(line_items.gross_value)!} per pelanggan. Pada depth 2, hasil per pelanggan itu dapat diringkas lagi ke level negara atau cohort, misalnya \passthrough{\lstinline!MEAN(SUM(line_items.gross_value))!} per \passthrough{\lstinline!Country!}. Secara umum:
 
-\[ h^{(d)} = \phi \left( h^{(d-1)} \right) \]
+\[
+h^{(d)} = \phi\big(h^{(d-1)}\big)
+\]
 
-Di mana \(h^{(d)}\) adalah sekumpulan fitur pada kedalaman \(d\), dan \(\phi\) adalah fungsi \emph{primitive} (transformasi atau agregasi) yang diterapkan pada representasi fitur dari kedalaman sebelumnya \(h^{(d-1)}\). Data kolom asli dihitung sebagai fitur kedalaman nol (\(d=0\)).
+Dalam rumus tersebut, \(h^{(d)}\) adalah fitur pada \emph{depth} \(d\), dan \(\phi\) adalah \emph{primitive} yang diterapkan pada fitur \emph{depth} sebelumnya. Notasi \(\phi\) mewakili satu \emph{primitive} pada satu lintasan fitur. Dalam praktiknya, DFS menerapkan banyak \emph{primitive} berbeda secara paralel pada setiap \emph{depth}, sehingga jumlah fitur bertambah dengan cepat. Rekursi ini menjadi sumber kekuatan sekaligus sumber ledakan.
 
-Sebagai contoh, perhatikan fitur dasar berupa nilai nominal dari setiap transaksi. Pada kedalaman satu, DFS menerapkan \emph{aggregation primitive} ke tabel pelanggan, menghasilkan fitur total nominal transaksi per pelanggan (\passthrough{\lstinline!SUM(transaksi.nominal)!}). Pada kedalaman dua, DFS mengambil fitur kedalaman satu tersebut dan merangkumnya berdasarkan wilayah domisili pelanggan, menghasilkan rata-rata total transaksi pelanggan per wilayah (\passthrough{\lstinline!MEAN(SUM(transaksi.nominal))!}).
+Gambar 16.1 memperlihatkan entity tree sederhana. Primitive bergerak naik dari baris item ke invoice, lalu ke pelanggan atau negara. Cabang tertentu perlu ditutup jika kolomnya tidak bermakna untuk operasi matematis.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch16-fig-1}
-\caption{Skema Pohon Relasi Entitas pada Deep Feature Synthesis (DFS)}
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch16-fig-1}
+\caption{Deep Feature Synthesis pada entity tree}
 \label{fig:ch16-fig-1}
 \end{figure}
 
-Penumpukan operasi membuat eksplorasi pola data berjalan amat cepat. Namun, otomatisasi ini memunculkan kendala berupa ledakan ruang fitur (\emph{feature space explosion}). Algoritma beroperasi tanpa pemahaman konteks bisnis, sehingga mesin dapat menghitung rata-rata dari kode pos atau nilai maksimum dari nomor telepon semata-mata karena tipe datanya numerik.
+DFS membutuhkan schema, relasi antar tabel, target dataframe, time index, \emph{cutoff}, daftar primitive, dan maximum depth. Tanpa itu, mesin tidak tahu apa yang sah. Ia juga tidak punya akal domain. Jika sebuah kolom bertipe numerik, sistem dapat saja menghitung rata-rata kode pos atau maksimum nomor telepon. Angka itu valid secara komputasi, tetapi tidak bermakna sebagai fitur.
 
-Ketika algoritma menelusuri setiap relasi dan menerapkan seluruh kombinasi \emph{primitive}, jumlah fitur tumbuh secara eksponensial seiring bertambahnya kedalaman. Hal ini membebani memori, memperlambat pelatihan, dan meningkatkan risiko \emph{overfitting}. Untuk mengendalikan ledakan dimensi, pustaka rekayasa fitur otomatis menyediakan parameter pembatasan struktural:
+Karena itu, ruang pencarian harus diberi rem. Pertama, batasi depth agar fitur tidak meledak jumlahnya. Kedua, exclude variable yang tidak boleh diperlakukan sebagai angka, seperti ID, nomor telepon, atau kode administratif. Ketiga, tegakkan \emph{cutoff} agar hanya histori sebelum waktu prediksi yang dipakai. Aturan point-in-time dari Bab 6 tetap berlaku. Automation dengan \emph{cutoff} yang salah tidak mengurangi leakage; ia hanya menghasilkan leakage lebih cepat. DFS memperlihatkan otomasi pada level fitur relasional; langkah berikutnya memperluas pencarian ke seluruh pipeline preprocessing dan model.
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Pembatasan kedalaman (\passthrough{\lstinline!max_depth!})}: Menghentikan rekursi pada level tertentu.
-\item
-  \textbf{Pengecualian variabel (\passthrough{\lstinline!ignore_variables!})}: Memblokir kolom seperti ID unik agar tidak dikenai operasi matematika.
-\item
-  \textbf{Penerapan \emph{cutoff time}}: Membatasi data riwayat hanya hingga waktu prediksi untuk mencegah kebocoran data (\emph{data leakage}) temporal.
-\end{itemize}
+\section{AutoML dan Pipeline Fitur Otomatis}\label{automl-dan-pipeline-fitur-otomatis}
 
-Meskipun DFS menghilangkan pekerjaan manual yang mekanis, kapasitas algoritma untuk mencetak fitur secara massal menuntut mekanisme seleksi fitur yang ketat pada tahap pipeline berikutnya.
+Jika DFS fokus pada pembentukan fitur dari skema relasional, AutoML (Feurer et al. 2015) mencari pipeline yang lebih luas. Objek yang dicari bisa mencakup imputation, encoding, feature transformation, model selection, hyperparameter, ensembling, dan kadang feature selection. Satu kandidat pipeline dapat memakai median imputation, target encoding, dan gradient boosting. Kandidat lain dapat memakai k-NN imputation, scaling, dan SVM. Ribuan rakitan seperti ini dibandingkan melalui validasi.
 
-\section{\texorpdfstring{\emph{AutoML} dan \emph{Pipeline} Fitur Otomatis}{AutoML dan Pipeline Fitur Otomatis}}\label{automl-dan-pipeline-fitur-otomatis}
+Nilai AutoML adalah mengurangi pekerjaan pencarian rutin dan memberi baseline kuat (Erickson et al. 2020). Sistem AutoML yang dirancang baik dapat menjaga transformasi tetap di dalam \emph{fold} jika strategi \emph{split} dan \emph{pipeline} dikonfigurasi dengan benar. AutoML tidak otomatis menjamin pemisahan temporal atau grup yang sesuai deployment. Kemampuan menjaga batas \emph{fold} itu bagian dari nilai teknisnya, bukan hanya kenyamanan.
 
-Otomasi dalam rekayasa fitur umumnya terintegrasi ke dalam sistem \emph{AutoML} (\emph{Automated Machine Learning}). Jika \emph{Deep Feature Synthesis} berfokus pada pembentukan fitur baru dari tabel relasional, \emph{AutoML} mengambil peran lebih luas dengan mengotomatiskan seluruh alur kerja.
+Namun, AutoML tetap bekerja di bawah batas yang diberikan manusia. Prediction question, unit, split strategy, metric, time budget, fairness constraint, privacy constraint, dan deployment requirement harus ditentukan lebih dulu. Jika split bocor, AutoML akan mengoptimalkan kebocoran itu dengan sangat rajin.
 
-Sistem \emph{AutoML} modern mengatur fitur melalui beberapa tahapan berurutan:
+Gambar 16.2 menunjukkan loop pencarian AutoML. Kandidat pipeline dirakit dari menu komponen, dievaluasi dengan cross-validation, lalu skor memberi sinyal ke strategi pencarian untuk memilih kandidat berikutnya.
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Pra-pemrosesan:} Menangani tipe data dan mengisi nilai kosong (\emph{missing values}).
-\item
-  \textbf{Pembentukan representasi:} Menghasilkan fitur spesifik berdasarkan tipe data asal, seperti mengekstraksi atribut hari dari tanggal atau menghitung matriks n-gram dari teks.
-\item
-  \textbf{Penyaringan fitur:} Membuang fitur konstan atau fitur duplikat.
-\item
-  \textbf{Seleksi model:} Memilih algoritma dasar dan menyetel \emph{hyperparameter}.
-\end{itemize}
-
-\emph{AutoML} menjelajahi ruang pencarian \emph{pipeline} kombinatorial yang luas. Mesin merakit dan membandingkan ribuan urutan transformasi. Satu \emph{pipeline} mungkin memakai imputasi median dan \emph{target encoding} sebelum melatih model \emph{gradient boosting}. Pada saat bersamaan, \emph{pipeline} lain menggunakan imputasi k-NN dan SVM.
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch16-fig-2}
-\caption{Arsitektur Pencarian Pipeline AutoML}
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch16-fig-2}
+\caption{Loop pencarian pipeline AutoML}
 \label{fig:ch16-fig-2}
 \end{figure}
 
-Untuk menavigasi jutaan kombinasi transformasi secara efisien, kerangka kerja \emph{AutoML} sering menggunakan optimasi Bayesian. Sistem mencari konfigurasi terbaik menggunakan fungsi akuisisi, seperti \emph{Expected Improvement} (EI):
+Risikonya ada dua. Pertama, \emph{spurious search hits}. Jika ribuan \emph{pipeline} dicoba pada \emph{fold} yang sama, sebagian dapat cocok dengan skor validasi karena kebetulan, bukan karena generalisasi. Skor inner-CV boleh memandu pencarian, tetapi tidak boleh dilaporkan sebagai estimasi performa final yang tidak bias. Gunakan \emph{nested cross-validation} atau \emph{final holdout} yang dikunci dan tidak ikut memandu pencarian untuk estimasi akhir. Ini versi industri dari peringatan Bab 2 tentang \emph{fishing}. Kedua, \emph{semantic blindness}. Sistem dapat memilih transformasi yang kuat secara statistik tetapi salah makna, misalnya memperlakukan \emph{missing sensor value} sebagai \emph{noise} padahal mesin memang sengaja dimatikan.
 
-\[ EI(x) = \mathbb{E}[\max(f(x) - f(x^+), 0)] \]
+AutoML juga dapat membakar compute budget, menghasilkan pipeline yang sulit dijelaskan, atau memilih ensemble yang mahal dipelihara. Ketika skor sudah plateau, menambah jam pencarian sering tidak membantu. Bottleneck biasanya pindah ke kualitas data, definisi target, atau representasi. Di titik itu, manusia perlu kembali merancang fitur, bukan hanya memperpanjang search. Salah satu bentuk rancangan baru adalah meminta LLM mengusulkan fitur yang lebih semantik daripada sekadar kombinasi primitive atau pipeline.
 
-Di mana \(x\) adalah konfigurasi \emph{pipeline} fitur, \(f(x)\) adalah skor validasi dari konfigurasi tersebut, dan \(f(x^+)\) mewakili skor terbaik yang ditemukan sejauh ini. Fungsi ini memandu mesin untuk memprioritaskan eksplorasi pada transformasi yang berpeluang besar meningkatkan performa prediktif.
-
-\emph{AutoML} mempercepat pembuatan \emph{baseline} prediktif. Pra-pemrosesan yang membutuhkan waktu uji coba manual berjam-jam dapat dieksekusi dalam hitungan menit. Kerangka kerja tingkat produksi juga menjaga praktik \emph{pipeline} yang benar secara bawaan. Sistem menahan agar transformer hanya di-\emph{fit} pada data latih, sehingga menekan risiko \emph{leakage} temporal saat mesin menyeleksi kandidat.
-
-Eksplorasi otomatis memiliki batasan. Penelusuran ruang fitur masif secara murni komputasional sering berujung pada pemborosan daya (\emph{burning compute}). Praktik ini memunculkan masalah spesifik:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Korelasi kebetulan:} Mesin yang mengevaluasi banyak kombinasi rentan mengandalkan pola \emph{spurious}. \emph{Pipeline} tampak unggul pada data latih, tetapi gagal mempertahankan generalisasi saat pengujian.
-\item
-  \textbf{Kebutaan semantik:} \emph{AutoML} menelusuri fitur secara matematis tanpa konteks domain. Sistem tidak tahu bahwa nilai kosong pada sebuah sensor suhu sebenarnya mengindikasikan bahwa mesin produksi sedang dimatikan secara sengaja.
-\end{itemize}
-
-Menambah alokasi waktu pencarian jarang menyelesaikan masalah saat performa stagnan. Kebuntuan ini membutuhkan intervensi manusia untuk menata ulang representasi atau memperbaiki kualitas data asal.
+\begin{pendalaman}{Optimasi Bayesian di balik pencarian pipeline}
+Daripada mencoba semua konfigurasi atau memilih acak, banyak AutoML framework memodelkan landscape skor melalui Gaussian process surrogate dan memilih konfigurasi berikutnya dengan acquisition function. Posterior dari surrogate memberikan distribusi prediktif \(f(x)\), bukan sekadar satu nilai, sehingga ketidakpastian turut diperhitungkan. Salah satu acquisition function yang umum adalah Expected Improvement: \(EI(x) = \mathbb{E}\big[\max(f(x) - f(x^{+}),\ 0)\big]\). Di sini \(x\) adalah konfigurasi kandidat, \(f(x)\) adalah variabel acak dari posterior surrogate yang menyatakan skor yang diperkirakan beserta ketidakpastiannya, dan \(f(x^{+})\) adalah skor terbaik sejauh ini. Intuisinya, sistem menyeimbangkan eksplorasi wilayah yang belum pasti dengan eksploitasi wilayah yang tampak menjanjikan. Gagasan ini juga muncul pada hyperparameter tuning umum.
+\end{pendalaman}
 
 \section{GenAI untuk Usulan Fitur dan Risiko Fitur Semu}\label{genai-untuk-usulan-fitur-dan-risiko-fitur-semu}
 
-Rekayasa fitur otomatis (AutoFE) klasik beroperasi dengan mengombinasikan kolom secara matematis secara \emph{brute-force}, namun sistem tersebut buta terhadap semantik data. Kemunculan \emph{Large Language Models} (LLM) mengisi celah ini melalui pendekatan berbasis pengetahuan. Dalam arsitektur mutakhir, LLM hanya membaca \emph{metadata} (nama kolom, tipe data, dan deskripsi singkat) tanpa perlu mengekspos privasi nilai baris mentah, lalu ia menulis skrip kode transformasi untuk dieksekusi.
+Ketika DFS dan AutoML mulai dibatasi oleh primitive serta menu pipeline, GenAI atau LLM menambahkan sesuatu yang tidak dimiliki keduanya: kemampuan memakai makna bahasa. Jika metadata menyebut \passthrough{\lstinline!InvoiceDate!}, \passthrough{\lstinline!Quantity!}, \passthrough{\lstinline!UnitPrice!}, dan \passthrough{\lstinline!CustomerID!}, LLM dapat mengusulkan recency, nilai pembelian, atau frekuensi invoice. DFS mungkin hanya melihat kolom numerik dan mencoba kombinasi primitive. AutoML mungkin hanya mencoba transformasi pipeline. LLM dapat membaca nama kolom, deskripsi, dan konteks domain, lalu mengusulkan fitur semantik.
 
-Pendekatan ini dipelopori oleh kerangka kerja \emph{Context-Aware Automated Feature Engineering} (CAAFE). CAAFE memfungsikan GenAI sebagai pengusul hipotesis terarah. Sebagai contoh, jika \emph{dataset} medis memiliki atribut ``Tinggi'' dan ``Berat Badan'', LLM tidak akan mengalikan keduanya secara acak, melainkan secara spesifik merumuskan kalkulasi logis seperti \emph{Body Mass Index} (BMI).
+CAAFE adalah contoh pendekatan \emph{context-aware} yang memakai LLM untuk mengotomatisasi usulan rekayasa fitur pada data tabular. Salah satu pilihan implementasinya adalah memakai metadata seperti nama kolom, tipe, deskripsi, dan ringkasan konteks, bukan baris mentah. Pilihan ini dapat membatasi paparan data sensitif, tetapi bukan jaminan inheren CAAFE: metadata dan ringkasan pun dapat memuat informasi sensitif, sehingga kontrol akses, redaksi, dan kebijakan pengiriman data tetap diperlukan.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch16-fig-3}
-\caption{Arsitektur Agen CAAFE (Context-Aware Automated Feature Engineering)}
+Janji utamanya adalah ideasi. LLM dapat mengusulkan rasio, recency feature, interaction, grouping, atau transformasi domain yang tidak ada dalam primitive library. Pada Online Retail, ia dapat mengusulkan jarak waktu sejak invoice terakhir, rata-rata nilai per item, proporsi return, variasi stok yang dibeli, atau fitur kalender dari bulan invoice.
+
+Risikonya seimbang besar. LLM belajar dari co-occurrence tekstual di corpus, bukan dari sinyal statistik dalam dataset kita. Rasio yang terdengar ilmiah dapat tidak berkorelasi dengan target. Transformasi yang tampak cerdas dapat memakai tanggal setelah outcome, kategori turunan dari target, atau proxy sensitif. Kode yang dihasilkan dapat salah, mahal dihitung, atau sulit dipelihara. Jalankan kode transformasi dalam \emph{sandbox} dengan dependensi yang dibatasi, lalu uji dan tinjau sebelum menyentuh data nyata. Karena itu, usulan LLM adalah kandidat, bukan fakta.
+
+Gambar 16.3 memperlihatkan loop proposal. Metadata masuk ke LLM, usulan fitur dieksekusi dan dievaluasi, lalu hasilnya memberi umpan balik ke putaran prompt berikutnya. Kandidat yang semu, bocor, atau tidak tersedia masuk ke reject bin.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch16-fig-3}
+\caption{Loop usulan fitur berbasis LLM}
 \label{fig:ch16-fig-3}
 \end{figure}
 
-Kemampuan ekosistem otomasi ini telah berevolusi jauh dari sekadar \emph{zero-shot prompting} sederhana menuju paradigma \emph{Program-Search} yang canggih. Salah satu lompatan teoretis yang signifikan adalah kerangka kerja \textbf{LLM-FE} (Abhyankar, Shojaee \& Reddy, 2025). Arsitektur ini menempatkan LLM bukan sekadar sebagai pembuat kode, melainkan sebagai pengoptimal evolusioner (\emph{evolutionary optimizer}):
+Tabel 16.1 membandingkan tiga keluarga otomasi fitur. Gunakan tabel ini untuk membaca apa yang sebenarnya diotomasi dan apa yang tetap harus disediakan manusia.
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Iterasi Berbasis Umpan Balik:} LLM mengusulkan sekumpulan skrip transformasi, lalu agen evaluator mengeksekusinya dan menghitung metrik validasi silang pada model.
-\item
-  \textbf{Penyimpanan Memori Eksperimen:} Skor performa kuantitatif dari fitur-fitur yang divalidasi dimasukkan kembali ke dalam konteks \emph{prompt} LLM pada putaran selanjutnya.
-\item
-  \textbf{Evolusi Sintaksis:} Dengan membaca rekam jejak eksperimen tersebut, LLM memodifikasi, menggabungkan, atau merancang ulang skrip (layaknya proses mutasi dan \emph{crossover} pada algoritma genetika) untuk menavigasi ruang pencarian secara makin presisi.
-\end{itemize}
+\tabeljudul{Tabel 16.1 — Tiga keluarga otomasi fitur}
 
-Kemampuan agen dalam memilah mana fitur usulan yang lolos seleksi bergantung pada fungsi kebugaran (\emph{fitness function}) yang umumnya dieksekusi secara terpisah dari komputasi LLM:
-\[ \text{Fitness}(f) = \text{CV\_Score}(\mathcal{M}, X \cup \{f\}, Y) - \text{CV\_Score}(\mathcal{M}, X, Y) \]
-Di mana \(\text{Fitness}(f)\) adalah nilai utilitas yang diberikan kembali sebagai umpan balik kepada LLM, \(f\) adalah fitur sintesis baru hasil ekstraksi skrip usulan, \(\mathcal{M}\) melambangkan model penilai target, \(X\) dan \(Y\) adalah matriks latih awal, serta \(\text{CV\_Score}\) mencerminkan hasil metrik \emph{cross-validation} yang ketat.
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.160}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.301}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.266}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.273}}@{}}
+\toprule
 
-Selain arsitektur evolusioner, varian model LLM yang lebih baru juga dilatih secara khusus untuk menyertakan jejak penalaran (\emph{reasoning traces}). Model diwajibkan menuliskan rasionalisasi di balik setiap kode transformasi yang diajukan agar dapat diaudit keamanannya oleh manusia.
+Keluarga
+ & 
+Apa yang diotomasi
+ & 
+Butuh dari manusia
+ & 
+Risiko khas
+ \\
+\midrule
+\endhead
 
-\textbf{Risiko Fitur Semu (\emph{Spurious Features})}
-Sistem generatif ini tidak luput dari titik buta yang penting. LLM memproduksi logika fitur berdasarkan probabilitas ko-okurensi teks di korpus latihnya, bukan berdasarkan kekuatan sinyal statistik pada matriks data aktual di lapangan. LLM dapat mengusulkan rumus rasio yang secara bahasa terdengar sangat intelek dan masuk akal, padahal dalam realitas distribusi angkanya, hasil kalkulasi tersebut sama sekali tidak berkorelasi dengan label target. Jika disuntikkan secara mentah, fitur semu (\emph{spurious}) ini hanya meracuni matriks dengan \emph{noise} ekstra. Oleh karena itu, otomasi semantik dari LLM tidak boleh berdiri secara otonom; ia mutlak harus diikat di dalam putaran validasi statistik yang ketat untuk menyeleksi mana ilusi teks dan mana utilitas prediktif riil.
 
-\section{\texorpdfstring{\emph{Human-in-the-Loop}: Validasi dan Kurasi Fitur Usulan Mesin}{Human-in-the-Loop: Validasi dan Kurasi Fitur Usulan Mesin}}\label{human-in-the-loop-validasi-dan-kurasi-fitur-usulan-mesin}
 
-Kehadiran teknik ekstraksi fitur otomatis, baik melalui sintesis terstruktur maupun penjelajahan generatif berbasis \emph{Large Language Models} (LLM), sering memunculkan ekspektasi bahwa rekayasa fitur dapat diserahkan sepenuhnya secara mandiri kepada agen kecerdasan buatan. Kenyataannya, dalam sistem produksi nyata, arsitektur otomatis ini tidak didesain sebagai pengambil keputusan final, melainkan murni sebagai pabrik pengusul hipotesis komputasional.
 
-Guna menekan risiko komersial, ekosistem otomatisasi mewajibkan adopsi kerangka kerja \emph{human-in-the-loop} (HITL). Pendekatan kolaboratif ini (seperti yang dirumuskan pada riset klasifikasi \emph{Human-LLM Collaborative} mutakhir) mendesain sebuah interaksi di mana siklus algoritma dihentikan sejenak untuk menerima verifikasi pakar manusia:
+DFS & Komposisi primitive atas skema relasional & Skema, primitive, \emph{cutoff}, depth & Ledakan fitur, leakage temporal \\
+AutoML & Pencarian pipeline preprocessing dan model & Pertanyaan, split, metric, anggaran & Spurious hits, pipeline sulit dirawat \\
+GenAI\slash{}LLM & Usulan fitur semantik dan kode & Konteks domain, gerbang validasi & Fitur semu, kode invalid, proxy sensitif \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
 
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Praktisi Merancang Koridor Operasi:} Manusia bertugas menetapkan target prediksi, membatasi operator matematis yang diizinkan (misalnya menggunakan \emph{Domain Specific Language} / DSL agar model tidak merakit fungsi trigonometri pada data keuangan), dan mendikte \emph{cutoff time} untuk mencegah kebocoran informasi temporal.
-\item
-  \textbf{Mesin Mengeksekusi Eksplorasi Skala Besar:} Algoritma mengambil alih beban berat komputasi iteratif. Agen mesin menulis ratusan kombinasi transformasi relasional, mengujinya menggunakan skema \emph{cross-validation}, lalu menyodorkan daftar peringkat fitur yang secara terukur menaikkan metrik AUC atau RMSE.
-\item
-  \textbf{Praktisi Mengambil Peran Kurator Final:} Laporan pengujian empiris dikembalikan ke analis. Pakar manusia membaca jejak penalaran (\emph{reasoning traces}) yang disediakan mesin, lalu mengevaluasi kelayakan semantik dari fitur-fitur berperingkat teratas tersebut.
-\end{itemize}
+}
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch16-fig-4}
-\caption{Interaksi Antarmuka Sistem Human-in-the-Loop Analis Memvalidasi Fitur Usulan AI}
+Setiap fitur usulan perlu diperiksa availability, leakage, correctness, cost, dan dampak kebijakan. Sistem baru kadang menambahkan reasoning trace pada setiap transformasi agar manusia dapat membaca rationale, bukan hanya skor. Tetapi rationale pun harus diaudit; kalimat yang masuk akal belum tentu fitur yang sah. Karena itu, putaran proposal harus berakhir pada workflow human-in-the-loop, bukan pada penerimaan otomatis.
+
+\begin{pendalaman}{LLM sebagai pengoptimal evolusioner}
+Arah riset terbaru memperlakukan rekayasa fitur sebagai \emph{program search}. LLM mengusulkan \emph{script} transformasi, evaluator menjalankannya, lalu nilai marginalnya diukur dengan delta-CV: \(\text{Fitness}(f) = \text{CV}(\mathcal{M},\ X \cup \{f\},\ Y) - \text{CV}(\mathcal{M},\ X,\ Y)\), dengan \(\mathcal{M}\) sebagai model baseline, \(X\) sebagai kumpulan fitur saat ini, \(Y\) sebagai target, dan \(\text{CV}(\cdot)\) sebagai skor validasi silang. Skor itu kembali ke konteks LLM, sehingga putaran berikutnya dapat memutasi dan menggabungkan program yang lebih baik. Polanya mirip \emph{genetic algorithm} dengan LLM sebagai \emph{mutation operator}. Namun, \emph{quality control} utama tetap pada \emph{fitness gate}; LLM hanya memperlebar \emph{funnel} kandidat.
+\end{pendalaman}
+
+\section{Human-in-the-Loop: Validasi dan Kurasi Fitur Usulan Mesin}\label{human-in-the-loop-validasi-dan-kurasi-fitur-usulan-mesin}
+
+Setelah tiga keluarga otomasi terlihat, bagian pentingnya adalah gerbang penerimaan. Rekayasa fitur \emph{human-in-the-loop} (Amershi et al. 2014) berarti manusia tidak hanya hadir di akhir untuk membaca \emph{leaderboard}. Manusia mendefinisikan ruang kerja sejak awal: unit, target, \emph{cutoff}, \emph{split}, metrik, operator yang diizinkan, batas \emph{latency}, dan fitur yang dilarang. Mesin kemudian mengeksplorasi kandidat dalam koridor itu. Manusia kembali sebagai kurator, membaca skor sekaligus alasan, risiko, dan kelayakan operasional.
+
+Workflow yang baik dimulai dari definisi task. Setelah itu, kandidat fitur dibuat secara otomatis oleh DFS, AutoML, LLM, atau kombinasi. Kandidat pertama disaring secara keras: bocor, tidak tersedia, mahal dihitung, melanggar kebijakan, atau tidak masuk akal secara semantik. Kandidat yang lolos diuji dengan ablation, stability check, dan validasi yang sesuai split. Fitur yang diterima dan ditolak sama-sama didokumentasikan, karena keputusan penolakan sering sama pentingnya dengan keputusan penerimaan.
+
+Tabel 16.2 merangkum pembagian peran manusia dan mesin. Baris-barisnya menunjukkan bahwa mesin paling kuat pada eksplorasi dan ranking, sedangkan manusia memegang definisi, batas, kurasi, dan tanggung jawab. Gunakan tabel ini sebagai audit sederhana: jika sebuah tahap penting tidak punya pemilik manusia, workflow otomasi belum aman.
+
+\tabeljudul{Tabel 16.2 — Pembagian peran manusia-mesin}
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.195}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.495}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.310}}@{}}
+\toprule
+
+Tahap
+ & 
+Manusia
+ & 
+Mesin
+ \\
+\midrule
+\endhead
+
+
+
+
+Definisi masalah & Menentukan unit, target, \emph{cutoff}, metric & - \\
+Ruang pencarian & Menetapkan batasan, primitive, DSL & Mengeksekusi aturan yang diizinkan \\
+Eksplorasi dan pengujian & Menyediakan split dan kriteria & Membuat kandidat, CV, ranking \\
+Kurasi & Menilai kelayakan semantik, kepatuhan, latency & Menyajikan skor dan trace \\
+Dokumentasi dan monitoring & Mengelola siklus hidup fitur: keputusan penerimaan, pemilik, pemantauan drift & Menghasilkan log, laporan, alert; mendeteksi anomali \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+Gambar 16.4 menggambarkan gerbang kerja tersebut. Perhatikan dua gate: statistical validation dan human curation. Fitur yang lulus skor tetapi gagal kebijakan tetap ditolak.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch16-fig-4}
+\caption{Workflow human-in-the-loop untuk fitur otomatis}
 \label{fig:ch16-fig-4}
 \end{figure}
 
-Inspeksi manual oleh pakar menjadi lapisan keamanan mutlak karena algoritma validasi murni bersifat buta terhadap batas realitas dunia fisik dan aturan bisnis perusahaan. Validasi diagnostik yang dilakukan oleh kurator manusia berfokus untuk menangkal beberapa insiden penting:
+Apa yang hanya dapat ditangkap kurator? Pertama, fitur yang sangat kuat tetapi tidak punya dasar rasional, sehingga kemungkinan spurious. Kedua, fitur yang lolos pemeriksaan row-level tetapi mustahil dihitung dalam latency produksi. Ketiga, fitur yang secara statistik membantu tetapi merekonstruksi protected attribute melalui proxy, seperti pelajaran Bab 9.
+
+Pada audit Online Retail, automated synthesis menghasilkan banyak kandidat. Beberapa tampak sangat dominan karena sebenarnya membaca masa depan, misalnya hitungan invoice positif dalam 60 hari setelah \emph{cutoff} atau nilai belanja masa depan. Kandidat lain seperti \passthrough{\lstinline!CustomerID!} bisa dihitung, tetapi tidak bermakna sebagai angka yang boleh dirata-ratakan atau dibandingkan jaraknya. Fitness function melihat skor tinggi; manusia melihat temporal leak atau semantic misuse. Perbaikannya bukan sekadar membuang satu fitur, tetapi menutup keluarga fitur serupa dan memperketat konfigurasi \emph{cutoff}.
+
+Inilah batas dan kekuatan kolaborasi manusia-AI. Automation tetap berada di wilayah representasi yang dirancang manusia ketika manusia menentukan primitive, constraint, DSL, dan acceptance rule. Mesin memperluas pencarian; manusia menjaga makna, ketersediaan, kebijakan, dan deployment. Bab 17 menutup buku dengan prinsip yang lebih umum: alat boleh berubah, tetapi pipeline dan evaluasi harus tetap dirancang dengan disiplin.
+
+\begin{sintesis}
+
+Benang merah Bab 16 adalah bahwa rekayasa fitur otomatis memperbesar ruang kandidat, bukan menghapus tanggung jawab desain. DFS menyusun primitive pada skema relasional, AutoML mencari pipeline di bawah metric dan split yang diberikan, sedangkan GenAI mengusulkan fitur semantik dari metadata dan konteks. Tabel 16.1 membantu membedakan apa yang diotomasi oleh masing-masing keluarga.
+
+Risiko utamanya juga berbeda: ledakan fitur dan leakage temporal pada DFS, spurious search hits dan pipeline sulit dirawat pada AutoML, serta fitur semu, kode invalid, dan proxy sensitif pada LLM. Tabel 16.2 merangkum pembagian kerja yang sehat: manusia mendesain koridor dan mengurasi, mesin mengeksplorasi dan meranking. Dua tabel itu perlu dibaca bersama: keluarga otomasi menentukan kandidat yang muncul, sedangkan pembagian peran menentukan siapa yang boleh menerimanya.
+
+Pesan bab ini sederhana. Otomasi yang baik bukan ``sekali klik lalu selesai'', melainkan kolaborasi yang diberi batas. Semakin kuat mesin menghasilkan kandidat, semakin penting manusia mendefinisikan masalah, split, \emph{cutoff}, metric, dan acceptance rule.
+
+\end{sintesis}
+
+\begin{bacaan}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Jebakan Korelasi Semu (\emph{Spurious Features}):} Menghentikan fitur yang skor prediktifnya menonjol akibat kebetulan statistik spesifik pada himpunan data latih, namun secara fundamental tidak memiliki landasan rasional atau kausalitas sebab-akibat.
+  Featuretools (Kanter \& Veeramachaneni 2015, DSAA) --- \url{https://featuretools.alteryx.com/}. Deep Feature Synthesis otomatis.
 \item
-  \textbf{Kebocoran Proses Produksi:} Menolak kandidat fitur yang tampak aman dari kebocoran baris data (\emph{row-level leakage}) namun di dunia nyata mustahil dikalkulasi secara instan pada milidetik yang sama saat model dipanggil (\emph{inference latency limits}).
+  auto-sklearn (Feurer dkk. 2015) --- \url{https://automl.github.io/auto-sklearn/}. AutoML termasuk praproses fitur.
 \item
-  \textbf{Proksi Data Sensitif:} Menemukan dan membuang fitur turunan (seperti rasio demografi geografis sekunder) yang secara terselubung mengidentifikasi variabel terlarang atau rahasia privasi pasien.
+  CAAFE (Hollmann dkk. 2023) --- \url{https://arxiv.org/abs/2305.03403}. Rekayasa fitur berbantuan LLM yang context-aware.
+\item
+  LLM-FE (Abhyankar dkk. 2025) --- \url{https://arxiv.org/abs/2503.14434}. Fitur yang diusulkan LLM dengan evaluasi terukur.
+\item
+  scikit-learn --- Common Pitfalls --- \url{https://scikit-learn.org/stable/common_pitfalls.html}. Menjaga fitting per-fold pada pipeline otomatis.
+\item
+  Shahriari dkk. (2016), Bayesian Optimization (Proc. IEEE) --- \url{https://doi.org/10.1109/JPROC.2015.2494218}. Dasar optimisasi hiperparameter.
 \end{itemize}
 
-Kerangka kerja HITL ini mengunci kedudukan \emph{AutoFE} di dalam ranah sistem produksi analitis. Kendati seluruh proses persilangan, seleksi mandiri, dan pengujian statistiknya dijalankan seratus persen oleh agen otonom, luaran final sistem ini sepenuhnya masih diklasifikasikan sebagai \textbf{representasi yang dirancang manusia}. Eksekusinya tunduk pada batasan rancangan awal manusia, dan lisensi produksinya harus dibubuhkan melalui verifikasi sadar dari kurator pengetahuan.
+\end{bacaan}
 
-\section{Studi Kasus: Kurasi Manusia atas Fitur Otomatis pada Data Relasional}\label{studi-kasus-kurasi-manusia-atas-fitur-otomatis-pada-data-relasional}
+\rujukanheading
 
-Integrasi antara \emph{automated feature engineering} (AutoFE) dan \emph{human-in-the-loop} dievaluasi melalui studi kasus prediksi pelanggan berhenti berlangganan (\emph{churn}) pada \emph{dataset} ritel. Struktur relasional data ini tersebar di beberapa tabel, termasuk Pelanggan, Sesi, dan Transaksi. Sebagai tolok ukur perbandingan (\emph{baseline}), \emph{pipeline} awal dibangun menggunakan sekumpulan representasi dasar yang dirancang manual secara klasik, seperti usia pelanggan dan rata-rata pembelanjaan historis.
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-amershi2014power}
+Amershi, Saleema, Maya Cakmak, W. Bradley Knox, and Todd Kulesza. 2014. {``Power to the People: The Role of Humans in Interactive Machine Learning.''} \emph{AI Magazine} 35 (4): 105--20.
 
-Siklus penemuan fitur yang baru dijalankan melalui tiga etape utama:
+\bibitem[\citeproctext]{ref-erickson2020autogluon}
+Erickson, Nick, Jonas Mueller, Alexander Shirkov, et al. 2020. \emph{{AutoGluon-Tabular}: Robust and Accurate {AutoML} for Structured Data}. \url{https://arxiv.org/abs/2003.06505}.
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{Sintesis Otomatis Skala Besar:} Kerangka kerja \emph{Deep Feature Synthesis} (DFS) diinisiasi dengan mendefinisikan \emph{EntitySet} untuk memetakan hierarki kardinalitas antartabel. DFS kemudian menyintesis tumpukan primitif matematika (misalnya \passthrough{\lstinline!MEAN(Sesi.MAX(Transaksi.Jumlah))!}), memompa ukuran data awal menjadi 800 kandidat atribut turunan baru.
-\item
-  \textbf{Pemangkasan dan Optimasi Evolusioner:} Karena 800 fitur akan memicu dimensi yang terlalu renggang, algoritma filter statis diterjunkan untuk membuang kandidat dengan varians mendekati nol serta atribut berkolinearitas tinggi (korelasi \textgreater{} 0,95). Selanjutnya, subset fitur diserahkan kepada agen LLM yang bertindak sebagai pengoptimal evolusioner (\emph{evolutionary optimizer}). Agen ini mengusulkan, menyilangkan, dan memvalidasi subset fitur ke dalam model melalui putaran \emph{cross-validation} berulang, di mana umpan balik performa digunakan untuk membimbing iterasi agen (\emph{program-search}) hingga memangkas kandidat tersisa menjadi 50 atribut yang paling prediktif.
-\item
-  \textbf{Verifikasi Konteks Domain oleh Manusia:} Meskipun agen evolusioner telah merampingkan matriks secara empiris, agen tersebut tidak memiliki konteks hukum bisnis. Pakar domain manusia turun tangan untuk menginspeksi 50 fitur unggulan tersebut.
-\end{enumerate}
+\bibitem[\citeproctext]{ref-feurer2015autosklearn}
+Feurer, Matthias, Aaron Klein, Katharina Eggensperger, Jost Springenberg, Manuel Blum, and Frank Hutter. 2015. {``Efficient and Robust Automated Machine Learning.''} \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
 
-Selama inspeksi, pakar menemukan satu fitur dengan skor performa yang secara janggal melesat jauh di atas fitur lainnya: atribut ``waktu sejak \emph{login} terakhir''. Analisis terhadap arsitektur tabel membuktikan bahwa parameter log tersebut baru ditulis oleh sistem \emph{backend} \emph{setelah} akun pelanggan secara resmi diblokir atau ditandai \emph{churn}. Karena peristiwa tersebut direkam pada masa depan relatif terhadap titik prediksi, fitur tersebut memuat informasi yang belum ada pada saat inferensi riil.
+\bibitem[\citeproctext]{ref-kanter2015dfs}
+Kanter, James Max, and Kalyan Veeramachaneni. 2015. {``Deep Feature Synthesis: Towards Automating Data Science Endeavors.''} \emph{IEEE International Conference on Data Science and Advanced Analytics (DSAA)}. \url{https://doi.org/10.1109/DSAA.2015.7344858}.
 
-Insiden ini adalah bentuk klasik dari kebocoran temporal (\emph{temporal data leakage}). Agen optimasi matematis menilainya sebagai prediktor ``sempurna'' semata-mata karena korelasi angkanya tinggi. Tanpa intuisi operasional dari kurator manusia, sistem otomatis akan langsung mempromosikan fitur cacat ini ke produksi.
-
-Tindak lanjut atas temuan ini adalah penghapusan fitur tersebut beserta seluruh cabang turunannya. Sebagai langkah mitigasi struktural, pakar mengonfigurasi ulang parameter \emph{cutoff time} pada mesin pencari DFS agar secara algoritmik dilarang menyentuh baris data yang melewati batas waktu kejadian. Proses kurasi ini memfinalisasi 20 fitur tangguh yang 100\% valid secara operasional. Model dengan 20 turunan hasil seleksi kolaboratif ini sukses mengungguli performa \emph{baseline} sebesar 8\%, menggarisbawahi fakta bahwa sekuat apa pun utilitas \emph{automated feature engineering}, kepatuhan terhadap praktik \emph{pipeline} yang benar melalui audit rasional manusia tetap menjadi fondasi utamanya.
-
-\section{Sintesis Keputusan dan Prinsip Akhir}\label{sintesis-keputusan-dan-prinsip-akhir}
-
-Keberhasilan otomatisasi rekayasa fitur bertumpu pada keselarasan antara daya eksplorasi mesin dan kehati-hatian pengawasan manusia.
-
-\textbf{Panduan Pemilihan Metode Otomasi.} Gunakan \emph{Deep Feature Synthesis} (DFS) untuk basis data relasional berskala besar guna merangkai fitur agregasi lintas tabel secara cepat. Terapkan kerangka kerja \emph{AutoML} untuk mencari konfigurasi \emph{pipeline} prapemrosesan yang optimal secara Bayesian ketika keterbatasan waktu menghalangi uji coba manual. Untuk mengekstrak fitur yang kaya konteks semantik tanpa menulis kode prapemrosesan dari nol, manfaatkan agen GenAI (seperti CAAFE atau LLM-FE) sebagai pengusul hipotesis terarah.
-
-\textbf{Risiko dan Regulasi.} Otomatisasi murni yang buta terhadap konteks bisnis rentan memicu ledakan dimensi (\emph{feature space explosion}) dan menghasilkan korelasi semu (\emph{spurious features}). Putaran komputasi otomatis harus selalu dijaga ketat oleh parameter pembatasan (seperti \passthrough{\lstinline!max_depth!} pada DFS), pengecualian variabel administratif, dan penegakan batas waktu (\emph{cutoff time}) yang tegas untuk memblokir kebocoran data.
-
-\textbf{Prinsip Human-in-the-Loop.} Sistem otomatisasi tidak berfungsi sebagai pengambil keputusan otonom, melainkan sebagai mesin pengusul hipotesis. Desain kolaborasi \emph{human-in-the-loop} (HITL) menempatkan pakar domain sebagai kurator akhir untuk memeriksa kegunaan fisis fitur, menolak proksi data sensitif, dan mengaudit kelayakan operasional sebelum fitur dideploy ke lingkungan produksi.
-
-Demonstrasi langsung pengoperasian pustaka FeatureTools dan integrasi agen LLM dalam kurasi fitur otomatis dapat diuji secara interaktif pada panduan praktis di repositori pendamping buku ini.
+\end{CSLReferences}

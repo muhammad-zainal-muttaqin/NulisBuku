@@ -1,0 +1,34 @@
+% ==========================================================================
+% prakata.tex -- dihasilkan dari v2/drafts/Prakata.txt oleh tools/make_prakata.py
+% Jangan sunting manual; sunting draf lalu jalankan ulang skrip ini.
+% ==========================================================================
+% Bab bernomor punya kotak angka besar (58pt) di atas judul yang secara
+% alami mendorong judul turun; \chapter* tak punya angka jadi judulnya
+% nempel ke atas halaman. \vspace* biasa sebelum \chapter* tak berpengaruh
+% (chapter* memicu clearpage sendiri lalu membuang ruang tertunda), jadi
+% ruang ditambahkan lewat override titleformat lokal (di dalam grup, tak
+% memengaruhi bab tak bernomor lain seperti Panduan/Daftar Pustaka).
+\begingroup
+\titleformat{\chapter}[display]{\sffamily}{}{0pt}{\vspace*{65pt}\Huge\bfseries\color{black}\raggedright}[\vspace{7pt}{\color{rulegray}\titlerule[1.4pt]}]
+\chapter*{Prakata}
+\addcontentsline{toc}{chapter}{Prakata}
+\markboth{Prakata}{}
+
+Pada kelas pengantar \emph{machine learning} atau \emph{data mining}, perhatian utama biasanya diarahkan pada alur dasar pemodelan. Topik seperti klasifikasi, regresi, \emph{clustering}, validasi, dan evaluasi model membentuk fondasi awal yang perlu dipahami terlebih dahulu. Pada tahap tersebut, data yang digunakan sering kali telah berada dalam bentuk yang cukup siap pakai, atau hanya memerlukan beberapa transformasi dasar, agar pembelajaran dapat berfokus pada cara kerja model dan cara menilai hasilnya.
+
+Buku ini disusun untuk pembaca yang telah mengenal dasar-dasar \emph{machine learning} dan ingin melangkah lebih jauh ke aspek representasi data. Mahasiswa dapat menggunakannya untuk memahami mengapa dua eksperimen dengan algoritma yang sama dapat memberi hasil berbeda ketika fitur yang digunakan berbeda. Peneliti dapat menggunakannya sebagai rujukan untuk merancang fitur, menyusun \emph{pipeline}, memilih bentuk validasi, dan menjelaskan keputusan metodologis dengan lebih terstruktur.
+
+Sebagian materi dalam buku ini bersifat konseptual, sebagian lainnya bersifat teknis. Pendekatan yang digunakan tidak dimaksudkan untuk menghafalkan daftar transformasi, melainkan untuk memahami fungsi setiap keputusan. Standardisasi, pengodean kategorikal, \emph{temporal window}, \emph{embedding}, atau model pralatih memiliki kegunaan yang berbeda bergantung pada struktur data, tujuan, dan cara evaluasi yang digunakan.
+
+Sebagai sebuah diskursus keilmuan yang terus berkembang, buku ini tentu masih memiliki ruang untuk penyempurnaan. Oleh karena itu, masukan serta kritik yang konstruktif dari para pembaca sangat dinantikan. Ucapan terima kasih yang tulus juga ditujukan kepada Fakultas Matematika dan Ilmu Pengetahuan Alam (FMIPA) Universitas Lambung Mangkurat (ULM) atas pelatihan menulis bukunya serta dukungan dan iklim akademis yang memungkinkan perumusan gagasan di dalam buku ini dapat terwujud.
+
+Semoga literatur ini dapat memperkaya referensi riset tingkat lanjut sekaligus menjadi fondasi yang kokoh bagi siapa saja yang sedang membangun model prediktif. Sebab, sebuah model yang tangguh tidak pernah bermula dari kerumitan algoritmanya, melainkan dari seberapa baik data tersebut direpresentasikan.
+
+Selamat mendalami.
+
+\begin{flushright}
+Banjarbaru, Juli 2026\\
+Penulis
+\end{flushright}
+
+\endgroup

@@ -1,0 +1,57 @@
+{
+  "source": "UCI SMS Spam Collection official archive",
+  "uci_page_instances": 5574,
+  "raw_labeled_lines": 5574,
+  "rows": 5574,
+  "columns": [
+    "label",
+    "text",
+    "is_spam"
+  ],
+  "missing_cells": 0,
+  "label_counts": {
+    "ham": 4827,
+    "spam": 747
+  },
+  "spam_rate": 0.1340150699677072,
+  "count_vectorizer_vocabulary_size": 8444,
+  "count_vectorizer_density": 0.0009258532161145414,
+  "tfidf_word_bigram_vocabulary_size": 9207,
+  "tfidf_word_bigram_density": 0.0010788619710225785,
+  "duplicate_text_rows_after_first": 415,
+  "duplicate_text_groups": 290,
+  "duplicate_label_text_rows_after_first": 415,
+  "random_split_train_test_text_overlap_count": 141,
+  "fixed_random_split_metrics": {
+    "dummy_most_frequent": {
+      "average_precision": 0.13414634146341464,
+      "roc_auc": 0.5,
+      "f1": 0.0
+    },
+    "bow_count": {
+      "average_precision": 0.976465392731012,
+      "roc_auc": 0.9889326522203367,
+      "f1": 0.9467787114845938
+    },
+    "tfidf_word_bigram": {
+      "average_precision": 0.9753205127067747,
+      "roc_auc": 0.9886446707929236,
+      "f1": 0.9162303664921466
+    },
+    "tfidf_char_wb": {
+      "average_precision": 0.9857705722319199,
+      "roc_auc": 0.9949315268775281,
+      "f1": 0.964769647696477
+    }
+  },
+  "duplicate_group_split_tfidf_metrics": {
+    "train_rows": 4173,
+    "test_rows": 1401,
+    "test_spam_rate": 0.14275517487508924,
+    "average_precision": 0.9704745495489749,
+    "roc_auc": 0.991688176519567,
+    "f1": 0.9185185185185185
+  },
+  "source_note": "UCI page displays 5,574 instances and the downloaded SMSSpamCollection file has 5,574 labeled lines. Parse by splitting each line on the first tab; generic CSV quoting can merge lines because SMS text contains quote characters.",
+  "chronology_note": "UCI page notes the messages are not chronologically sorted; use random or duplicate-aware/group split examples, not time split."
+}

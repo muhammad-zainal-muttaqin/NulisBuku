@@ -1,0 +1,28 @@
+{
+  "source": "NetworkX karate_club_graph",
+  "source_url": "https://networkx.org/documentation/stable/reference/generated/networkx.generators.social.karate_club_graph.html",
+  "networkx_version": "3.6.1",
+  "license": "BSD-3-Clause via NetworkX",
+  "nodes": 34,
+  "edges": 78,
+  "degree_min": 1,
+  "degree_max": 17,
+  "club_counts": {
+    "Mr. Hi": 17,
+    "Officer": 17
+  },
+  "greedy_modularity_communities": 3,
+  "greedy_modularity_community_sizes": [
+    18,
+    11,
+    5
+  ],
+  "fixed_split_train_nodes": 22,
+  "fixed_split_test_nodes": 12,
+  "fixed_split_cross_edges": 38,
+  "node_classification_accuracy": {
+    "centrality_logistic_accuracy": 0.6666666666666666,
+    "spectral_embedding_logistic_accuracy": 1.0,
+    "centrality_plus_spectral_logistic_accuracy": 0.8333333333333334
+  }
+}

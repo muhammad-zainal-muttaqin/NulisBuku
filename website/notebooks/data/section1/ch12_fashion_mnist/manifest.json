@@ -1,0 +1,5 @@
+[
+"fashion_mnist_demo_features.parquet",
+"fashion_mnist_demo_sample.npz",
+"verified_stats.json"
+]

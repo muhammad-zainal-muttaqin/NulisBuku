@@ -1,0 +1,100 @@
+{
+  "source": "Open Food Facts static gzip export streamed into a curated paired subset",
+  "source_url": "https://world.openfoodfacts.org/data",
+  "static_export_url": "https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz",
+  "license": "Database: ODbL; database contents: DbCL; product images: CC BY-SA",
+  "rows_scanned_from_export": null,
+  "candidate_rows_before_image_check": 280,
+  "rows": 151,
+  "train_rows": 105,
+  "test_rows": 46,
+  "nutriscore_grade_counts": {
+    "a": 43,
+    "b": 25,
+    "c": 40,
+    "d": 18,
+    "e": 25
+  },
+  "nutri_good_counts": {
+    "0": 83,
+    "1": 68
+  },
+  "simple_category_counts": {
+    "beverage": 7,
+    "cereal": 22,
+    "dairy": 5,
+    "meal": 31,
+    "other": 22,
+    "plant": 23,
+    "sauce": 25,
+    "sweet_snack": 16
+  },
+  "image_feature_count": 181,
+  "fusion_metrics": [
+    {
+      "representation": "text",
+      "average_precision": 0.8025374876159928,
+      "roc_auc": 0.8590476190476191,
+      "f1": 0.8372093023255814,
+      "accuracy": 0.8478260869565217
+    },
+    {
+      "representation": "image_color",
+      "average_precision": 0.72974801065865,
+      "roc_auc": 0.7104761904761905,
+      "f1": 0.6521739130434783,
+      "accuracy": 0.6521739130434783
+    },
+    {
+      "representation": "nutrition_tabular",
+      "average_precision": 0.916933964592898,
+      "roc_auc": 0.9123809523809523,
+      "f1": 0.7906976744186046,
+      "accuracy": 0.8043478260869565
+    },
+    {
+      "representation": "late_tabular_plus_image",
+      "average_precision": 0.9191199471241491,
+      "roc_auc": 0.9142857142857144,
+      "f1": 0.7906976744186046,
+      "accuracy": 0.8043478260869565
+    },
+    {
+      "representation": "text_plus_image",
+      "average_precision": 0.7514680671008995,
+      "roc_auc": 0.7295238095238095,
+      "f1": 0.6521739130434783,
+      "accuracy": 0.6521739130434783
+    },
+    {
+      "representation": "text_plus_tabular",
+      "average_precision": 0.9107754971697921,
+      "roc_auc": 0.9123809523809524,
+      "f1": 0.7906976744186046,
+      "accuracy": 0.8043478260869565
+    },
+    {
+      "representation": "all_modalities",
+      "average_precision": 0.8608281949756964,
+      "roc_auc": 0.8571428571428571,
+      "f1": 0.7272727272727273,
+      "accuracy": 0.7391304347826086
+    }
+  ],
+  "late_fusion_weights": {
+    "late_tabular_plus_image": {
+      "weight_tabular": 0.9500000000000001,
+      "weight_image": 0.04999999999999993,
+      "oof_average_precision": 0.9016542941810323
+    }
+  },
+  "retrieval_metrics": {
+    "test_pairs": 46,
+    "image_to_text_recall_at_1": 0.043478260869565216,
+    "image_to_text_recall_at_5": 0.17391304347826086,
+    "image_to_text_recall_at_10": 0.30434782608695654,
+    "random_recall_at_5": 0.10869565217391304,
+    "cca_components": 10
+  },
+  "note": "The full Open Food Facts export is not vendored. This folder contains only a curated product subset plus cached thumbnails and source URLs. This run finalized from thumbnails cached before a longer image-download pass timed out."
+}
