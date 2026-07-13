@@ -1,305 +1,189 @@
-# Missing Values & Outliers (Reproducible, Berbasis Pipeline)
+# *Missing Values* dan *Outlier*
 
-Ketiadaan data dan kehadiran *outlier* merupakan kenyataan empiris yang senantiasa dijumpai saat bekerja dengan data mentah di dunia nyata. Algoritma pemelajaran mesin tidak dapat memproses nilai kosong pada saat kalkulasi gradien atau metrik jarak, sedangkan *outlier* ekstrem yang menyimpang jauh dari pusat distribusi dapat mendistorsi estimasi parameter model. Sayangnya, tindakan pembersihan data baris per baris di luar alur sistematis sering kali mengubah variansi asli, menyembunyikan anomali yang valid, dan memicu *data leakage* jika parameter pengisi dihitung sebelum pemisahan data (*data split*) dilakukan.
+Nilai kosong dan nilai ekstrem jarang muncul sebagai masalah abstrak. Keduanya baru terasa ketika tabel nyata dibuka dan terlihat kolom yang kosong berkelompok, angka yang jauh dari mayoritas data, serta target yang ekornya panjang. Namun, nilai kosong dan nilai ekstrem sering diperlakukan terlalu cepat. Baris dihapus, rata-rata diisikan, atau nilai ekstrem dipotong tanpa memeriksa alasannya. Pada pembelajaran mesin, tindakan seperti ini mengubah representasi yang diterima model. Jika dilakukan sebelum pemisahan data atau tanpa aturan yang dapat diulang, tindakan itu dapat menimbulkan kebocoran dan mengubah populasi belajar.
 
-Bab ini mendeskripsikan fondasi penanganan nilai kosong dan *outlier* secara sistematis, *reproducible*, dan terintegrasi di dalam objek *pipeline*. Pembahasan mencakup mekanisme hilangnya data (MCAR, MAR, MNAR) sebagai asupan diagnostik sebelum otomatisasi, pemilihan imputasi sederhana melawan imputasi iteratif multivariat berbasis model, pemanfaatan status kekosongan sebagai *feature* representatif (*missing indicator*), serta transformasi *outlier* menggunakan parameter statistik yang tangguh (*robust*). Seluruh proses ini dikemas ke dalam alur kerja terstruktur untuk menjamin integritas distribusi data dari tahap pelatihan hingga fase inferensi di lingkungan produksi.
+Bab ini membahas nilai kosong dan *outlier*, yaitu nilai yang jauh dari pola utama data, sebagai bagian dari rekayasa fitur yang harus diperiksa, dirancang, dan dipasang dalam *pipeline*. Mekanisme hilangnya data, yaitu MCAR, MAR, dan MNAR, dipakai sebagai kerangka asumsi dan diagnosis, bukan resep langsung untuk memilih imputer. Imputasi sederhana dan berbasis model, fitur indikator ketiadaan nilai (*missingness indicator*), serta deteksi dan penanganan *outlier* dibahas bersama risikonya. Bab ini menguraikan batas antara pembersihan data dan rekayasa fitur, dengan prinsip bahwa inspeksi mendahului otomatisasi.
 
-## *Missing Values* & *Outlier* (Reproducible, Berbasis *pipeline*)
+## Mekanisme *Missingness* MCAR, MAR, MNAR
 
-**Mekanisme *Missingness*: MCAR, MAR, dan MNAR.**
+Nilai kosong tidak selalu berarti hal yang sama. Kadang nilai hilang karena kesalahan acak saat data dikumpulkan. Kadang nilai hilang karena cakupan survei atau desain administrasi membuat kelompok tertentu lebih sering tidak memiliki isian. Kadang nilai hilang justru berkaitan dengan nilai yang tidak terlihat itu sendiri, misalnya ketika sebuah ukuran sensitif lebih mungkin tidak dilaporkan pada kondisi ekstrem.
 
-Sebagian besar algoritma *machine learning* tidak dapat memproses nilai kosong secara langsung, sehingga data yang tidak lengkap harus disesuaikan sebelum tahap pemodelan. Sebelum menyusun strategi imputasi di dalam *pipeline*, alasan di balik hilangnya data tersebut perlu diinspeksi. Ketiadaan nilai sering kali merepresentasikan kejadian faktual yang membawa informasi spesifik tentang prosedur perekaman observasi. Tahap diagnostik ini sangat penting sebelum menerapkan transformasi otomatis.
+Contoh kerja bab ini menggunakan UCI Communities and Crime. Setiap baris mewakili satu komunitas dengan fitur sensus dan sosial-ekonomi, sedangkan target `ViolentCrimesPerPop` menyatakan tingkat kejahatan kekerasan per penduduk pada skala yang sudah dinormalisasi sumber. Sejumlah kolom dalam blok LEMAS/police, yaitu kelompok variabel tentang administrasi dan sumber daya kepolisian, hilang bersama pada banyak komunitas karena cakupan pengumpulan data. Pola blok yang terlihat tidak dengan sendirinya membuktikan apakah mekanismenya MCAR, MAR, atau MNAR.
 
-Secara matematis, mekanisme hilangnya data (*missingness mechanism*) didefinisikan melalui probabilitas bersyarat dari matriks indikator kekosongan. Misalkan terdapat sekumpulan data $Y$ yang terdiri dari bagian teramati $Y_{obs}$ dan bagian kosong $Y_{miss}$. Jika kita mendefinisikan matriks indikator $R$ dengan nilai 1 berarti data hilang dan 0 berarti teramati, mekanisme *missingness* dinyatakan sebagai fungsi probabilitas $P(R \mid Y_{obs}, Y_{miss}, \phi)$. Dalam fungsi tersebut, $R$ merepresentasikan matriks indikator ketiadaan data, $Y_{obs}$ adalah nilai atribut yang berhasil terekam, $Y_{miss}$ adalah nilai atribut yang kosong, dan $\phi$ merupakan parameter tidak diketahui yang menentukan proses hilangnya data. Berdasarkan hubungan ketergantungan ini, statistika membagi hilangnya data ke dalam tiga kategori utama.
+Analisis data hilang membedakan tiga mekanisme (Little and Rubin 2019). Misalkan data lengkap $Y$ terdiri atas bagian teramati $Y_{\text{obs}}$ dan bagian hilang $Y_{\text{miss}}$. Misalkan pula $R$ adalah matriks indikator kekosongan, dengan nilai 1 berarti sebuah entri hilang. Mekanisme *missingness* dinyatakan sebagai probabilitas berikut.
 
-Kategori pertama adalah *Missing Completely At Random* (MCAR). Pada kasus ini, kekosongan terjadi murni secara kebetulan dan peluang hilangnya data tidak dipengaruhi oleh variabel lain. Bentuk distribusinya disederhanakan menjadi $P(R \mid Y_{obs}, Y_{miss}, \phi) = P(R \mid \phi)$. Contohnya, sensor pengukur angin gagal mengirimkan data sesaat akibat pemadaman listrik acak. Pada skenario MCAR, porsi data yang utuh tetap menjadi sampel representatif dari populasi awal.
+$$P(R \mid Y_{\text{obs}}, Y_{\text{miss}}, \phi)$$
 
-Kategori kedua adalah *Missing At Random* (MAR). Peluang terjadinya nilai kosong memiliki probabilitas bersyarat dengan variabel lain di dalam *dataset*, tetapi tidak dipengaruhi oleh nilai atribut yang hilang itu sendiri. Persamaannya diukur menjadi $P(R \mid Y_{obs}, Y_{miss}, \phi) = P(R \mid Y_{obs}, \phi)$. Sebagai contoh, responden survei berusia lanjut sering mengosongkan riwayat aktivitas fisik. Pola kekosongan pada riwayat olahraga tersebut pada dasarnya berkorelasi matematis dengan rentang usia responden. Memisahkan pengamatan berdasarkan umur akan menghasilkan probabilitas kekosongan yang independen pada setiap kelompok batas usianya.
+Dengan $\phi$ sebagai parameter yang mengatur proses kekosongan, rumus tersebut menyatakan bahwa pola hilangnya data dapat bergantung pada bagian yang terlihat, bagian yang hilang, atau mekanisme lain yang mengatur keduanya.
 
-Kategori ketiga adalah *Missing Not At Random* (MNAR). Probabilitas hilangnya suatu nilai terikat langsung dengan isi dari nilai yang tidak teramati tersebut ($Y_{miss}$). Ketergantungan ini membuat persamaan probabilitas tidak dapat disederhanakan. Kasus klasiknya adalah survei pendapatan, di mana responden dengan angka kekayaan ekstrem sering kali menolak melapor demi privasi. Absennya data merupakan dampak langsung dari nominal kekayaan itu sendiri, sehingga pada kondisi MNAR, lokasi kekosongan justru mengandung sinyal pemodelan yang kuat.
-```{mermaid}
-%%| label: fig-ch05-5_1
-%%| fig-cap: "Perbandingan Pola Hilangnya Data pada Mekanisme MCAR, MAR, dan MNAR"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    A[Analisis Missingness] --> B[MCAR: Hilang Acak Sempurna - Tanpa Hubungan Variabel]
-    A --> C[MAR: Hilang Terikat Atribut Lain - e.g. Lansia Melewatkan Isian Web]
-    A --> D[MNAR: Hilang Terikat Nilai Aslinya sendiri - e.g. Gaji Tinggi Malu Mengisi]
-```
-Membedakan ketiga profil mekanisme di atas mencegah injeksi bias pada fase pelatihan. Jika kita mengisi data yang tergolong MNAR menggunakan nilai rata-rata, kita akan mendistorsi batas distribusi asli dan menyamarkan keberadaan kelompok ekstrem dalam sampel.
+Pada MCAR, *missing completely at random*, kekosongan tidak bergantung pada nilai dalam data.
 
-Penerapan fungsi pengamatan statistik memfasilitasi proses inspeksi ini. Pengujian berbasis validasi observasional ini dapat dicapai melalui visualisasi matriks kekosongan yang direpresentasikan oleh fungsi pustaka `missingno`. Korelasi kosong (*nullity*) komparatif di antara dua lajur parameter menandakan kehadiran relasi struktural bertipe MAR maupun MNAR. Pada evaluasi formal, uji statistik MCAR Little dioperasikan untuk meninjau secara mekanis rasio asumsi deviasi *missingness*. Meskipun indikasi matematis memberikan acuan awal, pendekatan kuantitatif ini harus diverifikasi berdampingan dengan evaluasi konteks domain faktual data terkait. Jika kondisi absen bertipe MNAR teridentifikasi, parameter kosong tersebut berfungsi menjadi sinyal observasi mandiri. Beberapa arsitektur *deep learning* di desain khusus memetakan nilai kosong (*missing value*) sebagai bagian indikator mekanisme pemelajaran internal untuk menyelaraskan akurasi prediksi asimetris.
+$$P(R \mid Y_{\text{obs}}, Y_{\text{miss}}, \phi) = P(R \mid \phi)$$
 
-Operasi imputasi *missing values* memerlukan pendekatan yang sistematis. Pemahaman konseptual, inspeksi visual, serta pengetahuan konteks domain merupakan prasyarat mutlak sebelum mengubah teknik penanganan nilai kosong menjadi komponen *pipeline* permanen.
+Contohnya adalah satu berkas administrasi yang gagal terbaca secara acak. Pada MAR, *missing at random*, kekosongan dapat dijelaskan oleh variabel yang teramati.
 
-## Imputasi Sebagai Komponen *Pipeline*
+$$P(R \mid Y_{\text{obs}}, Y_{\text{miss}}, \phi) = P(R \mid Y_{\text{obs}}, \phi)$$
 
-Praktik yang sering keliru dalam pengembangan model adalah memposisikan penanganan data kosong sebagai tahap pembersihan di awal proses. Data diisi menggunakan rata-rata atau median dari keseluruhan *dataset*, baru kemudian dibagi menjadi *split training* dan *split test*. Pendekatan ini memicu *data leakage* karena tahap imputasi tidak terisolasi dari data uji. Imputasi adalah transformasi struktural yang harus tertanam di dalam *pipeline* pemodelan.
+Misalnya, kolom tertentu lebih sering kosong pada komunitas dengan cakupan administrasi yang berbeda, dan cakupan itu terwakili oleh variabel lain yang teramati. Pada MNAR, *missing not at random*, tidak ada penyederhanaan seperti itu. Kekosongan berkaitan dengan nilai yang hilang sendiri atau faktor yang tidak teramati. Ukuran sensitif yang lebih mungkin tidak dilaporkan ketika nilainya ekstrem adalah contoh yang masuk akal.
 
-Fenomena *data leakage* terjadi karena perhitungan statistik merekam informasi dari kelompok evaluasi. Jika sekumpulan data $X$ merupakan gabungan data latih dan data uji, persamaan rata-rata imputasi yang terdistorsi adalah:
+Perbedaan ini penting karena strategi imputasi membawa asumsi. Mengisi mean pada data MNAR dapat meratakan kelompok yang justru penting. Jika nilai yang tidak tersedia berkaitan dengan kondisi ekstrem yang tidak teramati, imputasi mean menyembunyikan sinyal nonresponse tersebut. Inilah sebabnya indikator *missingness* pada Bagian 5.4 kadang diperlukan.
 
-$$\mu_{bocor} = \frac{1}{|X_{train}| + |X_{test}|} \left( \sum_{x \in X_{train}} x + \sum_{x \in X_{test}} x \right)$$
+Gambar 5.1 memperlihatkan pola yang berbeda. MCAR tampak seperti lubang acak. MAR terkonsentrasi pada baris yang memiliki nilai tertentu pada kolom teramati. MNAR terkonsentrasi pada nilai yang hilang itu sendiri, sehingga mekanismenya sulit dibuktikan dari data yang terlihat.
+![Pola MCAR, MAR, dan MNAR pada matriks data](../figures/ch05-fig-1.png)
+Dalam praktik, mekanisme ini jarang dapat dipastikan sempurna. Diagnostik dan pengetahuan domain harus dibaca bersama. MCAR, MAR, dan MNAR merupakan kerangka asumsi, bukan label teramati yang otomatis menunjuk satu metode. Asumsi MAR tidak menjamin iterative imputation valid atau paling baik, sedangkan dugaan MNAR memerlukan analisis sensitivitas, pengetahuan domain, atau informasi eksternal tentang proses kekosongan. Setelah alasan kekosongan dipertimbangkan, langkah berikutnya adalah memastikan cara pengisiannya tidak belajar dari data yang seharusnya belum terlihat.
 
-Suku $\sum_{x \in X_{test}} x$ memastikan bahwa parameter pengisi pada data latih dihitung dengan menyertakan komponen distribusi uji. Akibatnya, model menyesuaikan fungsi internalnya berdasarkan rentang angka observasi masa depan yang direpresentasikan saat sesi inisialisasi pelatihan. Hasilnya, metrik kalkulasi skor tampak sangat akurat pada data eksperimental, namun akan mengalami tingkat kesalahan klasifikasi yang signifikan saat diaplikasikan pada baris *dataset* di operasional lingkungan *production*.
-```{mermaid}
-%%| label: fig-ch05-5_2a
-%%| fig-cap: "Alur Imputasi Data Utuh yang Menyebabkan Kebocoran"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    A1[Dataset Utuh] -->|Imputasi Menggunakan Statistik Keseluruhan| B1[Data Terimputasi]
-    B1 -->|Split| C1[Train]
-    B1 -->|Split| D1[Test]
-```
-```{mermaid}
-%%| label: fig-ch05-5_2b
-%%| fig-cap: "Alur Imputasi Aman Menggunakan Pipeline"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    A2[Dataset Utuh] -->|Split| B2[Train Split]
-    A2 -->|Split| C2[Test Split]
-    B2 -->|Pipeline Fit Imputer| D2[Transformer Parameter Imputasi]
-    D2 -->|Transform Train| E2[Train Bersih]
-    C2 -->|Transform Test Murni| D2
-    D2 -->|Output| F2[Test Bersih]
-```
-Untuk menghindari *data leakage*, modul imputasi (seperti `SimpleImputer` atau `KNNImputer` pada pustaka Scikit-Learn) harus diperlakukan sama seperti model prediktif, melalui pemisahan fase *fit* dan *transform*. Nilai pengisi dihitung eksklusif dari *split training*:
+Visualisasi seperti missingness matrix dan nullity-correlation plot dapat menunjukkan apakah beberapa kolom sering kosong bersama-sama. Pustaka seperti missingno menyediakan cara cepat untuk melihat pola seperti itu. Little's MCAR test memberi pemeriksaan formal terhadap asumsi MCAR. Namun, hasilnya harus dibaca hati-hati. Tes dapat menolak MCAR, tetapi tidak membuktikan mekanisme tertentu. MNAR pada dasarnya tidak dapat dibuktikan hanya dari data yang teramati, karena alasan kekosongannya terkait bagian yang tidak terlihat. Diagnostik seperti ini dilakukan pada tahap eksplorasi, sebelum kebijakan imputasi masuk ke *pipeline*.
 
-$$\mu_{benar} = \frac{1}{|X_{train}|} \sum_{x \in X_{train}} x$$
+## Imputasi sebagai Komponen *Pipeline*
 
-Siklus fungsi arsitektur dari parameter indikasi imputasi ini memaksa evaluasi statistik untuk dikerjakan independen. Pertama, kerangka kerja terisolasi berimplikasi pada fungsi komputasi *cross-validation*. Parameter nilai estimasi diformulasikan ulang pada blok data terpisah pelatihan (*fold*), menghindarkan tumpukan lipatan kelompok uji (*validation fold*) dari kebocoran sinyal referensi perhitungan parameter aslinya. Kedua, kerangka operasional imputasi yang konsisten meniadakan kendala komputasi pada fungsional algoritma di tingkat operasional \*production\*. Varians observasi tabel asing yang didatangkan untuk dievaluasi oleh parameter metode prediktif secara fungsional dinilai hanya merujuk acuan distribusi pelatihan yang sebelumnya disematkan oleh modul imputer bawaan. Ketiga, prosedur penyisipan yang memusat meredam distorsi komputasi untuk mekanisme multivariat interaktif. Algoritma seperti prediksi klasifikasi antar kolom *features* diharuskan berjalan independen memanfaatkan murni *split training* observasinya.
+Imputasi adalah proses mengisi nilai kosong dengan aturan atau model. Aturannya dapat sederhana, misalnya rata-rata, median, modus, atau konstanta. Aturannya juga dapat berbasis model, misalnya dengan memprediksi nilai kosong dari fitur lain. Apa pun metodenya, jika nilai pengisi dipelajari dari data, imputer adalah transformer yang harus mengikuti kontrak `fit` dan `transform`. Penetapan nilai pengisi selalu berkaitan dengan sumber data yang dipakai untuk mempelajarinya.
 
-Meskipun beberapa kajian literatur menyimpulkan bahwa imputasi median tak-diawasi (\*unsupervised\*) yang tidak beroperasi melalui isolasi *cross-validation* sesekali memperkecil perhitungan tingkat ukuran varians dengan membebankan penalti fungsional parameter metrik observasi pada ukuran parameter bias (Jaeger dkk., 2020), standar mutlak prapemrosesan harus dijaga. Penggabungan logika algoritma imputer dikerjakan konsisten hanya sesudah fungsi isolasi prapemrosesan rentang pemisahan \*split\* parameter observasi diterapkan sebagai komponen terpadu variabel \*transformer\* pada urutan parameter komputasi *pipeline*.
+Kebocoran pada imputasi dapat dilihat langsung dari rumus. Misalkan nilai kosong diisi dengan rata-rata. Cara yang salah adalah menghitung rata-rata dari gabungan data *train* dan *test*.
 
-## Imputasi Sederhana vs. Berbasis Model
+$$\mu_{\text{bocor}} = \frac{1}{|X_{\text{train}}| + |X_{\text{test}}|}\left(\sum_{x \in X_{\text{train}}} x + \sum_{x \in X_{\text{test}}} x\right)$$
 
-Pemilihan algoritma pengisian nilai kosong bergantung pada mekanisme *missingness* (MCAR, MAR, atau MNAR). Pendekatan imputasi terbagi ke dalam dua metode: metode univariat dasar yang memprioritaskan kecepatan kalkulasi dan metode multivariat yang berusaha mempertahankan struktur distribusi data asli.
+Suku kedua, yaitu jumlah dari $X_{\text{test}}$, menunjukkan bahwa data *test* ikut menentukan nilai pengisi. Cara yang benar ditulis sebagai berikut.
 
-**Imputasi Univariat (Sederhana).**
+$$\mu_{\text{benar}} = \frac{1}{|X_{\text{train}}|}\sum_{x \in X_{\text{train}}} x$$
 
-Imputasi sederhana mengisi sel data kosong menggunakan metrik statistik tunggal dari kolom yang sama, seperti rata-rata (*mean*), median, atau modus.
+Nilai pengisi dipelajari hanya dari data *train*, lalu dipakai ulang untuk validasi, *test*, dan inferensi. Prinsip yang sama berlaku untuk median, modus, kategori pengisi, atau model imputasi. Di dalam *cross-validation*, imputer hanya di-`fit` pada fold pelatihan, lalu di-`transform` pada fold validasi, bukan di-`fit` pada seluruh *dataset* sebelum CV.
 
-Karakteristik metode pendekatan imputasi komputasi univariat didasarkan murni pada tingkat kemudahan komputasi algoritma pemrosesannya. Kalkulasi matematis bekerja dengan singkat dengan menyajikan evaluasi fungsi linear sekuensial. Tetapi, kelebihan tersebut hadir mengabaikan fungsi analisis silang (*cross-correlation*) karena setiap variabel kolom beroperasi mutlak secara independen. Misalnya jika rentang dimensi parameter berat badan dinormalisasi berbasis indeks median global distribusi dari \*dataset\*, kalkulasi estimasi angka yang hilang tersebut tidak dipandu rujukan data variabel fungsional kelompok umur maupun proporsi dimensi ukuran tinggi secara spesifik dari sampel baris pengamatan itu. Imputasi angka titik berpusat juga berdampak signifikan dengan menekan simpangan angka (*variance shrinkage*) data tersebut. Konsentrasi jumlah titik yang sama pada garis median secara proporsional menekan pelebaran sebaran data populasi awal. Rekayasa parameter nilai varians mendistorsi rasio perbandingan galat dimensi matematis (*standard error*) ketika *machine learning* melacak konvergensi prediksi komputasi titik sasarannya.
+Gambar 5.2 membandingkan dua jalur. Jalur pertama melakukan imputasi global sebelum split, sehingga baris *test* ikut masuk ke nilai pengisi. Jalur kedua menempatkan imputer di dalam *pipeline*, di-*fit* hanya pada bagian *train*.
+![Imputasi bocor dan imputasi aman](../figures/ch05-fig-2.png)
+Kolom yang berbeda dapat membutuhkan strategi berbeda. Fitur numerik sensus dapat memakai median *train* sebagai *baseline*. Pada contoh Communities and Crime, kolom LEMAS/police yang hilang bersama layak diuji dengan indikator karena kekosongannya dapat membawa informasi tentang cakupan data. Beberapa kolom sebaiknya tidak diimputasi sebelum ada pemeriksaan domain. Dalam semua kasus, praktik *pipeline* yang benar lebih penting daripada kenyamanan satu kali pembersihan. Setelah aturan `fit` aman, barulah metode imputasi dapat dibandingkan menurut struktur data yang ingin dipertahankan.
 
-**Imputasi Multivariat (Berbasis Model).**
+## Imputasi Sederhana dan Berbasis Model
 
-Untuk mempertahankan korelasi struktural antar-*feature*, imputasi multivariat memperlakukan kolom berstatus *missing* sebagai variabel target prediksi, sementara lajur kolom utuh difungsikan secara bergantian sebagai matriks penjelas.
+Setelah imputer ditempatkan di dalam *pipeline*, metode pengisian dapat dibandingkan menurut asumsi yang masuk akal, struktur data yang hendak dipertahankan, dan hasil validasi tugas.
 
-Dua algoritma klasik utama di kelas multivariat ini adalah K-Nearest Neighbors (KNN) dan Imputasi Iteratif (MICE). Algoritma KNN mengisi sel renggang melalui rata-rata nilai dari gabungan tetangga terdekatnya. Proses pencariannya mengeksekusi parameter jarak spesifik hanya dari rentang variabel yang bebas sel kosong. Di sisi lain, *Multiple Imputation by Chained Equations* (MICE) menyusun rantai prediksi dengan melatih fungsi regresi pada tiap-tiap target kolom secara berurutan dalam skema *round-robin*.
-```{mermaid}
-%%| label: fig-ch05-5_3
-%%| fig-cap: "Siklus Prediksi Berantai pada Algoritma MICE"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph LR
-    A[Imputasi Awal Median] --> B[Prediksi Fitur 1 Menggunakan Fitur 2, 3]
-    B --> C[Prediksi Fitur 2 Menggunakan Fitur 1, 3]
-    C --> D[Prediksi Fitur 3 Menggunakan Fitur 1, 2]
-    D -->|Iterasi Hingga Konvergen| B
-```
-Secara matematis, prediksi fungsi target pada skema imputasi iteratif dikalkulasikan dengan formula $\hat{x}_{i,j}^{(t)} = f_j \left( x_{i,1}^{(t)}, \dots, x_{i,j-1}^{(t)}, x_{i,j+1}^{(t-1)}, \dots, x_{i,p}^{(t-1)} \right)$. Dalam persamaan tersebut, $\hat{x}_{i,j}^{(t)}$ menyatakan angka proyeksi pada sel baris ke-$i$ di kolom $j$ untuk siklus ke-$t$. Variabel $f_j$ mewakili algoritma pemelajaran mesin tersupervisi (contohnya *Random Forest* atau regresi) yang ditugaskan khusus membedah varians kolom $j$. Model ini mencerna deret data secara kontinu: meminjam pembaruan nilai kelompok indeks $1$ sampai $j-1$ dari iterasi terkini $(t)$, lalu memanfaatkan sisa rentang dari $j+1$ hingga dimensi puncak $p$ dari siklus masa lalu $(t-1)$. Modul arsitektur pustaka modern seperti `IterativeImputer` umumnya dikonfigurasi untuk memberikan prediksi nilai tunggal (*single imputation*) demi mereduksi kerumitan *pipeline* komputasi inferensi, walau hal ini menghilangkan visibilitas atas ketidakpastian angka penambalan (*imputation uncertainty*) yang biasanya dikelola lewat metodologi MICE murni.
+Imputasi sederhana adalah *baseline* yang kuat. Mean, median, modus, atau konstanta mudah dipahami, cepat, dan stabil. Kelayakannya tidak ditentukan hanya dengan memberi label MCAR pada data, melainkan perlu diperiksa terhadap pola kekosongan dan evaluasi tugas. Metode ini tetap membawa distorsi. Jika banyak nilai numerik diisi dengan mean atau median yang sama, sebaran fitur menjadi lebih sempit. Varians menyusut karena banyak observasi ditarik ke pusat. Selain itu, hubungan antar fitur dapat rusak karena tiap kolom diisi sendiri-sendiri.
 
-**Pendekatan Generatif Berbasis Deep Learning.**
+KNN imputation memakai baris yang mirip untuk mengisi nilai kosong. Jika beberapa komunitas memiliki profil sosial-ekonomi, kepadatan, dan struktur rumah tangga yang mirip, nilai pada kolom yang hilang dapat diperkirakan dari komunitas terdekat dalam ruang fitur. Metode ini bergantung pada definisi jarak, skala fitur, dan ketersediaan fitur lain yang berkorelasi. Pada data besar, biaya pencarian tetangga juga dapat menjadi masalah.
 
-Pada saat matriks *feature* berkembang menjadi dimensi raksasa yang mengandung distribusi dependensi tak-linear, perhitungan *deep learning* menghasilkan variasi penyelesaian komputasi imputasi fungsional tersupervisi. Sebagai gambaran struktural, model jaringan *Masked Autoencoder* mengubah parameter kekosongan pengamatan menjadi segmen lapisan (*mask*) untuk menstimulasi fungsi pengenalan mandiri *self-supervised* dalam menalar sebaran rasio varians asli pada data berdimensi utuh. Pada model \*diffusion\* probabilistik (*Diffusion Models*), pergeseran matematis metode penyebaran transmisi \*noise\* diadaptasi untuk menghitung kemungkinan pengisian nilai *feature* dengan pendekatan estimasi yang menyerupai fungsi \*baseline\* rasio asli data. Modifikasi desain untuk jaringan deteksi pola MNAR (seperti fungsional model `not-MIWAE`) melepaskan belenggu probabilitas matematis dari sistem acak (MAR) pada skema evaluasi \*training\* konvensional. Model arsitektur ini memetakan observasi parameter *missingness* sebagai mekanisme terintegrasi ke dalam rancangan pembobotan prediksi matriks observasi fungsional multi-layer.
+Iterative imputation, atau gaya MICE (Buuren and Groothuis-Oudshoorn 2011), memprediksi tiap kolom yang hilang dari kolom lain secara bergiliran. Untuk kolom $j$, pembaruan pada iterasi $t$ dapat ditulis sebagai berikut.
 
-Dominasi tingkat performa arsitektur jaringan generasi baru ini hampir selalu menuntut biaya komputasi yang tinggi. Banyak pakar komparatif metrik modern, direpresentasikan dalam dokumen analisis Näf (2026), merekomendasikan komputasi fungsional imputasi stokastik berbantuan regresi pohon berjejer (*MICE-Random Forest*) lantaran margin selisih kapabilitas prediksinya kerap kali sangat tipis dibandingkan model generatif yang kompleks. Keberhasilan parameter probabilitas klasik menjustifikasi fungsinya baik sebagai *baseline* fungsional maupun parameter penyeimbang pada optimisasi utilitas ruang arsitektur generatif modern.
+$$\hat{x}_{i,j}^{(t)} = f_j\big(x_{i,1}^{(t)}, \dots, x_{i,j-1}^{(t)},\ x_{i,j+1}^{(t-1)}, \dots, x_{i,p}^{(t-1)}\big)$$
 
-## *Missing Indicator* Sebagai Sinyal
+Dengan $\hat{x}_{i,j}^{(t)}$ sebagai nilai imputasi untuk baris $i$ dan kolom $j$ pada sweep ke-$t$, model $f_j$ memprediksi kolom $j$ dari kolom lain. Kolom yang sudah diperbarui pada sweep yang sama memakai nilai bertanda $(t)$, sedangkan kolom yang belum diperbarui masih memakai nilai dari sweep sebelumnya, yaitu $(t-1)$, dengan $p$ menyatakan banyaknya fitur. Proses ini berputar dari satu kolom ke kolom lain.
 
-Ketika berhadapan dengan data yang tidak lengkap, proses imputasi secara otomatis menghapus sebuah informasi struktural: fakta bahwa observasi tersebut awalnya kosong. Ketidakhadiran sebuah nilai sering kali menyimpan sinyal prediktif yang lebih kuat daripada nilai tebakan yang dimasukkan oleh algoritma imputasi.
+`IterativeImputer` bergaya MICE, tetapi secara default menghasilkan satu *dataset* imputasi. Ini cocok untuk *pipeline* prediksi yang membutuhkan satu tabel final, tetapi ketidakpastian imputasi tidak tampak. *Multiple imputation* membuat beberapa versi *dataset* terisi untuk mencerminkan ketidakpastian tersebut. Pendekatan ini lebih berat dan biasanya lebih dekat ke analisis statistik inferensial daripada *pipeline* prediksi sehari-hari.
 
-Untuk mempertahankan informasi ini, kita mengonstruksi *feature* biner tambahan yang disebut *missing indicator*. *Feature* ini memisahkan operasi pengisian nilai dari status ketersediaan data awal. Secara matematis, untuk sebuah *feature* $x^{(j)}$, indikator $m^{(j)}$ didefinisikan melalui persamaan berikut:
+Tabel 5.1 merangkum keluarga imputasi. Tabel ini berguna sebagai peta keputusan yang menghubungkan kondisi data, struktur yang ingin dijaga, dan biaya yang siap dibayar.
 
-$$m_i^{(j)} = \begin{cases}
-1, & \text{jika } x_i^{(j)} \text{ bernilai NaN (kosong)} \\
-0, & \text{jika } x_i^{(j)} \text{ terobservasi}
-\end{cases}$$
+**Tabel 5.1 --- Peta keputusan imputasi**
 
-Dalam rumusan ini, variabel $m_i^{(j)}$ mewakili elemen indikator biner untuk observasi ke-$i$ pada *feature* ke-$j$, sedangkan $x_i^{(j)}$ merepresentasikan nilai asli dari data sebelum melewati tahapan imputasi.
-```{mermaid}
-%%| label: fig-ch05-5_4
-%%| fig-cap: "Alur Transformasi Satu Fitur Asli Menjadi Fitur Berimputasi dan Missing Indicator"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph LR
-    A[Fitur Asal: Gaji - Berisi NaN] -->|Cabang 1: Imputasi Median| B[Gaji_Imputed: Nilai Asli + Median]
-    A -->|Cabang 2: Evaluasi Kehadiran Data| C[Gaji_Is_Missing: Boolean 0/1]
-```
-Pendekatan ini sangat relevan saat menangani mekanisme data *Missing Not At Random* (MNAR), di mana pola kekosongan memiliki korelasi dengan variabel target. Sebagai contoh, pada model penilaian risiko kredit, ketiadaan data "nomor telepon tempat kerja" sering kali bukan akibat kegagalan pencatatan sistem. Kekosongan tersebut dapat mengindikasikan riwayat pekerjaan yang tidak stabil, yang secara empiris merupakan sinyal probabilitas gagal bayar yang tinggi.
+*Tabel lengkap tersedia pada edisi cetak.*
 
-Keberadaan *missing indicator* mengubah cara model membaca *dataset* yang telah diimputasi. Algoritma akan menggunakan *feature* hasil imputasi untuk mengidentifikasi pola pada populasi umum, sembari di saat yang sama memanfaatkan matriks indikator biner ini untuk menyesuaikan probabilitas prediksi berdasarkan fenomena ketiadaan informasi tersebut. Pada model berbasis pohon (seperti *Random Forest* atau *Gradient Boosting*), tersedianya indikator ini memungkinkan algoritma membuat partisi percabangan logika (*split*) spesifik yang membedakan observasi dengan nilai asli dari observasi dengan nilai tebakan hasil perkiraan.
+Gambar 5.3 memperlihatkan siklus iterative imputation. Setiap kolom yang tidak lengkap diprediksi dari kolom lain, lalu hasilnya dipakai untuk memprediksi kolom berikutnya.
+![Siklus round-robin pada iterative imputation](../figures/ch05-fig-3.png)
+Metode yang lebih kompleks tidak otomatis lebih baik. Keputusan perlu mempertimbangkan tingkat *missingness*, relasi antar fitur, ukuran data, *latency*, interpretabilitas, dan performa validasi. Imputasi yang tampak canggih tetapi tidak memperbaiki evaluasi yang sah hanya menambah kompleksitas. Selain memilih nilai pengisi, fakta bahwa nilai semula tidak ada kadang perlu dipertahankan.
 
-Secara teknis, komputasi indikator ini umumnya dirangkai dalam satu paket dengan objek imputasi di dalam *pipeline* (seperti mengaktifkan parameter `add_indicator=True` pada `SimpleImputer` di pustaka Scikit-Learn). Pembentukan indikator tunduk pada batasan fiksasi *fit-transform* untuk mencegah *data leakage*. Pertama, *feature* indikator ini dikunci secara fiksasi saat pelatihan; matriks biner hanya diregistrasi untuk kolom-kolom yang secara empiris terdeteksi memiliki nilai kosong di dalam set pelatihan (*training set*). Kedua, terdapat kekakuan saat inferensi; jika sebuah kolom terisi penuh di data pelatihan namun secara mengejutkan muncul dengan nilai kosong pada data baru di lingkungan produksi, *pipeline* tidak akan mengizinkan pembentukan kolom indikator baru secara dadakan, melainkan hanya akan menjalankan fungsi imputasinya saja.
+Imputer generatif modern memperlakukan nilai hilang sebagai target rekonstruksi bertopeng. MIWAE memakai kerangka variational autoencoder untuk imputasi, sedangkan CSDI memakai model difusi untuk deret waktu. Untuk kasus MNAR, pendekatan seperti not-MIWAE mencoba memodelkan mekanisme missingness itu sendiri, bukan mengasumsikan MAR. Metode-metode ini relevan ketika dependensi data sangat non-linear dan jumlah data cukup besar. Namun, *baseline* klasik yang kuat, misalnya iterative imputation dengan model pohon, tetap harus dikalahkan pada validasi tugas sendiri sebelum imputer generatif layak diadopsi.
 
-Penggunaan *missing indicator* memiliki konsekuensi komputasi yang menuntut evaluasi struktural terukur. Praktisi wajib menggunakannya secara cermat dengan mengantisipasi dua konsekuensi spasial. Risiko pertama berupa penambahan indikator redundan yang mengekspansi skala dimensi fitur secara berlebih (karena imputasi MCAR meratakan proporsi tanpa menambah acuan korelasi spesifik) tanpa menambahkan tingkat sinyal signifikansi terhadap variabel *dataset*. Risiko sekunder terletak pada pembentukan multikolinearitas struktural fungsional matriks linear. Kondisi *dataset* yang menghapus data indikator dalam kombinasi parameter seragam berbarengan secara independen (*co-missing patterns*)--misalnya tanggal masuk kontrak tercatat bersama kolom keluarnya dari rentang operasional--berakibat parameter indikator yang sama pada fungsi korelasinya mengalami garis keselarasan konstan absolut. Kelemahan kalkulasi multikolinearitas mengganggu kestabilan arah konvergensi optimisasi saat dioperasikan memakai metode linear regresi atau algoritma parametrik murni lainnya.
+## Fitur Indikator *Missingness*
 
-## *Outlier*: Deteksi vs. Penanganan
+Imputasi memilih nilai pengganti, tetapi proses tersebut dapat menyembunyikan fakta bahwa nilai semula tidak ada. Fitur indikator *missingness* menandai apakah nilai asli kosong. Jika $x_i^{(j)}$ adalah nilai baris $i$ pada fitur $j$, indikatornya dapat ditulis sebagai berikut.
 
-Selain penanganan *missing values*, nilai ekstrem atau *outlier* merupakan tantangan utama dalam merepresentasikan distribusi populasi. *Outlier* kerap diperlakukan sebagai data rusak yang harus segera dihapus. Praktik pembersihan reaktif ini berisiko menghilangkan varians data. Rekayasa *feature* yang sistematis membagi manajemen *outlier* ke dalam dua tahap operasional terpisah: deteksi dan penanganan.
+$$m_i^{(j)} = \begin{cases} 1 & x_i^{(j)} \text{ kosong} \\ 0 & x_i^{(j)} \text{ terobservasi} \end{cases}$$
 
-**Deteksi: Mengobservasi Anomali.**
+Pada Communities and Crime yang diperkenalkan di Bagian 5.1, indikator dapat dipakai untuk mempertahankan informasi bahwa variabel LEMAS/police semula tidak tersedia. Targetnya adalah tingkat kejahatan kekerasan per penduduk, sedangkan fitur prediktornya berasal dari kondisi sensus, sosial-ekonomi, dan informasi penegakan hukum yang tersedia.
 
-Tahap deteksi murni bertujuan menetapkan batas kenormalan suatu *feature*. Algoritma hanya melabeli atau memberikan skor pada nilai yang secara matematis berada di luar distribusi mayoritas, tanpa melakukan modifikasi nilai.
+Indikator ini membuat model dapat membedakan nilai asli dari nilai hasil imputasi. Dalam dataset ini, kolom LEMAS/police yang kosong bersama dapat berarti informasi penegakan hukum tidak tercakup untuk komunitas tersebut, bukan sekadar angka yang lupa diisi. Nilai hasil imputasi dan fakta bahwa nilainya semula kosong dapat membawa makna yang berbeda.
 
-Ekosistem analitik data mengelompokkan pendekatan deteksi *outlier* ke dalam beberapa tingkatan perhitungan algoritma komputasi. Pendekatan pertama didasari pengukuran univariat, yang menganalisis rasio pusat distribusi melalui penerapan batasan ambang matematis interkuartil (IQR). Pada observasi ruang multi-dimensi fungsional, metode pendekatan kedua yaitu analisis multivariat dieksekusi dengan mendayagunakan metode *Isolation Forest* dan perhitungan jarak batas ruang variabel *Local Outlier Factor* (LOF). Evaluasi *Isolation Forest* membedah rentang observasi menjadi jarak dimensi pemisahan titik pencilan dari sampel mayoritas dalam kelompok \*dataset\*, sementara LOF menentukan skor jarak spasial menggunakan nilai proksimal kepadatan dimensi dari matriks bertingkat tersebut. Untuk kebutuhan komputasi skala rasio tanpa perhitungan metrik absolut manual, tingkat yang ketiga memanfaatkan pendekatan probabilitas observasional. Implementasi *Empirical-CDF-based Outlier Detection* (ECOD) menghasilkan batas deteksi anomali pada ruang kumulatif titik dimensi spasial yang menekan kebutuhan parameter penyetelan fungsional fungsi distribusi secara independen.
+Gambar 5.4 memperlihatkan pola ini. Satu kolom awal yang berlubang diubah menjadi dua kolom, yaitu nilai yang sudah diimputasi dan indikator apakah nilai asalnya kosong.
+![Nilai imputasi dan indikator \emph{missingness}](../figures/ch05-fig-4.png)
+Indikator tidak selalu membantu. Jika *missingness* benar-benar acak, indikator menambah dimensi tanpa sinyal. Jika nilai kosong sangat jarang, indikator dapat menjadi fitur yang rapuh. Jika beberapa kolom selalu kosong bersama-sama, indikatornya menjadi sangat berkorelasi dan dapat mengganggu interpretasi koefisien pada model linear.
 
-Implementasi antarmuka dalam pustaka seperti Scikit-Learn juga membedakan skenario analisis anomali ke dalam dua metode. *Outlier detection* melabeli data pelatihan yang memang sudah terkontaminasi anomali sejak awal (umumnya menggunakan fungsi `fit_predict`). Di sisi lain, *novelty detection* membangun profil normal secara eksklusif dari data bersih, lalu menggunakannya untuk mendeteksi penyimpangan hanya pada observasi baru (misalnya dengan memicu parameter `novelty=True` pada LOF).
+Indikator juga harus mengikuti *pipeline*. Pada `SimpleImputer(add_indicator=True)` atau `MissingIndicator`, kolom indikator didaftarkan saat *fit*. Jika sebuah kolom lengkap pada data *train* tetapi kosong saat produksi, *pipeline* tidak tiba-tiba membuat kolom baru. Lebar keluaran harus tetap sama agar model dapat menerima data. Karena itu, keputusan indikator perlu dibuat dengan memikirkan perilaku inferensi, bukan hanya data pelatihan.
 
-Untuk data univariat, rata-rata dan deviasi standar mudah terdistorsi oleh nilai ekstrem itu sendiri. Metode yang lebih tangguh (*robust*) mengganti deviasi standar dengan skor Z yang dimodifikasi (*modified z-score*) yang diturunkan dari Deviasi Absolut Median (MAD):
+Pada akhirnya, indikator *missingness* adalah fitur seperti fitur lain. Indikator tersebut dapat membawa sinyal, *noise*, atau proksi sensitif. Bab 9 akan membahas risiko kualitas fitur dan proksi semacam ini lebih sistematis. Prinsip yang sama berlaku ketika masalahnya bukan nilai yang hilang, melainkan nilai yang terlalu jauh dari pola umum.
 
-$$MAD = \text{median}(|x_i - \text{median}(X)|)$$
+## Deteksi dan Tindakan untuk *Outlier*
 
-$$M_i = \frac{0.6745 \cdot (x_i - \text{median}(X))}{MAD}$$
+Setelah nilai yang tidak ada diperlakukan sebagai keputusan representasi, persoalan kebalikannya muncul. Nilai ada, tetapi terlalu jauh dari pola umum. Definisi "jauh" dapat berupa jarak dari pusat distribusi, posisi di ekor, kepadatan lokal, atau kombinasi beberapa fitur. Karena itu, *outlier* selalu relatif terhadap domain dan model. Nilai target `ViolentCrimesPerPop` yang tinggi dapat menjadi kondisi komunitas yang sah, artefak normalisasi, atau kandidat yang perlu diperiksa lebih lanjut. Seperti nilai kosong, nilai ekstrem perlu ditafsirkan sebelum diubah.
 
-Dalam persamaan ini, variabel $x_i$ merepresentasikan nilai observasi *feature* ke-$i$, sedangkan $\text{median}(X)$ merupakan nilai tengah dari seluruh observasi *feature* $X$. Variabel $MAD$ mengukur variabilitas dari penyebaran data di sekitar median yang kebal terhadap tarikan *outlier*. Terakhir, $M_i$ adalah metrik anomali observasi; konstanta $0.6745$ digunakan untuk menyelaraskan metrik ini agar sepadan dengan estimasi deviasi standar pada distribusi normal. Secara empiris, observasi dengan nilai $|M_i| > 3.5$ umumnya dilabeli sebagai anomali.
-```{mermaid}
-%%| label: fig-ch05-5_7
-%%| fig-cap: "Perbandingan Alur Eksekusi Data Cleaning Statis vs Transformasi Dinamis"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    A[Sistem Pemrosesan] --> B[Cleaning Statis: Penggantian Permanen pada File Sumber]
-    A --> C[Transformasi Dinamis: Objek Transformer Pipeline Berjalan On-the-fly]
-```
-**Penanganan: Konteks Domain.**
+Deteksi dan tindakan adalah dua pekerjaan yang berbeda. Untuk prediktor $X$, deteksi dapat menghasilkan skor atau flag dari informasi yang tersedia saat inferensi, sedangkan tindakan menentukan apakah nilai diperbaiki, diubah menjadi *missing*, dipertahankan, di-*cap*, ditransformasi, atau diperiksa manual. Untuk target $y$, flag yang dibuat dari nilai target teramati hanya boleh menjadi diagnostik pelatihan dan tidak boleh dipakai sebagai fitur inferensi.
 
-Setelah modul matematika mengkalkulasi skor ekstrem, keputusan penyelesaian anomali tidak dipandu murni lewat rentang distribusi komputasi. Konteks riil operasional (\*domain knowledge\*) dari rentang \*dataset\* secara spesifik harus mendikte bentuk konversi dan substitusinya. Pada skenario kesalahan sistem pencatatan pengukuran instrumen, seperti observasi umur konsumen negatif atau angka ukuran sensor pada kisaran mustahil secara biologi manusia, baris tersebut secara efektif dikalkulasikan sebagai fitur kolom bernilai *missing value*. Solusinya bisa direalisasikan ke fungsi pemotongan titik maksimum batas operasional (*capping*) dari algoritma. Kasus anomali yang kedua terjadi karena pengamatan tersebut adalah pola sinyal asli matriks data. Perekaman jumlah transfer atau ukuran komputasi batas jutaan transaksi bisa berarti pergerakan nasabah \*corporate\* khusus (yang secara sah terindikasi \*fraud\*) pada evaluasi deteksi klasifikasi bank. Kesalahan fatal pada parameter modifikasi imputasi yang tidak seimbang untuk mendepak representasi *outlier* tanpa dasar akan mendistorsi prediksi evaluasi akhir dan parameter optimisasi batas fungsi *machine learning*. Pemisahan titik isolasi fungsional parameter batas pengurungan dari metode intervensi perhitungan nilai menjamin kalkulasi parameter asli dan mengembalikan signifikansi rentang \*machine learning\* secara utuh.
+Deteksi univariat melihat satu fitur prediktor yang berada di atas persentil tinggi. Deteksi multivariat melihat kombinasi beberapa prediktor. Isolation Forest berangkat dari intuisi bahwa anomali lebih mudah diisolasi dengan sedikit split acak. Local Outlier Factor membandingkan kepadatan lokal suatu titik dengan kepadatan tetangganya. Titik di lingkungan yang jauh lebih jarang dapat dianggap anomali.
 
-## Transformasi *Robust* untuk *Outlier*
+Diagnostik eksploratif dapat dipakai untuk memahami pola pada data pelatihan. Jika detektor memengaruhi fitur, penghapusan baris, atau ambang dalam evaluasi model, detektor tersebut harus di-*fit* di dalam setiap lipatan *train*, lalu diterapkan tanpa belajar ulang pada data yang ditahan. Aturan domain yang ditetapkan sebelum melihat data, seperti rentang fisik sensor, tidak perlu dipelajari per lipatan.
 
-*Outlier* yang faktual dan valid menimbulkan dilema. Menghapus observasi membuang informasi dan mengurangi ukuran sampel data. Sebaliknya, membiarkan nilai ekstrem apa adanya dapat mendistorsi pelatihan. Algoritma yang sensitif terhadap magnitudo (seperti regresi linier atau metode berbasis jarak) rentan terhadap efek ini karena fungsi kerugiannya memberikan penalti besar pada titik ekstrem. Akibatnya, garis regresi tertarik kuat ke arah *outlier* hanya untuk meminimalkan kerugian pada titik tersebut, sehingga mengorbankan akurasi mayoritas data. Transformasi *robust* meredam pengaruh nilai ekstrem ini tanpa menghilangkan informasi posisinya.
+Tabel 5.2 menghubungkan diagnosis dengan tindakan. Baris-barisnya menunjukkan bahwa tindakan wajar berbeda-beda, tergantung apakah nilai ekstrem merupakan kesalahan, nilai sah yang terlalu berpengaruh, sinyal penting, atau kasus yang belum jelas.
 
-Terdapat tiga metode utama untuk menangani nilai ekstrem melalui pendekatan transformasi.
+**Tabel 5.2 --- Dari diagnosis ke tindakan *outlier***
 
-Metode pertama adalah pemangkasan (*capping* atau *winsorizing*). Daripada membuang baris data, kita menetapkan ambang batas atas dan batas bawah; setiap nilai yang melampauinya dipangkas dan disamakan dengan batas tersebut. Sebagai contoh, jika batas ditetapkan pada persentil ke-99, observasi pendapatan yang melebihi titik tersebut diubah menjadi sama persis dengan nilai persentil itu. Individu terkait tetap berada di kelompok teratas, tetapi magnitudo absolutnya terkendali. Implementasi yang sejalan dengan praktik *pipeline* yang benar akan mempelajari batas pemangkasan ini murni dari data latih dan menerapkannya kembali secara persis pada saat pemrosesan data uji.
+*Tabel lengkap tersedia pada edisi cetak.*
 
-Ambang batas pemangkasan ini umumnya dihitung menggunakan tiga jenis pendekatan matematis. Pendekatan berbasis kuantil memotong distribusi menurut proporsi absolut, misalnya menyisihkan 1% data terendah dan tertinggi. Pendekatan berbasis Rentang Antarkuartil (IQR) menggunakan rentang antar-persentil sebagai basis turunan pagar anomali Tukey. Sementara itu, pendekatan berbasis Deviasi Absolut Median (MAD) menjadi alternatif *robust* dari standar deviasi konvensional. Standar deviasi biasa akan terdistorsi jika dihadapkan pada *outlier* ekstrem karena nilai ekstrem tersebut otomatis ikut membesarkan hasil kalkulasi rata-rata dan varians; perhitungan berbasis MAD kebal terhadap distorsi tersebut karena ia bersandar kuat pada pengukuran median.
+Target `ViolentCrimesPerPop` mempunyai ekor kanan dengan nilai tinggi yang belum tentu salah. Transformasi atau *capping* pada $y$ merupakan pilihan tujuan pelatihan, bukan pembuatan fitur, sehingga parameternya dipelajari hanya dari bagian *train*. Alternatifnya adalah memakai fungsi *loss* yang *robust*. Jika target ditransformasi, prediksi perlu dikembalikan ke skala asal dan dievaluasi pada skala tersebut bila metrik tugas memang didefinisikan di sana. Dalam semua pilihan ini, flag yang berasal dari $y$ tidak menjadi *input* saat inferensi.
 
-Persamaan *modified z-score* menggunakan rumusan:
+Untuk prediktor $X$, Gambar 5.5 memvisualisasikan alur yang sama. Deteksi menghasilkan flag atau skor. Setelah itu, keputusan domain menentukan apakah nilai diperlakukan sebagai missing, di-*cap*, ditransformasi, dipertahankan, atau diberi flag.
+![Dari deteksi outlier ke tindakan representasi](../figures/ch05-fig-5.png)
+Diagnostik sebaiknya dilakukan sebelum penanganan otomatis. Membuang setiap nilai ekstrem secara otomatis adalah kebiasaan berbahaya. Dalam banyak aplikasi, observasi yang jarang justru merupakan bagian paling penting dari tugas prediksi.
 
-$$M_i = \frac{0.6745 \cdot (x_i - \tilde{x})}{\text{MAD}}$$
+Dalam pustaka *machine learning*, *outlier detection* dan *novelty detection* dibedakan. Pada *outlier detection*, data pelatihan dianggap sudah terkontaminasi sehingga model mendeteksi anomali di data yang sama. Pada *novelty detection*, model membangun profil dari data yang dianggap bersih, lalu menilai observasi baru. Local Outlier Factor, misalnya, memiliki mode `novelty=True` untuk penggunaan seperti ini. Memilih mode yang salah mengubah arti skor. Untuk penyaringan berdimensi tinggi dengan sedikit parameter, metode berbasis ECDF seperti ECOD menilai observasi dari probabilitas ekor empiris tanpa harus memilih metrik jarak atau asumsi klaster. Namun, keluaran deteksi tetap merupakan sinyal diagnostik, bukan daftar otomatis untuk dihapus.
 
-Dalam formulasi tersebut, variabel $M_i$ mewakili skor modifikasi untuk observasi ke-$i$, $x_i$ adalah nilai titik data, $\tilde{x}$ adalah median dari distribusi *feature*, dan $\text{MAD}$ merupakan deviasi absolut median itu sendiri (yakni median dari selisih absolut setiap observasi terhadap $\tilde{x}$). Faktor $0.6745$ digunakan semata-mata untuk menyejajarkan skor dengan rentang distribusi normal baku. Titik data yang melewati rentang absolut $|M_i| > 3.5$ biasanya dipangkas atau ditandai sebagai *outlier*.
-```{mermaid}
-%%| label: fig-ch05-5_8
-%%| fig-cap: "Arsitektur Pipeline Pemrosesan Data: Aliran X_train dan X_test"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    X_train[X_train] -->|fit| Pipeline[Transformer Pipeline]
-    X_train -->|transform| X_train_clean[X_train_clean]
-    X_test[X_test] -->|transform murni| Pipeline
-    Pipeline -->|transform| X_test_clean[X_test_clean]
-```
-Selain pemangkasan, penyesuaian distribusi *feature* melalui penskalaan juga lazim digunakan. Metode kedua adalah penskalaan *robust* (*robust scaling*). Penskalaan standar berbasis *z-score* menjadi sangat rentan karena rata-rata dan standar deviasinya terseret oleh *outlier*. Penskalaan *robust* memusatkan data dengan median dan menskalakannya menggunakan IQR. Pengukuran ini murni memakai titik data di pusat distribusi (persentil ke-25 sampai ke-75), yang membuat skala *feature* tetap stabil meskipun terdapat deretan nilai ekstrem di ujung rentang distribusi.
+## Transformasi Robust untuk *Outlier*
 
-Metode ketiga adalah pemampatan distribusi (*log / power transform*). Memampatkan skala terbukti efektif memfasilitasi data yang didominasi nilai kecil namun memiliki ekor panjang ke sisi kanan. Transformasi logaritmik atau penerapan *power transform* menekan nilai-nilai dominan ekstrem agar rentang magnitudonya bergeser mendekati sisa distribusi mayoritas. Operasi ini mengecilkan jarak absolut antar-observasi tanpa mendisrupsi urutan ordinal; nilai maksimal tetap di puncak, sehingga model tidak terdistorsi akibat besaran asimetris saat pelatihan.
+Jika nilai ekstrem pada prediktor $X$ sah tetapi terlalu berpengaruh, baris tersebut tidak harus dihapus. Pengaruhnya dapat ditahan dengan transformasi yang lebih *robust*. Ini merupakan tindak lanjut langsung dari Tabel 5.2. Setelah diagnosis menyatakan nilai ekstrem masih valid, langkah berikutnya adalah memilih cara membatasi pengaruhnya. Bab 3 sudah membahas beberapa pilihan, seperti *scaling* median/IQR, log atau *power transform*, *clipping*, *winsorization*, dan *binning*. Bagian ini menegaskan kaitannya dengan *outlier*.
 
-## Batas Antara *Data Cleaning* dan Rekayasa *Feature*
+Winsorization mengganti nilai di luar batas dengan nilai batas tersebut. Batas dapat ditetapkan dari domain, kuantil, IQR, atau statistik robust lain. Karena dipelajari dari data, batas tersebut harus di-*fit* pada data *train* saja dan diterapkan ulang pada validasi, *test*, serta inferensi.
 
-Dalam alur kerja ilmu data, batasan antara *data cleaning* dan rekayasa *feature* kerap beririsan karena keduanya bertugas mengubah wujud data mentah sebelum dieksekusi oleh model *machine learning*. Pemahaman tentang batas operasional kedua proses ini berguna untuk merancang *pipeline* yang kebal terhadap *data leakage*, sekaligus mendefinisikan ruang lingkup teknis yang dibahas dalam buku ini.
+Salah satu ukuran robust untuk menyusun batas adalah median absolute deviation.
 
-*Data cleaning* berfokus pada koreksi fakta untuk memastikan sebuah *dataset* merepresentasikan keadaan dunia nyata secara akurat. Validitas dari pembersihan data bersifat mutlak dan tidak akan berubah meskipun kita mengganti algoritma pemodelan. Pertama, perbaikan ini terfokus pada fakta yang salah, format yang tidak konsisten, atau duplikasi entitas. Kedua, titik eksekusinya bersifat statis dan global; ia dieksekusi satu kali pada keseluruhan data sebelum proses pemodelan atau pembagian data dimulai. Contoh tindakannya meliputi mengurai teks *string* "1,200.50" agar terbaca secara benar sebagai nilai numerik, menghapus observasi usia 150 tahun yang mustahil secara biologis, atau melakukan deduplikasi terhadap baris data yang tercatat berulang akibat kesalahan sistem pencatatan.
+$$\text{MAD} = \operatorname{median}\big(|x_i - \tilde{x}|\big)$$
 
-Di sisi lain, rekayasa *feature* beroperasi di ranah representasi. Fokus utamanya bukan lagi menguji kebenaran fakta dasar, melainkan memanipulasi bentuk data agar algoritma dapat mengekstrak sinyal darinya dengan efisien. Pertama, manipulasi ini bertujuan mengubah distribusi, skala, atau format representasi sebagai keputusan desain yang disesuaikan secara khusus dengan kebutuhan algoritma tertentu. Kedua, titik eksekusinya bersifat dinamis dan harus diikat kuat di dalam *pipeline* pembelajaran untuk menjaga batasan isolasi data latih. Contoh tindakannya mencakup mengaplikasikan *robust scaler* pada sebuah *feature* agar metrik jarak SVM dapat konvergen, mencetak *missing indicator* baru untuk menampung sinyal informasi, atau melakukan imputasi nilai yang hilang berdasarkan pola distribusi observasi latih.
+Dengan $\tilde{x}$ sebagai median, MAD mengukur jarak absolut tipikal dari nilai terhadap median. Berbeda dari standar deviasi, MAD tidak mudah terseret oleh nilai ekstrem yang sedang dinilai. Modified z-score (Iglewicz and Hoaglin 1993) kemudian dapat ditulis sebagai berikut.
 
-Kriteria pembatas operasional paling tegas antara kedua proses ini bersandar pada literatur kebocoran data (IBM, 2024), yakni dengan mengajukan satu pengujian: apakah transformasi tersebut bergantung pada pembagian *train/test split*?
+$$M_i = \frac{0{,}6745\,(x_i - \tilde{x})}{\text{MAD}}$$
 
-Secara matematis, perbedaan sifat eksekusi ini dapat dirumuskan melalui definisi fungsi pemrosesan:
+Secara konvensional, observasi dengan $|M_i| > 3{,}5$ sering ditandai sebagai kandidat *outlier*. Konstanta 0,6745 mengkalibrasi MAD agar sebanding dengan standar deviasi di bawah asumsi normalitas, sedangkan 3,5 adalah konvensi, bukan hukum universal. Jika $\text{MAD}=0$, modified z-score tidak terdefinisi. Ambang 3,5 tidak boleh dipakai. Gunakan aturan domain atau ukuran sebaran lain yang telah ditetapkan dan divalidasi.
 
-$$X_{bersih} = C(X_{mentah}) \quad \text{vs} \quad X_{\text{feature}} = T_{\theta}(X_{bersih})$$
+Pilihan transformasi prediktor bergantung pada makna ekstrem. Jika satu fitur komunitas sangat tinggi tetapi masih sah dan membuat model linear terlalu sensitif, *capping* pada persentil 99 dapat dipertimbangkan, mungkin disertai flag yang dihitung dari $X$. Jika distribusi fitur sangat *skewed*, log transform bisa lebih tepat daripada menghapus komunitas berekor kanan. Jika nilai ekstrem adalah sinyal utama bagi tugas prediksi, meredamnya justru dapat menghilangkan informasi utama. Perlakuan target mengikuti pilihan tujuan pelatihan yang dijelaskan pada Bagian 5.5, bukan jalur fitur ini.
 
-Fungsi pembersihan $C$ diterapkan secara seragam pada seluruh observasi $X_{mentah}$ tanpa mengamati interaksi antar-baris. Sebaliknya, transformasi *feature* $T$ dikendalikan oleh matriks parameter $\theta$ (misalnya batas parameter kuartil pada *scaler* atau nilai rata-rata pada imputer) yang secara eksklusif dipelajari hanya dari subset data latih. Menghitung $\theta$ menggunakan data pengujian adalah asal mula terjadinya *data leakage*.
+Urutan *pipeline* juga merupakan keputusan desain. Pada *pipeline* Communities and Crime, misalnya, indikator *missingness* untuk blok LEMAS/police dapat dibuat lebih dulu, kemudian diikuti imputasi berbasis model, *winsorization*, dan akhirnya *robust scaling*. Setiap langkah di-*fit* pada data *train* di dalam satu *pipeline*. Urutan yang berbeda dapat menghasilkan representasi berbeda, sehingga perlu divalidasi. Rangkaian tindakan ini memperlihatkan mengapa batas antara memperbaiki data dan membentuk fitur perlu dibuat eksplisit.
 
-Batas operasional ini juga membatasi cakupan materi yang dieksplorasi di dalam bab-bab berikutnya. Buku ini tidak membahas tutorial manipulasi teks mentah, penggunaan fungsi *regex* untuk menyortir format kotor, atau instruksi teknik deduplikasi basis data. Titik berat kita dikhususkan sepenuhnya pada desain dan penerapan operasional $T_{\theta}$, yakni rekayasa representasi yang berinteraksi langsung dengan mekanisme pembelajaran mesin.
+## Batas antara *Data Cleaning* dan Rekayasa Fitur
 
-## Studi Kasus: *Pipeline* Imputasi dan Penanganan *Robust* yang *Reproducible*
+Perbedaan antara *data cleaning* dan rekayasa fitur perlu dibuat jelas. *Data cleaning* memperbaiki atau menghapus catatan yang tidak valid, seperti tanggal mustahil, ID duplikat, satuan rusak, nilai korup, atau format angka yang rusak. Rekayasa fitur mengubah data yang valid atau sudah diterima menjadi representasi yang siap dipakai model. Keduanya sering bersentuhan, terutama pada nilai ekstrem, nilai kosong, kategori tidak konsisten, dan konversi satuan. Karena bab ini banyak membahas tindakan di batas tersebut, pemisah operasionalnya perlu dibuat eksplisit.
 
-Penerapan taktik penanganan *missing values* dan *outlier* secara terpisah pada tahap prapemrosesan rentan memicu *data leakage*. Jika kalkulasi batas *outlier* atau rata-rata imputasi dilakukan sebelum membagi set pelatihan dan pengujian, informasi dari set pengujian akan ikut merembes dan memengaruhi model. Untuk mencegah kontaminasi ini, seluruh komponen transformasi harus disatukan ke dalam arsitektur *pipeline*.
+Tes operasionalnya adalah apakah suatu aturan sudah tetap sebelum data dilihat atau justru mempelajari parameter. Aturan skema dan domain yang tetap, seperti parsing "1,200.50" menjadi angka atau konversi meter ke sentimeter, boleh diterapkan seragam pada seluruh catatan. Akan tetapi, ambang pembersihan yang dipelajari dari distribusi, termasuk kuantil untuk membuang atau membatasi nilai, harus di-*fit* hanya pada bagian *train*. Nama "cleaning" tidak membebaskannya dari batas evaluasi. *Scaling*, imputasi median, winsorization, dan seleksi fitur mengikuti aturan train-only yang sama.
 
-Sebagai contoh, tinjau sebuah *dataset* medis untuk prediksi risiko penyakit yang memiliki dua anomali struktural:
+Untuk aturan cleaning yang tetap, perbedaan itu dapat ditulis sebagai berikut.
 
-1.  **Ketiadaan data yang tidak acak:** *Feature* "jumlah tes darah" mengandung *missing values* bertipe *Missing Not At Random* (MNAR). Pasien berisiko tinggi lebih sering menjalani observasi laboratorium. Kekosongan data di kolom ini merepresentasikan ketiadaan tes karena pasien relatif sehat.
+$$X_{\text{bersih}} = C(X_{\text{mentah}})$$
 
-2.  **Ekor distribusi yang panjang:** *Feature* "kadar protein" memiliki nilai ekstrem yang valid secara biologis, bukan akibat kesalahan sensor. Jika tidak dibatasi, magnitudo ekstrem ini akan mengganggu konvergensi dan stabilitas skala model linier.
+dan
 
-Berdasarkan diagnosis di atas, kita merancang spesifikasi *pipeline* berurutan:
+$$X_{\text{fitur}} = T_{\theta}(X_{\text{bersih}})$$
 
-1.  **Ekstraksi indikator:** Menambahkan `MissingIndicator` (atau mengaktifkan argumen `add_indicator=True` pada objek imputer) untuk menyalin lokasi sel yang kosong menjadi sebuah *feature* biner baru.
+Fungsi $C$ pada rumus tersebut hanya mencakup aturan tetap yang tidak dipelajari dari split. Fungsi $T_{\theta}$ mengubah data bersih menjadi fitur dengan parameter $\theta$ yang dipelajari dari data *train*. Jika langkah yang disebut cleaning mempelajari ambang, parameternya juga harus diperlakukan seperti $\theta$ dan dipasang di dalam lipatan pelatihan. Jika parameter tersebut dihitung memakai data *test*, *leakage* mulai terjadi.
 
-2.  **Imputasi berbasis model:** Menjalankan algoritma `IterativeImputer` atau `KNNImputer` untuk menaksir nilai numerik pada sel yang kosong dengan memetakan korelasi antar-atribut medis.
+Contohnya, nilai normalisasi di bawah 0 atau di atas 1 pada kolom yang seharusnya berada dalam rentang itu adalah masalah kualitas data. Nilai itu tidak mungkin dan perlu diperbaiki, dihapus, atau diperlakukan sebagai nilai kosong berdasarkan aturan domain. Sebaliknya, nilai 1.0 pada kolom tertentu belum tentu salah. Nilai tersebut bisa valid, langka, atau berasal dari cara sumber menormalisasi nilai ekstrem. Pemeriksaan domain harus mendahului keputusan apakah nilai itu dibersihkan, dipertahankan, atau diperlakukan sebagai *outlier* dalam representasi.
 
-3.  **Pembatasan ekstrem (*capping*):** Menerapkan objek `Winsorizer` untuk memangkas magnitudo nilai di atas batas persentil ke-95.
+Keputusan cleaning juga tidak boleh diam-diam mengubah populasi target. Menghapus semua baris dengan nilai sulit dapat membuat model hanya belajar dari kasus yang rapi, padahal produksi akan menghadapi kasus yang tidak rapi. Buku ini berfokus pada transformasi yang dapat direproduksi untuk pemodelan. Masalah kualitas data yang serius tetap membutuhkan tata kelola data dan tinjauan domain.
 
-4.  **Penyesuaian skala (*scaling*):** Melakukan standardisasi dengan `RobustScaler` menggunakan perhitungan median dan *Interquartile Range* (IQR), sehingga skala *feature* akhir tetap stabil terhadap sisa residu *outlier*.
+Nilai kosong dan *outlier* perlu diperlakukan sebagai keputusan representasi. Keduanya dapat berupa *noise*, kesalahan pencatatan, sinyal operasional, atau bagian utama dari masalah prediksi. Inspeksi harus mendahului otomatisasi.
 
-Secara matematis, *pipeline* mengeksekusi komposisi fungsi transformasi secara berantai pada data observasi ($X_{\text{in}}$). Parameter transformasi di setiap tahap akan dikunci dengan mengandalkan statistik yang dipelajari mutlak dari data latih melalui persamaan $X_{\text{out}} = T_n(T_{n-1}( \dots T_1(X_{\text{in}} \mid \theta_1) \dots \mid \theta_{n-1}) \mid \theta_n)$. Pada perumusan tersebut, $T_i$ adalah representasi matematis dari fungsi transformasi pada tahap ke-$i$ (seperti fungsi pemotongan distribusi atau fungsi pergeseran skala), dan $\theta_i$ mewakili parameter statistik spesifik (seperti batas kuantil, median, atau bobot imputasi) yang dikalkulasi secara eksklusif saat algoritma memproses *split* pelatihan. Pemanggilan fungsi `fit()` pada blok *pipeline* akan merekam pola indikator variabel, distribusi relasional, dan batas persentil tanpa melihat satu pun observasi dari set pengujian. Saat dieksekusi di dalam skema *cross-validation*, struktur ini memaksa prosedur imputasi dan estimasi statistik beroperasi secara terisolasi murni di dalam setiap porsi lipatan (*fold*).
+Untuk nilai kosong, mekanisme MCAR, MAR, dan MNAR membantu menyusun asumsi dan diagnosis, bukan memilih metode secara otomatis. Imputasi sederhana memberi *baseline* yang jelas, sedangkan KNN, iterative imputation, dan metode generatif mencoba menjaga struktur yang lebih kaya dengan biaya lebih tinggi. Indikator *missingness* dapat membantu ketika kekosongan itu sendiri membawa sinyal, tetapi dapat menambah *noise* atau proksi sensitif.
 
-Sebagai catatan evaluasi teknis, literatur menunjukkan satu pengecualian: metode imputasi univariat statis tanpa pengawasan (seperti imputasi nilai rata-rata biasa) yang dieksekusi sebelum pemisahan lipatan *cross-validation* memang terkadang memunculkan bias yang dapat diabaikan sembari mempercepat komputasi. Namun, untuk metode imputasi iteratif dan tersupervisi, keseluruhan kalkulasinya wajib diletakkan secara ketat di dalam *pipeline* guna menghindari ilusi akurasi evaluasi yang fiktif.
+Untuk *outlier*, deteksi dan tindakan harus dipisahkan. Pada prediktor $X$, nilai ekstrem dapat diperbaiki sebagai cleaning, ditransformasi secara robust, di-*cap*, dipertahankan, atau diberi flag dari informasi yang tersedia saat inferensi. Pada target $y$, transformasi atau *capping* merupakan pilihan tujuan pelatihan dan flag yang diturunkan dari target tidak boleh menjadi fitur inferensi. Keputusan itu bergantung pada domain, model, dan evaluasi yang sah.
 
-``` {.python language="Python"}
-import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.experimental import enable_iterative_imputer  # Wajib diimpor sebelum IterativeImputer
-from sklearn.impute import IterativeImputer
-from sklearn.preprocessing import RobustScaler
-from sklearn.pipeline import Pipeline
+Benang merah bab ini sama dengan Bab 2. Semua transformasi yang belajar dari data harus hidup di dalam *pipeline*. Imputer, indikator, batas *winsorization*, dan *robust scaler* merupakan bagian dari representasi model, sehingga harus dapat direproduksi pada validasi, *test*, dan inferensi. Dengan disiplin tersebut, pembersihan data tetap menjaga sinyal dan rekayasa fitur tidak memasukkan informasi yang belum tersedia saat prediksi.
 
-class Winsorizer(BaseEstimator, TransformerMixin):
-    """
-    Transformer kustom untuk memotong (cap/clip) nilai outlier ekstrem 
-    berdasarkan nilai persentil batas bawah dan batas atas.
-    """
-    def __init__(self, lower_quantile=0.05, upper_quantile=0.95):
-        self.lower_quantile = lower_quantile
-        self.upper_quantile = upper_quantile
-        self.lower_bounds_ = None
-        self.upper_bounds_ = None
-        
-    def fit(self, X, y=None):
-        X_df = pd.DataFrame(X)
-        self.lower_bounds_ = X_df.quantile(self.lower_quantile).values
-        self.upper_bounds_ = X_df.quantile(self.upper_quantile).values
-        return self
-        
-    def transform(self, X):
-        X_df = pd.DataFrame(X).copy()
-        for col_idx in range(X_df.shape[1]):
-            X_df.iloc[:, col_idx] = np.clip(
-                X_df.iloc[:, col_idx], 
-                self.lower_bounds_[col_idx], 
-                self.upper_bounds_[col_idx]
-            )
-        return X_df.values
+- scikit-learn --- Imputation of missing values --- <https://scikit-learn.org/stable/modules/impute.html>. SimpleImputer, KNNImputer, dan IterativeImputer.
 
-# Membangun arsitektur pipeline pemrosesan data medis terintegrasi
-medical_pipeline = Pipeline([
-    ('imputer', IterativeImputer(max_iter=10, random_state=42, add_indicator=True)),
-    ('outlier_clipper', Winsorizer(lower_quantile=0.01, upper_quantile=0.95)),
-    ('scaler', RobustScaler())
-])
+- scikit-learn --- Novelty and Outlier Detection --- <https://scikit-learn.org/stable/modules/outlier_detection.html>. Metode deteksi outlier di scikit-learn.
 
-# Simulasi data medis pasien (misalnya: Tekanan Darah, Kadar Gula Darah, Kadar Protein)
-np.random.seed(42)
-X_raw = np.random.normal(loc=100, scale=20, size=(100, 3))
-X_raw[0, 0] = 400.0  # Sisipkan outlier ekstrem atas
-X_raw[1, 1] = 2.0    # Sisipkan outlier ekstrem bawah
-X_raw[5:15, 0] = np.nan  # Sisipkan missing values (NaN)
-X_raw[12:20, 2] = np.nan
+- Mattei & Frellsen (2019), MIWAE --- <https://arxiv.org/abs/1812.02633>. Imputasi generatif berbasis deep latent variable.
 
-# Melatih pipeline sekaligus mentransformasikan data latih secara aman
-X_processed = medical_pipeline.fit_transform(X_raw)
+- Ipsen dkk. (2021), not-MIWAE --- <https://arxiv.org/abs/2006.12871>. Pemodelan data hilang MNAR.
 
-print(f"Dimensi data asli: {X_raw.shape}")
-print(f"Dimensi data terproses (termasuk kolom indikator missing): {X_processed.shape}")
-print(f"Nilai maksimum setelah pemrosesan: {np.max(X_processed):.4f}")
-```
+- Li dkk. (2022), ECOD (IEEE TKDE) --- <https://arxiv.org/abs/2201.00382>. Deteksi outlier tanpa parameter via ECDF.
 
-## Sintesis Keputusan dan Prinsip Akhir
+- missingno --- <https://github.com/ResidentMario/missingno>. Visualisasi pola kekosongan data.
 
-Penanganan nilai kosong dan pencilan adalah perpaduan antara kehati-hatian statistik, pemahaman konteks domain, dan kedisiplinan integrasi *pipeline*.
+Buuren, Stef van, and Karin Groothuis-Oudshoorn. 2011. "mice: Multivariate Imputation by Chained Equations in R." *Journal of Statistical Software* 45 (3): 1--67.
 
-**Strategi Pengisian Nilai Kosong.** Diagnosis pola kekosongan terlebih dahulu sebelum memilih metode. Pada skenario MCAR, imputasi univariat sederhana (rata-rata/median) cukup memadai dan efisien. Jika korelasi antar-variabel kuat (MAR), terapkan imputasi multivariat (seperti KNN atau MICE) agar struktur distribusi asli tetap terjaga. Pada kondisi MNAR, ketiadaan data sering kali menyimpan informasi penting; pertahankan sinyal tersebut dengan mengonstruksi *feature* biner pendukung berupa *missing indicator*.
+Iglewicz, Boris, and David C. Hoaglin. 1993. *How to Detect and Handle Outliers*. ASQC Quality Press.
 
-**Manajemen Pencilan.** Deteksi pencilan menggunakan parameter yang kebal terhadap kontaminasi ekstrem (seperti median dan MAD untuk data univariat, atau *Isolation Forest* untuk data berdimensi tinggi). Keputusan intervensi (apakah dipotong lewat *capping/winsorization*, ditransformasi lewat metode *robust*, atau diperlakukan sebagai *missing values*) wajib disesuaikan dengan konteks domain untuk mencegah hilangnya sinyal anomali yang bernilai tinggi (seperti pada deteksi transaksi penipuan).
-
-**Integrasi Bersih dalam Pipeline.** Seluruh kalkulasi statistik (seperti rata-rata imputasi, median, dan batas kuantil pemotongan) harus diisolasi di dalam objek *pipeline*. Parameter ini dipelajari (*fit*) murni dari himpunan data latih dan diterapkan kembali saat *transform* pada data uji atau data baru di lingkungan produksi. Batasan tegas ini menjamin reproduksibilitas komputasi sekaligus melenyapkan risiko kebocoran data.
-
-Demonstrasi interaktif dan latihan penanganan data renggang secara terstruktur ini dapat diuji secara langsung menggunakan skrip dan data pendamping pada repositori buku ini.
+Little, Roderick J. A., and Donald B. Rubin. 2019. *Statistical Analysis with Missing Data*. 3rd ed. Wiley.

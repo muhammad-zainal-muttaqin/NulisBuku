@@ -1,348 +1,127 @@
-# Sintesis: Merancang Pipeline & Prinsip yang Bertahan Lama
+# Sintesis: Merancang Pipeline dan Prinsip yang Bertahan Lama
 
-## Kerangka Perancangan: Dari Tujuan Prediksi ke *Pipeline* Final
+Rekayasa fitur sering tampak seperti kumpulan teknik yang terpisah, mulai dari penskalaan, pengodean, lag, embedding, centrality graf, hingga AutoML. Setelah enam belas bab, gambaran yang lebih penting seharusnya terlihat. Fitur adalah keputusan representasi yang hidup di dalam pipeline. Keputusan itu harus cocok dengan tujuan prediksi, tersedia pada waktu prediksi, mengikuti pemisahan data, dapat dipelihara, dan terbukti membantu melalui validasi.
 
-Rekayasa fitur tidak berdiri sendiri sebagai langkah terisolasi. Transformasi data yang rumit akan menjadi sia-sia jika tidak selaras dengan tujuan awal pemodelan. Kita memerlukan kerangka perancangan terstruktur untuk memastikan setiap keputusan memiliki pijakan konseptual yang kokoh. Kerangka ini memastikan *pipeline* dapat dieksekusi secara konsisten pada saat *inference*.
+Bab penutup ini mengubah isi buku menjadi kerangka kerja, dimulai dari pertanyaan paling awal, yaitu apa yang akan diprediksi dan kapan informasi tersedia, menuju pertanyaan operasional tentang konsistensi pelatihan-inferensi, validasi skema, versioning, dan pemantauan perubahan data (drift). Peta keputusan representasi, kebocoran, dan validasi lintas tipe data disajikan sebagai rujukan cepat. Bab ini menguraikan dua prinsip penutup, yaitu mulai dari masalah, ketersediaan, dan pemisahan data sebelum membuat fitur, serta validasi mengalahkan jumlah fitur.
 
-Tahap pertama yang menentukan adalah membangun tulang punggung masalah. Pada fase ini, kita belum menulis kode transformasi sama sekali. Kita berfokus merumuskan empat definisi dasar. Kesalahan pada tahap awal dapat memicu *data leakage* dan merusak seluruh validitas rekayasa fitur. Keempat definisi tersebut meliputi:
+## Kerangka Desain: dari Tujuan Prediksi ke *Pipeline* Final
 
-- **Tujuan prediksi:** Sasaran akhir yang ingin diselesaikan oleh model saat diterapkan di lingkungan produksi.
+Proyek rekayasa fitur yang baik tidak dimulai dari teknik favorit. Ia dimulai dari tujuan prediksi. Apa keputusan yang akan dibantu model? Apa konsekuensi salah prediksi? Kapan prediksi dibuat? Data apa yang benar-benar tersedia pada waktu itu?
 
-- **Unit observasi:** Representasi spesifik dari satu baris di dalam data pelatihan. Unit ini dapat berupa satu pelanggan, satu transaksi tunggal, atau pengukuran sensor per menit.
+Empat definisi menjadi tulang punggung masalah sebelum satu baris transformasi dibuat: unit analisis, target, horizon, dan *cutoff*. Unit menjawab satu baris mewakili apa: pelanggan per bulan, transaksi, sesi pemeriksaan, produk per minggu, atau node dalam graf. Target menjawab apa yang diprediksi. Horizon menjawab seberapa jauh ke depan. *Cutoff* menjawab batas informasi yang sah sebelum prediksi.
 
-- **Target:** Label yang diprediksi beserta batas horizon waktunya.
+Kesalahan di tahap ini tidak dapat diperbaiki oleh fitur yang canggih. Jika target salah dirumuskan, model mengoptimalkan masalah yang salah. Jika *cutoff* kabur, leakage masuk lewat pintu belakang. Jika unit terlalu kasar atau terlalu halus, fitur menjadi tidak stabil.
 
-- **Strategi *split*:** Cara pemisahan data untuk menyimulasikan kondisi *inference* seobjektif mungkin.
+Setelah itu, pilih *split* yang meniru deployment. *Random split* cocok ketika baris dapat dipertukarkan di bawah protokol penggunaan. Entitas berulang bukan otomatis *leakage*: untuk memprediksi masa depan pelanggan yang sudah dikenal, gunakan evaluasi temporal dan fitur *point-in-time*; gunakan *group split* jika deployment menuntut generalisasi ke pelanggan baru. Demikian pula, kedekatan lokasi atau *edge* lintas *train-test* tidak otomatis bocor. Gunakan *spatial block*, buffer, evaluasi *transductive*, *inductive split*, atau *temporal graph split* sesuai lokasi, hubungan, dan informasi yang benar-benar tersedia saat inferensi. Pada masalah nyata, *split* bisa *hybrid*.
 
-Setelah fondasi ditetapkan, perancangan bergerak ke tahap pengolahan data. Alur kerja ini mencakup langkah operasional yang dieksekusi secara berurutan:
+Baru setelah itu kita memilih sumber fitur dan struktur representasi: tabular, sequence, teks, citra, audio, spasial, graf, atau multimodal. Dari struktur itu muncul transformasi yang sesuai: *scaling*, *encoding*, *derived features*, *selection*, *dimensionality reduction*, *embeddings*, *pretrained encoders*, atau *automated feature proposals*. *Baseline* harus hadir sebelum kompleksitas bertambah.
 
-1.  **Pengumpulan sumber data:** Menarik data historis yang tersedia secara sah sebelum titik prediksi.
+Gambar 17.1 merangkum seluruh kerangka buku sebagai satu band desain. Diagram ini dapat dibaca sebagai checklist awal setiap proyek.
+![Kerangka desain rekayasa fitur dari awal sampai produksi](../figures/ch17-fig-1.png)
+Contoh mikro: sistem credit approval. Tujuannya memperkirakan default risk. Unitnya satu loan application. Targetnya default dalam 12 bulan. *Split*-nya temporal berdasarkan tanggal aplikasi. Hanya setelah ini agregat histori pembayaran, rasio pendapatan, dan fitur perilaku diuji terhadap *baseline* logistic regression. Urutan ini tampak sederhana, tetapi ia mencegah banyak kesalahan yang tidak terlihat jika proyek dimulai dari teknik.
 
-2.  **Transformasi:** Mengubah data mentah menjadi representasi yang siap diproses oleh model.
+*Pipeline* final harus mereproduksi transformasi pelatihan pada *inference*. Ia menyimpan *fitted state*, urutan transformasi, daftar fitur, versi encoder, dan keputusan *cutoff*. Dokumentasi bukan pekerjaan administratif belakangan; ia adalah cara agar representasi dapat dipercaya ulang. Kerangka desain ini baru kuat jika definisi yang sama bertahan saat model masuk ke *inference*.
 
-3.  **Seleksi:** Membuang atribut yang redundan atau tidak relevan demi menjaga dimensi data tetap terkendali.
+## Konsistensi Training-Inference dan Training-Serving Skew
 
-4.  **Pembuatan *baseline*:** Mengembangkan model sederhana sebagai pembanding utama sebelum menguji fitur-fitur yang lebih kompleks.
+Kerangka desain baru sah jika definisi yang dibuat saat pelatihan bertahan saat model melayani prediksi (Sculley et al. 2015). *Training-inference consistency* berarti definisi fitur dan logika transformasi sama saat pelatihan, validasi, dan *serving*. Ini kontrak Bab 2, tetapi pada skala sistem. Jika pelatihan memakai satu cara menghitung fitur dan produksi memakai cara lain, model tidak lagi melihat distribusi yang sama.
 
-5.  **Evaluasi:** Menguji fitur baru terhadap *baseline* untuk mengukur peningkatan performa prediksi sekaligus memonitor stabilitasnya.
-```{mermaid}
-%%| label: fig-ch17-17_1
-%%| fig-cap: "Monitoring Drift Fitur (Data Drift Diagram) Pasca-Produksi"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph LR
-    A[Distribusi Fitur Latih Baseline] -->|Evaluasi Komparatif KS-Test| B{Drift Terdeteksi?}
-    C[Distribusi Fitur Produksi Baru] --> B
-    B -->|Ya: Kirim Alert & Pemicu Latih Ulang| D[Sistem retraining]
-    B -->|Tidak| E[Sistem Aman]
-```
-Satu elemen utama dalam perancangan ini adalah memastikan fitur yang dihasilkan stabil saat menghadapi data baru. Saat mengevaluasi fitur pada tahap *baseline* atau memantau *data drift* di lingkungan produksi, kita mengukur pergeseran distribusi antara data pelatihan dan data *inference*. Pengukuran stabilitas ini lazim menggunakan *Population Stability Index* (PSI). Secara matematis, metrik ini dihitung melalui persamaan berikut:
+*Training-serving skew* sering muncul diam-diam. *Reimplementation drift* terjadi ketika logika eksperimen di Python ditulis ulang di backend lain dengan aturan rounding, null handling, atau timezone yang berbeda. *Live recomputation* terjadi ketika produksi menghitung ulang statistik dari *streaming* data, padahal pelatihan memakai statistik beku dari *training split*. Tidak selalu ada error log. Prediksi hanya menurun diam-diam.
 
-$$PSI = \sum_{i=1}^{k} \left( P_{aktual, i} - P_{ekspektasi, i} \right) \times \ln \left( \frac{P_{aktual, i}}{P_{ekspektasi, i}} \right)$$
+*Fitted transformation* harus menyimpan state: rata-rata dan standard deviation scaler, nilai imputasi, kategori encoder, *vocabulary*, *selected features*, version model, version tokenizer, dan version *embedding*. *Feature availability* juga tidak bisa ditawar. Jika fitur hanya ada setelah keputusan dibuat, fitur itu invalid meskipun sangat prediktif.
 
-Dalam persamaan tersebut, $k$ adalah jumlah kelompok (*bin*) dari variabel yang dievaluasi, $P_{aktual, i}$ adalah proporsi sampel pada *bin* ke-$i$ di data aktual (*inference*), dan $P_{ekspektasi, i}$ adalah proporsi sampel pada *bin* yang sama di data yang diharapkan (pelatihan).
+Gambar 17.2 memperlihatkan pola *feature store*. Definisi fitur berada di pusat, lalu mengalir ke *offline store* untuk pelatihan historis dan *online store* untuk *serving* rendah latency.
+![\emph{Feature store}: definisi fitur untuk pelatihan dan \emph{serving}](../figures/ch17-fig-2.png)
+Pada skala kecil, *pipeline* yang diserialisasi dengan baik sudah mewakili gagasan yang sama: satu definisi, satu urutan transformasi, satu state yang dipakai ulang. Pada skala besar, definisi fitur dipusatkan agar tim pelatihan dan tim backend tidak menghitung fitur dengan logika berbeda.
 
-Sebagai contoh penerapan kerangka ini, mari kita tinjau sistem persetujuan kredit. Tujuannya adalah memprediksi risiko gagal bayar. Unit observasinya berupa aplikasi pinjaman individu, dan targetnya adalah kegagalan bayar dalam horizon dua belas bulan ke depan. Untuk menjaga praktik *pipeline* yang benar, strategi *split* yang paling valid adalah pemisahan temporal berdasarkan tanggal pengajuan aplikasi. Ketika struktur awal ini sudah solid, barulah fitur turunan direkayasa dari riwayat transaksi dan diuji terhadap *baseline* regresi logistik. Jika tahap desain awal keliru, tingkat PSI akan bergeser drastis saat produksi, dan rekayasa fitur sekompleks apa pun tidak akan mampu menyelamatkan performa model.
+Contohnya sederhana. Pelatihan memakai CSV yang sudah dibersihkan, tetapi produksi membaca database live dengan kode *missing value* yang berbeda. *Text vectorizer* di-*fit* pada korpus pelatihan, lalu *vocabulary* dan IDF yang sama harus dipakai ulang di produksi. Istilah "korpus lengkap" dalam konteks ini hanya boleh berarti seluruh korpus pelatihan yang sah, bukan validasi atau *test*. Kedua kasus ini bukan masalah model; ini masalah representasi yang tidak konsisten. Konsistensi juga perlu dijaga setelah sistem berjalan, melalui *schema validation*, *versioning*, dan *drift monitoring*.
 
-## Konsistensi Pelatihan dan *Inference*: Mencegah *Skew* di Produksi
+*Feature store* memusatkan definisi fitur dan membagi penyimpanan menjadi *offline store* untuk histori skala warehouse dan *online store* untuk *inference* rendah latency. Dua jaminan utamanya adalah *point-in-time-correct historical joins*, yaitu aturan *cutoff* Bab 1 dan Bab 6 yang dilembagakan, serta satu *serving interface* agar tim backend tidak mengimplementasikan ulang logika fitur. Untuk proyek kelas atau riset kecil, *pipeline* yang disimpan rapi adalah versi sederhana dari prinsip yang sama: definisi fitur tidak boleh bercabang diam-diam.
 
-Sebuah *pipeline machine learning* pada dasarnya adalah kontrak komputasional. Kontrak ini menjamin bahwa distribusi dan logika kalkulasi fitur yang dilihat oleh model saat pelatihan (*training*) harus identik secara struktural dengan fitur yang masuk saat *inference*. Apabila kontrak ini tercederai, sistem akan menderita *training-serving skew*, yaitu degradasi performa model di lingkungan produksi akibat ketidakselarasan transformasi data.
+## Schema Validation, Versioning, dan Drift
 
-*Training-serving skew* merupakan ancaman yang paling sulit terdeteksi karena bersifat *silent failure* (gagal tanpa suara). Kode tidak menghasilkan galat atau pesan *error*, namun akurasi probabilitasnya merosot drastis. Fenomena ini sering dipicu oleh hal-hal operasional:
+Konsistensi tidak cukup dijaga sekali saat model dikirim. *Pipeline* yang baik perlu gerbang produksi (Breck et al. 2017). *Schema validation* memeriksa apakah data masuk memiliki kolom, tipe, rentang, kategori, pola *missingness*, dan hubungan yang diharapkan. Tooling seperti TFDV, Great Expectations, atau pemeriksaan runtime bergaya Pandera berada dalam keluarga ini. Jika input melanggar kontrak, sistem sebaiknya memberi alert atau menolak *batch*, bukan diam-diam mengubah data menjadi bentuk yang salah.
 
-- Insinyur perangkat lunak menulis ulang kueri Python eksperimen ke dalam bahasa Java/Go di *backend* dengan pembulatan yang berbeda.
+*Transformation versioning* mencatat logika fitur, *fitted parameters*, model atau encoder version, dan data contract yang menghasilkan feature set. Nilai operasionalnya adalah rollback. Jika prediksi produksi tiba-tiba menyimpang, tim dapat kembali ke versi *pipeline* fitur terakhir yang stabil sambil menyelidiki penyebab. Tooling bergaya DVC mengikat code, data, dan model checkpoint agar perubahan dapat ditelusuri.
 
-- Pelanggaran status *fit/transform*. (Sistem produksi menghitung rata-rata bergerak dari aliran data *real-time* alih-alih menggunakan konstanta pelatih historis yang dibekukan).
+*Data drift* atau *covariate drift* berarti $P(X)$ berubah, sedangkan *concept drift* (Gama et al. 2014) berarti $P(Y\mid X)$ berubah. *Population shift* menamai perubahan komposisi populasi; dampaknya dapat terlihat sebagai perubahan $P(X)$ atau prevalensi label $P(Y)$ dan tidak otomatis berarti *concept drift*. Jika sensor baru mengganti rentang nilai, itu mungkin *data drift* mekanis. Jika komposisi pelanggan berubah setelah kebijakan baru, itu dapat menjadi *population shift*. Jika hubungan perilaku dengan target atau definisi target berubah, pemeriksaannya lebih mendasar.
 
-Pada praktik industri lampau, solusi standar untuk mencegah *skew* adalah membungkus seluruh tahap transformasi ke dalam satu objek (*pipeline serialization*) seperti modul *pickle*. Namun, pendekatan ini gagal menangani ekosistem skala raksasa yang mewajibkan komputasi silang-platform. Solusi definitif untuk tantangan ini terwujud dalam arsitektur ***Feature Store*** (seperti pustaka *open-source* Feast).
+Bab 9 sudah membahas PSI; di sini cukup diingat bahwa nilai besar, misalnya konvensi investigasi di atas 0,25, memicu pemeriksaan, bukan keputusan otomatis. Untuk *drift* multivariat pada fitur kontinu, ukuran jarak seperti *Wasserstein distance* dapat dipakai. Monitoring harus memprioritaskan fitur penting dan rapuh, bukan semua statistik dengan bobot sama.
 
-Berdasarkan hierarki kebutuhan yang dirumuskan oleh praktisi industri (Eugene Yan, 2021), sistem *Feature Store* menyediakan tingkat "Integritas" dengan memusatkan definisi fitur ke dalam satu basis kode dan membelah penyimpanan menjadi dua mesin sinkron:
+Gambar 17.3 merangkum tiga *guardrail*. *Schema gate* menolak input cacat, *versioned transformation layer* menjaga rollback, dan *drift monitor* memberi alert yang harus diselidiki.
+![Guardrail produksi untuk fitur](../figures/ch17-fig-3.png)
+Respons terhadap *drift* harus bertahap. Pertama, bedakan sebab mekanis dari perubahan populasi organik: sensor rusak, sync gagal, kategori baru, atau format input berubah. Teks masukan pengguna juga dapat berubah setelah kebijakan baru atau migrasi platform, misalnya formulir *online* yang diganti formatnya. Kedua, jika perubahan organik terbukti melewati toleransi dan memengaruhi performa, jadwalkan retraining dengan data terbaru. Jangan mematikan model otomatis hanya karena satu alert *drift* menyala. Dengan *guardrail* ini, kita dapat kembali ke pertanyaan desain: representasi apa yang wajar untuk tipe data dan batas operasional tertentu?
 
-1.  ***Offline Store*:** Basis data pergudangan (seperti BigQuery atau Snowflake) yang dirancang secara optimal untuk ekstraksi *batch* besar data historis guna pelatihan model.
+Masalah monitoring paling sulit adalah label produksi sering terlambat minggu atau bulan. Estimator modern mencoba memprediksi dampak performa dari *drift* yang terlihat, memakai distribusi input dan *confidence* model sebelum label tiba. *Confidence-based performance estimation* dan *direct loss estimation*, misalnya, memperkirakan apakah AUC atau loss sedang memburuk. Ini estimasi dengan asumsi, bukan pengukuran; salah satu asumsi pentingnya adalah *concept drift* tidak dominan. Nilainya adalah peringatan dini. Evaluasi berbasis label tetap menjadi penyelesaian akhir ketika ground truth tiba.
 
-2.  ***Online Store*:** Basis data kunci-nilai berlatensi sangat rendah (seperti Redis atau DynamoDB) yang menyajikan nilai fitur terbaru secara *real-time* kepada layanan *inference*.
-```{mermaid}
-%%| label: fig-ch17-17_2
-%%| fig-cap: "Arsitektur Feature Store (Feast) Offline dan Online Store"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    subgraph Ingesti ["Ingesti Log & Event"]
-        A[Sistem Database]
-    end
-    subgraph Feature_Store ["Sistem Feast"]
-        A -->|Batch ETL| Offline[Offline Store: Parquet/BigQuery]
-        A -->|Stream / Streaming| Online[Online Store: Redis]
-    end
-    subgraph ML_Services ["Konsumen Model"]
-        Offline -->|Train Silsilah Fitur Bebas Leakage| Train[Melatih Model ML]
-        Online -->|Latensi Rendah Real-time Retrieve| Serving[Aplikasi Inference]
-    end
-```
-Fungsi penting dari *Feature Store* adalah jaminan *Point-in-Time Correctness* (*Time Travel*). Ketika analis menarik miliaran baris data latih historis, sistem secara otomatis memastikan bahwa nilai fitur yang digabungkan (*join*) ke sebuah observasi adalah nilai yang eksis secara kronologis sesaat *sebelum* waktu kejadian. Hal ini melindungi *pipeline* dari kebocoran waktu (*temporal leakage*). Pada tahap inferensi, aplikasi *backend* cukup memanggil antarmuka seragam `get_online_features()` dengan menyetor *ID Entitas* (seperti ID Pelanggan), dan sistem akan merespons dengan vektor utuh tanpa memaksa tim *backend* mengulangi logika kalkulasi rekayasa. Pendekatan terpusat ini menjadi mekanisme paling andal untuk menyelaraskan performa model di laboratorium dengan kondisinya di produksi.
+## Peta Rute Lintas Tipe Data
 
-## Validasi Skema, *Versioning* Transformasi, dan Fenomena *Drift*
+Sebelum memilih modalitas, cabang pertama sering bersifat operasional: *batch* atau *streaming*. Agregat histori satu bulan mungkin wajar untuk scoring malam hari, tetapi mustahil untuk *serving* milidetik jika data harus dihitung ulang live. *Latency*, *freshness*, dan biaya sering memangkas menu fitur sebelum teknik dipilih.
 
-Stabilitas fitur di lingkungan produksi membutuhkan pengamanan teknis berlapis di luar kerangka arsitektur *pipeline* itu sendiri. Distribusi data riil bergerak dinamis seiring bergantinya waktu. Desain sistem analitik mutlak memfasilitasi tiga lapisan perlindungan operasional yang umumnya didukung oleh perkakas spesialis pihak ketiga: validasi skema, manajemen versi, dan pemantauan pergeseran.
+Peta rute pada bagian ini melengkapi peta operasi yang sudah dibangun sejak awal buku. Bab 3-9 membantu menjawab apa yang dilakukan terhadap fitur: *scaling*, *encoding*, imputasi, agregasi, seleksi, reduksi, dan evaluasi. Bagian ini membantu menjawab bentuk data apa yang sedang dihadapi: tabular, deret waktu, teks, citra, audio, spasial, graf, atau multimodal. Dalam proyek nyata, dua peta ini dipakai bersama.
 
-**Validasi Skema Berbasis *Runtime***
-Validasi skema memverifikasi keutuhan data mentah sebelum membiarkannya masuk ke mesin instruksi transformasi. Industri modern umumnya mengandalkan pustaka khusus seperti *Pandera* untuk menegakkan validasi statistik berlapis:
+Setelah itu, cocokkan representasi dengan tipe data, model, ukuran data, interpretabilitas, compute, dan deployment constraint. Tabel 17.1 adalah router lintas bab. Ia tidak memilihkan model secara otomatis, tetapi membantu pembaca bertanya: representasi awal apa yang wajar, *leakage* apa yang paling mungkin, dan kapan representasi yang dipelajari mesin layak dicoba? Bacalah tabel ini dari kiri ke kanan: mulai dari situasi data, pilih representasi awal yang tidak berlebihan, lalu cek risiko evaluasi sebelum mencoba representasi yang lebih kompleks atau lebih bergantung pada pembelajaran mesin.
 
-- **Tipe Data dan Kelengkapan:** Sistem otomatis memblokir injeksi matriks jika mendeteksi anomali struktural akibat sistem hulu, seperti bergesernya struktur kolom numerik menjadi format teks (*string*).
+**Tabel 17.1 --- Peta rute lintas tipe data**
 
-- **Rentang Batas Wajar:** Mesin mengetes nilai observasi terhadap limit batas ekspektasi, serta memvalidasi keselarasan entitas kategorikal terhadap kamus referensi guna menangkal intrusi dari label asing yang tak dikenal model.
+*Tabel lengkap tersedia pada edisi cetak.*
 
-Jika tumpukan data harian melanggar batasan validasi ini, proses akan ditolak (*rejected*) dan peringatan diaktifkan. Tanpa palang pintu ini, nilai pengamatan cacat akan mencemari *pipeline* dan membuat model menghasilkan prediksi yang keliru.
+Dua skenario menunjukkan cara membaca router. Pada retail demand forecasting, unitnya store x product x week. *Split* temporal menahan minggu terakhir sebagai test. Fitur rolling dihitung dari minggu $T{-}4$ sampai $T{-}1$, bukan minggu target. Risiko utamanya *look-ahead leakage*. Representasi sekuensial mungkin dicoba jika *baseline* lag dan rolling tidak cukup.
 
-**Manajemen Versi (*Data Version Control*)**
-Siklus komputasi rekayasa fitur secara rutin dimodifikasi seiring eksperimentasi. Seluruh berkas transformasi memerlukan kontrol manajemen versi (*Data Version Control* / DVC) yang mengikat jejak skrip rekayasa fitur dengan *checkpoint* modelnya. Fiksasi historis ini merupakan kunci untuk operasi pemulihan (*rollback*). Apabila probabilitas prediksi mendadak menyimpang di produksi, teknisi dapat langsung merestorasi status *pipeline* ke versi kode ekstraksi yang stabil.
+Pada multimodal medical severity, unitnya satu sesi pemeriksaan. X-ray masuk lewat *frozen CNN embedding*, dengan catatan bahwa encoder *pretrained* dari citra alami tidak selalu cocok untuk citra medis; verifikasi *domain fit* tetap diperlukan. *Lab features* diimputasi dan diberi *robust scaling*. Jika deployment menuntut generalisasi ke pasien baru, gunakan *patient-level group split* agar pasien yang sama tidak muncul di *train* dan *test*. Di domain seperti ini, auditability dapat membatasi penggunaan *black-box embeddings*, walaupun benchmark terlihat kuat. Pada credit dan health, governance dapat menjadi veto desain, bukan catatan tambahan. Dari router ini, prinsip akhirnya dapat diringkas menjadi dua kelompok: mulai dari masalah dan *split*, lalu buktikan bahwa representasi yang dipilih benar-benar bernilai.
 
-**Pemantauan *Data Drift***
-*Data drift* mendeskripsikan bergesernya sebaran distribusi atribut masukan produksi menjauhi distribusi sampel pelatihan aslinya. Pergeseran diam-diam ini mereduksi akurasi tanpa memicu peringatan *error* sama sekali. Simpangan ini dikalkulasi menggunakan ukuran geometri probabilitas matematis, di mana *Population Stability Index* (PSI) dan jarak *Wasserstein* menjadi standar pengukuran yang paling lazim digunakan. Secara formal, perhitungan PSI diformulasikan sebagai:
-$$\text{PSI} = \sum_{i=1}^{B} \left( P_{\text{actual}, i} - P_{\text{expected}, i} \right) \times \ln \left( \frac{P_{\text{actual}, i}}{P_{\text{expected}, i}} \right)$$
-Di mana sebaran nilai numerik dibagi ke dalam $B$ buah bin interval, $P_{\text{actual}, i}$ melambangkan proporsi populasi data produksi pada interval ke-$i$, dan $P_{\text{expected}, i}$ mewakili persentase populasi dari distribusi data latih referensi pada interval yang identik. Ambang batas umum menetapkan bahwa jika PSI $> 0.2$, maka *drift* yang terjadi bersifat masif dan wajib ditangani.
-```{mermaid}
-%%| label: fig-ch17-17_4
-%%| fig-cap: "Jalur Ekstraksi Fitur Batch vs Streaming Features"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    A[Data Masuk] --> B(Batch: Diolah Berkala Tiap Malam - Latensi Tinggi)
-    A --> C(Streaming: Diolah Seketika via Kafka/Flink - Latensi Rendah)
-```
-Dalam memitigasi anomali ini, ekosistem pemantauan telah beralih pada pemanfaatan alat spesialis:
+## Prinsip I: Mulai dari Masalah, Ketersediaan, dan *Split*
 
-- ***Evidently AI*:** Bekerja dominan pada deteksi pergeseran *univariate* (variabel tunggal), yang memberikan panel kontrol visual mengenai fitur apa yang nilai rata-rata populasinya paling parah terdistorsi.
+Setelah router lintas tipe data memberi peta pilihan, prinsip payung pertama mengembalikan proyek ke awal: mulai dari masalah prediksi, bukan teknik favorit. Unit, target, horizon, *cutoff*, dan *split* harus jelas sebelum fitur dibuat. Jika pertanyaan salah, model yang akurat pun tidak membantu keputusan yang benar. Tiga subprinsip berikutnya merinci ketersediaan, batas *split*, dan tata kelola di bawah prinsip payung ini.
 
-- ***NannyML*:** Menutup kelemahan utama dari pemantauan konvensional, yakni ketiadaan label *ground truth* di lingkungan produksi *real-time*. *NannyML* memelopori algoritma seperti *Confidence-Based Performance Estimation* (CBPE) dan *Direct Loss Estimation* (DLE). Algoritma tersebut secara matematis mengestimasi seberapa besar *drift* fitur saat ini telah menggerus performa prediksi riil model (seperti kejatuhan skor AUC), murni bermodalkan pergerakan fitur input tanpa menunggu kedatangan label hasil observasi aslinya.
+Subprinsip ketersediaan: fitur hanya valid jika tersedia saat prediksi. Availability tidak hanya berarti kolom itu ada di suatu tabel. Ia juga berarti segar, cukup cepat, dan sah untuk dipakai pada waktu keputusan. "Waktu login terakhir" yang disinkronkan malam hari dapat stale pada siang hari. Agregat yang butuh query mahal mungkin tersedia secara teoritis tetapi gagal latency produksi.
 
-Saat degradasi terdeteksi, rantai mitigasi standar tidak menyarankan model langsung dimatikan. Praktisi harus memverifikasi apakah ini isu integritas mekanis (seperti disfungsi pemancar sensor) atau transformasi populasi organik. Bila terbukti pergeseran populasi riil, dan ambang degradasi (berdasarkan parameter *NannyML*) melewati toleransi komersial, *pipeline* kemudian dijadwalkan ulang untuk proses *retraining* parsial menggunakan irisan data termutakhir.
+Subprinsip batas *split*: setiap transformasi atau statistik yang dipelajari dalam evaluasi terawasi harus mengikuti *split*. Bentuk finalnya singkat: *estimate on train, freeze, apply everywhere else*. Scaler, imputer, encoder yang dilatih lokal, *vocabulary*, *selected features*, PCA, dan threshold dipelajari dari sisi pelatihan yang sah, lalu diterapkan ke validasi, *test*, dan inferensi. *Retrieval index* berbeda dari transformasi tersebut: indeks boleh memuat korpus apa pun yang memang tersedia saat inferensi, termasuk item tak berlabel di luar *training split*, tetapi tidak boleh memuat dokumen masa depan atau metadata yang belum tersedia dalam protokol deployment.
 
-## Kerangka Keputusan Lintas Tipe Data
+Subprinsip tata kelola: privacy, proxy, dan data minimization adalah bagian dari kualitas fitur. Menghapus kolom sensitif tidak cukup jika postcode, delivery route, sekolah, atau perangkat dapat merekonstruksi atribut yang sama. Akurasi tidak otomatis membenarkan fitur. Jika sebuah fitur berisiko merugikan kelompok tertentu, menambah skor bukan akhir argumen; itu awal governance.
 
-Setiap tipe data menuntut perlakuan yang spesifik. Pemilihan teknik rekayasa fitur sangat bergantung pada modalitas data, batasan latensi saat *inference*, serta tingkat interpretasi yang disyaratkan oleh proyek. Kerangka keputusan lintas tipe data bertindak sebagai alat navigasi utama bagi perancang sebelum menyusun satu baris kode pun. Peta utuh dari panduan ini dapat ditelusuri pada Lampiran A.
+Contoh yang tampak kecil sering paling berbahaya. Fitur yang sangat prediktif tetapi tiba setelah keputusan harus ditolak. Fitur atribut kependudukan atau proxy-nya mungkin meningkatkan ranking model, tetapi memerlukan aturan penggunaan yang jelas, dokumentasi, dan kadang penolakan. Feature importance tinggi tidak sama dengan legitimasi.
 
-Cabang pertama dalam pohon keputusan berawal dari kendala produksi. Merujuk pada pedoman pembingkaian masalah *machine learning*, perancang harus menetapkan target latensi prediksi sejak awal:
+Prinsip-prinsip ini terdengar sederhana karena diulang sepanjang buku. Justru karena sederhana, mereka mudah dilanggar ketika proyek mengejar skor. Dalam praktik, banyak kegagalan model bukan karena algoritmanya kurang modern, tetapi karena *cutoff* salah, *split* bocor, fitur tidak tersedia, atau transformasi tidak sama antara pelatihan dan *inference*. Kelompok prinsip berikutnya menutup sisi lain: bagaimana menilai jumlah fitur, kompleksitas, dan kombinasi representasi.
 
-- **Pemrosesan *batch*:** Pendekatan untuk inferensi periodik dengan volume data masif dan toleransi waktu komputasi yang longgar.
+## Prinsip II: Validasi, Kombinasi Representasi, dan Jalan ke Depan
 
-- **Pemrosesan *streaming*:** Pendekatan untuk merespons permintaan secara seketika berdasarkan arus data waktu nyata.
+Setelah masalah dan *split* dikunci, prinsip payung kedua menahan godaan menambah fitur tanpa bukti. Lebih banyak fitur tidak otomatis lebih baik. Fitur tambahan dapat menambah *noise*, *leakage*, biaya, latency, dan risiko kebijakan. Validasi mengalahkan jumlah fitur. Setiap fitur kompleks atau representasi yang dipelajari mesin harus membayar tempatnya dengan bukti: peningkatan stabil terhadap *baseline*, ketersediaan yang jelas, biaya yang masuk akal, dan risiko yang dapat diterima.
 
-Batasan arsitektur ini mendikte jenis fitur yang bisa diimplementasikan. Fitur agregasi kompleks yang mencakup riwayat transaksi sebulan penuh mungkin valid beroperasi pada sistem *batch*, tetapi memakan durasi komputasi yang terlalu lambat untuk melayani kebutuhan sistem *streaming*.
-```{mermaid}
-%%| label: fig-ch17-17_5
-%%| fig-cap: "Skema Training-Serving Skew Akibat Perbedaan Ketersediaan Fitur"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    subgraph Training_Time ["Waktu Pelatihan"]
-        A1[Data Historis Lengkap] --> B1[Fitur Agregat Mewah]
-    end
-    subgraph Serving_Time ["Waktu Produksi"]
-        A2[Inference Real-time] -->|Atribut Transaksi Baru Belum Tercatat di DB| B2[Fitur Kosong / Missing - Kegagalan Model]
-    end
-```
-Gambar 17.3 mengilustrasikan perbedaan jalur ekstraksi fitur dalam arsitektur sistem untuk memenuhi batasan waktu respons *inference*.
+Representasi yang dirancang manusia dan representasi yang dipelajari mesin bukan lawan. Bentuk hybrid dari Bab 15, $\mathbf{x}_{\text{final}} = [\phi_{\text{learned}} \parallel \phi_{\text{designed}}]$, dapat dibaca sebagai simbol penutup buku. Di sini $\phi_{\text{learned}}$ adalah vektor fitur dari representasi yang dipelajari mesin, $\phi_{\text{designed}}$ dari representasi yang dirancang manusia, dan $\parallel$ menyatakan operasi penggabungan vektor menjadi satu vektor fitur akhir $\mathbf{x}_{\text{final}}$. Mesin mengekstrak pola yang sulit dienumerasi manusia; fitur yang dirancang manusia mengikat model pada logika domain, batas waktu, dan pengetahuan yang jelas.
 
-Setelah arsitektur dasar ditetapkan, kerangka keputusan membagi perlakuan fitur berdasarkan modalitas input:
+Automation juga bukan pengganti judgment. Bab 16 memberi rumus sosialnya: machine proposes, human disposes. Mesin memperluas kandidat, menjalankan evaluasi, dan memberi ranking. Manusia mendefinisikan target, *cutoff*, constraint, metric, dan alasan penerimaan. Tanpa dokumentasi, keputusan itu hilang; tanpa monitoring, keputusan itu membusuk.
 
-- **Data Tabular (Representasi yang Dirancang Manusia):** Pemrosesan bertumpu pada manipulasi skala, reduksi kardinalitas, dan injeksi atribut interaksi antar kolom. Pendekatan ini membangun representasi eksplisit yang sangat transparan bagi keperluan audit bisnis. Transparansi ini sangat membantu saat sistem perlu melacak *data drift*. Evaluasi pergeseran distribusi populasi pada fitur tabular umumnya diukur melalui perhitungan *Population Stability Index* (PSI):
+Gambar 17.4 menutup sumbu buku. Di kiri ada representasi yang dirancang manusia, di kanan representasi yang dipelajari mesin. Keduanya dipertemukan oleh validasi dan dokumentasi.
+![Representasi yang dirancang manusia dan representasi yang dipelajari mesin dalam satu \emph{pipeline}](../figures/ch17-fig-4.png)
+Tabel 17.2 adalah checklist akhir. Ia dirancang untuk dibaca sebelum proyek dimulai, saat feature review, dan sebelum model masuk produksi. Setiap baris memaksa satu pertanyaan yang harus bisa dijawab dengan bukti, bukan rasa yakin.
 
-$$PSI = \sum_{i=1}^{k} (A_i - E_i) \times \ln\left(\frac{A_i}{E_i}\right)$$
+**Tabel 17.2 --- Daftar periksa prinsip yang bertahan lama**
 
-Di mana $A_i$ mewakili proporsi sampel aktual pada *bin* ke-$i$ saat *inference*, $E_i$ mewakili proporsi ekspektasi dari kumpulan data latih, dan $k$ adalah jumlah total *bin*. Atribut eksplisit rancangan manusia memungkinkan kalibrasi yang terarah ketika nilai PSI melewati batas aman.
+*Tabel lengkap tersedia pada edisi cetak.*
 
-- **Deret Waktu dan Spasial (Struktur dan Konteks):** Kehadiran dimensi temporal atau koordinat lokasi mewajibkan perancang untuk berfokus pada isolasi konteks. Implementasi teknis membutuhkan aturan *windowing* ketat guna merekam riwayat historis tanpa terekspos kejadian masa depan. Pada area ini, penerapan praktik *pipeline* yang benar menjadi penangkal utama terhadap kebocoran data spesifik modalitas.
+Dokumentasi membuat rekayasa fitur tahan lama: definisi, sumber, *cutoff*, risiko, versi, pemilik, dan monitor. Tanpa itu, fitur yang bagus hari ini menjadi hutang teknis besok. Dengan itu, fitur dapat dievaluasi ulang ketika data berubah, model berganti, atau aturan bisnis bergerak.
 
-- **Teks, Citra, dan Audio (Representasi yang Dipelajari Mesin):** Modalitas tidak terstruktur memaksa perancang untuk memotong jalur rekayasa manual. Sistem langsung mengandalkan vektor *embedding* berdensitas tinggi dari *pretrained model*. Beban kerja beralih dari merancang fitur individual menjadi menyusun arsitektur integrasi, memastikan gabungan representasi dari mesin saling melengkapi struktur prediksi akhir.
+Jalan ke depan bersifat hybrid. Manusia merumuskan masalah, memilih batas, dan menilai konsekuensi. Mesin belajar representasi, mengusulkan kandidat, dan mempercepat pencarian. *Pipeline* yang baik menyatukan keduanya di bawah validasi yang jujur. Dengan bahasa Bab 1, pekerjaan ini tetap tentang merancang $\phi(x_{\text{raw}})$: transformasi dari data mentah ke representasi yang sah, berguna, dan dapat dipelihara. Setiap proyek ML/DL seharusnya dapat menjawab: representasi apa yang kita pilih, mengapa, dan bagaimana kita tahu ia bekerja?
 
-Kerangka keputusan ini memastikan sinkronisasi antara teknik komputasi dan aturan operasional di lapangan. Regulasi industri finansial yang menuntut rekam jejak audit penuh akan menolak *embedding* kotak hitam dan mengunci pilihan pada representasi rancangan manusia, meskipun *pretrained model* terbaru tersedia. Pemetaan arsitektur di awal mencegah perancang membangun sistem teknis yang pada akhirnya ditolak oleh lingkungan produksi.
+- scikit-learn --- Common Pitfalls & Pipelines --- <https://scikit-learn.org/stable/common_pitfalls.html>. Disiplin pipeline untuk produksi.
 
-## Prinsip Dasar: Masalah, Ketersediaan, dan Aturan Split
+- Sculley dkk. (2015), Hidden Technical Debt in ML Systems (NeurIPS) --- <https://papers.nips.cc/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html>. Sumber sintesis utama untuk utang teknis ML.
 
-Rekayasa fitur berawal dari pemahaman atas masalah operasional, bukan sekadar eksperimen algoritmik. Praktisi kerap menghabiskan waktu mencoba berbagai transformasi rumit pada data historis, padahal fitur yang kuat justru lahir dari pemahaman mendalam tentang mekanisme domain. Pendekatan berbasis masalah (*problem-driven*) memastikan setiap operasi komputasi terarah pada sinyal yang relevan dengan tujuan sistem.
+- Gebru dkk. (2021), Datasheets for Datasets --- <https://arxiv.org/abs/1803.09010>. Dokumentasi asal dan batasan data.
 
-Perancangan fitur untuk produksi tunduk pada tiga prinsip berikut.
+- TensorFlow Data Validation --- <https://www.tensorflow.org/tfx/data_validation>. Validasi skema dan deteksi drift.
 
-**Ketersediaan Data Saat *Inference*.**
+- Great Expectations --- <https://greatexpectations.io/>. Uji kualitas data sebagai kode.
 
-Syarat teknis paling kaku dalam produksi adalah ketersediaan data pada saat prediksi berjalan (*inference*). Fitur wajib tersedia secara komputasional dan faktual pada detik model dipanggil. Metrik evaluasi yang tinggi di fase eksperimen tidak ada artinya jika bahan baku fitur tersebut mengalami hambatan latensi di produksi.
+- Evidently AI --- <https://docs.evidentlyai.com/>. Pemantauan drift data dan model.
 
-- **Kasus Sinkronisasi Data:** Model prediksi *churn* sering menggunakan fitur waktu interaksi terakhir (*last login date*). Jika saluran data menyinkronkan log interaksi setiap 24 jam sekali pada tengah malam, fitur tersebut akan usang saat model mengeksekusi prediksi di siang hari.
+- Feast --- <https://docs.feast.dev/>. Feature store: konsistensi latih--saji.
 
-- **Risiko *Training-Serving Skew*:** Perbedaan jalur ketersediaan data antara lingkungan eksperimen (tersedia semua) dan produksi (tersedia sebagian atau tertunda) menyebabkan model menerima distribusi data yang berbeda saat bekerja di lapangan.
-```{mermaid}
-%%| label: fig-ch17-17_6
-%%| fig-cap: "Arsitektur Hibrida Menggabungkan Ekstraksi Fitur Visual DL & Tabular Rancangan Manusia"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph LR
-    Img[Foto Produk] -->|ResNet Extractor| Embedding[Vektor Laten Visual]
-    Tab[Teks Metadata] -->|One-Hot Scaler| Tabular[Fitur Tabular]
-    Embedding --> Cat[Concatenate Layer]
-    Tabular --> Cat
-    Cat --> MLP[Model Klasifikasi Cacat Produk]
-```
-Untuk mendeteksi seberapa jauh pergeseran distribusi yang terjadi akibat perbedaan fase ini, kita dapat mengukur *Population Stability Index* (PSI):
+- ICO --- Data minimisation --- <https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/data-protection-principles/a-guide-to-the-data-protection-principles/the-principles/data-minimisation/>. Prinsip minimisasi data (privasi).
 
-$$PSI = \sum_{i=1}^{k} \left( P_{inference,i} - P_{train,i} \right) \ln \left( \frac{P_{inference,i}}{P_{train,i}} \right)$$
+Breck, Eric, Shanqing Cai, Eric Nielsen, Michael Salib, and D. Sculley. 2017. "The ML Test Score: A Rubric for ML Production Readiness and Technical Debt Reduction." *IEEE International Conference on Big Data*.
 
-Dalam persamaan tersebut, $k$ adalah jumlah partisi (*bin*) dari suatu fitur, $P_{inference,i}$ adalah proporsi sampel pada *bin* ke-$i$ di lingkungan produksi, dan $P_{train,i}$ adalah proporsi sampel pada *bin* yang sama di set pelatihan.
+Gama, João, Indrė Žliobaitė, Albert Bifet, Mykola Pechenizkiy, and Abdelhamid Bouchachia. 2014. "A Survey on Concept Drift Adaptation." *ACM Computing Surveys* 46 (4): 1--37.
 
-Nilai PSI di atas 0,2 menandakan pergeseran populasi atau *skew* yang besar. Jika ini terjadi, desain ketersediaan fitur tersebut perlu dievaluasi ulang.
-
-**Transformasi Selalu Mengikuti *Split*.**
-
-Validitas evaluasi menuntut agar semua transformasi data dilakukan setelah penerapan strategi pemisahan (*split*). Praktik *pipeline* yang benar mengatur urutan operasi sebagai berikut:
-
-- **Estimasi Parameter pada Data Latih:** Operasi penyusunan fitur (seperti perhitungan rata-rata untuk imputasi, penyesuaian skala, atau *target encoding*) harus dihitung murni menggunakan observasi dari set pelatihan.
-
-- **Pembekuan Transformer:** Parameter transformasi yang telah diperoleh kemudian dibekukan dan dipakai apa adanya untuk mentransformasi set pengujian.
-
-- **Pencegahan Data Leakage:** Jika kalkulasi beroperasi pada keseluruhan dataset sebelum pemisahan, distribusi set pengujian akan ikut terhitung ke dalam parameter transformasi. Kebocoran ini menghasilkan akurasi palsu yang terlihat tinggi saat eksperimen namun anjlok saat produksi.
-
-**Keamanan Operasional dan Fitur *Proxy*.**
-
-Melanjutkan prinsip privasi dari Bab 9, fakta bahwa sebuah atribut menaikkan akurasi prediksi tidak otomatis membuatnya boleh dipakai. Sistem harus dibangun dengan batas keamanan operasional agar tidak mengeksploitasi atribut yang dilindungi.
-
-- **Penghapusan Atribut Sensitif:** Variabel demografi atau data pribadi yang dilindungi wajib dibuang dari *pipeline* pemodelan.
-
-- **Bahaya Fitur *Proxy*:** Model amat rentan menyerap fitur *proxy*, yaitu atribut yang terkesan netral namun berkorelasi kuat dengan variabel sensitif. Misalnya, atribut "kode pos domisili" atau "rute pengiriman harian" sering kali menyimpan profil status sosial-ekonomi secara terselubung.
-
-- **Mengunci Bias Historis:** Membiarkan sistem mengakses variabel *proxy* sama dengan menginstruksikan model untuk mempelajari dan mereplikasi bias historis yang sudah berurat akar pada data mentah.
-
-## Prinsip Dasar Bagian II: Validasi, Sinergi Representasi, dan Arah ke Depan
-
-Menambahkan ratusan atribut baru ke dalam *dataset* sering dianggap sebagai metode cepat untuk meningkatkan akurasi. Namun, penambahan variabel tanpa dasar keilmuan justru memperbesar risiko *overfitting*, di mana model menghafal *noise* dari data pelatihan. Sistem prediksi yang andal selalu dibangun dari stabilitas fitur yang teruji melalui skema validasi silang yang ketat, bukan sekadar dari lonjakan dimensi matriks.
-
-Buku ini telah mengeksplorasi spektrum pemrosesan data yang membentang luas, dari representasi yang dirancang manusia di satu sisi, hingga representasi yang dipelajari mesin di sisi lain. Kedua pendekatan tersebut tidak dirancang untuk saling berkompetisi. Sinergi keduanya justru bekerja maksimal saat diimplementasikan pada sistem prediksi berarsitektur hibrida. Algoritma *deep learning* menangani beban ekstraksi pola rumit dari data tidak terstruktur, sementara tenaga ahli mengamankan pemahaman konteks logis melalui variabel tabular konvensional.
-
-Integrasi kedua spektrum tersebut diformulasikan secara matematis melalui teknik penggabungan matriks representasi:
-
-$$\mathbf{x}_{final} = \big[ \phi_{learned}(\mathbf{x}_{unstructured}) \parallel \phi_{designed}(\mathbf{x}_{tabular}) \big]$$
-
-Dalam persamaan tersebut, $\mathbf{x}_{final}$ adalah vektor fitur gabungan yang diteruskan ke lapisan prediktif akhir. Fungsi $\phi_{learned}$ adalah ekstraktor otomatis (misalnya *pretrained model* jaringan saraf) yang memproses input non-tabular $\mathbf{x}_{unstructured}$, seperti matriks piksel citra sinar-X, sedangkan $\phi_{designed}$ adalah transformasi manual berbasis keilmuan yang memproses atribut terstruktur $\mathbf{x}_{tabular}$, seperti kategori usia atau riwayat penyakit. Notasi $\parallel$ menandakan operator konkatenasi yang menyatukan kedua vektor.
-```{mermaid}
-%%| label: fig-ch17-17_7
-%%| fig-cap: "Arsitektur Dua Sistem Prediktif Berdampingan: Peramalan Ritel & Hybrid Multimodal Medis"
-%%{init: {'theme': 'neutral', 'themeVariables': { 'edgeLabelBackground': '#ffffff' }}}%%
-graph TD
-    subgraph Ritel_System ["Sistem Peramalan Ritel Temporal"]
-        A1[Data Penjualan] --> B1[Feature Lag & Rolling Window]
-        B1 --> C1[Model XGBoost Forecasting]
-    end
-    subgraph Medis_System ["Sistem Multimodal Medis"]
-        A2[Rekam Medis Tabular] --> D2[Concatenate Layer]
-        B2[Citra Rontgen Paru] -->|CNN Extractor| D2
-        D2 --> E2[Model Jaringan Neural Prediksi Patologi]
-    end
-```
-Validasi simultan terhadap $\mathbf{x}_{final}$ menjamin model belajar membedakan pola general yang sesungguhnya. Model tercegah dari sekadar menghafal temuan individu karena dikunci oleh batasan fisik yang diatur oleh logika representasi desain manusia.
-
-Masa depan rekayasa fitur bertumpu penuh pada kolaborasi antara komputasi mesin dan evaluasi rasional manusia. Walaupun perangkat otomasi AutoFE sanggup memproduksi usulan transformasi dalam hitungan detik, ekuilibrium operasional tetap mengandalkan pembagian tugas yang definitif:
-
-- **Tugas Mesin:** Menemukan pola laten berskala besar, memproses input data dimensi tinggi, serta membuat kombinasi iterasi turunan atribut secara komprehensif tanpa henti.
-
-- **Tugas Manusia:** Memverifikasi kewajaran logis dari penambahan atribut, mendeteksi jalur jebakan *data leakage* di level operasional, dan menakar beban latensi komputasi terhadap efisiensi infrastruktur.
-
-Mesin berperan sebagai pengusul hipotesis representasi, sedangkan kepakaran manusia menjadi penentu validasi akhir.
-
-## Studi Kasus: Merancang *Pipeline* dari Nol untuk Berbagai Skenario
-
-Kita akan merancang dua *pipeline* dari nol untuk mendemonstrasikan bagaimana jenis data dan rumusan masalah memandu penentuan unit observasi hingga pemilihan representasi.
-
-**Skenario Pertama: Peramalan Permintaan Ritel.**
-
-Sebuah jaringan swalayan memprediksi volume penjualan untuk mengatur stok barang. Desain *pipeline* untuk masalah ini dibangun dengan spesifikasi berikut:
-
-- **Unit observasi dan target:** Kombinasi spesifik antara toko, produk, dan minggu. Target prediksinya adalah volume penjualan pada minggu $T+1$.
-
-- **Strategi pembagian data (*split*):** Prediksi bergantungan pada waktu, sehingga pembagian data menaati kronologi secara ketat. Pemisahan temporal menyisihkan blok minggu terakhir khusus untuk pengujian guna menyimulasikan kondisi di lingkungan produksi.
-
-- **Ekstraksi fitur:** Data tabular membutuhkan jendela waktu (*windowing*) terstruktur. Contoh representasinya adalah nilai rata-rata historis (*rolling average*) dari minggu $T-1$ hingga $T-4$.
-
-- **Pencegahan *leakage*:** Perhitungan fitur tidak boleh menyertakan informasi dari target di minggu $T+1$. Praktik *pipeline* yang benar wajib diterapkan sejak awal pembentukan sampel pembelajaran demi menghindari *look-ahead leakage*.
-
-Setelah *pipeline* fitur ritel beroperasi di produksi, stabilitas datanya perlu dipantau. Metrik yang lazim dipakai untuk mendeteksi *data drift* adalah *Population Stability Index* (PSI):
-
-$$\text{PSI} = \sum_{i=1}^{k} (A_i - E_i) \times \ln\left(\frac{A_i}{E_i}\right)$$
-
-Dalam persamaan tersebut, $k$ adalah jumlah kategori atau *bin* pembagian fitur numerik, $A_i$ adalah proporsi observasi pada *bin* $i$ saat produksi (*inference*), dan $E_i$ adalah proporsi observasi pada *bin* yang sama saat pelatihan (*training*).
-
-Pergeseran skor PSI yang tinggi menandakan bahwa distribusi fitur telah berubah dan siklus pelatihan ulang kemungkinan diperlukan.
-
-**Skenario Kedua: Diagnosis Medis Multimodal.**
-
-Skenario kedua melibatkan klasifikasi tingkat keparahan penyakit paru-paru berdasarkan data rumah sakit. Karakteristik perancangan arsitektur multimodal ini meliputi:
-
-- **Unit observasi:** Satu sesi pemeriksaan pasien individual tanpa horizon waktu prediktif ke depan.
-
-- **Strategi *split*:** Pemisahan data diacak, namun seluruh rekam medis dari satu pasien harus selalu masuk ke blok *split* yang sama. Ini membatasi model agar tidak sekadar menghafal karakteristik individu pasien.
-
-- **Pemrosesan citra:** Citra sinar-X melewati augmentasi dan masuk ke *pretrained model* jaringan konvolusional (CNN). Model ini sengaja dibekukan untuk mengabdi sebagai ekstraktor fitur yang memproduksi vektor *embedding*. Bagian ini memakai representasi yang dipelajari mesin.
-
-- **Pemrosesan tabular:** Hasil tes darah dan sensor numerik diproses terpisah. Fitur-fitur tersebut diimputasi lalu diseragamkan dengan metode *robust scaling*.
-
-- **Penggabungan (*fusion*):** Aliran *embedding* citra dan aliran fitur tabular digabungkan secara internal sebelum masuk lapisan klasifikasi akhir.
-
-Implementasi kode transformasi merupakan tahapan teknis penutup. Ketepatan dalam merumuskan unit observasi, mengatur logika *split* pengujian, serta menyatukan ragam bentuk representasi adalah pondasi sejati dari pembangunan sistem prediktif yang berhasil.
-
-``` {.python language="Python"}
-import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.preprocessing import RobustScaler
-from sklearn.impute import SimpleImputer
-from sklearn.decomposition import PCA
-from sklearn.ensemble import RandomForestClassifier
-
-# 1. Transformer kustom untuk melakukan pemilihan (seleksi) kolom spesifik
-class ColumnSelector(BaseEstimator, TransformerMixin):
-    def __init__(self, columns):
-        self.columns = columns
-    def fit(self, X, y=None):
-        return self
-    def transform(self, X):
-        return pd.DataFrame(X)[self.columns].values
-
-# 2. Simulasi Dataset Medis: Gabungan data tabular & embedding citra rontgen
-np.random.seed(42)
-df_medis = pd.DataFrame({
-    'tensi_darah': np.random.normal(120.0, 15.0, 100),
-    'kadar_hemoglobin': np.random.normal(14.0, 2.0, 100),
-    'img_feat_1': np.random.normal(0.0, 1.0, 100),
-    'img_feat_2': np.random.normal(0.0, 1.0, 100)
-})
-df_medis.iloc[10:20, 0] = np.nan  # Sisipkan nilai kosong
-y_diagnosis = np.random.randint(0, 2, size=100)
-
-# 3. Aliran pemrosesan fitur tabular numerik
-tabular_flow = Pipeline([
-    ('select_tab', ColumnSelector(columns=['tensi_darah', 'kadar_hemoglobin'])),
-    ('impute', SimpleImputer(strategy='median')),
-    ('scale', RobustScaler())
-])
-
-# 4. Aliran pemrosesan fitur embedding citra (pre-extracted CNN)
-image_flow = Pipeline([
-    ('select_img', ColumnSelector(columns=['img_feat_1', 'img_feat_2'])),
-    ('pca', PCA(n_components=1, random_state=42))
-])
-
-# 5. Peleburan (fusion) fitur secara paralel menggunakan FeatureUnion
-fusion_layer = FeatureUnion([
-    ('tab_pipeline', tabular_flow),
-    ('img_pipeline', image_flow)
-])
-
-# 6. Merangkai pipeline utama tingkat tinggi secara menyeluruh
-main_pipeline = Pipeline([
-    ('union', fusion_layer),
-    ('classifier', RandomForestClassifier(random_state=42))
-])
-
-# 7. Menjalankan proses fitting terintegrasi
-main_pipeline.fit(df_medis, y_diagnosis)
-
-# Verifikasi dimensi output hasil gabungan
-features_transformed = fusion_layer.fit_transform(df_medis)
-print(f"Dimensi data masukan awal : {df_medis.shape}")
-print(f"Dimensi fitur gabungan akhir: {features_transformed.shape}")
-print("Status: Arsitektur Pipeline FeatureUnion berhasil dieksekusi.")
-```
+Sculley, D., Gary Holt, Daniel Golovin, et al. 2015. "Hidden Technical Debt in Machine Learning Systems." *Advances in Neural Information Processing Systems (NeurIPS)*.
