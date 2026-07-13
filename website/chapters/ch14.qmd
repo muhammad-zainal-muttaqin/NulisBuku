@@ -17,7 +17,9 @@ $$W_{\tau} = \{ (x_k^{(m)}, t_k) \mid \tau \le t_k < \tau + \Delta t \}$$
 Dalam rumus tersebut, $W_{\tau}$ adalah *window* yang dimulai pada waktu $\tau$, $\Delta t$ adalah lebarnya, $x_k^{(m)}$ adalah titik data ke-$k$ dari modalitas $m$, dan $t_k$ adalah *timestamp*-nya. Satu unit observasi mengumpulkan semua titik dari berbagai modalitas yang jatuh di dalam *window* tersebut.
 
 Gambar 14.1 memperlihatkan tiga timeline dengan kepadatan berbeda. Window satu detik memotong video, audio, dan sensor menjadi satu blok observasi yang sejajar.
-![Alignment window untuk video, audio, dan sensor](../figures/ch14-fig-1.png)
+
+![Alignment window untuk video, audio, dan sensor](../figures/ch14-fig-1.png){#fig-ch14-fig-1}
+
 Sample unit dari Bab 1 tetap menjadi keputusan awal. Pada contoh Open Food Facts di bab ini, unitnya adalah produk makanan; target ringkasnya dibangun dari Nutri-Score, dan modalitas yang digabung adalah nutrisi tabular, teks, dan thumbnail. Split juga harus menjaga integritas entitas: semua modalitas dari satu produk berada di sisi split yang sama. Jika teks produk berada di training tetapi gambarnya berada di test, model dapat mengenali entitas melintasi batas split.
 
 Contoh Open Food Facts ini sengaja memakai label turunan: `nutri_good` dibentuk dari Nutri-Score, sedangkan cabang nutrisi tabular memuat bidang-bidang yang secara substansial menentukan Nutri-Score. Karena itu, nutrisi tabular merupakan *near-label signal*, yaitu sinyal yang sangat dekat dengan definisi label, sehingga performanya yang kuat memang diharapkan. Contoh ini dipakai untuk mengajarkan label turunan; hasilnya bukan bukti bahwa fitur nutrisi atau *fusion* selalu dominan pada tugas lain, dan *fusion* sendiri tidak otomatis lebih baik.
@@ -35,12 +37,22 @@ Setelah modalitas disejajarkan, titik penggabungannya perlu ditentukan. *Fusion*
 *Late fusion* menggabungkan prediksi atau keputusan dari model yang berbeda. Misalnya, model nutrisi memberi probabilitas tinggi untuk produk bernutrisi baik, sedangkan model gambar memberi sinyal lemah dari thumbnail; *ensemble* merata-ratakan atau menimbang dua probabilitas itu. Representasinya tidak dicampur. Yang digabung adalah output. *Late fusion* modular dan lebih tahan ketika satu modalitas hilang, tetapi dapat kehilangan interaksi lintas modalitas yang hanya terlihat jika fitur bertemu lebih awal. Secara konseptual, *early fusion* dan *intermediate fusion* bekerja pada tingkat representasi (*feature-level fusion*), sedangkan *late fusion* bekerja pada tingkat keputusan (*decision-level fusion*).
 
 Gambar 14.2 menunjukkan tiga titik gabung itu pada dua modalitas yang sama. Perhatikan bahwa yang berubah bukan hanya diagramnya, tetapi juga jenis interaksi yang mungkin dipelajari.
-![Tiga titik \emph{fusion} multimodal](../figures/ch14-fig-2.png)
+
+![Tiga titik *fusion* multimodal](../figures/ch14-fig-2.png){#fig-ch14-fig-2}
+
 Tabel 14.1 merangkum pilihan *fusion*. Barisnya bergerak dari pendekatan paling sederhana sampai paling fleksibel, bukan membentuk *ranking*. Kolom risiko menunjukkan pengujian yang perlu didahulukan. *Early fusion* menuntut kontrol skala dan dimensi, *intermediate fusion* menuntut data dan desain, sedangkan *late fusion* menuntut aturan penggabungan prediksi. Pilihan yang tepat bergantung pada ukuran data, biaya, *missingness*, dan kebutuhan interaksi.
 
-**Tabel 14.1 --- Strategi fusi multimodal**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Strategi | Apa yang digabung | Kekuatan | Risiko | Penggunaan khas |
+| --- | --- | --- | --- | --- |
+| *Early fusion* | Vektor fitur | Interaksi lintas modalitas dipelajari langsung | Ketimpangan dimensiskala, rapuh pada modalitas hilang | Tabular + *embedding* sederhana |
+| *Intermediate fusion* | Representasi laten | Interaksi kaya di dalam model | Butuh datakomputasi dan desain arsitektur | *Deep learning* multimodal |
+| *Late fusion* | Prediksi atau keputusan | Modular, tahan modalitas hilang | Kehilangan sebagian interaksi lintas modalitas | *Ensemble* model per modalitas |
+
+: Strategi fusi multimodal {#tbl-ch14-8}
+
+:::
 
 Ada juga arsitektur *frontier* seperti *latent bottleneck* ala Perceiver, yang melewatkan berbagai *input* melalui sekumpulan *latent vectors* tetap. Gagasan itu memisahkan kedalaman model dari panjang *input*. Dalam rekayasa fitur praktis, keputusan dasarnya tetap menyangkut titik pertemuan modalitas, bentuk representasinya, dan konsekuensi bagi validasi.
 
@@ -57,10 +69,18 @@ Jumlah dimensi dapat berkontribusi pada dominasi modalitas, tetapi tidak menjami
 Penskalaan fitur perlu dilakukan dengan hati-hati dan tetap di dalam *pipeline* validasi. Setiap transformasi per modalitas, seperti standardisasi, PCA, atau proyeksi, harus di-*fit* pada data latih saja, lalu di-*transform* ke kedua split, persis seperti prinsip Bab 2. Namun, penskalaan saja tidak selalu cukup. Dua strategi umum adalah mengecilkan mayoritas atau mengangkat minoritas. Mengecilkan mayoritas dapat dilakukan dengan *dimensionality reduction*, *pooling*, atau *feature selection*. TruncatedSVD cocok untuk representasi berdimensi tinggi yang jarang, misalnya *TF-IDF* dari Bab 11. Untuk *embedding* padat seperti keluaran BERT atau ResNet, PCA/SVD, proyeksi yang dipelajari (*learned projection*), dan *feature selection* adalah pilihan yang perlu dibandingkan dalam validasi; proyeksi yang dipelajari tidak otomatis lebih aman. Mengangkat minoritas dapat dilakukan dengan *learned embedding layer* kecil yang memetakan fitur tabular ke lebar yang lebih sebanding.
 
 Gambar 14.3 menggambarkan ketimpangan itu secara visual. *Sliver* fitur tabular dapat tenggelam di samping blok *embedding* yang sangat panjang; dua solusi dasarnya adalah memampatkan blok besar atau memperlebar cabang kecil.
-![Menyeimbangkan dimensi representasi pada fusi multimodal](../figures/ch14-fig-3.png)
+
+![Menyeimbangkan dimensi representasi pada fusi multimodal](../figures/ch14-fig-3.png){#fig-ch14-fig-3}
+
 Pertanyaan evaluasinya sederhana: apakah setiap modalitas menambah nilai? Bab 9 memberi alatnya, yaitu *ablation* per kelompok fitur. Pada Open Food Facts, latih model dengan nutrisi saja, teks saja, gambar saja, dan gabungan. Jika gabungan tidak mengalahkan cabang terbaik secara stabil, *fusion* mungkin hanya menambah kompleksitas. Setelah dimensi dibuat seimbang, asumsi berikutnya adalah semua cabang tersedia. Pada sistem nyata, asumsi itu sering patah.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Jembatan yang dipelajari: *cross-attention* menggantikan konkatenasi {.pendalaman-title .unnumbered .unlisted}
+
 Sistem multimodal modern makin sering mengganti konkatenasi buta dengan jembatan yang dipelajari. *Cross-attention* $\text{Attention}(Q, K, V) = \operatorname{softmax}\!\big(QK^{\top}/\sqrt{d_k}\big)V$ membuat satu modalitas, misalnya instruksi teks sebagai *query* $Q$, menarik fitur relevan dari modalitas lain, misalnya region citra sebagai *keys* $K$ dan *values* $V$. BLIP-2 memakai Q-Former sebagai jembatan kecil antara *image encoder* beku dan LLM beku. Untuk proyek tabular berskala biasa, konkatenasi yang diseimbangkan tetap *baseline* jujur yang perlu dikalahkan.
+:::
 
 ## Menangani Modalitas yang Hilang
 
@@ -72,9 +92,20 @@ Strategi bergantung pada desain *fusion*. Pada *early fusion*, salah satu opsi a
 
 Tabel 14.2 merangkum strategi ini. Kolom "cocok dengan fusi" penting karena solusi untuk *early fusion* tidak selalu cocok untuk *late fusion*.
 
-**Tabel 14.2 --- Strategi modalitas hilang**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Strategi | Mekanisme | Cocok dengan fusi | Perhatian |
+| --- | --- | --- | --- |
+| Vektor nol + indikator | Isi cabang kosong dengan nol dan tandai absennya modalitas | *Early fusion* | Salah satu opsi; nol bukan citra hitam atau audio hening |
+| Mask atau *learned missing token* | Tandai cabang hilang melalui mekanisme arsitektur | Earlyintermediate fusion | Perlu dilatih pada pola *missingness* yang relevan |
+| Lewati cabang | Pakai prediksi dari cabang yang tersedia | *Late fusion* | Perlu aturan agregasi untuk input parsial |
+| *Modality dropout* saat pelatihan | Sembunyikan modalitas acak selama pelatihan | Intermediateearly fusion | *Dropout* harus menyerupai *missingness* nyata |
+| Substitusi ruang bersama | Pakai *embedding* modalitas tersisa dalam *shared space* | *Joint embedding* | Hanya masuk akal bila ruang benar-benar selaras |
+| Model terpisah per subset modalitas | Latih model untuk kombinasi modalitas tertentu | Semua | Kompleksitas pemeliharaan meningkat |
+
+: Strategi modalitas hilang {#tbl-ch14-9}
+
+:::
 
 Pola missingness sendiri dapat informatif atau bias. Produk tanpa gambar bisa berasal dari sumber data tertentu, kategori tertentu, atau item yang belum lengkap proses unggahnya. Teks bahan yang kosong tidak sama dengan bahan yang memang sederhana. Karena itu, dropping semua sampel tidak lengkap jarang menjadi default yang baik. Sistem harus mendefinisikan perilaku untuk input parsial sebelum deployment.
 
@@ -97,12 +128,20 @@ Encoder citra $f_{\theta}$ dan encoder teks $g_{\phi}$ memproyeksikan input ke r
 Pada model bergaya CLIP, *embedding* dinormalisasi L2 ketika *dot product* dipakai untuk merepresentasikan cosine similarity. Tanpa normalisasi itu, *dot product* juga dipengaruhi magnitudo vektor.
 
 Gambar 14.4 memperlihatkan arsitektur dual encoder. Image encoder dan text encoder terpisah, tetapi keluarannya hidup di satu ruang. Query teks dapat menarik gambar yang paling dekat.
-![\emph{Dual encoder} dalam ruang \emph{embedding} bersama](../figures/ch14-fig-4.png)
+
+![*Dual encoder* dalam ruang *embedding* bersama](../figures/ch14-fig-4.png){#fig-ch14-fig-4}
+
 *Joint embedding* mendukung *retrieval*, *zero-shot classification*, *matching*, *clustering*, dan *multimodal search*. Dalam e-commerce, pengguna dapat mencari gambar produk dengan *query* teks. Dalam arsip bukti, deskripsi tekstual dapat dipakai untuk menemukan citra atau audio yang relevan. *Retrieval* teks-ke-audio memerlukan model yang memang diselaraskan pada pasangan audio-teks; encoder citra-teks tidak otomatis menyediakan keselarasan itu. Evaluasinya pun *retrieval-shaped*: *recall@k* menanyakan apakah pasangan benar muncul dalam k kandidat teratas, sedangkan *nDCG* menilai kualitas *ranking*. Metrik ini menggantikan akurasi klasifikasi biasa karena tugasnya adalah *retrieval*, bukan klasifikasi label tunggal.
 
 Namun, kedekatan *embedding* bukan kebenaran mutlak. Ruang itu mencerminkan data pelatihan, kualitas *pairing*, *objective*, dan bias dataset. Jika pasangan data buruk, model belajar asosiasi buruk. Jika dataset kurang mewakili bahasa, budaya, atau domain tertentu, *similarity* dapat menjadi tidak adil atau tidak relevan. Setelah ruang bersama terbukti berguna, langkah praktis berikutnya adalah memakai model *pretrained* yang sudah membawa ruang semacam itu sebagai fitur siap pakai.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### *Contrastive loss*, mesin yang menyejajarkan ruang {.pendalaman-title .unnumbered .unlisted}
+
 Untuk *batch* berisi $N$ pasangan, salah satu arah *objective* dapat ditulis $\mathcal{L} = -\frac{1}{N} \sum_{i} \log \dfrac{\exp(\mathbf{v}_i \cdot \mathbf{t}_i / \tau)}{\sum_{j} \exp(\mathbf{v}_i \cdot \mathbf{t}_j / \tau)}$. Dalam rumus tersebut, $\mathbf{v}_i$ adalah *image embedding*, $\mathbf{t}_i$ adalah *caption embedding* pasangannya, dan $\tau$ adalah *temperature* yang mengatur ketajaman pemisahan. Setiap citra dilatih agar paling dekat dengan *caption* miliknya sendiri di antara *caption* lain dalam *batch*. Dalam praktik CLIP, *loss* ini simetris dan dihitung juga dari arah teks ke citra, sehingga kedua arah *retrieval* terlatih. Keselarasan kontrasif mendukung *retrieval*, tetapi tidak menjamin satu modalitas dapat menggantikan informasi khusus yang hilang dari modalitas lain; substitusi harus diuji pada tugas dan pola *missingness* yang nyata.
+:::
 
 ## Multimodal *Pretrained* Model
 
@@ -114,13 +153,26 @@ Kekuatan *pretrained representation* tidak menghapus pekerjaan rekayasa fitur. *
 
 Reproducibility membutuhkan pencatatan yang lebih rinci. Nama model, versi, lisensi, *preprocessing*, *prompt text*, cara *pooling*, penskalaan *embedding*, dan *metric similarity* semuanya bagian dari definisi fitur. Untuk *zero-shot*, *prompt wording* sendiri adalah keputusan rekayasa fitur. "foto sepatu" dan "gambar produk sepatu" dapat memberi *ranking* berbeda, sehingga *prompt* harus dicatat dan dievaluasi seperti fitur lain.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Dari ekstraktor beku ke *vision-language model* {.pendalaman-title .unnumbered .unlisted}
+
 *Frontier model* tidak selalu melatih ulang *encoder* besar. BLIP-2, misalnya, memakai Q-Former sebagai jembatan yang belajar mengambil fitur visual relevan di antara *image encoder* beku dan LLM beku. Model *vision-language* yang lebih baru dapat mengonsumsi citra dan teks bersama, lalu menghasilkan representasi yang lebih mengikuti tugas daripada satu vektor tetap. Dalam lensa rekayasa fitur buku ini, sistem seperti itu tetap dapat dibaca sebagai *extractor* dengan *query* yang bisa diarahkan. Tugas *reproducibility* justru bertambah: versi model, *prompt*, *preprocessing*, dan penskalaan harus dicatat lebih ketat. Bab 15 melanjutkan cerita umum tentang *pretrained representation*, sedangkan Bab 16 membahas sisi *automation*.
+:::
+
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
 
 Data multimodal berhasil bukan karena semua modalitas dimasukkan sekaligus, tetapi karena modalitas dipertemukan pada unit yang benar. *Alignment* menentukan entitas, waktu, dan event yang sama. *Fusion* menentukan apakah representasi bertemu sebelum model, di dalam model, atau setelah prediksi. Keseimbangan dimensi menentukan apakah satu modalitas menenggelamkan yang lain.
 
 Tabel 14.1 memberi peta strategi *fusion*: gabungkan fitur, representasi laten, atau keputusan sesuai kebutuhan interaksi dan ketahanan sistem. Tabel 14.2 membantu merancang perilaku ketika modalitas hilang, bukan setelah sistem telanjur berjalan. Keduanya perlu dibaca bersama prinsip validasi: semua modalitas satu entitas harus tetap dalam sisi split yang sama, dan fitur masa depan tidak boleh dipasangkan dengan prediksi masa lalu.
 
 *Joint embedding* dan model multimodal *pretrained* menggeser sebagian pekerjaan representasi ke *encoder* besar, tetapi tidak menghapus keputusan manusia. *Prompt*, *preprocessing*, versi model, *similarity metric*, *domain shift*, dan *fairness* tetap bagian dari rekayasa fitur. Inti bab ini sederhana: buat modalitas bertemu pada waktu, skala, dan batas validasi yang tepat.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - Baltrušaitis dkk. (2017), Multimodal ML: A Survey --- <https://arxiv.org/abs/1705.09406>. Taksonomi tantangan pembelajaran multimodal.
 
@@ -134,8 +186,14 @@ Tabel 14.1 memberi peta strategi *fusion*: gabungkan fitur, representasi laten, 
 
 - Girdhar dkk. (2023), ImageBind --- <https://arxiv.org/abs/2305.05665>. Ruang embedding bersama enam modalitas.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Baltrušaitis, Tadas, Chaitanya Ahuja, and Louis-Philippe Morency. 2019. "Multimodal Machine Learning: A Survey and Taxonomy." *IEEE Transactions on Pattern Analysis and Machine Intelligence* 41 (2): 423--43.
 
 Ngiam, Jiquan, Aditya Khosla, Mingyu Kim, Juhan Nam, Honglak Lee, and Andrew Y. Ng. 2011. "Multimodal Deep Learning." *Proceedings of the 28th International Conference on Machine Learning (ICML)*.
 
 Radford, Alec, Jong Wook Kim, Chris Hallacy, et al. 2021. "Learning Transferable Visual Models from Natural Language Supervision." *Proceedings of the 38th International Conference on Machine Learning (ICML)*.
+
+:::

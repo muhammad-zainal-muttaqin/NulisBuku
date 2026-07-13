@@ -17,7 +17,9 @@ Setelah itu, pilih *split* yang meniru deployment. *Random split* cocok ketika b
 Baru setelah itu kita memilih sumber fitur dan struktur representasi: tabular, sequence, teks, citra, audio, spasial, graf, atau multimodal. Dari struktur itu muncul transformasi yang sesuai: *scaling*, *encoding*, *derived features*, *selection*, *dimensionality reduction*, *embeddings*, *pretrained encoders*, atau *automated feature proposals*. *Baseline* harus hadir sebelum kompleksitas bertambah.
 
 Gambar 17.1 merangkum seluruh kerangka buku sebagai satu band desain. Diagram ini dapat dibaca sebagai checklist awal setiap proyek.
-![Kerangka desain rekayasa fitur dari awal sampai produksi](../figures/ch17-fig-1.png)
+
+![Kerangka desain rekayasa fitur dari awal sampai produksi](../figures/ch17-fig-1.png){#fig-ch17-fig-1}
+
 Contoh mikro: sistem credit approval. Tujuannya memperkirakan default risk. Unitnya satu loan application. Targetnya default dalam 12 bulan. *Split*-nya temporal berdasarkan tanggal aplikasi. Hanya setelah ini agregat histori pembayaran, rasio pendapatan, dan fitur perilaku diuji terhadap *baseline* logistic regression. Urutan ini tampak sederhana, tetapi ia mencegah banyak kesalahan yang tidak terlihat jika proyek dimulai dari teknik.
 
 *Pipeline* final harus mereproduksi transformasi pelatihan pada *inference*. Ia menyimpan *fitted state*, urutan transformasi, daftar fitur, versi encoder, dan keputusan *cutoff*. Dokumentasi bukan pekerjaan administratif belakangan; ia adalah cara agar representasi dapat dipercaya ulang. Kerangka desain ini baru kuat jika definisi yang sama bertahan saat model masuk ke *inference*.
@@ -31,12 +33,20 @@ Kerangka desain baru sah jika definisi yang dibuat saat pelatihan bertahan saat 
 *Fitted transformation* harus menyimpan state: rata-rata dan standard deviation scaler, nilai imputasi, kategori encoder, *vocabulary*, *selected features*, version model, version tokenizer, dan version *embedding*. *Feature availability* juga tidak bisa ditawar. Jika fitur hanya ada setelah keputusan dibuat, fitur itu invalid meskipun sangat prediktif.
 
 Gambar 17.2 memperlihatkan pola *feature store*. Definisi fitur berada di pusat, lalu mengalir ke *offline store* untuk pelatihan historis dan *online store* untuk *serving* rendah latency.
-![\emph{Feature store}: definisi fitur untuk pelatihan dan \emph{serving}](../figures/ch17-fig-2.png)
+
+![*Feature store*: definisi fitur untuk pelatihan dan *serving*](../figures/ch17-fig-2.png){#fig-ch17-fig-2}
+
 Pada skala kecil, *pipeline* yang diserialisasi dengan baik sudah mewakili gagasan yang sama: satu definisi, satu urutan transformasi, satu state yang dipakai ulang. Pada skala besar, definisi fitur dipusatkan agar tim pelatihan dan tim backend tidak menghitung fitur dengan logika berbeda.
 
 Contohnya sederhana. Pelatihan memakai CSV yang sudah dibersihkan, tetapi produksi membaca database live dengan kode *missing value* yang berbeda. *Text vectorizer* di-*fit* pada korpus pelatihan, lalu *vocabulary* dan IDF yang sama harus dipakai ulang di produksi. Istilah "korpus lengkap" dalam konteks ini hanya boleh berarti seluruh korpus pelatihan yang sah, bukan validasi atau *test*. Kedua kasus ini bukan masalah model; ini masalah representasi yang tidak konsisten. Konsistensi juga perlu dijaga setelah sistem berjalan, melalui *schema validation*, *versioning*, dan *drift monitoring*.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### *Feature store*: satu definisi, dua mesin {.pendalaman-title .unnumbered .unlisted}
+
 *Feature store* memusatkan definisi fitur dan membagi penyimpanan menjadi *offline store* untuk histori skala warehouse dan *online store* untuk *inference* rendah latency. Dua jaminan utamanya adalah *point-in-time-correct historical joins*, yaitu aturan *cutoff* Bab 1 dan Bab 6 yang dilembagakan, serta satu *serving interface* agar tim backend tidak mengimplementasikan ulang logika fitur. Untuk proyek kelas atau riset kecil, *pipeline* yang disimpan rapi adalah versi sederhana dari prinsip yang sama: definisi fitur tidak boleh bercabang diam-diam.
+:::
 
 ## Schema Validation, Versioning, dan Drift
 
@@ -49,10 +59,18 @@ Konsistensi tidak cukup dijaga sekali saat model dikirim. *Pipeline* yang baik p
 Bab 9 sudah membahas PSI; di sini cukup diingat bahwa nilai besar, misalnya konvensi investigasi di atas 0,25, memicu pemeriksaan, bukan keputusan otomatis. Untuk *drift* multivariat pada fitur kontinu, ukuran jarak seperti *Wasserstein distance* dapat dipakai. Monitoring harus memprioritaskan fitur penting dan rapuh, bukan semua statistik dengan bobot sama.
 
 Gambar 17.3 merangkum tiga *guardrail*. *Schema gate* menolak input cacat, *versioned transformation layer* menjaga rollback, dan *drift monitor* memberi alert yang harus diselidiki.
-![Guardrail produksi untuk fitur](../figures/ch17-fig-3.png)
+
+![Guardrail produksi untuk fitur](../figures/ch17-fig-3.png){#fig-ch17-fig-3}
+
 Respons terhadap *drift* harus bertahap. Pertama, bedakan sebab mekanis dari perubahan populasi organik: sensor rusak, sync gagal, kategori baru, atau format input berubah. Teks masukan pengguna juga dapat berubah setelah kebijakan baru atau migrasi platform, misalnya formulir *online* yang diganti formatnya. Kedua, jika perubahan organik terbukti melewati toleransi dan memengaruhi performa, jadwalkan retraining dengan data terbaru. Jangan mematikan model otomatis hanya karena satu alert *drift* menyala. Dengan *guardrail* ini, kita dapat kembali ke pertanyaan desain: representasi apa yang wajar untuk tipe data dan batas operasional tertentu?
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Memantau performa tanpa label: estimasi berbasis keyakinan {.pendalaman-title .unnumbered .unlisted}
+
 Masalah monitoring paling sulit adalah label produksi sering terlambat minggu atau bulan. Estimator modern mencoba memprediksi dampak performa dari *drift* yang terlihat, memakai distribusi input dan *confidence* model sebelum label tiba. *Confidence-based performance estimation* dan *direct loss estimation*, misalnya, memperkirakan apakah AUC atau loss sedang memburuk. Ini estimasi dengan asumsi, bukan pengukuran; salah satu asumsi pentingnya adalah *concept drift* tidak dominan. Nilainya adalah peringatan dini. Evaluasi berbasis label tetap menjadi penyelesaian akhir ketika ground truth tiba.
+:::
 
 ## Peta Rute Lintas Tipe Data
 
@@ -62,9 +80,21 @@ Peta rute pada bagian ini melengkapi peta operasi yang sudah dibangun sejak awal
 
 Setelah itu, cocokkan representasi dengan tipe data, model, ukuran data, interpretabilitas, compute, dan deployment constraint. Tabel 17.1 adalah router lintas bab. Ia tidak memilihkan model secara otomatis, tetapi membantu pembaca bertanya: representasi awal apa yang wajar, *leakage* apa yang paling mungkin, dan kapan representasi yang dipelajari mesin layak dicoba? Bacalah tabel ini dari kiri ke kanan: mulai dari situasi data, pilih representasi awal yang tidak berlebihan, lalu cek risiko evaluasi sebelum mencoba representasi yang lebih kompleks atau lebih bergantung pada pembelajaran mesin.
 
-**Tabel 17.1 --- Peta rute lintas tipe data**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Situasi data | Representasi awal yang wajar | Risiko leakage utama | Catatan evaluasi | Kapan representasi dipelajari membantu |
+| --- | --- | --- | --- | --- |
+| Tabular klasik | Numericcategorical *encoding*, *missing indicators*, *derived features* | *Preprocessing* di-*fit* sebelum *split*, *target leakage* | *Baseline* sederhana dan *ablation* kelompok fitur | Jika *row embedding* diperlukan atau data sangat besar |
+| Deret waktusensor | Window, lag, rolling, differencing, frequency features | *Look-ahead*, target-window overlap, label belum tersedia | *Temporal split*; gap hanya jika overlapavailability memerlukannya | Jika pola sekuensial kompleks dan data cukup |
+| Teks | *TF-IDF baseline*, *embedding*, *frozen extractor* | *Vocabulary* atau IDF di-*fit* pada seluruh corpus | Bandingkan *baseline sparse* dan *embedding* | Jika semantik, sinonim, dan konteks penting |
+| Citraaudio | Penskalaan input, augmentasi, HOGspectrogram, *pretrained encoder* | Near duplicate, source *leakage*, augmentation invalid | *Source-aware* atau *group split* | Jika data visualaudio kaya dan label terbatas |
+| Spasial | Jarak, region, proximity count, spatial lag | Label tetangga atau konteks ruang yang tidak tersedia; klaim wilayah baru dari *random split* | *Spatial block*buffer untuk wilayah baru; split lokal bila sesuai deployment | Jika *encoder* spasial pada citrageometri besar diperlukan, atau jika hubungan spasial kompleks memerlukan representasi yang dipelajari dari koordinat |
+| Graf | Degree, centrality, aggregation, *node embedding* | Label tersembunyi, *future edge*, atau atribut yang tidak tersedia | *Transductive*, *inductive*, atau temporal sesuai protokol deployment | Jika struktur graf memberikan informasi prediktif yang sulit ditangkap oleh fitur *centrality* dan agregasi manual, misalnya melalui *node embedding* atau *message passing* pada GNN |
+| Multimodal | *Alignment*, *fusion*, *missing-modality strategy* | Modalitas satu entitas terpisah antar-*split*, *future modality* | Groupentity split, *ablation* per modalitas | Jika *shared embedding* atau *fusion* yang dipelajari menambah nilai |
+
+: Peta rute lintas tipe data {#tbl-ch17-6}
+
+:::
 
 Dua skenario menunjukkan cara membaca router. Pada retail demand forecasting, unitnya store x product x week. *Split* temporal menahan minggu terakhir sebagai test. Fitur rolling dihitung dari minggu $T{-}4$ sampai $T{-}1$, bukan minggu target. Risiko utamanya *look-ahead leakage*. Representasi sekuensial mungkin dicoba jika *baseline* lag dan rolling tidak cukup.
 
@@ -93,16 +123,32 @@ Representasi yang dirancang manusia dan representasi yang dipelajari mesin bukan
 Automation juga bukan pengganti judgment. Bab 16 memberi rumus sosialnya: machine proposes, human disposes. Mesin memperluas kandidat, menjalankan evaluasi, dan memberi ranking. Manusia mendefinisikan target, *cutoff*, constraint, metric, dan alasan penerimaan. Tanpa dokumentasi, keputusan itu hilang; tanpa monitoring, keputusan itu membusuk.
 
 Gambar 17.4 menutup sumbu buku. Di kiri ada representasi yang dirancang manusia, di kanan representasi yang dipelajari mesin. Keduanya dipertemukan oleh validasi dan dokumentasi.
-![Representasi yang dirancang manusia dan representasi yang dipelajari mesin dalam satu \emph{pipeline}](../figures/ch17-fig-4.png)
+
+![Representasi yang dirancang manusia dan representasi yang dipelajari mesin dalam satu *pipeline*](../figures/ch17-fig-4.png){#fig-ch17-fig-4}
+
 Tabel 17.2 adalah checklist akhir. Ia dirancang untuk dibaca sebelum proyek dimulai, saat feature review, dan sebelum model masuk produksi. Setiap baris memaksa satu pertanyaan yang harus bisa dijawab dengan bukti, bukan rasa yakin.
 
-**Tabel 17.2 --- Daftar periksa prinsip yang bertahan lama**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Prinsip | Pertanyaan yang harus bisa dijawab |
+| --- | --- |
+| Mulai dari masalah | Apa unit, target, horizon, dan *cutoff*? |
+| Ketersediaan | Apakah fitur ini ada, segar, dan cukup cepat saat prediksi? |
+| Transformasi mengikuti *split* | Di mana transformasi ini di-fit, kapan dibekukan, dan ke mana diterapkan? |
+| Kualitas melampaui importance | Apakah fitur tersedia, stabil, terjangkau, dan sah? |
+| Validasi mengalahkan jumlah fitur | Apa *baseline*-nya, dan apa bukti fitur ini menambah nilai? |
+| Privasi dan proxy | Siapa yang bisa dirugikan, dan lewat jalur proxy apa? |
+| Dokumentasi dan monitoring | Siapa pemilik fitur, versinya apa, dan bagaimana kita tahu ia masih bekerja? |
+
+: Daftar periksa prinsip yang bertahan lama {#tbl-ch17-7}
+
+:::
 
 Dokumentasi membuat rekayasa fitur tahan lama: definisi, sumber, *cutoff*, risiko, versi, pemilik, dan monitor. Tanpa itu, fitur yang bagus hari ini menjadi hutang teknis besok. Dengan itu, fitur dapat dievaluasi ulang ketika data berubah, model berganti, atau aturan bisnis bergerak.
 
 Jalan ke depan bersifat hybrid. Manusia merumuskan masalah, memilih batas, dan menilai konsekuensi. Mesin belajar representasi, mengusulkan kandidat, dan mempercepat pencarian. *Pipeline* yang baik menyatukan keduanya di bawah validasi yang jujur. Dengan bahasa Bab 1, pekerjaan ini tetap tentang merancang $\phi(x_{\text{raw}})$: transformasi dari data mentah ke representasi yang sah, berguna, dan dapat dipelihara. Setiap proyek ML/DL seharusnya dapat menjawab: representasi apa yang kita pilih, mengapa, dan bagaimana kita tahu ia bekerja?
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - scikit-learn --- Common Pitfalls & Pipelines --- <https://scikit-learn.org/stable/common_pitfalls.html>. Disiplin pipeline untuk produksi.
 
@@ -120,8 +166,14 @@ Jalan ke depan bersifat hybrid. Manusia merumuskan masalah, memilih batas, dan m
 
 - ICO --- Data minimisation --- <https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/data-protection-principles/a-guide-to-the-data-protection-principles/the-principles/data-minimisation/>. Prinsip minimisasi data (privasi).
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Breck, Eric, Shanqing Cai, Eric Nielsen, Michael Salib, and D. Sculley. 2017. "The ML Test Score: A Rubric for ML Production Readiness and Technical Debt Reduction." *IEEE International Conference on Big Data*.
 
 Gama, João, Indrė Žliobaitė, Albert Bifet, Mykola Pechenizkiy, and Abdelhamid Bouchachia. 2014. "A Survey on Concept Drift Adaptation." *ACM Computing Surveys* 46 (4): 1--37.
 
 Sculley, D., Gary Holt, Daniel Golovin, et al. 2015. "Hidden Technical Debt in Machine Learning Systems." *Advances in Neural Information Processing Systems (NeurIPS)*.
+
+:::

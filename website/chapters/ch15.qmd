@@ -19,16 +19,34 @@ $$\min_{\theta,\, \phi}\ \sum_{i=1}^{N} \mathcal{L}\big(y_i,\ f_{\theta}(g_{\phi
 Di sini $g_{\phi}$ adalah pretrained encoder, $f_{\theta}$ adalah task head baru, $x_i$ adalah input, $y_i$ adalah target, dan $\mathcal{L}$ adalah loss. Ketika $\phi$ dibekukan, minimisasi hanya berjalan terhadap $\theta$; notasi di atas menunjukkan bentuk paling umum. Spektrum adaptasi adalah kebijakan terhadap $\phi$: dibekukan, dibuka sebagian, dijaga tetap tetapi diberi adapter kecil, atau dilatih penuh.
 
 Gambar 15.1 memperlihatkan spektrum itu. Semakin ke kanan, semakin banyak parameter yang berubah, semakin kuat adaptasi, dan biasanya semakin tinggi kebutuhan data, compute, serta kontrol overfitting.
-![Spektrum adaptasi pretrained encoder](../figures/ch15-fig-1.png)
+
+![Spektrum adaptasi pretrained encoder](../figures/ch15-fig-1.png){#fig-ch15-fig-1}
+
 Tabel 15.1 merangkum pilihan adaptasi. Tabel ini menunjukkan seberapa jauh *optimizer* diizinkan mengubah pengetahuan yang sudah ada pada bobot *pretrained*.
 
-**Tabel 15.1 --- Spektrum adaptasi**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Pendekatan | Parameter yang dilatih | Kebutuhan data | Risiko utama | Kapan dipilih |
+| --- | --- | --- | --- | --- |
+| Frozen extractor | Tidak ada pada encoder | Rendah | Underfit domain khusus | Baseline cepat, data kecil, caching |
+| Task head saja | Head baru | Rendah-sedang | Representasi lama kurang cocok | Klasifikasi sederhana di atas embedding |
+| Partial fine-tuning | Layer akhir + head | Sedang | Overfitting layer akhir | Domain agak berbeda, data cukup |
+| PEFTLoRA | Adapter kecil atau low-rank update | Sedang | Desain adapter dan tuning | Model besar, compute terbatas |
+| Full fine-tuning | Hampir semua bobot | Tinggi | Catastrophic forgetting, biaya tinggi | Domain sangat berbeda, label banyak |
+
+: Spektrum adaptasi {#tbl-ch15-8}
+
+:::
 
 Frozen extraction murah, mudah direproduksi, dan cocok untuk feature bank. Namun, ia dapat gagal membaca sinyal domain yang tidak ada dalam pretraining. Full fine-tuning paling fleksibel, tetapi dapat mengalami catastrophic forgetting: adaptasi agresif pada data sempit menghapus sebagian pengetahuan umum model. PEFT menjadi default praktis yang makin umum untuk model besar karena menekan jumlah parameter yang dilatih tanpa harus menyerah sepenuhnya pada adaptasi. Setelah strategi adaptasi dipilih, embedding yang dihasilkan perlu disimpan, dibandingkan, dan dipakai ulang secara konsisten.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### LoRA, adaptasi lewat dekomposisi peringkat rendah {.pendalaman-title .unnumbered .unlisted}
+
 LoRA membekukan matriks bobot *pretrained* $W_0$ dan hanya melatih koreksi berperingkat rendah, yaitu $h = W_0 x + BAx$, dengan $B \in \mathbb{R}^{d \times r}$, $A \in \mathbb{R}^{r \times k}$, dan $r \ll \min(d, k)$. Dalam rumus tersebut, $x$ adalah *input* ke *layer*, $h$ adalah *output*, sedangkan $A$ dan $B$ adalah matriks kecil yang dilatih. Jumlah parameter *trainable* turun menjadi sebagian kecil dari bobot asli, sering di bawah beberapa persen, sambil mendekati kualitas *fine-tuning* penuh pada banyak tugas. Satu *backbone* beku juga dapat melayani beberapa tugas melalui *adapter* yang berbeda.
+:::
 
 ## Feature Bank dan Similarity Metrics
 
@@ -45,7 +63,9 @@ $$\text{sim}(\mathbf{z}_i, \mathbf{z}_j) = \cos(\mathbf{z}_i, \mathbf{z}_j)$$
 Formula cosine-nya sudah diperkenalkan pada Bab 11. Di sini yang penting adalah konsistensi: semua embedding dalam satu bank harus hidup di ruang yang sama dan dibandingkan dengan aturan yang sama.
 
 Gambar 15.2 memperlihatkan alur feature bank. Encoder menghasilkan vektor, vektor ditata skalanya, masuk ke ANN index, lalu query mengambil top-k neighbors.
-![Feature bank dan pencarian embedding](../figures/ch15-fig-2.png)
+
+![Feature bank dan pencarian embedding](../figures/ch15-fig-2.png){#fig-ch15-fig-2}
+
 Pada skala besar, exact nearest-neighbor search mahal. Approximate nearest-neighbor index menukar sedikit exactness dengan kecepatan. Inverted-file partitioning membagi ruang vektor ke beberapa partisi agar pencarian tidak memeriksa semua vektor. Product quantization mengompres vektor menjadi kode yang lebih murah disimpan dan dibandingkan. Nama seperti IVF dan product quantization sering muncul dalam ekosistem FAISS.
 
 Versioning sangat penting. Embedding dari encoder versi berbeda berada di ruang berbeda. Jika vektor lama dan baru dicampur dalam satu index, similarity dapat rusak tanpa error yang jelas. Karena itu, model version, preprocessing, pooling, metric, dan tanggal refresh harus menjadi bagian dari definisi feature bank. Similarity tetap model-defined, bukan jaminan kebenaran semantik. Karena kedekatan vektor adalah klaim model, langkah berikutnya adalah menguji apakah klaim itu berguna untuk tugas lokal.
@@ -59,14 +79,22 @@ Visualisasi seperti t-SNE atau UMAP membantu inspeksi awal. Kita dapat melihat a
 Domain shift (Quiñonero-Candela et al. 2009) adalah risiko utama pretrained representation. Jika model vision dilatih pada gambar web umum lalu dipakai pada Fashion-MNIST yang kecil, grayscale, dan sangat terstruktur, encoder mungkin tidak memberi lompatan sebesar reputasinya. Jika model speech umum dipakai pada klip digit FSDD dengan variasi speaker terbatas, ia tetap perlu diuji pada split yang benar. Kelas yang seharusnya terpisah dapat jatuh pada koordinat saling tumpang tindih. Downstream model akhirnya tidak punya sinyal diskriminatif untuk dipelajari, meskipun embedding tampak canggih.
 
 Gambar 15.3 menunjukkan *linear probing* (Alain and Bengio 2017), cara sederhana untuk menguji apakah *embedding space* sudah membawa struktur yang berguna bagi tugas tertentu.
-![Linear probing untuk menguji embedding](../figures/ch15-fig-3.png)
+
+![Linear probing untuk menguji embedding](../figures/ch15-fig-3.png){#fig-ch15-fig-3}
+
 *Linear probing* mengukur keterpisahan linear untuk tugas dan *split* tertentu. Akurasi tinggi bukan bukti kualitas umum *embedding*, sedangkan kebutuhan akan *head* nonlinear tidak otomatis berarti representasinya lemah; batas keputusan tugas mungkin memang nonlinear. Jika *domain shift* terlalu tajam untuk *frozen extraction*, naiklah ke kanan pada spektrum adaptasi Bagian 15.1: *partial fine-tuning*, PEFT, atau *full fine-tuning*. Tujuannya membentuk ulang ruang embedding agar lebih sesuai dengan distribusi target. Namun, adaptasi harus divalidasi ketat agar tidak hanya menghafal data lokal.
 
 Setelah sistem berjalan, kualitas embedding perlu dipantau: distribusi vektor, stabilitas tetangga terdekat, atau drift metric sederhana dapat mendeteksi degradasi sebelum merusak keputusan hilir. Pergantian encoder versi atau perubahan distribusi data sama-sama dapat mengubah ruang secara diam-diam.
 
 Embedding juga dapat mengandung spurious correlations, sensitive attributes, bahasa dominan, aksen, gaya kamera, atau artifact dataset. Dari sudut pandang Bab 9, fitur hasil model tetap harus dinilai dari availability, stability, cost, legitimacy, dan risiko proxy. Bandingkan dengan baseline kuat; jangan anggap pretrained embedding otomatis menang. Setelah cara evaluasinya jelas, kita perlu membedakan representasi pretrained dari kompresi internal yang sudah dibahas pada Bab 8.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### *Linear probing*: menguji ruang embedding dengan model sengaja sederhana {.pendalaman-title .unnumbered .unlisted}
+
 *Linear probing* membekukan encoder, mengekstrak embedding, lalu melatih hanya *linear classifier* di atasnya. Protokol ini banyak dipakai dalam *self-supervised learning* sebagai evaluasi linear. Logikanya sederhana: jika model linear sudah memisahkan kelas, representasi telah menyediakan struktur yang mudah dipakai untuk tugas tersebut. Jika performa baru membaik dengan *head* nonlinear, batas kelas mungkin nonlinear atau *head* memanfaatkan interaksi tambahan; hasil itu bukan vonis bahwa representasinya lemah secara umum. Hasil *probe* selalu spesifik terhadap tugas: ruang yang baik untuk topik belum tentu baik untuk sentimen. *Probe* juga harus mengikuti validasi Bab 2.
+:::
 
 ## Batas dengan Bab 8
 
@@ -77,7 +105,9 @@ Batasnya bukan "linear vs neural". Autoencoder adalah model neural, tetapi jika 
 Cara paling tajam membaca batasnya adalah melalui objective. Internal compression meminimalkan reconstruction loss pada data sendiri. Transfer representation dioptimalkan untuk objective luar, misalnya klasifikasi pada label eksternal, contrastive alignment pada pasangan image-text, atau language modeling pada korpus besar, lalu diimpor ke tugas lokal. Di mana objective dijalankan, di situlah sumber pengetahuannya.
 
 Gambar 15.4 membandingkan dua lane ini. Lane pertama belajar dari data sendiri; lane kedua membawa pengetahuan dari corpus eksternal.
-![Kompresi data sendiri vs transfer representasi](../figures/ch15-fig-4.png)
+
+![Kompresi data sendiri vs transfer representasi](../figures/ch15-fig-4.png){#fig-ch15-fig-4}
+
 Transfer dapat membantu *dataset* lokal kecil yang tidak cukup besar untuk membentuk representasi sendiri, tetapi membawa risiko *domain shift* dan bias eksternal. Kompresi internal cocok dengan distribusi target karena dibangun dari data sendiri, tetapi tidak dapat memuat pengetahuan di luar *dataset* lokal. Pilihannya adalah belajar representasi dari *dataset* tersebut atau mengimpor representasi dari luar lalu menyesuaikannya. Batas ini mengantar pada peran rekayasa fitur ketika model dapat belajar representasi sendiri.
 
 ## Apakah *Deep Learning* Menghapus Rekayasa Fitur?
@@ -126,13 +156,30 @@ TabNet mengambil jalur lain dengan attention-like feature selection dalam decisi
 
 Tabel 15.2 membantu menimbang kapan gradient boosting tetap menjadi pilihan rasional dan kapan deep tabular layak dibayar kompleksitasnya.
 
-**Tabel 15.2 --- Gradient boosting vs deep tabular**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Situasi | Cenderung: gradient boosting | Cenderung: deep tabular |
+| --- | --- | --- |
+| Ukuran data | Kecil sampai menengah | Sangat besar atau banyak pretraining |
+| Outlierskala ekstrem | Sering kuat dan stabil | Perlu preprocessing dan tuning lebih hati-hati |
+| Kebutuhan embedding baris untuk modul hilir | Tidak utama | Ya, row embedding dipakai ulang |
+| Fusi multimodal | Bisa pada fitur gabungan | Lebih alami bersama embedding lain |
+| Anggaran tuninginfrastruktur | Terbatas | Compute dan tuning tersedia |
+| Interpretabilitas | Lebih mudah dengan tool pohon | Lebih sulit, tetapi dapat dibantu probing |
+
+: Gradient boosting vs deep tabular {#tbl-ch15-9}
+
+:::
 
 Sebagai heuristic yang harus tetap diuji, pada tabel kecil sampai menengah, kira-kira puluhan ribu baris, dengan outlier kuat dan tanpa kebutuhan embedding, gradient boosting sering menjadi default rasional. Deep tabular lebih masuk akal ketika skala besar, row embedding diperlukan, atau model harus menyatu dengan representasi unstructured. Dari sinilah pola akhir bab muncul: sering kali kita tidak memilih antara fitur rekayasa dan embedding, tetapi menggabungkan keduanya.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Tabular foundation model dan *in-context learning* {.pendalaman-title .unnumbered .unlisted}
+
 Arah terbaru memberi data tabular sesuatu yang sudah lama dimiliki teks dan citra, yaitu model *pretrained* lintas *dataset*. TabPFN (Hollmann et al. 2023) adalah contoh penting. Model ini memakai *transformer* yang dilatih pada banyak tugas tabular sintetis, lalu mengklasifikasikan *dataset* kecil baru dengan membaca contoh berlabel dalam *context* tanpa memperbarui bobot. Kekuatan saat ini terutama pada *dataset* kecil yang cocok dengan *prior* model. Pelajaran untuk buku ini tetap sama. Manusia masih menyusun tabel belajar, target, *split*, dan definisi fitur. Keputusan Bab 1 tidak otomatis hilang.
+:::
 
 ## Hybrid Models: Fitur Rekayasa sebagai Input Tambahan
 
@@ -147,18 +194,27 @@ Di sini $\mathbf{x}_{\text{rekayasa}}$ adalah vektor fitur domain yang sudah dit
 Contohnya pada SMS Spam, cabang teks klasik dapat menghasilkan TF-IDF atau *character n-grams*, sedangkan cabang representasi yang dipelajari mesin menghasilkan *embedding* kalimat. Keduanya dapat digabung, lalu model yang sesuai membaca fitur *hybrid* itu. *Logistic regression* sering menjadi pilihan alami untuk gabungan TF-IDF yang sangat renggang dan *embedding* padat. *Gradient boosting* sebaiknya tidak diterapkan begitu saja pada gabungan TF-IDF berdimensi sangat tinggi; gunakan setelah reduksi dimensi atau bila implementasi dan validasi menunjukkan kecocokan. *Embedding* menangkap kedekatan semantik dan variasi frasa; fitur rekayasa tetap menangkap pola token, angka, dan karakter yang sering sangat kuat pada spam.
 
 Gambar 15.5 menggambarkan arsitektur dua jalur ini. Satu cabang mengubah data unstructured menjadi embedding, cabang lain menyiapkan fitur domain, lalu keduanya bertemu sebelum model akhir.
-![Arsitektur hybrid dua jalur](../figures/ch15-fig-5.png)
+
+![Arsitektur hybrid dua jalur](../figures/ch15-fig-5.png){#fig-ch15-fig-5}
+
 Mengapa hybrid sering bekerja? Karena setiap cabang punya blind spot. Pada SMS Spam, embedding kalimat dapat melihat kemiripan frasa, tetapi character n-grams dapat menangkap pola nomor, kapitalisasi, atau ejaan spam yang sangat lokal. Pada Fashion-MNIST, embedding citra dapat membaca bentuk global, sedangkan fitur sederhana seperti intensitas atau tepi dapat memberi baseline murah yang mudah diaudit. Concatenation yang diseimbangkan dapat menutup dua blind spot sekaligus.
 
 Risikonya juga gabungan. Ketimpangan dimensi dari Bab 14 berlaku penuh. Fitur rekayasa bisa bocor jika agregatnya memakai masa depan. Embedding bisa membawa bias domain. Sinyal bisa duplikatif sehingga kompleksitas naik tanpa manfaat. Proxy privacy dan fairness dapat masuk dari kedua cabang. Pemeliharaan juga lebih sulit karena encoder, pipeline tabular, dan final model memiliki versi masing-masing.
 
 Karena itu, evaluasi hybrid harus memakai group ablation seperti Bab 9. Uji fitur rekayasa saja, embedding saja, dan gabungan. Jika gabungan memberi peningkatan stabil, valid, dan layak biaya, hybrid punya alasan. Jika tidak, kesederhanaan cabang tunggal mungkin lebih baik.
 
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
+
 Benang merah Bab 15 adalah bahwa pretrained model menggeser banyak pekerjaan representasi ke encoder yang sudah belajar dari data besar, tetapi tidak menghapus rekayasa fitur. Pekerjaan itu muncul kembali sebagai keputusan tentang input, unit observasi, target, tokenizer, window, prompt, feature bank, metric, adaptation policy, dan kombinasi cabang fitur.
 
 Tabel 15.1 menunjukkan bahwa memakai pretrained model bukan keputusan biner. Kita dapat membekukan, melatih head, membuka sebagian layer, memakai PEFT, atau fine-tuning penuh. Tabel 15.2 mengingatkan bahwa deep learning pada tabular data tetap harus dibandingkan dengan gradient boosting dan baseline kuat lain.
 
 Masa depan praktis jarang murni handcrafted atau murni hasil pembelajaran mesin. Yang paling berguna adalah memilih representasi yang cocok dengan tugas, mengevaluasi apakah ruang embedding benar-benar membantu, menjaga split dan versioning, lalu menggabungkan fitur domain dan embedding hanya ketika masing-masing menambah nilai. Itulah bentuk rekayasa fitur modern di era pretrained model.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - Bommasani dkk. (2021), On the Opportunities and Risks of Foundation Models --- <https://arxiv.org/abs/2108.07258>. Tinjauan model fondasi.
 
@@ -174,6 +230,10 @@ Masa depan praktis jarang murni handcrafted atau murni hasil pembelajaran mesin.
 
 - Muennighoff dkk. (2022), MTEB --- <https://arxiv.org/abs/2210.07316>. Tolok ukur embedding pralatih.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Alain, Guillaume, and Yoshua Bengio. 2017. *Understanding Intermediate Layers Using Linear Classifier Probes*. <https://arxiv.org/abs/1610.01644>.
 
 Bommasani, Rishi, Drew A. Hudson, Ehsan Adeli, et al. 2021. *On the Opportunities and Risks of Foundation Models*. <https://arxiv.org/abs/2108.07258>.
@@ -183,3 +243,5 @@ Hollmann, Noah, Samuel Müller, Katharina Eggensperger, and Frank Hutter. 2023. 
 Pan, Sinno Jialin, and Qiang Yang. 2010. "A Survey on Transfer Learning." *IEEE Transactions on Knowledge and Data Engineering* 22 (10): 1345--59.
 
 Quiñonero-Candela, Joaquin, Masashi Sugiyama, Anton Schwaighofer, and Neil D. Lawrence. 2009. *Dataset Shift in Machine Learning*. MIT Press.
+
+:::

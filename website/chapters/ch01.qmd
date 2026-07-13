@@ -16,15 +16,33 @@ Agar bisa menjawab pertanyaan prediksi, catatan tersebut harus diubah. `InvoiceD
 
 Tabel 1.1 memperlihatkan perubahan tersebut melalui ilustrasi semi-sintetis yang mengikuti skema kolom UCI Online Retail, bukan cuplikan baris mentah yang persis dari sumber. Bagian atas berisi beberapa baris transaksi contoh untuk pelanggan `17850`. Bagian bawah meringkasnya menjadi satu baris pelanggan-bulan. Waktu prediksi $t_p$ ditetapkan pada 1 Februari 2011. Jendela fiturnya adalah $[t_p-30\ \text{hari}, t_p)$, yaitu sejak 2 Januari sampai sebelum 1 Februari 2011, sedangkan jendela target adalah $[t_p, t_p+30\ \text{hari})$.
 
-**Tabel 1.1 --- Ilustrasi semi-sintetis dari baris *invoice* ke satu baris pelanggan-bulan**
-
 Bagian atas menampilkan baris transaksi contoh untuk pelanggan `CustomerID` 17850 pada Januari 2011.
 
-*Tabel lengkap tersedia pada edisi cetak.*
+::: {.tabel-buku}
+
+| InvoiceNo | StockCode | Description | Quantity | InvoiceDate | UnitPrice | CustomerID | Country |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 536365 | 85123A | WHITE HANGING HEART T-LIGHT HOLDER | 6 | 2011-01-05 08:26 | 2.55 | 17850 | United Kingdom |
+| 536365 | 71053 | WHITE METAL LANTERN | 6 | 2011-01-05 08:26 | 3.39 | 17850 | United Kingdom |
+| 536501 | 84406B | CREAM CUPID HEARTS COAT HANGER | 8 | 2011-01-18 10:03 | 2.75 | 17850 | United Kingdom |
+| 536702 | 85123A | WHITE HANGING HEART T-LIGHT HOLDER | 4 | 2011-01-27 14:41 | 2.55 | 17850 | United Kingdom |
+| 536702 | 22752 | SET 7 BABUSHKA NESTING BOXES | 2 | 2011-01-27 14:41 | 7.65 | 17850 | United Kingdom |
+
+: Ilustrasi semi-sintetis dari baris *invoice* ke satu baris pelanggan-bulan {#tbl-ch01-8}
+
+:::
 
 Bagian bawah menampilkan satu baris pelanggan-bulan dengan $t_p$ = 2011-02-01.
 
-*Tabel lengkap tersedia pada edisi cetak.*
+::: {.tabel-buku}
+
+| unit | total_belanja_30h | jumlah_invoice | ragam_produk | hari_sejak_transaksi_terakhir | (target) membeli_lagi_30h |
+| --- | --- | --- | --- | --- | --- |
+| 17850 @ 2011-01 | 83.14 | 3 | 4 | 5 | ditentukan dari $ [t_p,t_p+30 hari) $ |
+
+: Ilustrasi semi-sintetis dari baris *invoice* ke satu baris pelanggan-bulan (lanjutan) {#tbl-ch01-9}
+
+:::
 
 Baris bawah tersebut mempunyai unit analisis pelanggan-bulan, yaitu pelanggan `17850` pada Januari 2011. Nilai `total_belanja_30h` diperoleh dari penjumlahan `Quantity` dikali `UnitPrice` hanya untuk transaksi di dalam jendela $[t_p-30\ \text{hari},t_p)$, bukan dari seluruh riwayat sebelum $t_p$. Hasilnya adalah 15.30 + 20.34 + 22.00 + 10.20 + 15.30 = 83.14. Nilai `jumlah_invoice` adalah banyaknya `InvoiceNo` unik, yaitu 3. Nilai `ragam_produk` adalah banyaknya `StockCode` unik, yaitu 4, karena `85123A` muncul dua kali tetapi dihitung sebagai satu jenis produk. Nilai `hari_sejak_transaksi_terakhir` adalah jarak tanggal kalender dari 27 Januari 2011 ke 1 Februari 2011, yaitu 5 hari.
 
@@ -41,7 +59,9 @@ Istilah ini sering berdekatan dengan *preprocessing*. Dalam praktik sehari-hari,
 Pembersihan data berfokus pada ketepatan, konsistensi, dan kewajaran nilai yang tercatat. `Quantity` negatif perlu diperiksa, tanggal transaksi tidak boleh berada di masa depan, dan kode negara harus valid. Setelah nilai tersebut cukup dipercaya, rekayasa fitur menentukan bentuk representasi yang paling membantu tugas prediksi.
 
 Pemodelan berada pada tahap setelah itu. Algoritma dipilih, parameter disesuaikan, lalu model belajar memberi bobot, memisahkan, membandingkan, atau menemukan pola dalam *input*. Rekayasa fitur berada di hulu dari proses tersebut. Model memang belajar dari data, tetapi bentuk data yang diberikan kepadanya tidak pernah netral.
-![Posisi rekayasa fitur dalam alur \emph{machine learning}](../figures/ch01-fig-1.png)
+
+![Posisi rekayasa fitur dalam alur *machine learning*](../figures/ch01-fig-1.png){#fig-ch01-fig-1}
+
 Gambar 1.1 menempatkan rekayasa fitur di antara data mentah dan pemodelan. Posisi tersebut menegaskan bahwa catatan mentah perlu dibentuk lebih dahulu sebelum masuk ke model. Dalam praktik, alurnya juga tidak selalu bergerak satu arah. Hasil evaluasi sering mengarahkan pemeriksaan ulang terhadap unit, target, jendela waktu, atau transformasi yang dipakai.
 
 Perubahan dari data mentah ke fitur dapat ditulis secara ringkas dengan rumus berikut.
@@ -89,15 +109,34 @@ Dengan $w$ sebagai berat badan dalam kilogram dan $h$ sebagai tinggi badan dalam
 
 Perbedaan dua ujung spektrum tersebut diringkas pada Tabel 1.2. Kolom kiri tidak selalu lebih baik daripada kolom kanan, dan sebaliknya. Tabel ini membantu menentukan apakah suatu sinyal perlu dinyatakan secara eksplisit, dipelajari mesin dari data, atau digabungkan.
 
-**Tabel 1.2 --- Perbandingan representasi yang dirancang manusia dan representasi yang dipelajari mesin**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Dimensi | Representasi yang dirancang manusia | Representasi yang dipelajari mesin |
+| --- | --- | --- |
+| Sumber logika | Pengetahuan domain dan aturan eksplisit | Optimisasi parameter model pada data |
+| Interpretabilitas | Tinggi, setiap fitur memiliki makna yang dinyatakan | Rendah, dimensi laten jarang memiliki nama |
+| Kebutuhan data | Dapat bekerja pada data kecil | Biasanya membutuhkan data besar |
+| Kebutuhan komputasi | Ringan | Berat, terutama untuk pelatihan atau inferensi *encoder* |
+| Modalitas khas | Tabular dan data bisnis | Teks, citra, audio, graf berskala besar |
+| Jenis kegagalan umum | Sinyal hilang karena tidak terpikirkan pakar | Pola semu dan bias terserap dari data |
+
+: Perbandingan representasi yang dirancang manusia dan representasi yang dipelajari mesin {#tbl-ch01-10}
+
+:::
 
 Contoh pada tabel tersebut dapat ditempatkan pada satu garis spektrum. Sisi kiri Gambar 1.2 berisi fitur yang sangat eksplisit. Bagian tengah berisi metode yang mulai belajar struktur dari data, tetapi masih sering dipakai sebagai transformasi yang terkontrol. Sisi kanan berisi representasi dari model besar yang dilatih pada data berukuran besar.
-![Spektrum representasi yang dirancang manusia sampai dipelajari mesin](../figures/ch01-fig-2.png)
+
+![Spektrum representasi yang dirancang manusia sampai dipelajari mesin](../figures/ch01-fig-2.png){#fig-ch01-fig-2}
+
 Spektrum tersebut juga memberi urutan bagi pembahasan buku ini. Pembahasan dimulai dari perancangan fitur eksplisit pada data tabular, lalu bergerak ke seleksi dan reduksi, representasi menurut tipe data, representasi yang dipelajari mesin dan model *pretrained*, otomatisasi, serta sintesis. Urutan ini memperluas cara memandang representasi dari bentuk yang paling eksplisit sampai bentuk yang banyak dipelajari dari data.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### *Self-supervised learning*, manusia merancang lingkungan belajar {.pendalaman-title .unnumbered .unlisted}
+
 Pada *self-supervised learning*, manusia tidak menulis rumus fitur satu per satu. Kontribusi manusia bergeser ke perancangan tugas belajar, yang sering disebut *pretext task*. Pada SimCLR (Chen et al. 2020), model belajar dari pasangan augmentasi yang seharusnya dipandang mirip. Pada Masked Autoencoders (He et al. 2022), model belajar merekonstruksi bagian *input* yang disembunyikan. Dalam kedua contoh tersebut, representasi dipelajari mesin, tetapi lingkungan belajarnya tetap dirancang manusia. Posisi ini berada di sisi kanan spektrum, sekaligus memperlihatkan bahwa *deep learning* tidak menghapus keputusan representasi. Bab 15 akan kembali ke tema ini ketika membahas representasi yang dipelajari mesin secara lebih luas.
+:::
 
 ## Peran Rekayasa Fitur dalam *Deep Learning*
 
@@ -107,7 +146,13 @@ Perubahan itu nyata, tetapi keputusan rekayasa fitur tetap ada. *Deep learning* 
 
 Keputusan tersebut harus mengikuti keadaan saat model dipakai. Pada data berurutan waktu, misalnya, manusia tetap menetapkan unit analisis, horizon prediksi, dan batas informasi yang tersedia. Pada model fondasi, manusia menentukan dokumen atau konteks yang boleh diberikan. Karena itu, tabel pelanggan-bulan pada Bagian 1.1 harus jelas menyatakan apa yang diwakili satu baris dan informasi apa yang sah dipakai, sekalipun representasi berikutnya dipelajari oleh jaringan yang jauh lebih rumit.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Rekayasa konteks untuk model fondasi {.pendalaman-title .unnumbered .unlisted}
+
 Pada sistem berbasis LLM, penyusunan konteks berperan mirip dengan rekayasa fitur pada *machine learning* klasik. Dalam *retrieval-augmented generation* (Lewis et al. 2020), sistem memilih dokumen yang diberikan kepada model sebelum jawaban dihasilkan. Secara ringkas, konteks dapat ditulis sebagai $C = q \oplus f_{\text{retrieve}}(q, \mathcal{D})$. Dalam rumus tersebut, $q$ adalah pertanyaan atau instruksi pengguna, $\mathcal{D}$ adalah korpus dokumen, $f_{\text{retrieve}}$ adalah fungsi pencarian, dan $\oplus$ adalah operasi penggabungan. Rumus itu menunjukkan bahwa *query* dipadukan dengan materi yang diambil. Manusia tidak menulis fitur numerik satu per satu, tetapi tetap menentukan informasi yang sampai ke model.
+:::
 
 ## Dari Pertanyaan Prediksi ke Tabel Data untuk Model
 
@@ -122,7 +167,9 @@ Beberapa istilah perlu dibuat jelas sejak awal:
 - horizon prediksi adalah rentang waktu setelah prediksi dibuat, misalnya pembelian ulang dalam 30 hari, masuk ulang rumah sakit dalam 7 hari, atau kegagalan sensor dalam 24 jam.
 
 Waktu prediksi ditetapkan sebagai *cutoff* $t_p$, yang pada beberapa domain juga disebut *index time*. Pada Tabel 1.1, $t_p$ adalah 1 Februari 2011. Waktu kejadian menyatakan kapan transaksi berlangsung, sedangkan waktu ketersediaan menyatakan kapan catatannya sudah dapat diketahui sistem. Keduanya dapat berbeda jika data terlambat masuk atau direvisi. Contoh ini mengasumsikan catatan langsung tersedia. Fitur hanya memakai transaksi dengan waktu kejadian di $[t_p-30\ \text{hari},t_p)$ yang sudah tersedia pada $t_p$, sedangkan target memakai kejadian di $[t_p,t_p+30\ \text{hari})$.
-![Tabel data untuk model sebagai potongan waktu untuk satu unit](../figures/ch01-fig-3.png)
+
+![Tabel data untuk model sebagai potongan waktu untuk satu unit](../figures/ch01-fig-3.png){#fig-ch01-fig-3}
+
 Pada Gambar 1.3, peristiwa historis berada sebelum *index time*, sedangkan zona target dimulai pada titik tersebut. Pemisahan ini menjelaskan mengapa banyak kesalahan rekayasa fitur sebenarnya merupakan kesalahan membangun tabel data untuk model. Jika total belanja dihitung dengan memasukkan transaksi pada atau setelah 1 Februari 2011, model diberi informasi dari jendela target. Evaluasi dapat terlihat baik, tetapi bukan karena model belajar memprediksi masa depan. Jawaban sudah bocor ke dalam *input*.
 
 Aturan batas waktu dapat ditulis langsung di dalam rumus agregasi. Misalkan $v_{i,t}$ adalah nilai transaksi unit $i$ pada waktu kejadian $t$, $T_i$ adalah himpunan waktu transaksi untuk unit tersebut, $a_{i,t}$ adalah waktu ketika catatan transaksi tersedia, dan $t_p$ adalah *cutoff*. Total nilai transaksi 30 hari yang boleh dipakai sebagai fitur ditulis sebagai berikut.
@@ -133,7 +180,13 @@ Syarat $t_p-30\ \text{hari} \le t < t_p$ membatasi waktu kejadian ke jendela fit
 
 Karena itu, unit analisis, target, waktu prediksi, horizon prediksi, dan batas informasi perlu ditetapkan sebelum fitur dihitung. Bab 2 menjadikan aturan ini bagian dari validasi dan praktik *pipeline* yang benar.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### *Point-in-time correctness* dan *feature store* {.pendalaman-title .unnumbered .unlisted}
+
 Di sistem produksi, aturan *cutoff* sering diformalkan sebagai *point-in-time correctness*. Artinya, setiap nilai fitur pada data pelatihan harus direkonstruksi persis seperti nilai yang diketahui pada *index time*. *Feature store* seperti Feast mendukung kebutuhan ini melalui *point-in-time joins*, sehingga pengambilan fitur historis pada data pelatihan mengikuti keadaan yang diketahui pada waktu tersebut. Kesamaan pelatihan dan produksi tetap menuntut definisi fitur dan jalur komputasi yang konsisten. Bab 6 kembali ke persoalan ini saat membahas *as-of join* pada *event log*, sedangkan Bab 17 membahasnya dari sisi infrastruktur.
+:::
 
 ## Peta Struktur Representasi
 
@@ -142,7 +195,9 @@ Contoh utama sejauh ini berbentuk tabel. Pada *machine learning* tabular, data s
 Namun, banyak data tidak hidup secara alami sebagai baris dan kolom. Pada *sequence*, seperti *time series*, riwayat klik, atau token teks, sinyal berada pada urutan. Kata atau kejadian yang sama dapat bermakna berbeda ketika posisinya berubah. Pada *grid* atau *tensor*, seperti citra, spektrogram, atau raster spasial, sinyal berada pada ketetanggaan. Piksel yang berdekatan biasanya lebih terkait daripada piksel yang jauh.
 
 Pada set, seperti produk dalam keranjang belanja, sinyal berada pada keanggotaan dan kombinasi item, bukan pada urutan pencatatan. Pada graf, sinyal berada pada relasi tentang siapa terhubung dengan siapa, seberapa kuat hubungannya, dan pola jaringan apa yang terbentuk. Pada data multimodal, sinyal berasal dari gabungan struktur, misalnya tabel pelanggan, teks keluhan, dan gambar dokumen.
-![Peta struktur representasi](../figures/ch01-fig-4.png)
+
+![Peta struktur representasi](../figures/ch01-fig-4.png){#fig-ch01-fig-4}
+
 Enam panel pada Gambar 1.4 memberi peta awal, bukan taksonomi yang harus dihafal. Setiap struktur memberi petunjuk tentang strategi rekayasa fitur. Jika sinyal berada pada urutan, informasi urutan perlu dijaga. Jika sinyal berada pada relasi, fitur graf perlu dipertimbangkan. Jika sinyal berada pada gabungan modalitas, beberapa representasi harus dipertemukan tanpa menghapus struktur pentingnya. Bagian IV buku ini kembali ke peta tersebut ketika membahas data waktu, teks, citra, audio, spasial, graf, dan multimodal.
 
 ## Sekilas *Pipeline* dan Cara Membaca Buku
@@ -163,11 +218,18 @@ Untuk membaca secara selektif, Bab 1 dan Bab 2 sebaiknya dibaca terlebih dahulu 
 
 Spektrum pada Bagian 1.4 tetap menjadi peta keputusan. Pada data kecil, domain yang diatur ketat, atau model yang harus dijelaskan, representasi yang dirancang manusia sering menjadi titik awal yang kuat. Pada data tak terstruktur berskala besar dengan pola kompleks, representasi yang dipelajari mesin sering lebih sesuai. Dalam sistem produksi, jawaban yang banyak muncul adalah bentuk hibrid tempat fitur eksplisit, *embedding*, aturan waktu, dan transformasi *pipeline* hidup bersama.
 
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
+
 Fitur terbentuk dari keputusan representasi. Penyusunannya menetapkan unit yang diprediksi, target yang dikejar, waktu prediksi, informasi yang sah dipakai, dan struktur data yang perlu dipertahankan. Satu atribut dapat menjadi beberapa fitur, satu fitur gabungan, atau tidak dipakai sama sekali.
 
 Di sepanjang spektrum representasi, manusia dan mesin berbagi pekerjaan. Representasi yang dirancang manusia memberi interpretabilitas, efisiensi data, dan kontrol domain. Representasi yang dipelajari mesin memberi fleksibilitas besar, terutama pada modalitas kompleks dan data berskala besar, tetapi menuntut data, komputasi, dan pemeriksaan risiko yang lebih serius. Pada setiap masalah, bagian dari $\phi$ perlu dipilih secara sadar, baik untuk dinyatakan manusia, dipelajari mesin, maupun digabungkan.
 
 Setiap teknik pada bab-bab berikutnya, dari *scaling* sampai *embedding*, merupakan cara memilih $\phi$ yang mengubah data mentah menjadi *input* model. Model mengolah representasi yang dibangun untuk tugasnya.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - Chip Huyen, "Building a Generative AI Platform" --- <https://huyenchip.com/2024/07/25/genai-platform.html>. Menyamakan konstruksi konteks (RAG, tool use) dengan rekayasa fitur pada era model fondasi.
 
@@ -181,8 +243,14 @@ Setiap teknik pada bab-bab berikutnya, dari *scaling* sampai *embedding*, merupa
 
 - Data-Centric AI Resource Hub --- <https://datacentricai.org/>. Gerakan yang menempatkan perbaikan data sebagai tuas utama performa model.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Chen, Ting, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton. 2020. "A Simple Framework for Contrastive Learning of Visual Representations." *Proceedings of the 37th International Conference on Machine Learning (ICML)*. <https://arxiv.org/abs/2002.05709>.
 
 He, Kaiming, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Dollár, and Ross Girshick. 2022. "Masked Autoencoders Are Scalable Vision Learners." *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*. <https://arxiv.org/abs/2111.06377>.
 
 Lewis, Patrick, Ethan Perez, Aleksandra Piktus, et al. 2020. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems (NeurIPS)*. <https://arxiv.org/abs/2005.11401>.
+
+:::

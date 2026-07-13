@@ -19,7 +19,9 @@ Stride menentukan seberapa jauh window bergeser antar sampel. Stride kecil mengh
 Alignment menghubungkan akhir input window, waktu prediksi, horizon, dan target period. Jika prediksi dibuat pada pukul 10.00, semua fitur harus tersedia sebelum atau pada pukul 10.00 sesuai aturan domain. Targetnya mungkin nilai pada pukul 11.00, total kejadian antara 10.00 sampai 12.00, atau status apakah kegagalan terjadi dalam 24 jam berikutnya.
 
 Gambar 10.1 menjadi timeline utama bab ini. Perhatikan garis *cutoff*. Semua yang berada di kiri garis dapat menjadi *input*, sedangkan target berada di kanan. Baris kedua menunjukkan window yang bergeser satu stride.
-![Window, cutoff, horizon, dan target pada sampel temporal](../figures/ch10-fig-1.png)
+
+![Window, cutoff, horizon, dan target pada sampel temporal](../figures/ch10-fig-1.png){#fig-ch10-fig-1}
+
 Causal window hanya memakai masa lalu. Centered window, yang memakai nilai sebelum dan sesudah titik tengah, sah untuk analisis retrospektif seperti smoothing atau imputasi setelah data lengkap tersedia. Namun, centered window tidak sah untuk forecasting karena memakai masa depan relatif terhadap waktu prediksi.
 
 Data sensor dan event log sering tidak tersampel teratur. Irregular sampling dapat ditangani dengan resampling, agregasi, interpolasi, atau model yang memang menerima ketidakteraturan. Jika data diubah menjadi interval tetap, downsampling biasanya memakai agregasi, sedangkan upsampling sering membutuhkan interpolasi. Keputusan ini harus dibuat sebelum fitur dihitung, karena setiap stride hanya bermakna jika jarak waktu antar langkah konsisten. Setelah batas sampel temporal jelas, fitur pertama yang biasanya dibangun adalah fitur yang membawa masa lalu ke dalam bentuk kolom, yaitu lag dan rolling statistics.
@@ -42,12 +44,25 @@ Expanding statistics melengkapi rolling. Jika rolling memakai rentang tetap yang
 
 Tabel 10.1 merangkum keluarga fitur temporal utama. Kolom risiko utama perlu dibaca bersama Gambar 10.1 karena fitur temporal selalu sah atau tidak sah relatif terhadap *cutoff*.
 
-**Tabel 10.1 --- Keluarga fitur temporal**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Keluarga | Menangkap apa | Contoh | Risiko utama |
+| --- | --- | --- | --- |
+| Lag | Nilai referensi terdekat | `cnt` jam yang sama kemarin | Dimensi dan korelasi membengkak |
+| Rolling | Trenfluktuasi lokal | Rata-rata dan deviasi `cnt` 24 jam | Jendela salah skala, *target leakage* |
+| Expanding | Akumulasi sejarah | Rata-rata permintaan sejak awal periode | Makna bergeser seiring panjang sejarah |
+| Differencingmusiman | Perubahan, bukan level | Selisih harian, selisih mingguan | Over-differencing membuang sinyal |
+| Kalendersiklik | Ritme aktivitas manusia | Jam sincos, hari libur | Periode salah |
+| Frekuensi | Struktur periodik sinyal | Daya pita getaran | Butuh sampling dan jendela tepat |
+
+: Keluarga fitur temporal {#tbl-ch10-8}
+
+:::
 
 Gambar 10.2 memperlihatkan perbedaan rolling dan expanding. Rolling window bergerak dengan lebar tetap. Expanding window mulai dari titik awal yang sama dan terus memanjang.
-![Rolling window dan expanding window](../figures/ch10-fig-2.png)
+
+![Rolling window dan expanding window](../figures/ch10-fig-2.png){#fig-ch10-fig-2}
+
 Fitur rolling harus dihitung dengan shift yang benar. Untuk prediksi pada waktu $t$, rolling average tidak boleh memasukkan nilai target pada waktu $t$ atau periode target setelahnya. Kesalahan kecil seperti ini dapat membuat model tampak sangat akurat karena fitur sudah membawa jawabannya.
 
 Banyak lag dapat membengkakkan dimensi dan korelasi antar fitur. Lag 1, 2, 3, ..., 168 mungkin berguna untuk beberapa masalah, tetapi sering lebih stabil jika riwayat diringkas menjadi beberapa statistik window yang bermakna. Alat seperti tsfresh dan aeon dapat menghitung banyak agregat temporal secara sistematis di dalam pipeline, tetapi hasilnya tetap perlu divalidasi seperti fitur turunan lain. Setelah level lokal diringkas, pertanyaan berikutnya adalah apakah model sebaiknya membaca level itu sendiri, atau perubahan, tren, dan pola musiman di baliknya.
@@ -71,7 +86,9 @@ Stationarity berarti sifat statistik seperti mean, varians, dan autokovariansi t
 Tren menangkap arah jangka panjang. Seasonality menangkap pola berulang, seperti jam dalam sehari, hari dalam minggu, bulan dalam tahun, musim hujan, atau siklus operasi mesin. Decomposition memisahkan seri teramati menjadi trend, seasonal, dan residual. Metode klasik seperti `seasonal_decompose` membuat pemisahan sederhana, sedangkan STL (*Seasonal-Trend decomposition using Loess*) memakai pendekatan Loess yang lebih fleksibel.
 
 Gambar 10.3 memperlihatkan dekomposisi permintaan sepeda per jam menjadi empat panel, yaitu observed, trend, seasonal, dan residual. Residual sering menjadi bagian yang lebih stationer untuk dimodelkan, sementara trend dan seasonal dapat ditambahkan kembali setelah prediksi.
-![Dekomposisi tren, musiman, dan residual](../figures/ch10-fig-3.png)
+
+![Dekomposisi tren, musiman, dan residual](../figures/ch10-fig-3.png){#fig-ch10-fig-3}
+
 Decomposition juga harus mengikuti aturan waktu. Dekomposisi klasik dan STL umumnya memakai pemulusan dua sisi, sehingga komponen untuk satu baris historis dapat memanfaatkan titik yang lebih akhir meskipun metode hanya di-*fit* pada bagian pelatihan. Memotong data sebelum *split* saja belum membuat komponen tersebut kausal pada setiap baris. Untuk fitur prediksi, gunakan dekomposisi *trailing* atau kausal, atau estimasikan lalu proyeksikan komponen dari setiap origin prediksi. Jika komponen dihitung dengan pemulusan dua sisi tanpa proyeksi dari origin, perlakukan hasilnya sebagai analisis retrospektif. Pada sensor berfrekuensi tinggi, struktur penting kadang tidak tampak sebagai tren atau musiman di domain waktu, tetapi sebagai pola frekuensi.
 
 ## Fitur Domain Frekuensi
@@ -83,10 +100,18 @@ FFT mengubah sinyal dari domain waktu ke domain frekuensi. Spektrumnya dapat dir
 Dalam predictive maintenance, early bearing wear dapat muncul sebagai pergeseran daya pada pita frekuensi tinggi sebelum total vibration meningkat. Dalam sinyal medis, band power dapat membedakan kondisi fisiologis tertentu. Pada sensor aktivitas, pola frekuensi dapat membedakan berjalan, berlari, dan diam lebih baik daripada nilai amplitudo sesaat.
 
 Gambar 10.4 memperlihatkan satu sinyal getaran semi-sintetis dalam dua pandangan. Panel kiri menampilkan gelombang waktu. Panel kanan menampilkan spektrum frekuensi dengan puncak dominan. Overlay "sinyal aus" menunjukkan puncak frekuensi tinggi baru.
-![Sinyal sensor dalam domain waktu dan frekuensi](../figures/ch10-fig-4.png)
+
+![Sinyal sensor dalam domain waktu dan frekuensi](../figures/ch10-fig-4.png){#fig-ch10-fig-4}
+
 Fitur frekuensi membutuhkan sampling rate, panjang window, dan preprocessing yang tepat. Window terlalu pendek membuat resolusi frekuensi kasar. Sampling terlalu rendah membuat frekuensi tinggi tidak terlihat. Dalam praktik, alat seperti tsfresh dapat menghitung FFT coefficients, Welch spectral density, dan spectral entropy pada rolling window. Aeon menyediakan transformer seperti periodogram atau wavelet dalam pipeline temporal. Bab 12 akan membahas representasi audio seperti spectrogram secara lebih khusus. Apa pun domainnya, fitur temporal yang tampak kuat tetap belum dapat dipercaya sebelum skema validasinya meniru masa depan.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Discrete Fourier Transform dalam satu rumus {.pendalaman-title .unnumbered .unlisted}
+
 DFT dapat ditulis $X_k = \sum_{n=0}^{N-1} x_n \, e^{-i 2\pi k n / N}$. Rumus ini mengukur seberapa kuat komponen frekuensi ke-$k$ hadir dalam window berisi $N$ sampel. Nilai kompleks $X_k$ membawa amplitude dan phase, sedangkan FFT adalah algoritma cepat untuk menghitungnya. Dalam rekayasa fitur, yang biasanya dipakai bukan seluruh koefisien mentah, melainkan ringkasan spektrum seperti puncak dan band power. Panjang window dan sampling rate menentukan frekuensi mana yang terlihat. Inilah intuisi di balik resolusi frekuensi dan batas Nyquist.
+:::
 
 ## Validasi Temporal dan *Look-Ahead Leakage*
 
@@ -97,10 +122,18 @@ Temporal cross-validation punya beberapa bentuk. Expanding-window CV membuat tra
 Ketergantungan tambahan muncul ketika window tumpang tindih. Misalkan lookback 7 hari dan sampel validasi pertama berada di hari 100. Window validasi itu memakai nilai hari 93 sampai 99, sedangkan sampel pelatihan terakhir dapat memakai nilai hari 92 sampai 98. Irisan riwayat ini bukan otomatis *leakage* jika semua nilai tersebut tersedia pada masing-masing *cutoff*. Namun, sampel menjadi sangat berkorelasi, dan batas evaluasi bermasalah bila target pelatihan menjangkau periode validasi, labelnya belum tersedia saat model dilatih, atau protokol penerapan mengharuskan episode yang terpisah.
 
 Gambar 10.5 menunjukkan kebijakan konservatif untuk memisahkan sampel di sekitar batas. *Purge gap* diperlukan ketika jendela target atau waktu ketersediaan label menyeberangi batas, dan dapat diperlebar jika protokol memang mensyaratkan jendela fitur yang tidak beririsan. Irisan *lookback* historis saja tidak selalu mewajibkan *purge*.
-![Temporal split dengan purge gap](../figures/ch10-fig-5.pdf)
+
+![Temporal split dengan purge gap](../figures/ch10-fig-5.pdf){#fig-ch10-fig-5}
+
 Fitur juga tidak boleh memasukkan target-period information. Rolling average untuk memprediksi demand pada jam tertentu tidak boleh memakai nilai demand pada jam itu. Scaling, imputasi, decomposition, dan seleksi fitur juga harus di-*fit* hanya pada periode training dalam fold temporal. Untuk deret waktu berkelompok, evaluasi temporal sesuai ketika penerapan memprediksi masa depan entitas yang sudah dikenal. Tambahkan evaluasi sadar grup ketika tujuan penerapan adalah generalisasi ke pelanggan, mesin, atau grup baru yang tidak muncul dalam pelatihan. Setelah batas evaluasi aman, pilihan representasi berikutnya adalah apakah riwayat ditulis eksplisit sebagai kolom atau diberikan sebagai urutan ke model sekuensial.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Menentukan *purge gap* dari protokol {.pendalaman-title .unnumbered .unlisted}
+
 Lebar *purge* tidak mempunyai rumus universal. Pada setiap batas, hapus sampel pelatihan yang jendela targetnya memasuki periode validasi atau yang labelnya belum tersedia ketika model seharusnya dilatih. Jika penerapan mensyaratkan episode independen, tambahkan jarak yang memisahkan jendela fitur. Dengan demikian, lebar *purge* bergantung pada panjang jendela target, keterlambatan label, *stride*, dan waktu pelatihan dalam penerapan. `TimeSeriesSplit(gap=...)` menghitung baris sampel, bukan durasi; data dengan waktu tidak teratur memerlukan aturan berbasis *timestamp*. Nilai $L+H$ hanya contoh konservatif ketika sampel teratur, *stride* satu, target berada $H$ langkah di depan, label tersedia pada akhir horizon, dan kebijakan juga melarang irisan jendela fitur. Biayanya adalah berkurangnya sampel, sedangkan manfaatnya adalah batas evaluasi yang sesuai dengan protokol.
+:::
 
 ## Fitur Eksplisit vs Input Sekuensial
 
@@ -112,19 +145,43 @@ Namun, model sekuensial tidak menghapus keputusan rekayasa fitur. Analis tetap m
 
 Tabel 10.2 merangkum perbedaan praktis kedua pendekatan. Keputusan representasinya adalah apakah pola temporal perlu dinyatakan secara eksplisit sebagai kolom atau dipelajari dari urutan mentah.
 
-**Tabel 10.2 --- Fitur eksplisit vs input sekuensial**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Aspek | Fitur eksplisit + model tabular | Model sekuensial |
+| --- | --- | --- |
+| Bentuk input | Kolom datar | Tensor waktu x fitur |
+| Siapa menangkap pola temporal | Perancang fitur melalui lagwindowstatistik | Mekanisme internal seperti hidden state, convolution, attention |
+| Kebutuhan data | Kecil-menengah | Lebih besar |
+| Interpretabilitas | Lebih tinggi | Lebih rendah |
+| Pekerjaan analis yang tetap ada | Jendela, horizon, sampling, scaling, siklik | Jendela, horizon, sampling, scaling, siklik |
+| Kapan dipilih | Baseline kuat, data terbatas, butuh interpretabilitas | Pola kompleks, data dan komputasi cukup |
+
+: Fitur eksplisit vs input sekuensial {#tbl-ch10-9}
+
+:::
 
 Bagian ini adalah salah satu titik jelas antara representasi yang dirancang manusia dan representasi yang dipelajari mesin. Fitur eksplisit menyatakan hipotesis manusia tentang lag, tren, frekuensi, dan kalender. Model sekuensial mencoba belajar sebagian struktur itu dari data. Dalam praktik, fitur eksplisit plus gradient boosting sering menjadi benchmark yang harus dikalahkan sebelum model sekuensial dianggap perlu.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Hibrida dan foundation model untuk deret waktu {.pendalaman-title .unnumbered .unlisted}
+
 Batas antara dua pendekatan makin kabur. Patch-based Transformer seperti PatchTST memecah seri menjadi patch pendek sebelum attention, mirip gagasan windowing dalam bentuk arsitektur. Time-series foundation model seperti Chronos mulai dipakai secara frozen sebagai feature extractor. Seri mentah dipetakan ke embedding padat, lalu model klasik memakainya sebagai fitur. Nama seperti Lag-Llama dan MOMENT muncul dalam ekosistem yang sama. Untuk sebagian besar masalah tabular berskala kecil-menengah, fitur rekayasa plus gradient boosting tetap benchmark yang harus dikalahkan. Contoh ini adalah peta arah, bukan rekomendasi otomatis.
+:::
+
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
 
 Pada data temporal, fitur hanya valid relatif terhadap waktu prediksi. Lookback, stride, horizon, target window, dan alignment menentukan sampel belajar sebelum teknik apa pun dipakai. Gambar 10.1 menunjukkan aturan dasarnya. Fitur berada di masa lalu, target berada di masa depan, dan batasnya tidak boleh bocor.
 
 Lag, rolling, expanding, differencing, kalender, dan fitur frekuensi mengubah urutan waktu menjadi representasi yang dapat dipakai model. Tabel 10.1 membantu memilih keluarga fitur sesuai sinyal yang dicari, mulai dari nilai referensi, fluktuasi lokal, akumulasi sejarah, perubahan, ritme kalender, sampai pola frekuensi. Tren dan musiman membantu membedakan level, perubahan, dan pola berulang. Fitur frekuensi berguna ketika sinyal periodik lebih jelas di spektrum daripada di amplitudo mentah.
 
 Validasi temporal adalah penjaga utama bab ini. Random split, jendela target atau ketersediaan label yang melintasi batas evaluasi, transformasi yang di-*fit* pada seluruh seri, dan fitur yang memasukkan periode target dapat membuat model tampak bagus tetapi gagal di masa depan. Setelah validasi aman, Tabel 10.2 merangkum keputusan akhir. Fitur eksplisit memberi *baseline* yang kuat dan mudah diaudit, sedangkan input sekuensial sesuai ketika pola kompleks serta data dan komputasi memadai.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - scikit-learn --- TimeSeriesSplit --- <https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html>. Validasi silang yang menghormati urutan waktu.
 
@@ -140,6 +197,12 @@ Validasi temporal adalah penjaga utama bab ini. Random split, jendela target ata
 
 - MOMENT (Goswami dkk. 2024) --- <https://arxiv.org/abs/2402.03885>. Model fondasi deret waktu tujuan umum.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Bergmeir, Christoph, and José M. Benítez. 2012. "On the Use of Cross-Validation for Time Series Predictor Evaluation." *Information Sciences* 191: 192--213.
 
 Hyndman, Rob J., and George Athanasopoulos. 2018. *Forecasting: Principles and Practice*. 2nd ed. OTexts.
+
+:::

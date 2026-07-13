@@ -29,10 +29,18 @@ Misalnya, kolom tertentu lebih sering kosong pada komunitas dengan cakupan admin
 Perbedaan ini penting karena strategi imputasi membawa asumsi. Mengisi mean pada data MNAR dapat meratakan kelompok yang justru penting. Jika nilai yang tidak tersedia berkaitan dengan kondisi ekstrem yang tidak teramati, imputasi mean menyembunyikan sinyal nonresponse tersebut. Inilah sebabnya indikator *missingness* pada Bagian 5.4 kadang diperlukan.
 
 Gambar 5.1 memperlihatkan pola yang berbeda. MCAR tampak seperti lubang acak. MAR terkonsentrasi pada baris yang memiliki nilai tertentu pada kolom teramati. MNAR terkonsentrasi pada nilai yang hilang itu sendiri, sehingga mekanismenya sulit dibuktikan dari data yang terlihat.
-![Pola MCAR, MAR, dan MNAR pada matriks data](../figures/ch05-fig-1.png)
+
+![Pola MCAR, MAR, dan MNAR pada matriks data](../figures/ch05-fig-1.png){#fig-ch05-fig-1}
+
 Dalam praktik, mekanisme ini jarang dapat dipastikan sempurna. Diagnostik dan pengetahuan domain harus dibaca bersama. MCAR, MAR, dan MNAR merupakan kerangka asumsi, bukan label teramati yang otomatis menunjuk satu metode. Asumsi MAR tidak menjamin iterative imputation valid atau paling baik, sedangkan dugaan MNAR memerlukan analisis sensitivitas, pengetahuan domain, atau informasi eksternal tentang proses kekosongan. Setelah alasan kekosongan dipertimbangkan, langkah berikutnya adalah memastikan cara pengisiannya tidak belajar dari data yang seharusnya belum terlihat.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Diagnostik pola kekosongan {.pendalaman-title .unnumbered .unlisted}
+
 Visualisasi seperti missingness matrix dan nullity-correlation plot dapat menunjukkan apakah beberapa kolom sering kosong bersama-sama. Pustaka seperti missingno menyediakan cara cepat untuk melihat pola seperti itu. Little's MCAR test memberi pemeriksaan formal terhadap asumsi MCAR. Namun, hasilnya harus dibaca hati-hati. Tes dapat menolak MCAR, tetapi tidak membuktikan mekanisme tertentu. MNAR pada dasarnya tidak dapat dibuktikan hanya dari data yang teramati, karena alasan kekosongannya terkait bagian yang tidak terlihat. Diagnostik seperti ini dilakukan pada tahap eksplorasi, sebelum kebijakan imputasi masuk ke *pipeline*.
+:::
 
 ## Imputasi sebagai Komponen *Pipeline*
 
@@ -49,7 +57,9 @@ $$\mu_{\text{benar}} = \frac{1}{|X_{\text{train}}|}\sum_{x \in X_{\text{train}}}
 Nilai pengisi dipelajari hanya dari data *train*, lalu dipakai ulang untuk validasi, *test*, dan inferensi. Prinsip yang sama berlaku untuk median, modus, kategori pengisi, atau model imputasi. Di dalam *cross-validation*, imputer hanya di-`fit` pada fold pelatihan, lalu di-`transform` pada fold validasi, bukan di-`fit` pada seluruh *dataset* sebelum CV.
 
 Gambar 5.2 membandingkan dua jalur. Jalur pertama melakukan imputasi global sebelum split, sehingga baris *test* ikut masuk ke nilai pengisi. Jalur kedua menempatkan imputer di dalam *pipeline*, di-*fit* hanya pada bagian *train*.
-![Imputasi bocor dan imputasi aman](../figures/ch05-fig-2.png)
+
+![Imputasi bocor dan imputasi aman](../figures/ch05-fig-2.png){#fig-ch05-fig-2}
+
 Kolom yang berbeda dapat membutuhkan strategi berbeda. Fitur numerik sensus dapat memakai median *train* sebagai *baseline*. Pada contoh Communities and Crime, kolom LEMAS/police yang hilang bersama layak diuji dengan indikator karena kekosongannya dapat membawa informasi tentang cakupan data. Beberapa kolom sebaiknya tidak diimputasi sebelum ada pemeriksaan domain. Dalam semua kasus, praktik *pipeline* yang benar lebih penting daripada kenyamanan satu kali pembersihan. Setelah aturan `fit` aman, barulah metode imputasi dapat dibandingkan menurut struktur data yang ingin dipertahankan.
 
 ## Imputasi Sederhana dan Berbasis Model
@@ -70,15 +80,33 @@ Dengan $\hat{x}_{i,j}^{(t)}$ sebagai nilai imputasi untuk baris $i$ dan kolom $j
 
 Tabel 5.1 merangkum keluarga imputasi. Tabel ini berguna sebagai peta keputusan yang menghubungkan kondisi data, struktur yang ingin dijaga, dan biaya yang siap dibayar.
 
-**Tabel 5.1 --- Peta keputusan imputasi**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Metode | Cocok saat | Menjaga apa | Biayarisiko |
+| --- | --- | --- | --- |
+| Meanmedianmodus | *Baseline* cepat dengan aturan sederhana yang dapat diuji | Kesederhanaan, transparansi | Variance shrinkage dan korelasi antar fitur rusak |
+| Konstanta + kategori ``missing'' | Kategorikal dengan kekosongan bermakna | Status kosong tetap terlihat | Menambah kategori artifisial |
+| KNN | Fitur berkorelasi, skala terkendali | Struktur lokal antar baris | Sensitif skalajarak dan mahal di data besar |
+| Iterative (MICE-style) | Dependensi multivariat cukup kuat dan model imputasi dapat divalidasi | Struktur multivariat | Kompleks, asumsi hubungan dapat salah, default single-imputation menyembunyikan ketidakpastian |
+| Generatif (VAEdiffusion) | Data kompleksderet waktu, skala besar | Dependensi non-linear | Komputasi berat, keunggulan tidak otomatis |
+
+: Peta keputusan imputasi {#tbl-ch05-8}
+
+:::
 
 Gambar 5.3 memperlihatkan siklus iterative imputation. Setiap kolom yang tidak lengkap diprediksi dari kolom lain, lalu hasilnya dipakai untuk memprediksi kolom berikutnya.
-![Siklus round-robin pada iterative imputation](../figures/ch05-fig-3.png)
+
+![Siklus round-robin pada iterative imputation](../figures/ch05-fig-3.png){#fig-ch05-fig-3}
+
 Metode yang lebih kompleks tidak otomatis lebih baik. Keputusan perlu mempertimbangkan tingkat *missingness*, relasi antar fitur, ukuran data, *latency*, interpretabilitas, dan performa validasi. Imputasi yang tampak canggih tetapi tidak memperbaiki evaluasi yang sah hanya menambah kompleksitas. Selain memilih nilai pengisi, fakta bahwa nilai semula tidak ada kadang perlu dipertahankan.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Imputasi generatif dan kasus MNAR {.pendalaman-title .unnumbered .unlisted}
+
 Imputer generatif modern memperlakukan nilai hilang sebagai target rekonstruksi bertopeng. MIWAE memakai kerangka variational autoencoder untuk imputasi, sedangkan CSDI memakai model difusi untuk deret waktu. Untuk kasus MNAR, pendekatan seperti not-MIWAE mencoba memodelkan mekanisme missingness itu sendiri, bukan mengasumsikan MAR. Metode-metode ini relevan ketika dependensi data sangat non-linear dan jumlah data cukup besar. Namun, *baseline* klasik yang kuat, misalnya iterative imputation dengan model pohon, tetap harus dikalahkan pada validasi tugas sendiri sebelum imputer generatif layak diadopsi.
+:::
 
 ## Fitur Indikator *Missingness*
 
@@ -91,7 +119,9 @@ Pada Communities and Crime yang diperkenalkan di Bagian 5.1, indikator dapat dip
 Indikator ini membuat model dapat membedakan nilai asli dari nilai hasil imputasi. Dalam dataset ini, kolom LEMAS/police yang kosong bersama dapat berarti informasi penegakan hukum tidak tercakup untuk komunitas tersebut, bukan sekadar angka yang lupa diisi. Nilai hasil imputasi dan fakta bahwa nilainya semula kosong dapat membawa makna yang berbeda.
 
 Gambar 5.4 memperlihatkan pola ini. Satu kolom awal yang berlubang diubah menjadi dua kolom, yaitu nilai yang sudah diimputasi dan indikator apakah nilai asalnya kosong.
-![Nilai imputasi dan indikator \emph{missingness}](../figures/ch05-fig-4.png)
+
+![Nilai imputasi dan indikator *missingness*](../figures/ch05-fig-4.png){#fig-ch05-fig-4}
+
 Indikator tidak selalu membantu. Jika *missingness* benar-benar acak, indikator menambah dimensi tanpa sinyal. Jika nilai kosong sangat jarang, indikator dapat menjadi fitur yang rapuh. Jika beberapa kolom selalu kosong bersama-sama, indikatornya menjadi sangat berkorelasi dan dapat mengganggu interpretasi koefisien pada model linear.
 
 Indikator juga harus mengikuti *pipeline*. Pada `SimpleImputer(add_indicator=True)` atau `MissingIndicator`, kolom indikator didaftarkan saat *fit*. Jika sebuah kolom lengkap pada data *train* tetapi kosong saat produksi, *pipeline* tidak tiba-tiba membuat kolom baru. Lebar keluaran harus tetap sama agar model dapat menerima data. Karena itu, keputusan indikator perlu dibuat dengan memikirkan perilaku inferensi, bukan hanya data pelatihan.
@@ -110,17 +140,34 @@ Diagnostik eksploratif dapat dipakai untuk memahami pola pada data pelatihan. Ji
 
 Tabel 5.2 menghubungkan diagnosis dengan tindakan. Baris-barisnya menunjukkan bahwa tindakan wajar berbeda-beda, tergantung apakah nilai ekstrem merupakan kesalahan, nilai sah yang terlalu berpengaruh, sinyal penting, atau kasus yang belum jelas.
 
-**Tabel 5.2 --- Dari diagnosis ke tindakan *outlier***
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Diagnosis | Contoh | Tindakan wajar |
+| --- | --- | --- |
+| Kesalahan data | Nilai ter-normalisasi di luar rentang yang mungkin | Perlakukan sebagai nilai kosong perbaiki di cleaning |
+| Nilai prediktor sah tapi terlalu berpengaruh | Fitur komunitas dengan nilai tinggi yang masih valid | Cappingwinsorization atau transformasi bentuk pada $ X $ |
+| Sinyal penting | Pola prediktor komunitas yang langka dan relevan | Pertahankan, tambah flag dari $ X $, jangan diredam |
+| Tidak jelas | Satu fitur administratif melonjak sendiri | Inspeksi domain dulu, jangan otomatis |
+
+: Dari diagnosis ke tindakan *outlier* {#tbl-ch05-9}
+
+:::
 
 Target `ViolentCrimesPerPop` mempunyai ekor kanan dengan nilai tinggi yang belum tentu salah. Transformasi atau *capping* pada $y$ merupakan pilihan tujuan pelatihan, bukan pembuatan fitur, sehingga parameternya dipelajari hanya dari bagian *train*. Alternatifnya adalah memakai fungsi *loss* yang *robust*. Jika target ditransformasi, prediksi perlu dikembalikan ke skala asal dan dievaluasi pada skala tersebut bila metrik tugas memang didefinisikan di sana. Dalam semua pilihan ini, flag yang berasal dari $y$ tidak menjadi *input* saat inferensi.
 
 Untuk prediktor $X$, Gambar 5.5 memvisualisasikan alur yang sama. Deteksi menghasilkan flag atau skor. Setelah itu, keputusan domain menentukan apakah nilai diperlakukan sebagai missing, di-*cap*, ditransformasi, dipertahankan, atau diberi flag.
-![Dari deteksi outlier ke tindakan representasi](../figures/ch05-fig-5.png)
+
+![Dari deteksi outlier ke tindakan representasi](../figures/ch05-fig-5.png){#fig-ch05-fig-5}
+
 Diagnostik sebaiknya dilakukan sebelum penanganan otomatis. Membuang setiap nilai ekstrem secara otomatis adalah kebiasaan berbahaya. Dalam banyak aplikasi, observasi yang jarang justru merupakan bagian paling penting dari tugas prediksi.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### *Outlier detection* vs *novelty detection*, dan deteksi tanpa banyak parameter {.pendalaman-title .unnumbered .unlisted}
+
 Dalam pustaka *machine learning*, *outlier detection* dan *novelty detection* dibedakan. Pada *outlier detection*, data pelatihan dianggap sudah terkontaminasi sehingga model mendeteksi anomali di data yang sama. Pada *novelty detection*, model membangun profil dari data yang dianggap bersih, lalu menilai observasi baru. Local Outlier Factor, misalnya, memiliki mode `novelty=True` untuk penggunaan seperti ini. Memilih mode yang salah mengubah arti skor. Untuk penyaringan berdimensi tinggi dengan sedikit parameter, metode berbasis ECDF seperti ECOD menilai observasi dari probabilitas ekor empiris tanpa harus memilih metrik jarak atau asumsi klaster. Namun, keluaran deteksi tetap merupakan sinyal diagnostik, bukan daftar otomatis untuk dihapus.
+:::
 
 ## Transformasi Robust untuk *Outlier*
 
@@ -162,6 +209,10 @@ Contohnya, nilai normalisasi di bawah 0 atau di atas 1 pada kolom yang seharusny
 
 Keputusan cleaning juga tidak boleh diam-diam mengubah populasi target. Menghapus semua baris dengan nilai sulit dapat membuat model hanya belajar dari kasus yang rapi, padahal produksi akan menghadapi kasus yang tidak rapi. Buku ini berfokus pada transformasi yang dapat direproduksi untuk pemodelan. Masalah kualitas data yang serius tetap membutuhkan tata kelola data dan tinjauan domain.
 
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
+
 Nilai kosong dan *outlier* perlu diperlakukan sebagai keputusan representasi. Keduanya dapat berupa *noise*, kesalahan pencatatan, sinyal operasional, atau bagian utama dari masalah prediksi. Inspeksi harus mendahului otomatisasi.
 
 Untuk nilai kosong, mekanisme MCAR, MAR, dan MNAR membantu menyusun asumsi dan diagnosis, bukan memilih metode secara otomatis. Imputasi sederhana memberi *baseline* yang jelas, sedangkan KNN, iterative imputation, dan metode generatif mencoba menjaga struktur yang lebih kaya dengan biaya lebih tinggi. Indikator *missingness* dapat membantu ketika kekosongan itu sendiri membawa sinyal, tetapi dapat menambah *noise* atau proksi sensitif.
@@ -169,6 +220,9 @@ Untuk nilai kosong, mekanisme MCAR, MAR, dan MNAR membantu menyusun asumsi dan d
 Untuk *outlier*, deteksi dan tindakan harus dipisahkan. Pada prediktor $X$, nilai ekstrem dapat diperbaiki sebagai cleaning, ditransformasi secara robust, di-*cap*, dipertahankan, atau diberi flag dari informasi yang tersedia saat inferensi. Pada target $y$, transformasi atau *capping* merupakan pilihan tujuan pelatihan dan flag yang diturunkan dari target tidak boleh menjadi fitur inferensi. Keputusan itu bergantung pada domain, model, dan evaluasi yang sah.
 
 Benang merah bab ini sama dengan Bab 2. Semua transformasi yang belajar dari data harus hidup di dalam *pipeline*. Imputer, indikator, batas *winsorization*, dan *robust scaler* merupakan bagian dari representasi model, sehingga harus dapat direproduksi pada validasi, *test*, dan inferensi. Dengan disiplin tersebut, pembersihan data tetap menjaga sinyal dan rekayasa fitur tidak memasukkan informasi yang belum tersedia saat prediksi.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - scikit-learn --- Imputation of missing values --- <https://scikit-learn.org/stable/modules/impute.html>. SimpleImputer, KNNImputer, dan IterativeImputer.
 
@@ -182,8 +236,14 @@ Benang merah bab ini sama dengan Bab 2. Semua transformasi yang belajar dari dat
 
 - missingno --- <https://github.com/ResidentMario/missingno>. Visualisasi pola kekosongan data.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Buuren, Stef van, and Karin Groothuis-Oudshoorn. 2011. "mice: Multivariate Imputation by Chained Equations in R." *Journal of Statistical Software* 45 (3): 1--67.
 
 Iglewicz, Boris, and David C. Hoaglin. 1993. *How to Detect and Handle Outliers*. ASQC Quality Press.
 
 Little, Roderick J. A., and Donald B. Rubin. 2019. *Statistical Analysis with Missing Data*. 3rd ed. Wiley.
+
+:::

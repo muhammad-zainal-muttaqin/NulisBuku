@@ -17,14 +17,22 @@ $$x_c' = \dfrac{x_c - \mu_c}{\sigma_c}$$
 Dalam rumus tersebut, $\mu_c$ adalah rata-rata kanal dan $\sigma_c$ adalah *standard deviation* kanal. Untuk model yang dilatih dari awal, statistik ini dihitung dari *training split* saja. Model *pretrained* menggunakan statistik yang didokumentasikan khusus untuk bobotnya. Sebagai contoh, sebagian bobot *vision pretrained* yang dilatih pada ImageNet mendokumentasikan *mean* RGB \[0.485, 0.456, 0.406\] beserta *standard deviation* tertentu. Angka tersebut tidak berlaku untuk semua model *vision pretrained*. Mengganti statistik bawaan dengan statistik *dataset* lokal juga tidak selalu benar, karena lapisan awal model sudah belajar membaca *input* dengan konvensi lama.
 
 Gambar 12.1 memperlihatkan perbedaan antara jalur pelatihan dan jalur evaluasi. Jalur pelatihan boleh memakai augmentasi acak, sedangkan *preprocessing* validasi dan *test* secara default dibuat deterministik agar evaluasi dapat direproduksi. *Test-time augmentation* yang ditetapkan sebelumnya tetap sah jika transformasi dan aturan penggabungan prediksinya reproducible serta sesuai dengan prosedur *serving*.
-![Tensor citra, augmentasi pelatihan, dan preprocessing evaluasi](../figures/ch12-fig-1.png)
+
+![Tensor citra, augmentasi pelatihan, dan preprocessing evaluasi](../figures/ch12-fig-1.png){#fig-ch12-fig-1}
+
 Contoh citra pada bab ini memakai Fashion-MNIST. Setiap baris mewakili satu citra pakaian grayscale berukuran 28 x 28 piksel dengan label kelas pakaian. Contoh audio memakai Free Spoken Digit Dataset (FSDD), yang berisi rekaman pendek pengucapan digit 0 sampai 9. Kedua contoh ini menunjukkan bahwa augmentasi hanya sah jika label tetap dapat dipertahankan.
 
 Augmentasi membuat contoh pelatihan baru melalui transformasi yang dianggap tidak mengubah label, misalnya crop, flip, rotasi kecil, color jitter, blur, atau *noise*. Pada Fashion-MNIST, rotasi kecil atau translasi ringan dapat membantu jika label pakaian tetap terbaca. Crop tidak selalu aman. Jika gambar ankle boot dipotong sampai sol atau bentuk utamanya hilang, label lama menjadi meragukan. Pada audio digit FSDD, time shift atau *noise* ringan dapat aman, tetapi transformasi yang memotong awal ucapan dapat menghapus informasi digit.
 
 Dengan kata lain, augmentasi bukan data gratis. Augmentasi adalah pernyataan bahwa label tetap benar di bawah transformasi tertentu. Pernyataan tersebut harus sesuai dengan domain, tugas, dan cara data dipakai saat deployment. Setelah input citra dipersiapkan, pertanyaan berikutnya adalah apakah struktur visual perlu ditulis manusia sebagai *descriptor*, atau dibiarkan dipelajari oleh model.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Kebijakan augmentasi otomatis dan augmentasi lintas sampel {.pendalaman-title .unnumbered .unlisted}
+
 Selain transformasi yang dipilih manual, AutoAugment dan RandAugment mencari atau memilih kombinasi augmentasi secara otomatis. Augmentasi lintas sampel seperti mixup dan CutMix mencampur dua citra, dan kadang dua label, agar prediksi tidak terlalu bergantung pada satu latar atau pola global. Pendekatan ini menekankan morfologi lokal yang stabil. Namun, setiap augmentasi tetap merupakan asumsi invariance. Flip pada X-ray dada dapat menukar anatomi kiri dan kanan. Kebijakan otomatis pun perlu diperiksa terhadap invariance yang benar-benar berlaku.
+:::
 
 ## HOG dan Batas Fitur Citra yang Dirancang Manusia
 
@@ -41,7 +49,9 @@ $$G_y = I(x, y{+}1) - I(x, y{-}1)$$
 Dalam rumus tersebut, $I(x, y)$ adalah intensitas piksel pada posisi $(x, y)$. Nilai $G_x$ dan $G_y$ memberi bahan untuk menghitung besar dan arah perubahan lokal. HOG kemudian mengumpulkan arah-arah itu dalam cell kecil, menormalkannya per block, lalu menggabungkannya menjadi descriptor panjang tetap.
 
 Gambar 12.2 menunjukkan alur ini. Patch citra masuk sebagai intensitas, diubah menjadi panah gradien, diringkas menjadi histogram orientasi per cell, lalu disusun menjadi descriptor HOG.
-![Dari patch citra ke descriptor HOG](../figures/ch12-fig-2.png)
+
+![Dari patch citra ke descriptor HOG](../figures/ch12-fig-2.png){#fig-ch12-fig-2}
+
 Fitur seperti HOG, edge descriptor, dan texture descriptor tetap berguna untuk beberapa situasi. Dataset kecil, sistem dengan komputasi terbatas, inspeksi visual sederhana, atau kebutuhan interpretabilitas kadang lebih cocok dengan descriptor yang jelas maknanya. Model klasik seperti SVM atau logistic regression dapat bekerja baik bila descriptor memang menangkap sinyal utama.
 
 Batasnya juga jelas. Parameter seperti cell size, block size, jumlah orientation bins, dan skema penskalaan harus dipilih manusia. Jika tugas berubah dari siluet pakaian grayscale ke foto produk berwarna atau citra medis, descriptor mungkin perlu diatur ulang. Fitur yang dirancang manusia juga sulit membangun hierarki visual yang fleksibel. Tepi perlu menjadi tekstur, tekstur menjadi bagian objek, dan bagian objek menjadi konsep semantik. CNN dan model pretrained muncul untuk membangun hierarki seperti itu langsung dari data.
@@ -59,7 +69,9 @@ Dalam rumus tersebut, $\mathbf{X}$ adalah input lokal dari citra atau feature ma
 Model vision pretrained memanfaatkan hierarki ini. Kita dapat mengambil ResNet (He et al. 2016), EfficientNet, atau keluarga CNN lain yang sudah dilatih pada dataset besar, membuang atau melewati classification head terakhir, lalu memakai vektor sebelum head sebagai fitur. Fitur itu kemudian masuk ke model hilir seperti linear classifier, SVM, atau gradient boosting.
 
 Gambar 12.3 memperlihatkan pola feature extraction ini. Classification head asli dicoret, sedangkan pooled vector dari lapisan akhir diarahkan ke classifier lokal.
-![CNN pretrained sebagai feature extractor](../figures/ch12-fig-3.png)
+
+![CNN pretrained sebagai feature extractor](../figures/ch12-fig-3.png){#fig-ch12-fig-3}
+
 Transfer learning membantu ketika data berlabel lokal terbatas. Untuk Fashion-MNIST, fitur dari model pretrained dapat menjadi *baseline* cepat, tetapi domain mismatch tetap harus diperiksa karena gambar grayscale kecil tidak sama dengan foto natural ImageNet. Citra medis, foto satelit, atau citra mikroskop juga tidak selalu mengikuti distribusi ImageNet. Performa validasi yang jauh di bawah ekspektasi pretrained, atau visualisasi embedding yang mengelompokkan sumber citra alih-alih kelas, merupakan sinyal kuat adanya domain mismatch yang perlu ditangani. Frozen extraction memakai representasi lama apa adanya. Partial atau full fine-tuning mengubah representasi agar lebih cocok dengan label lokal. Logikanya sama dengan keputusan feature extraction vs fine-tuning pada Bab 11 dan Tabel 11.2.
 
 Preprocessing harus mengikuti bobot model. Resize, crop, urutan kanal, dan statistik penskalaan perlu sesuai dokumentasi. Split data juga harus dijaga. Near-duplicate image, frame dari video yang sama, patch dari citra besar yang sama, atau foto subjek yang sama tidak boleh tersebar sembarangan ke train dan test jika deployment menuntut generalisasi ke subjek atau lokasi baru.
@@ -79,12 +91,20 @@ $$N = \dfrac{H \times W}{P^2}$$
 Dalam rumus tersebut, $H$ dan $W$ adalah tinggi dan lebar citra, sedangkan $P$ adalah ukuran sisi patch. Rumus ini mengasumsikan $H$ dan $W$ habis dibagi $P$; jika tidak, citra perlu di-*resize*, di-*pad*, atau di-*crop* sesuai aturan model. Citra 224 x 224 dengan patch 16 x 16 menghasilkan $224 \times 224 / 16^2 = 196$ token patch. Angka ini penting karena *patch size* langsung memengaruhi resolusi lokal dan biaya komputasi.
 
 Gambar 12.4 memperlihatkan alur patch. Citra dibagi menjadi grid, setiap patch menjadi token embedding, lalu transformer menghasilkan dua jenis representasi yang dapat dipakai.
-![Citra sebagai urutan patch embedding](../figures/ch12-fig-4.png)
+
+![Citra sebagai urutan patch embedding](../figures/ch12-fig-4.png){#fig-ch12-fig-4}
+
 Granularitas embedding merupakan keputusan desain. Untuk klasifikasi satu citra, global image vector, misalnya token CLS atau pooled vector, sering cukup. Untuk segmentation, deteksi, atau pencarian bagian citra, per-patch vectors dapat lebih berguna karena masih menyimpan struktur spasial. Jika patch terlalu besar, detail kecil hilang. Jika patch terlalu kecil, jumlah token dan biaya attention meningkat.
 
 Embedding visual juga tidak otomatis netral. Model dapat belajar latar, watermark, pose, alat perekam, atau bias dataset lain sebagai shortcut. Karena itu, embedding harus dievaluasi berdasarkan tugas, domain, dan failure mode. Retrieval yang tampak bagus secara visual mungkin gagal pada kasus minoritas. Clustering yang rapi mungkin sebenarnya mengelompokkan sumber kamera, bukan objek. Pola keputusan yang sama muncul lagi pada audio. Sinyal mentah dapat ditransformasikan dengan aturan manusia, atau dipelajari oleh encoder modern.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Ekosistem ekstraktor visual pretrained {.pendalaman-title .unnumbered .unlisted}
+
 Tiga keluarga sering muncul dalam praktik. Pertama, model image-text contrastive seperti CLIP (Radford et al. 2021) dan penerusnya menghasilkan encoder visual dengan semantik luas karena dilatih menyelaraskan citra dan teks. Kedua, model self-supervised seperti DINOv2 banyak dipakai ketika struktur spasial dan fitur per patch penting. Ketiga, model supervised klasik dari garis ResNet atau EfficientNet tetap kuat pada data kecil. Pelajaran dari Bab 11 tentang MTEB berlaku lagi: reputasi model adalah petunjuk awal, bukan bukti. Uji pada tugas sendiri. Penyelarasan lintas modalitas dibahas lebih penuh pada Bab 14, sedangkan reuse representasi pretrained kembali menjadi tema pada Bab 15.
+:::
 
 ## Audio dari Waveform, Spectrogram, MFCC, dan Chroma
 
@@ -101,7 +121,9 @@ Dalam rumus tersebut, $f$ adalah frekuensi fisik dalam Hertz, dan $m$ adalah nil
 MFCC, atau *Mel-frequency cepstral coefficients*, melangkah lebih jauh. Representasi ini merangkum bentuk envelope spektral menjadi koefisien yang lebih ringkas setelah mentransformasikan energi per filterbank mel melalui *discrete cosine transform* (DCT). DCT mendekorelasikan energi filterbank mel secara aproksimatif, tetapi tidak menjamin koefisien MFCC tidak berkorelasi secara statistik pada setiap *dataset*. Secara historis, MFCC sangat kuat untuk tugas speech dan tetap berguna pada dataset kecil atau edge deployment yang membutuhkan fitur padat dan murah. Chroma berbeda lagi. Representasi ini merangkum energi ke dua belas pitch class, dengan octave yang dilipat. Karena itu, chroma lebih cocok untuk musik, chord, genre, atau tugas yang bergantung pada harmoni.
 
 Gambar 12.5 merangkum tangga representasi audio. Semakin naik, representasi makin terstruktur oleh asumsi manusia tentang frekuensi, persepsi, dan musik.
-![Tangga representasi audio klasik](../figures/ch12-fig-5.png)
+
+![Tangga representasi audio klasik](../figures/ch12-fig-5.png){#fig-ch12-fig-5}
+
 Window length, hop length, sampling rate, dan penskalaan amplitudo mengubah representasi. Window pendek memberi resolusi waktu lebih baik tetapi resolusi frekuensi lebih kasar. Window panjang memberi frekuensi lebih rapi tetapi peristiwa singkat dapat melebur. Pada FSDD, fitur MFCC-like dapat cukup kuat untuk membedakan digit lisan bila split menjaga sumber rekaman dengan benar. Untuk musik, chroma membantu membaca hubungan pitch. Untuk mesin atau getaran, spectrogram dan band-energy sering lebih informatif daripada amplitude sesaat.
 
 Semua transformasi ini adalah representasi yang dirancang manusia. Bahkan jika spectrogram kemudian masuk ke CNN, keputusan awal tentang window, hop, mel, MFCC, atau chroma tetap menentukan sinyal apa yang terlihat dan apa yang dibuang. Pilihan berikutnya lebih dekat dengan representasi yang dipelajari mesin, yaitu encoder yang langsung belajar dari waveform.
@@ -118,7 +140,13 @@ Dokumentasi pipeline audio biasanya menentukan sampling rate yang diharapkan. Ji
 
 Perpindahan ini adalah titik penting menuju representasi yang dipelajari mesin pada audio. Model tidak lagi hanya menerima *spectrogram* yang dirancang manusia, tetapi belajar struktur dari *waveform*. Meski begitu, *compute*, *latency*, dan *domain mismatch* tetap nyata. Untuk *environmental sound*, musik, atau suara mesin, model *pretrained speech* belum tentu pilihan terbaik. Pendekatan berbasis *spectrogram* atau encoder *pretrained* khusus *non-speech* bisa lebih sesuai. Setelah encoder dipilih, rangkaian frame atau *chunk* perlu diubah menjadi representasi berukuran tetap.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Peta ekstraktor audio pretrained {.pendalaman-title .unnumbered .unlisted}
+
 Ekosistem audio cukup terspesialisasi. wav2vec 2.0 dan HuBERT kuat dalam garis speech recognition. WavLM sering dipakai untuk berbagai tugas speech sekaligus, seperti pengenalan ucapan, verifikasi pembicara, diarisasi, dan pengenalan emosi, karena dirancang sebagai fondasi speech yang menyeluruh. Hidden states dari encoder Whisper dapat dipakai sebagai fitur speech umum. Untuk environmental audio, nama seperti AudioMAE dan BEATs sering muncul. Untuk musik, MERT adalah salah satu keluarga yang relevan. Nama-nama ini bukan daftar rekomendasi otomatis. Pelajaran Bab 11 tetap berlaku. Cocokkan domain pretraining dengan sinyal sendiri, lalu validasi lokal sebelum percaya leaderboard.
+:::
 
 ## Audio Embedding dan Agregasi Sepanjang Waktu
 
@@ -130,23 +158,51 @@ Label clip-level juga bisa lemah. Pada FSDD, label digit berlaku untuk satu klip
 
 Setelah dua jalur citra dan audio itu terlihat, Tabel 12.1 merangkum peta representasi keduanya dalam satu tampilan. Kolom "jenis representasi" membedakan representasi yang dirancang manusia dari representasi yang dipelajari mesin. Kolom batas utama perlu dibaca sebagai peringatan desain, bukan alasan untuk menolak representasi tersebut.
 
-**Tabel 12.1 --- Peta representasi citra dan audio**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Representasi | Modalitas | Jenis representasi | Penggunaan khas | Batas utama |
+| --- | --- | --- | --- | --- |
+| HOG | Citra | Representasi yang dirancang manusia | Shape cue, baseline klasik | Sensitif pada parameter dan tugas |
+| CNN features pretrained | Citra | Representasi yang dipelajari mesin | Klasifikasi citra, transfer learning | Domain mismatch dan preprocessing |
+| ViT patch embeddings | Citra | Representasi yang dipelajari mesin | Retrieval, klasifikasi, dense tasks | Biaya komputasi dan bias embedding |
+| Spectrogrammel | Audio | Representasi yang dirancang manusia | Speech, mesin, environmental sound | Window, hop, dan sampling menentukan sinyal |
+| MFCC | Audio | Representasi yang dirancang manusia | Speech kecil, edge deployment | Mengompres banyak detail spektral |
+| Chroma | Audio | Representasi yang dirancang manusia | Musik, chord, genre | Kurang cocok untuk non-pitch tasks |
+| Raw-waveform encoder embeddings | Audio | Representasi yang dipelajari mesin | Speechaudio transfer learning | Compute, domain match, pooling |
+
+: Peta representasi citra dan audio {#tbl-ch12-8}
+
+:::
 
 Tabel 12.2 berfokus pada keputusan *pooling* temporal audio. Baris-barisnya membantu memilih strategi berdasarkan apakah peristiwa tersebar merata, muncul singkat, atau membutuhkan urutan.
 
-**Tabel 12.2 --- Strategi pooling temporal audio**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Strategi | Cocok untuk | Risiko |
+| --- | --- | --- |
+| Average pooling | Tekstur suara stasioner, misalnya machine hum | Peristiwa singkat hilang dalam rata-rata |
+| Max pooling | Peristiwa impulsif, misalnya kaca pecah | Sensitif pada *noise* ekstrem |
+| Attention pooling | Klip dengan bagian penting yang tidak selalu sama | Butuh label dan pelatihan cukup |
+| Sequence model | Tugas yang membutuhkan urutan waktu | Biaya dan kompleksitas lebih tinggi |
+
+: Strategi pooling temporal audio {#tbl-ch12-9}
+
+:::
 
 Split data audio harus menghormati sumber. Frame atau chunk dari rekaman yang sama tidak boleh tersebar ke train dan test jika deployment menuntut generalisasi ke rekaman baru. Untuk FSDD, rekaman dari pembicara yang sama perlu dijaga tetap di satu sisi split bila tujuan evaluasi adalah generalisasi ke pembicara baru. Jika tidak, embedding dapat tampak kuat hanya karena mengenali suara pembicara, bukan digit.
+
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
 
 Benang merah Bab 12 adalah bahwa gambar dan suara tidak pernah hanya file yang netral. Keduanya bermula dari sinyal padat, tetapi representasi yang dipilih menentukan struktur apa yang tampak bagi model. Pada citra, tensor piksel perlu dipersiapkan sesuai aturan model, HOG merangkum gradien yang dirancang manusia, CNN belajar hierarki visual, dan Vision Transformer membaca patch sebagai token. Pada audio, waveform dapat diubah menjadi spectrogram, mel, MFCC, chroma, atau embedding raw-waveform encoder.
 
 Tabel 12.1 memperlihatkan pola umum bab ini. Representasi klasik memberi kontrol dan interpretasi, sedangkan representasi pretrained memberi kekuatan transfer dengan biaya domain match, preprocessing, dan validasi. Tabel 12.2 menambahkan keputusan khas audio. Sinyal berdurasi variabel harus diringkas atau dipertahankan sebagai urutan.
 
 Prinsip akhirnya sederhana. Resize, crop, patch size, window length, hop length, pooling, dan pilihan encoder semuanya adalah keputusan representasi. Keputusan itu harus sesuai dengan tugas, menjaga split tetap jujur, dan diuji terhadap failure mode yang masuk akal untuk domainnya.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - TorchVision --- Models and pre-trained weights --- <https://pytorch.org/vision/stable/models.html>. Backbone citra pralatih siap pakai.
 
@@ -164,6 +220,10 @@ Prinsip akhirnya sederhana. Resize, crop, patch size, window length, hop length,
 
 - Zhang dkk. (2017), mixup --- <https://arxiv.org/abs/1710.09412>. Augmentasi interpolasi untuk pelatihan.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Baevski, Alexei, Henry Zhou, Abdelrahman Mohamed, and Michael Auli. 2020. "Wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations." *Advances in Neural Information Processing Systems (NeurIPS)*.
 
 Dalal, Navneet, and Bill Triggs. 2005. "Histograms of Oriented Gradients for Human Detection." *IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*.
@@ -171,3 +231,5 @@ Dalal, Navneet, and Bill Triggs. 2005. "Histograms of Oriented Gradients for Hum
 He, Kaiming, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016. "Deep Residual Learning for Image Recognition." *IEEE Conference on Computer Vision and Pattern Recognition (CVPR)*.
 
 Radford, Alec, Jong Wook Kim, Chris Hallacy, et al. 2021. "Learning Transferable Visual Models from Natural Language Supervision." *Proceedings of the 38th International Conference on Machine Learning (ICML)*.
+
+:::

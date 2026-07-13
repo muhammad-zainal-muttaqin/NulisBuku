@@ -13,7 +13,9 @@ Inilah masalah skala. Skala menyangkut besar nilai, rentang, dan variasi yang di
 Skala berbeda dari bentuk distribusi. Fitur `kw_avg_avg`, misalnya, dapat berisi banyak artikel dengan nilai sedang dan sedikit artikel dengan nilai sangat tinggi. Distribusi seperti ini disebut *skewed* atau berekor berat. Mengubah skalanya saja tidak otomatis membuat distribusi tersebut menjadi simetris. Nilai ekstrem masih berada di ekor, dan sebagian besar observasi masih menumpuk di daerah kecil. Untuk masalah seperti ini, kita sering membutuhkan *log transform*, *power transform*, *quantile transform*, atau penanganan nilai ekstrem yang lebih eksplisit.
 
 Contoh suhu dan visibilitas pada Gambar 3.1 memperlihatkan bagaimana skala mentah dapat meregangkan ruang fitur. Titik-titiknya sama, tetapi lingkungan yang tampak dekat atau jauh berubah ketika kedua sumbu dibuat lebih sebanding.
-![Skala mentah yang meregangkan ruang fitur](../figures/ch03-fig-1.png)
+
+![Skala mentah yang meregangkan ruang fitur](../figures/ch03-fig-1.png){#fig-ch03-fig-1}
+
 Transformasi numerik membentuk kembali representasi agar angka mentah lebih sesuai dengan asumsi dan mekanisme model. Jika transformasi memiliki parameter yang dipelajari, seperti rata-rata, standar deviasi, nilai minimum, maksimum, kuantil, atau batas interval, parameter tersebut harus berasal dari data *train* dan dipakai ulang pada validasi, *test*, serta data baru.
 
 ## Standardisasi dan *Min-Max Scaling*
@@ -35,7 +37,9 @@ Nilai $x_{\min}$ dan $x_{\max}$ juga dihitung dari data *train*. Jika rentang ta
 Kedua transformasi tersebut bersifat linear dan monoton untuk setiap fitur. Artinya, dalam satu fitur, urutan nilai dipertahankan. Jika 30 lebih besar dari 20 sebelum transformasi, maka hasil transformasinya juga lebih besar. Jarak relatif di dalam fitur berubah secara linear. Namun, semua jarak multivariat tidak dipertahankan. Justru tujuan *scaling* adalah mengubah bobot relatif antar fitur, sehingga jarak gabungan pada beberapa dimensi memang dapat berubah.
 
 Gambar 3.2 menunjukkan perbedaan cara membaca standardisasi dan *min-max scaling*. Standardisasi memakai rata-rata dan standar deviasi sebagai jangkar, sedangkan *min-max scaling* memakai minimum dan maksimum.
-![Dua cara membuat skala fitur lebih sebanding](../figures/ch03-fig-2.png)
+
+![Dua cara membuat skala fitur lebih sebanding](../figures/ch03-fig-2.png){#fig-ch03-fig-2}
+
 Kelemahan utama *min-max scaling* adalah ketergantungannya pada nilai ekstrem. Jika satu artikel dengan statistik kata kunci sangat tinggi menetapkan batas maksimum, sebagian besar artikel biasa dapat terdesak ke bagian kecil dekat nol. Karena itu, *min-max scaling* tidak mengurangi pengaruh *outlier*. Metode ini hanya memasukkan *outlier* ke dalam rentang yang dipilih.
 
 Ada juga `MaxAbsScaler`, yang membagi nilai dengan nilai absolut terbesar sehingga hasilnya berada pada rentang sekitar $[-1, 1]$ tanpa menggeser nol. Catatan ini berguna terutama untuk data jarang (*sparse*) atau fitur yang memang berpusat di sekitar nol. Untuk sebagian besar pembahasan dasar, standardisasi dan *min-max scaling* sudah cukup sebagai dua pola utama.
@@ -59,7 +63,9 @@ Dengan cara ini, pusat fitur ditentukan oleh median, bukan rata-rata. Skala peny
 Pada contoh popularitas berita, satu artikel dengan statistik kata kunci sangat tinggi dapat menentukan nilai maksimum. *Min-max scaling* kemudian menekan mayoritas artikel biasa ke rentang yang sempit. *Robust scaling* tidak menghilangkan nilai ekstrem tersebut, tetapi membuat sebaran kelompok utama lebih terbaca karena skala tidak ditetapkan oleh nilai paling jauh. Median dan IQR masih mewakili kelompok utama observasi dengan lebih stabil.
 
 Gambar 3.3 membandingkan efek ini pada satu distribusi. Titik ekstrem masih ada setelah *robust scaling*, tetapi kelompok utama tidak lagi terlalu terkompresi oleh batas minimum dan maksimum.
-![\emph{Min-max scaling} dan \emph{robust scaling} ketika ada nilai ekstrem](../figures/ch03-fig-3.png)
+
+![*Min-max scaling* dan *robust scaling* ketika ada nilai ekstrem](../figures/ch03-fig-3.png){#fig-ch03-fig-3}
+
 *Robust scaling* tidak menghapus *outlier*. Nilai ekstrem tetap ekstrem setelah transformasi, bahkan kadang terlihat semakin jelas karena pusat data lebih stabil. Keadaan ini menguntungkan jika artikel yang sangat populer membawa sinyal yang memang penting. Jika nilai ekstrem perlu ditahan agar model tidak bereaksi berlebihan, *clipping* atau *capping* dapat digunakan seperti yang dibahas pada Bagian 3.5. Analisis mengenai kesalahan, variasi sah, atau sinyal khusus pada nilai ekstrem dibahas lebih lengkap pada Bab 5.
 
 Seperti scaler lain, median dan IQR dihitung dari data *train*, lalu nilai yang sama dipakai untuk validasi, *test*, dan data baru. Jadi, representasi yang dipakai saat evaluasi tetap mengikuti kondisi pelatihan. Setelah skala dibuat lebih tahan terhadap nilai ekstrem, masih ada kasus ketika yang bermasalah bukan pusat atau penyebutnya, melainkan bentuk distribusi itu sendiri.
@@ -85,10 +91,18 @@ Di sisi lain, *quantile transform* memakai peta yang lebih kuat. Transformasi in
 Kekuatan ini datang bersama risiko. *Quantile transform* bersifat nonlinear. Transformasi ini dapat mengubah jarak antar nilai dan struktur korelasi antar fitur, terutama jika hubungan linear semula penting bagi model. Nilai baru di luar rentang yang dipelajari juga dapat terdorong ke batas distribusi target. Log memberi intervensi paling ringan karena bentuknya tetap. *Power transform* mempelajari satu parameter bentuk, sedangkan *quantile transform* mempelajari peta distribusi yang jauh lebih *data-driven*. Karena itu, keandalan peta ini bergantung pada jumlah sampel pelatihan. Pada *dataset* kecil, log atau *power transform* sering lebih sesuai.
 
 Gambar 3.4 menempatkan perbedaan ini secara visual. *Scaling* hanya mengubah satuan pada sumbu. Log, *power transform*, dan *quantile transform* mengubah bentuk sebaran nilai. Ekor kanan dapat memendek, nilai yang semula bertumpuk dapat menyebar, dan model yang peka terhadap bentuk distribusi mendapat representasi yang lebih mudah dipakai.
-![Mengubah bentuk distribusi fitur numerik](../figures/ch03-fig-4.png)
+
+![Mengubah bentuk distribusi fitur numerik](../figures/ch03-fig-4.png){#fig-ch03-fig-4}
+
 Secara implementasi konseptual, *power transform* dan *quantile transform* adalah transformer yang di-*fit* pada data *train*. *Log transform* dapat bersifat stateless, misalnya melalui `FunctionTransformer` untuk `log1p`, tetapi sebaiknya tetap diletakkan di *pipeline* yang sama agar perlakuan data *train*, validasi, *test*, dan inferensi tetap konsisten.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Yeo-Johnson dan batas praktis quantile transform {.pendalaman-title .unnumbered .unlisted}
+
 *Yeo-Johnson* memperluas ide *Box-Cox* agar dapat menerima nilai nol dan negatif.
+:::
 
 $$\psi(x, \lambda) = \begin{cases} \dfrac{(x + 1)^{\lambda} - 1}{\lambda} & \lambda \neq 0,\ x \geq 0 \\[4pt] \ln(x + 1) & \lambda = 0,\ x \geq 0 \\[4pt] -\dfrac{(1 - x)^{2 - \lambda} - 1}{2 - \lambda} & \lambda \neq 2,\ x < 0 \\[4pt] -\ln(1 - x) & \lambda = 2,\ x < 0 \end{cases}$$
 
@@ -104,9 +118,18 @@ Berbeda dari penghapusan *outlier*, *clipping* tetap mempertahankan observasi. Y
 
 Batas *clipping* harus memiliki alasan. Ada batas domain yang ditentukan sebelum melihat data, seperti rentang sensor atau batas fisik. Ada juga batas statistik yang dipelajari dari data *train*, misalnya persentil, IQR, atau MAD. Batas domain tidak perlu melalui *pipeline* pelatihan karena ditetapkan sebelum data dibagi. Batas statistik harus dipelajari hanya dari data *train*. Tabel 3.1 merangkum beberapa aturan umum. Kolom pertama menyebut metode, kolom kedua menyebut bentuk batas, dan kolom ketiga memberi petunjuk kapan metode itu wajar dipakai.
 
-**Tabel 3.1 --- Aturan penetapan batas untuk *clipping* atau *winsorization***
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Metode | Aturan batas | Kapan cocok |
+| --- | --- | --- |
+| Batas domain | Batas tetap dari pengetahuan bisnis atau fisik sebelum melihat data | Batasnya bermakna dan stabil, misalnya suhu, kelembapan, atau rentang sensor |
+| Persentil | Batas di bawah danatau di atas persentil tertentu dari data *train*, misalnya persentil 1 dan 99 | Menahan dua ekor distribusi secara sederhana tanpa asumsi bentuk distribusi |
+| IQR fences | $ Q_1 - k IQR $ dan $ Q_3 + k IQR $ dari data *train* | *Outlier* moderat dan konvensi yang selaras dengan boxplot |
+| MAD | Median $ c MAD $ dari data *train* | Kontaminasi *outlier* berat, ketika meanstd dan bahkan IQR kurang stabil |
+
+: Aturan penetapan batas untuk *clipping* atau *winsorization* {#tbl-ch03-8}
+
+:::
 
 Untuk IQR, nilai $k$ yang sering dipakai adalah 1.5 atau 3.
 
@@ -119,12 +142,20 @@ MAD, atau median absolute deviation, mengukur median dari jarak absolut setiap n
 Intervensi lain adalah *binning* atau *discretization*, yaitu mengubah fitur kontinu menjadi interval. Jumlah tautan dapat dibagi menjadi sedikit, sedang, dan banyak. Panjang konten dapat dibagi menjadi pendek, sedang, dan panjang. Popularitas historis kata kunci dapat dibagi ke dalam kuantil. Interval dapat dipilih dengan lebar sama (*uniform*), frekuensi sama (*quantile*), kedekatan ke pusat klaster satu-dimensi (*kmeans*), atau secara *supervised* memakai target.
 
 Gambar 3.5 memperlihatkan hubungan antara nilai mentah, nilai yang di-*clip*, dan interval *binning*. Nilai di dalam satu bin tidak lagi dibedakan, sehingga informasi halus di dalam interval hilang.
-![\emph{Clipping} dan \emph{binning} pada satu sumbu numerik](../figures/ch03-fig-5.png)
+
+![*Clipping* dan *binning* pada satu sumbu numerik](../figures/ch03-fig-5.png){#fig-ch03-fig-5}
+
 *Binning* dapat membantu model linear menangkap efek ambang. Jika peluang artikel populer berubah setelah jumlah tautan atau panjang konten melewati zona tertentu, indikator bin dapat membuat model sederhana membaca pola yang tidak linear. Namun, *binning* juga mengorbankan detail karena dua nilai yang berada dalam interval sama diperlakukan identik. Jika hasil *binning* di-*one-hot*, jumlah fitur juga bertambah, sehingga isu seleksi fitur pada Bab 7 menjadi relevan.
 
 Untuk model pohon, manfaat *binning* eksternal biasanya lebih kecil karena pohon dapat belajar ambang pada fitur kontinu. Yang perlu lebih diwaspadai adalah *supervised discretization*. Pada pendekatan ini, misalnya dengan `DecisionTreeDiscretiser`, sebuah pohon dangkal dilatih untuk tiap fitur dengan target, lalu daun atau batas daunnya dipakai sebagai bin. Karena target ikut menentukan batas, metode ini sangat mudah memberi kesan performa tinggi jika dilakukan sebelum pemisahan data. Praktik pipeline yang benar wajib diterapkan dengan menempatkan pemilihan batas di dalam lipatan *train*, bukan pada seluruh *dataset*.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Spline, alternatif mulus untuk binning {.pendalaman-title .unnumbered .unlisted}
+
 *Binning* keras membuat representasi berbentuk tangga. Setiap batas bin menimbulkan lompatan, sementara variasi di dalam bin tidak terlihat. `SplineTransformer` menawarkan jalan lain dengan membentuk fitur basis B-spline, yaitu polinomial potongan yang tersambung mulus pada titik *knot*. Untuk model linear yang membutuhkan non-linearitas, *spline* sering lebih halus daripada bin *one-hot* karena tidak ada tebing tajam di batas interval. Penempatan *knot* dapat mengikuti pola yang mirip dengan batas bin, misalnya *uniform* atau *quantile*. Meski demikian, *binning* tetap menarik ketika interpretabilitas interval lebih penting atau ketika domain memang memiliki ambang diskret yang nyata.
+:::
 
 ## Memilih Transformasi Berdasarkan Keluarga Model
 
@@ -132,27 +163,54 @@ Daftar transformasi tadi belum menentukan pilihan akhir, karena gangguan yang sa
 
 Tabel 3.2 memberi peta awal. Kolom "kebutuhan *scaling*" menunjukkan seberapa sering transformasi skala menjadi langkah penting sebelum pemodelan, sedangkan kolom alasan menjelaskan mekanisme teknisnya. Tabel ini memberi panduan keputusan, bukan aturan mutlak.
 
-**Tabel 3.2 --- Peta kepekaan keluarga model terhadap transformasi numerik**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Keluarga model | Kebutuhan *scaling* | Alasan singkat |
+| --- | --- | --- |
+| k-NN k-means | Tinggi | Jarak berubah ketika satu fitur memiliki satuan jauh lebih besar |
+| SVM RBF | Tinggi | Perilaku jarak pada *kernel* bergantung pada skala |
+| Linearlogistik + *regularization* | Sedang-tinggi | Penalti koefisien mengasumsikan skala fitur relatif sebanding |
+| PCA pada fitur numerik dengan satuan atau skala tak sebanding | Tinggi jika bobot relatif antarfitur ingin disetarakan | Varians mentah yang besar dapat mendominasi komponen. *Scaling* mengubah tujuan PCA |
+| `TruncatedSVD` pada matriks *sparse* | Bergantung pada makna bobot fitur, umumnya tanpa *centering* | Tidak melakukan *centering* menjaga *sparsity*, sedangkan *scaling* hanya dipakai jika pembobotan relatifnya memang diinginkan |
+| Neural network SGD | Sering tinggi | Optimisasi lebih mudah ketika skala *input* sebanding |
+| Tree random forest GBDT | Rendah untuk *scaling* linear | Split ambang bergantung terutama pada urutan, bukan besar satuan |
+
+: Peta kepekaan keluarga model terhadap transformasi numerik {#tbl-ch03-9}
+
+:::
 
 Pada *k-NN*, dua observasi dianggap dekat atau jauh berdasarkan jarak. Jika satu fitur memakai statistik historis kata kunci yang bisa mencapai puluhan ribu dan fitur lain memakai skor sentimen yang berada di sekitar -1 sampai 1, fitur berentang besar dapat menguasai jarak total. Pada *k-means*, pusat klaster juga ditarik oleh skala fitur. Pada SVM dengan *RBF kernel*, skala mengubah perilaku jarak dalam *kernel*. Pada PCA untuk fitur numerik dengan satuan yang tidak sebanding, varians mentah dapat membuat satu fitur mendominasi hanya karena satuannya. Standardisasi tepat ketika bobot relatif yang sebanding memang menjadi tujuan, tetapi juga mengubah objektif PCA. Pengecualian pentingnya adalah `TruncatedSVD` pada matriks *sparse*, yang lazim dipakai tanpa *centering* agar *sparsity* terjaga. Kebutuhan *scaling*-nya bergantung pada makna pembobotan fitur, bukan aturan tinggi yang universal.
 
 Contoh Online News Popularity pada Gambar 3.6 membuat hal ini lebih konkret. Dua fitur, `num_hrefs` dan `kw_avg_avg`, memiliki rentang dan satuan yang berbeda. Pada ruang mentah, batas keputusan *k-NN* mudah mengikuti geometri yang dibentuk oleh skala awal. Setelah standardisasi, kedua sumbu menjadi lebih sebanding, sehingga bentuk batas keputusan dapat berubah.
-![Batas keputusan \emph{k-NN} sebelum dan sesudah standardisasi](../figures/ch03-fig-6.png)
+
+![Batas keputusan *k-NN* sebelum dan sesudah standardisasi](../figures/ch03-fig-6.png){#fig-ch03-fig-6}
+
 Model pohon berbeda. Pohon dapat membuat aturan seperti "suhu \<= ambang" atau "energi lampu \<= ambang". Jika satuan fitur diubah secara linear, urutan observasi tidak berubah. Ambangnya berubah angka, tetapi pemisahan yang sama masih tersedia. Inilah intuisi mengapa decision tree, random forest, dan banyak GBDT relatif rendah sensitivitasnya terhadap *scaling* linear.
 
 Kepekaan yang rendah tidak berarti pengaruh transformasi hilang sama sekali. Transformasi yang mengubah urutan, menggabungkan nilai, atau membuang informasi tetap dapat mengubah perilaku pohon. *Binning* yang terlalu kasar, misalnya, dapat menghilangkan ambang yang sebenarnya bisa dipelajari pohon dari nilai kontinu. Detail implementasi seperti penanganan nilai hilang, presisi numerik, dan *histogram-based binning* juga dapat membuat representasi tetap berpengaruh.
 
 Transformasi numerik sebaiknya dipilih sebagai bagian dari *pipeline* dan dibandingkan secara empiris. Standardisasi adalah *baseline* yang kuat untuk banyak model sensitif skala. *Robust scaling* sesuai ketika nilai ekstrem sah tetapi tidak boleh menentukan skala. Transformasi log, *power*, atau *quantile* dipilih ketika bentuk distribusi menjadi masalah. *Clipping* dan *binning* dipakai ketika ada alasan domain atau alasan pemodelan yang jelas.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Binning internal pada gradient boosting modern {.pendalaman-title .unnumbered .unlisted}
+
 Implementasi GBDT modern seperti LightGBM memakai algoritma berbasis histogram. Nilai kontinu dibucketkan ke sejumlah bin diskret sebelum pencarian split. Model kemudian menilai batas bin, bukan setiap nilai mentah satu per satu. Bagi praktisi, ada dua akibat. Pertama, *scaling* linear eksternal biasanya redundan untuk model seperti ini. Kedua, *pre-binning* yang terlalu kasar dari luar dapat berinteraksi buruk dengan binning internal model, bahkan membuang informasi yang seharusnya masih dapat dimanfaatkan. Karena itu, tabel utama menyebut sensitivitasnya "rendah", bukan "nol".
+:::
+
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
 
 Benang merah bab ini adalah diagnosis, bukan mencari satu scaler baku untuk semua angka. Jika fitur hanya berbeda satuan atau rentang, standardisasi atau *min-max scaling* mungkin cukup. Jika nilai ekstrem sah tetapi tidak boleh mengatur skala seluruh fitur, *robust scaling* lebih sesuai. Jika bentuk distribusi yang menjadi masalah, terutama *skew* atau ekor berat, log, *power transform*, atau *quantile transform* dapat dipertimbangkan. Jika pengaruh nilai ekstrem perlu dibatasi atau pola ambang perlu diekspresikan, *clipping* dan *binning* menjadi pilihan yang lebih langsung.
 
 Kompromi utamanya adalah antara kesederhanaan, informasi yang dipertahankan, dan kecocokan dengan model. Transformasi linear menjaga urutan dalam fitur tetapi mengubah geometri antar fitur. Transformasi bentuk distribusi dapat membantu, tetapi juga dapat mengubah jarak dan korelasi. *Clipping* menahan pengaruh ekstrem, tetapi dapat menyembunyikan variasi yang masih berguna. *Binning* membuat ambang lebih mudah dibaca, tetapi menghapus detail di dalam interval.
 
 Keputusan akhir perlu dimulai dari diagnosis atas representasi mentah dan keluarga model yang akan memakai fitur tersebut. Parameter transformasi harus dipelajari hanya dari data *train*, lalu hasilnya diperiksa melalui evaluasi yang sah. Dengan cara ini, fitur numerik menjadi representasi yang sengaja dirancang untuk tujuan pemodelan.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - scikit-learn --- Preprocessing data --- <https://scikit-learn.org/stable/modules/preprocessing.html>. Penskalaan, transformasi, dan diskretisasi fitur numerik.
 
@@ -166,6 +224,12 @@ Keputusan akhir perlu dimulai dari diagnosis atas representasi mentah dan keluar
 
 - Yeo & Johnson (2000), Biometrika --- <https://doi.org/10.1093/biomet/87.4.954>. Transformasi daya untuk nilai nol/negatif.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Box, George E. P., and David R. Cox. 1964. "An Analysis of Transformations." *Journal of the Royal Statistical Society, Series B* 26 (2): 211--52.
 
 Huber, Peter J. 1981. *Robust Statistics*. Wiley.
+
+:::

@@ -15,7 +15,9 @@ Untuk geometri lokal, workflow yang umum adalah memulai dari WGS84, lalu memproy
 Fitur spasial yang sering dipakai mencakup koordinat terproyeksi, jarak ke point of interest, keanggotaan wilayah, jumlah objek dalam radius tertentu, dan kepadatan lokal. Pada Meuse, contoh paling langsung adalah koordinat sampel, jarak ke sampel lain, tetangga k-nearest, dan ringkasan kovariat tanah di sekitar titik. Ringkasan `log_zinc` tetangga hanya sah jika pengukuran historis itu benar-benar tersedia saat titik baru diprediksi; ia bukan fitur biasa ketika `log_zinc` yang sama menjadi target yang belum diamati. Pada domain lain, fitur sejenis dapat berupa jarak ke sungai, jalan, fasilitas, atau lokasi layanan terdekat.
 
 Gambar 13.1 menunjukkan tiga cara mengubah satu lokasi menjadi fitur. Lokasi sampel yang sama dapat menghasilkan jarak ke tetangga, jumlah sampel dalam radius, atau keanggotaan cell pada grid.
-![Dari koordinat ke fitur spasial](../figures/ch13-fig-1.png)
+
+![Dari koordinat ke fitur spasial](../figures/ch13-fig-1.png){#fig-ch13-fig-1}
+
 Hierarchical grid indexing seperti H3 memberi pilihan modern selain jarak langsung dan batas administratif. Bumi dibagi menjadi cell hexagonal pada beberapa resolusi. Koordinat latitude/longitude dapat diubah langsung menjadi ID cell tanpa memerlukan proyeksi, lalu fitur kepadatan, jumlah peristiwa, atau agregat tetangga dihitung per cell. Ini membuat fitur proximity lebih murah dan konsisten, terutama ketika data sangat besar atau *query radius* sering dilakukan.
 
 Namun, grid bukan jawaban universal. Resolusi cell menentukan apakah detail lokal terlihat atau justru melebur. Batas cell juga tetap buatan. Seperti semua representasi, grid indexing mengubah pertanyaan spasial menjadi bentuk yang lebih mudah dipakai model, tetapi membawa asumsi tentang skala. Setelah posisi menjadi fitur, lingkungan sekitar mulai ikut dihitung melalui tetangga, kepadatan, dan pola kemiripan lokal.
@@ -35,12 +37,20 @@ Dalam rumus tersebut, $y_{\text{lag},i}$ adalah fitur *spatial lag* untuk lokasi
 Definisi tetangga adalah keputusan representasi. Distance band memasukkan semua titik dalam radius $r$ kilometer. k-nearest neighbors memberi setiap lokasi jumlah tetangga yang sama, berguna ketika kepadatan titik tidak merata. Contiguity memakai wilayah yang berbatasan langsung, misalnya kecamatan yang saling menyentuh. Travel time atau network distance dapat lebih sesuai ketika akses mengikuti jalan, sungai, atau jaringan transportasi, bukan garis lurus.
 
 Gambar 13.2 memperlihatkan bagaimana satu lokasi dapat memiliki tetangga berbeda di bawah tiga skema bobot. *Spatial lag* yang dihasilkan pun dapat berbeda, walaupun titik targetnya sama.
-![\emph{Spatial lag} dengan beberapa skema bobot tetangga](../figures/ch13-fig-2.png)
+
+![*Spatial lag* dengan beberapa skema bobot tetangga](../figures/ch13-fig-2.png){#fig-ch13-fig-2}
+
 Spatial autocorrelation berarti nilai pada lokasi berdekatan lebih mirip daripada nilai pada lokasi jauh. Moran's I adalah ukuran global yang sering dipakai untuk memeriksa pola ini. Local indicators dapat menemukan klaster lokal atau outlier spasial. Fitur tetangga dapat meningkatkan prediksi, tetapi juga dapat memperkuat pola historis, bias pengukuran, atau efek kebijakan. Batas administratif, misalnya, sering mencerminkan keputusan manusia dan dapat menjadi proxy untuk layanan, aturan, atau ketimpangan lama.
 
 Satu risiko perlu disebut sejak awal. *Spatial lag* yang memakai nilai target tetangga hanya sah bila nilai tetangga itu memang sudah diketahui pada waktu prediksi. Jika `log_zinc` dari titik validasi ikut memengaruhi fitur *training* atau fitur titik validasi lain melalui tetangga, label tersembunyi melintasi batas *split* dan evaluasi menjadi bocor. Risiko ini menjadi lebih konkret pada *spatial cross-validation* (Roberts et al. 2017).
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Indikator autokorelasi lokal (LISA) sebagai fitur {.pendalaman-title .unnumbered .unlisted}
+
 Local Moran's I dapat mengelompokkan lokasi ke empat kuadran relatif terhadap lingkungan sekitarnya. High-High menandai hot spot, Low-Low menandai cold spot, sedangkan High-Low dan Low-High menandai outlier spasial. Kuadran LISA dapat menjadi fitur jika dihitung dari kovariat non-target yang tersedia. Jika LISA dihitung dari `log_zinc` yang sedang diprediksi, kuadrannya bukan fitur inferensi biasa; hanya label historis yang benar-benar sudah ada pada waktu prediksi yang boleh berkontribusi. Aturan *split* pada Bagian 13.3 tetap berlaku.
+:::
 
 ## Spatial Leakage dan Spatial Cross-Validation
 
@@ -57,7 +67,9 @@ Dalam rumus tersebut, $n$ adalah jumlah observasi, $w_{ij}$ adalah bobot spasial
 Validasi spasial harus mengikuti pertanyaan deployment. Jika model akan memprediksi titik baru di wilayah yang sama, *split* dapat lebih longgar; hindari duplikat dan pastikan konteks tetangga yang dipakai evaluasi juga akan tersedia saat inferensi. Jika model akan dipakai di wilayah baru, gunakan *spatial block*, *leave-region-out*, atau *leave-location-out*. Jika deployment mensyaratkan jarak minimum dari wilayah terukur, *buffered split* membuang *training point* dalam jarak tertentu dari batas *test block* untuk meniru kondisi tersebut.
 
 Gambar 13.3 membandingkan tiga split. Panel random memperlihatkan train dan test bercampur. Panel block memisahkan wilayah. Panel buffered block menambahkan strip kosong di sekitar batas.
-![Random split, spatial block, dan buffer](../figures/ch13-fig-3.png)
+
+![Random split, spatial block, dan buffer](../figures/ch13-fig-3.png){#fig-ch13-fig-3}
+
 Fitur spasial juga harus dibangun di dalam batas *split*. Jika agregat memakai label atau outcome tetangga, hitung hanya dari label historis yang sah untuk *fold* tersebut dan memang akan tersedia saat inferensi. Jika deployment bersifat time-space, *split* perlu menghormati waktu sekaligus lokasi. Model dilatih pada periode dan wilayah yang tersedia sebelum prediksi, lalu diuji pada masa depan atau wilayah baru sesuai tujuan. Pola yang sama akan muncul pada graf. Hubungan membantu prediksi, tetapi informasi yang tidak tersedia dan mengalir melalui hubungan dapat membuat evaluasi terlalu mudah.
 
 ## Degree, Centrality, dan Clustering pada Graf
@@ -78,9 +90,19 @@ Centrality lain mengukur "penting" dengan definisi berbeda. Betweenness melihat 
 
 Tabel 13.1 merangkum ukuran-ukuran ini. Kolom kedua menunjukkan bahwa "penting" dapat berarti banyak hal, bukan ranking universal.
 
-**Tabel 13.1 --- Ukuran sentralitas dan makna pentingnya**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Ukuran | Mengukur apa | Contoh node yang menonjol |
+| --- | --- | --- |
+| Degree | Jumlah koneksi langsung | Anggota klub dengan banyak hubungan langsung |
+| Betweenness | Proporsi jalur terpendek yang lewat | Jembatan antar faksi |
+| Closeness | Jarak rata-rata ke semua node | Anggota yang dekat ke banyak bagian klub |
+| PageRankeigenvector | Terhubung ke node yang juga penting | Anggota yang terhubung ke anggota sentral |
+| Clustering coefficient | Kepadatan lokal antar tetangga | Anggota *clique* |
+
+: Ukuran sentralitas dan makna pentingnya {#tbl-ch13-8}
+
+:::
 
 Fitur-fitur ini adalah representasi yang dirancang manusia. Kita memilih ukuran, menghitungnya dari struktur graf, lalu menambahkannya ke tabel node atau edge. Pada Karate Club, degree, betweenness, dan clustering coefficient membantu membedakan anggota yang berada di pusat faksi, anggota yang lebih periferal, dan anggota yang menjembatani komunitas. Pada domain lain, ukuran serupa dapat dipakai untuk citation network, road network, atau deteksi anomali struktural.
 
@@ -120,7 +142,13 @@ Batasnya penting. Banyak embedding berbasis *walk* bersifat *transductive*. Vekt
 
 Dua batas ini menjelaskan mengapa desain *inductive* seperti GraphSAGE dan GNN menjadi penting. Kita tidak hanya ingin memetakan node lama dalam graf tetap, tetapi juga ingin menghasilkan representasi untuk node baru dengan atribut dan tetangga yang tersedia. Pada GNN, agregasi tetangga tidak hanya menjadi fitur manual, tetapi menjadi operasi yang dipelajari.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Bias jalan acak dengan parameter p dan q {.pendalaman-title .unnumbered .unlisted}
+
 Pada node2vec, langkah *walk* berikutnya dapat ditulis $P(c_i = x \mid c_{i-1} = v) = \pi_{vx} / Z$, dengan $\pi_{vx}$ sebagai bobot mentah dan $Z$ sebagai konstanta penyesuaian. Parameter *return* $p$ yang rendah membuat *walk* cenderung tetap lokal, mirip BFS, sehingga embedding menangkap komunitas atau *homophily*. Parameter *in-out* $q$ yang rendah mendorong *walk* bergerak keluar, mirip DFS, sehingga embedding menangkap peran struktural seperti *bridge node*. Kedua parameter tersebut menentukan jenis kemiripan yang dikodekan geometri, mengulang pelajaran Tabel 13.1 bahwa "penting" dan "mirip" adalah keputusan desain.
+:::
 
 ## GNN sebagai Pembelajar Representasi
 
@@ -135,18 +163,35 @@ $$\mathbf{h}_v^{(k)} = \sigma\!\left( \mathbf{W}^{(k)} \sum_{u \in \mathcal{N}(v
 Dalam rumus tersebut, $\mathbf{h}_v^{(k)}$ adalah representasi node $v$ pada layer ke-$k$, $\mathcal{N}(v)$ adalah tetangga $v$, dan $\mathbf{h}_u^{(k-1)}$ adalah representasi tetangga pada layer sebelumnya. Matriks $\mathbf{W}^{(k)}$ mentransformasi rata-rata pesan tetangga, sedangkan $\mathbf{B}^{(k)}$ mentransformasi representasi node itu sendiri. Fungsi $\sigma$ menambahkan nonlinearitas. Dibanding formula neighbor mean pada Bagian 13.5, GNN menambahkan bobot yang dipelajari dan komposisi berlapis.
 
 Gambar 13.4 memperlihatkan *message passing*. Node target menerima vektor dari tetangga, mengagregasikannya, melewati learned transformation, lalu menghasilkan representasi baru. Frame kedua menunjukkan bahwa layer kedua memperluas receptive field sampai dua hop.
-![\emph{Message passing} pada GNN](../figures/ch13-fig-4.png)
+
+![*Message passing* pada GNN](../figures/ch13-fig-4.png){#fig-ch13-fig-4}
+
 GNN berguna ketika struktur dan atribut sama-sama penting. Pada node classification, atribut node dan tetangga membantu menentukan label. Pada link prediction, representasi dua node dapat dipakai untuk menilai kemungkinan edge. Pada graph classification, seluruh graf diringkas menjadi vektor, misalnya molekul dengan atom sebagai node, bond sebagai edge, dan toxicity sebagai target.
 
 Tabel 13.2 menempatkan GNN bersama representasi graf lain. Kolom "simpul baru" penting karena tidak semua pendekatan mudah dipakai pada deployment *inductive*.
 
-**Tabel 13.2 --- Tangga representasi graf**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Pendekatan | Memakai atribut node? | Node baru *inductive*? | Biaya | Kapan cukup |
+| --- | --- | --- | --- | --- |
+| Metrik struktural manual | Tidak selalu | Ya, jika graf lokal tersedia | Rendah | Baseline, interpretabilitas |
+| Agregasi tetangga dan jalur | Ya, jika atribut tersedia | Ya, dengan edge sah | Rendah-sedang | Fitur relasional praktis |
+| node2vecDeepWalk | Umumnya tidak | Terbatas pada graf tetap | Sedang | Topology kuat, atribut minim |
+| GNN (GCNGATGraphSAGE) | Ya | Bisa, tergantung desain | Sedang-tinggi | Struktur dan atribut sama-sama penting |
+
+: Tangga representasi graf {#tbl-ch13-9}
+
+:::
 
 GNN adalah titik jelas representasi yang dipelajari mesin pada graf. Namun, risikonya nyata, termasuk *over-smoothing*, scalability, bias dalam struktur graf, serta *leakage* melalui label, *edge*, atau atribut yang tidak tersedia dalam protokol deployment. Karena itu, pembahasan graf perlu ditutup dengan validasi.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Varian dan batas praktis GNN {.pendalaman-title .unnumbered .unlisted}
+
 GAT memakai attention agar tetangga tidak diberi bobot sama rata. GraphSAGE mengambil sampel dan mengagregasi neighborhood sehingga lebih cocok untuk node baru dalam setting *inductive*. Graf heterogen memerlukan varian yang membedakan tipe relasi, seperti keluarga R-GCN. Batas praktisnya juga perlu diingat. *Over-smoothing* membuat terlalu banyak layer mengarahkan node ke vektor yang makin mirip. *Over-squashing* terjadi ketika informasi jarak jauh dipaksa melewati bottleneck struktural yang sempit. Secara ekspresivitas, banyak *message-passing* GNN berbagi batas dengan Weisfeiler-Lehman graph-isomorphism test. Cukup kenali nama batas ini sebagai peringatan, bukan teori yang perlu dibuktikan pada bagian ini.
+:::
 
 ## Leakage pada Graf
 
@@ -157,16 +202,25 @@ Ada dua rezim evaluasi yang perlu dibedakan. Pada *setting transductive*, graf, 
 Link prediction punya jebakan tambahan. *Negative samples* harus diambil terpisah per split. Future edges tidak boleh dipakai untuk membangun graf training jika tugasnya memprediksi edge masa depan. Pada temporal graph, split perlu time-aware. Model dilatih dari edge dan node sebelum *cutoff*, lalu diuji pada target setelah *cutoff*. Citation graph, misalnya, tidak boleh memakai sitasi masa depan saat memprediksi status paper pada tanggal publikasi. Social graph juga tidak boleh memakai friendship edge yang terbentuk setelah tanggal prediksi.
 
 Gambar 13.5 menunjukkan *node split* pada graf yang masih terhubung dan satu varian *inductive split* yang lebih ketat. Panel pertama masih memiliki *edge* melintasi batas. Panel kedua memutus subgraph untuk meniru deployment ke graf atau komunitas terpisah; pemutusan ini bukan syarat universal bagi semua tugas *inductive*.
-![Graph split dengan dan tanpa edge lintas batas](../figures/ch13-fig-5.png)
+
+![Graph split dengan dan tanpa edge lintas batas](../figures/ch13-fig-5.png){#fig-ch13-fig-5}
+
 Mitigasi mengikuti rezim evaluasi. Potong *cross-partition edges* hanya ketika hubungan itu tidak akan tersedia saat inferensi atau ketika deployment menuntut subgraf terpisah. Dalam rezim *transductive*, fitur, *random walk*, dan *message passing* boleh memakai graf yang tersedia, tetapi tidak boleh menerima label uji, *edge* masa depan, atau atribut yang belum diketahui. Untuk GNN maupun fitur manual seperti degree, centrality, dan agregasi tetangga, adjacency yang dipakai harus sesuai dengan graf yang benar-benar tersedia dalam protokol deployment.
 
 Contoh *fraud* memperjelas perbedaan protokol. *Random node split* yang memakai *transaction links* yang sudah tersedia mengukur tugas *transductive* pada jaringan yang sama. Skor itu tidak boleh diklaim sebagai bukti performa pada jaringan baru tanpa hubungan tersebut. Kebocoran yang sebenarnya muncul jika label node uji, transaksi masa depan, atau atribut yang belum tersedia ikut mengalir. Strategi *split* perlu ditetapkan sejak awal, apakah tugasnya memprediksi label node baru, *edge* yang belum terlihat, graf baru, atau evolusi graf di masa depan. Keputusan tersebut menentukan representasi dalam Tabel 13.2 yang dapat dipakai dengan jujur.
+
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
 
 Data spasial dan graf mengajarkan prinsip yang sama. Hubungan adalah fitur dan dapat menjadi jalur kebocoran ketika membawa informasi yang tidak tersedia saat inferensi. Pada data spasial, hubungan muncul sebagai jarak, radius, ketetanggaan, grid cell, *spatial lag*, dan autokorelasi. Pada graf, hubungan muncul sebagai degree, centrality, clustering, agregasi tetangga, path similarity, node embedding, dan *message passing*.
 
 Namun, fitur relasional selalu membawa risiko evaluasi. *Random split* dapat terlalu optimistis jika deployment menuntut wilayah atau graf baru tetapi evaluasi tetap menyediakan konteks tetangga dari wilayah atau graf yang sama. Kebocoran terjadi ketika label tersembunyi, *edge* masa depan, atau atribut yang belum tersedia ikut membangun fitur. *Spatial block*, buffer, *group split*, *temporal split*, dan *inductive graph split* adalah pilihan yang dipakai sesuai bentuk deployment, bukan kewajiban universal untuk setiap hubungan.
 
 Tabel 13.1 membantu membaca berbagai arti "penting" pada graf, sedangkan Tabel 13.2 merangkum tangga representasi dari metrik manual sampai GNN. Pilihan terbaik bergantung pada tugas, atribut, skala graf, kebutuhan interpretasi, dan jenis generalisasi yang diinginkan. Jika hubungan membentuk data, maka representasi dan validasi harus dibangun dengan hubungan itu di pusat keputusan.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - GeoPandas --- <https://geopandas.org/>. Struktur data dan operasi geospasial di Python.
 
@@ -180,8 +234,14 @@ Tabel 13.1 membantu membaca berbagai arti "penting" pada graf, sedangkan Tabel 1
 
 - Hamilton dkk. (2017), GraphSAGE --- <https://arxiv.org/abs/1706.02216>. Agregasi tetangga yang induktif.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Grover, Aditya, and Jure Leskovec. 2016. "Node2vec: Scalable Feature Learning for Networks." *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining*. <https://arxiv.org/abs/1607.00653>.
 
 Kipf, Thomas N., and Max Welling. 2017. "Semi-Supervised Classification with Graph Convolutional Networks." *International Conference on Learning Representations (ICLR)*. <https://arxiv.org/abs/1609.02907>.
 
 Roberts, David R., Volker Bahn, Simone Ciuti, et al. 2017. "Cross-Validation Strategies for Data with Temporal, Spatial, Hierarchical, or Phylogenetic Structure." *Ecography* 40 (8): 913--29. <https://doi.org/10.1111/ecog.02881>.
+
+:::

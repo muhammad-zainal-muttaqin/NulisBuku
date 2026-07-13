@@ -39,12 +39,20 @@ dengan tepat satu $x_i = 1$. Untuk contoh tadi, "Never married" pada urutan {Nev
 Ordinal encoding memetakan kategori ke satu kolom integer. Untuk variabel yang benar-benar berurutan, cara ini wajar. Tingkat pendidikan dapat diberi kode berurutan karena relasi urutnya memang bermakna. Namun, untuk kategori nominal seperti negara lahir atau kode pekerjaan, kode 1, 2, 3 dapat menyesatkan. Model linear atau berbasis jarak dapat membaca kode yang lebih besar sebagai kategori yang lebih tinggi atau lebih jauh, padahal angka itu hanya label buatan.
 
 Gambar 4.1 memperlihatkan perbedaan ini. Ordinal encoding hemat dimensi, tetapi membawa asumsi urutan. *One-hot encoding* lebih lebar, tetapi menjaga kategori tetap terpisah.
-![One-hot dan ordinal encoding pada kolom kategori](../figures/ch04-fig-1.png)
+
+![One-hot dan ordinal encoding pada kolom kategori](../figures/ch04-fig-1.png){#fig-ch04-fig-1}
+
 Baik *one-hot* maupun ordinal encoder mempelajari pemetaan dari data *train*. Pada data baru, kategori harus mengikuti pemetaan yang sama. Pada `OneHotEncoder`, parameter `handle_unknown` seperti `'error'`, `'ignore'`, `'infrequent_if_exist'`, atau `'warn'`, serta `min_frequency` dan `max_categories`, menentukan perilaku terhadap kategori baru dan kategori jarang. Pada `OrdinalEncoder`, `handle_unknown`, misalnya `'error'` atau `'use_encoded_value'`, bersama `unknown_value` dan `encoded_missing_value` memainkan peran serupa.
 
 Untuk model linear tanpa *regularization*, `drop='first'` atau `drop='if_binary'` dapat dipakai untuk menghindari kolinearitas sempurna antarkolom *one-hot*, meskipun penghapusan ini membuat representasi kehilangan simetri antarkategori. Jika `handle_unknown='ignore'` menghasilkan baris *all-zero*, kategori tak dikenal tidak dapat dibedakan dari kategori referensi yang dibuang oleh `drop='first'`, karena keduanya mempunyai kode yang sama. Ketika pembedaan tersebut penting, siapkan bucket eksplisit untuk kategori tak dikenal atau jarang saat *fit*, atau pantau laju kategori baru, bukan hanya mengandalkan kode *all-zero*. `OrdinalEncoder` juga berbeda dari `LabelEncoder`. Yang pertama didesain untuk kolom fitur dan menerima *input* 2-D, sedangkan yang kedua dimaksudkan untuk label target. Setelah makna dasar kategori dijaga, persoalan berikutnya adalah skala karena beberapa kolom terlalu besar untuk diperlakukan dengan *one-hot* biasa.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Nilai kosong dan kategori tak dikenal sebagai kebijakan encoder {.pendalaman-title .unnumbered .unlisted}
+
 Nilai kosong pada fitur kategorikal tidak selalu harus dihapus atau diimputasi menjadi kategori paling sering. Pada beberapa encoder, nilai kosong dapat diperlakukan sebagai kategori tersendiri. `OrdinalEncoder(encoded_missing_value=...)`, misalnya, dapat memetakan NaN ke integer khusus secara deterministik. Sementara itu, `handle_unknown` menentukan apa yang terjadi ketika kategori baru muncul saat inferensi, mulai dari error, baris all-zero, kode khusus, sampai masuk ke bucket infrequent. Semua ini adalah kebijakan desain yang harus diputuskan saat *fit*, bukan perilaku default yang baru ditemukan ketika sistem sudah berjalan. Bagian 4.7 membahas kategori baru lebih lengkap, sedangkan Bab 5 membahas kebijakan nilai kosong.
+:::
 
 ## Count Encoding dan Frequency Encoding
 
@@ -77,10 +85,18 @@ Dengan $\bar{y}_i$ sebagai rata-rata target kategori $i$ pada data *train*, $\ba
 Cross-fitting menghindari encoding yang melihat label barisnya sendiri. Data *train* dibagi menjadi beberapa fold internal. Untuk setiap fold, encoding baris-baris di fold tersebut dihitung dari target pada fold lain. Dengan begitu, satu baris tidak pernah dikodekan memakai targetnya sendiri. Pada scikit-learn, `TargetEncoder.fit_transform(X_train, y_train)` melakukan cross-fitting internal, sedangkan `fit(X_train, y_train).transform(X_train)` tidak. *Pipeline* yang di-*fit* harus menghasilkan encoding pelatihan melalui jalur cross-fitted tersebut, kemudian memakai pemetaan yang dipelajari dari data *train* untuk validasi, *test*, dan inferensi. Kategori yang belum pernah terlihat biasanya diarahkan ke rata-rata global.
 
 Gambar 4.2 memperlihatkan mekanisme itu. Perhatikan bahwa target dari fold yang sedang dienkode tidak masuk ke perhitungan encoding fold tersebut. Inilah hubungan langsung *target encoding* dengan praktik *pipeline* yang benar.
-![Cross-fitting untuk target encoding](../figures/ch04-fig-2.png)
+
+![Cross-fitting untuk target encoding](../figures/ch04-fig-2.png){#fig-ch04-fig-2}
+
 *Target encoding* sangat berguna, tetapi sebaiknya diperlakukan sebagai encoder berisiko tinggi. Encoder ini cocok untuk kategori banyak, tetapi harus selalu dipasang di dalam *pipeline* validasi. Untuk kategori sangat jarang, grouping atau smoothing tambahan sering diperlukan agar nilai target mean tidak menjadi *noise* yang diperlakukan terlalu serius oleh model. Ketika kosakata kategori sangat dinamis atau tidak ingin disimpan secara eksplisit, pendekatan berikutnya memilih kompresi yang lebih mekanis melalui hashing.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Ordered target statistics ala CatBoost {.pendalaman-title .unnumbered .unlisted}
+
 CatBoost mengendalikan *target leakage* dengan mekanisme berbeda. Alih-alih membuat fold internal seperti cross-fitting, CatBoost memberi urutan acak pada baris pelatihan. Encoding untuk satu baris dihitung hanya dari baris-baris yang muncul lebih awal dalam urutan itu. Jadi, label baris tersebut tidak ikut membentuk encoding-nya sendiri. Tujuannya sama dengan cross-fitting, yaitu menghindari encoding yang self-referential, tetapi mekanismenya tertanam di dalam model. Inilah salah satu alasan CatBoost dapat menangani kolom kategorikal mentah secara native.
+:::
 
 ## Hashing untuk Fitur Berkardinalitas Tinggi
 
@@ -95,10 +111,18 @@ Dengan $c$ sebagai kategori, fungsi $\operatorname{hash}$ mengubah string katego
 Kelemahan hashing adalah collision. Dua kategori berbeda dapat masuk ke bucket yang sama. Collision bukan bug, melainkan harga dari ukuran keluaran yang tetap. Jika $k$ diperbesar, collision berkurang, tetapi memori bertambah. Jika $k$ terlalu kecil, terlalu banyak kategori saling menumpuk dan sinyalnya bercampur.
 
 Gambar 4.3 menunjukkan ide ini. Beberapa string kategori masuk ke fungsi hash, lalu mengisi baris bucket berukuran tetap. Satu bucket menerima dua kategori berbeda untuk memperlihatkan collision.
-![Hashing trick untuk kategori berkardinalitas tinggi](../figures/ch04-fig-3.png)
+
+![Hashing trick untuk kategori berkardinalitas tinggi](../figures/ch04-fig-3.png){#fig-ch04-fig-3}
+
 Hashing berguna ketika kosakata kategori tidak stabil atau terlalu besar untuk disimpan sebagai daftar eksplisit. Pendekatan ini juga memudahkan produksi karena konfigurasi yang perlu dijaga terutama adalah fungsi hash dan ukuran $k$. Namun, interpretabilitas berkurang. Kolom hasil hashing tidak lagi memiliki arti kategori yang jelas. Dalam lingkungan yang membutuhkan audit rinci, kompromi ini perlu dipertimbangkan sebelum hashing dipilih. Jika hashing menekankan ukuran tetap, *entity embedding* menekankan kedekatan antar kategori yang mirip.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Meredam bias collision dengan alternate sign {.pendalaman-title .unnumbered .unlisted}
+
 `FeatureHasher` dapat memakai tanda berbasis hash untuk memberi tanda +1 atau -1 pada kontribusi kategori. Ketika beberapa kategori bertabrakan di bucket yang sama, kontribusinya tidak selalu menumpuk searah. Sebagian dapat saling mengurangi. Dengan cara ini, *noise* collision cenderung lebih netral secara harapan. Namun, alternate sign tidak menghapus collision. Pengungkit utama tetap ukuran $k$. Menaikkan $k$ mengurangi peluang kategori berbeda masuk ke bucket yang sama, dengan biaya memori yang lebih besar.
+:::
 
 ## *Entity Embedding*
 
@@ -115,7 +139,9 @@ Dengan $\mathbf{x}_i \in \{0,1\}^{|\mathcal{V}|}$ sebagai vektor *one-hot* untuk
 Representasi ini berada lebih dekat ke representasi yang dipelajari mesin. Namun, keputusan manusia tetap banyak, mulai dari kolom kategori mana yang diberi *embedding*, berapa dimensinya, apa tujuan pelatihannya, bagaimana validasinya, sampai bagaimana kategori langka ditangani. *Embedding* dapat *overfit* pada kategori jarang, dan dapat menyerap informasi sensitif atau proksi yang tidak disadari.
 
 Gambar 4.4 memperlihatkan *embedding* kategori pekerjaan atau industri. Jika dua kode pekerjaan menghasilkan pola target pendapatan yang mirip, keduanya dapat berada dekat. Inset *one-hot* menunjukkan kontrasnya karena semua kategori saling berjarak sama.
-![Ruang embedding untuk kategori](../figures/ch04-fig-4.png)
+
+![Ruang embedding untuk kategori](../figures/ch04-fig-4.png){#fig-ch04-fig-4}
+
 *Embedding* yang sudah dilatih tidak selalu harus dipakai hanya dalam jaringan neural. Vektor *embedding* dapat diekspor sebagai fitur numerik statis untuk model lain, misalnya gradient boosting. Dalam pola ini, jaringan neural dipakai sebagai pembangun fitur, sedangkan model inferensi akhir dapat berupa model non-neural. Jika *embedding* dilatih secara *supervised* dengan label tugas lalu diekspor, pelatihannya harus diulang di dalam setiap lipatan *train* terluar atau representasi untuk model hilir harus dihasilkan secara *out-of-fold*. Aturan ini berbeda dari *embedding* eksternal *pretrained* yang dibekukan dan tidak dilatih dengan label evaluasi tugas tersebut. Pilihan ini berguna jika *embedding* memberi sinyal yang baik tetapi sistem produksi menginginkan model hilir yang berbeda. Namun, apa pun encodernya, model produksi tetap menghadapi pertanyaan yang sama tentang cara memperlakukan kategori yang belum pernah muncul saat pelatihan.
 
 ## Menangani Kategori Baru Saat Inferensi
@@ -128,17 +154,35 @@ Setiap metode memiliki kebijakan sendiri. *One-hot encoding* dapat menghasilkan 
 
 Tabel 4.1 mengembalikan seluruh bab ke sumbu keputusan yang sama. Kolom dimensi keluaran menunjukkan biaya representasi. Kolom kardinalitas membantu memilih skala masalah. Kolom kategori baru dan risiko utama perlu dibaca sebagai bagian dari desain produksi, bukan catatan tambahan. Dalam contoh Census-Income di awal bab, tabel ini membantu membedakan perlakuan untuk pendidikan, negara lahir, kode pekerjaan, dan status rumah tangga tanpa memaksa semuanya mengikuti encoder yang sama.
 
-**Tabel 4.1 --- Peta keputusan encoding kategorikal**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Metode | Dimensi keluaran | Kardinalitas | Kategori baru | Risiko utama |
+| --- | --- | --- | --- | --- |
+| *One-hot* | $ \|V\| $ kolom biner | Rendah-menengah | *All-zero* infrequent bucket | Ledakan dimensi dan *sparsity*. Unknown dapat menyatu dengan referensi yang di-*drop* |
+| Ordinal | 1 kolom numerik | Rendah, ordinal sejati | Kode khusus, misalnya -1 | Urutan palsu di model linearjarak |
+| CountFrequency | 1 kolom numerik | Tinggi | Nilai isian terkonfigurasi | Tabrakan nilai, bukan makna semantik |
+| *Target encoding* | 1 kolom numerik | Tinggi | Rata-rata global | *Target leakage* tanpa cross-fitting |
+| Hashing | $ k $ kolom tetap | Sangat tinggi tak terbatas | Otomatis by construction | Collision dan hilang interpretabilitas |
+| *Entity embedding* | $ d $ kolom padat | Tinggi | Indeks unknown terlatih | *Overfit* kategori langka, butuh data dan komputasi |
+
+: Peta keputusan encoding kategorikal {#tbl-ch04-8}
+
+:::
 
 Perilaku kategori baru sebaiknya diuji dengan sengaja. Jangan mengandalkan data *test* yang kebetulan hanya berisi kategori yang sudah dikenal. Dalam produksi, distribusi kategori dapat bergeser. Memantau jumlah kategori baru, kategori jarang, dan perubahan frekuensi kategori adalah bagian dari menjaga kualitas fitur.
+
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
 
 Pengodean kategorikal adalah keputusan representasi, bukan sekadar pekerjaan mengubah label menjadi angka. Nominal, ordinal, biner, dan kategori berkardinalitas tinggi memerlukan perlakuan yang berbeda karena maknanya berbeda. Encoder yang baik mempertahankan makna yang dibutuhkan model, mengendalikan dimensi keluaran, memiliki perilaku jelas untuk kategori baru, dan tidak merusak validasi. Tabel 4.1 dapat dipakai sebagai peta keputusan ringkas ketika satu *dataset* memuat beberapa jenis kategori sekaligus.
 
 *One-hot encoding* aman untuk kategori nominal dengan kardinalitas rendah sampai menengah, tetapi dapat membuat matriks sangat lebar. Ordinal encoding hemat, tetapi hanya wajar ketika urutan memang bermakna atau model dapat menoleransi kode arbitrer. Count dan frequency encoding mengompresi kategori banyak, tetapi kehilangan identitas semantik. *Target encoding* kuat tetapi berisiko *leakage*. Hashing cocok untuk kategori tak terbatas dengan harga collision dan interpretabilitas. *Embedding* belajar kemiripan kategori, tetapi membutuhkan data, validasi, dan pengendalian *overfit*.
 
 Keputusan encoding juga perlu mempertimbangkan *pipeline*, kategori baru, *rare category*, interpretabilitas, dan keluarga model yang akan memakai fitur. Dengan pertimbangan tersebut, kategori dapat diubah menjadi representasi yang sesuai dengan makna dan risiko pemodelannya.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - scikit-learn --- Comparing Target Encoder --- <https://scikit-learn.org/stable/auto_examples/preprocessing/plot_target_encoder.html>. Perbandingan target encoding dengan encoder lain.
 
@@ -152,4 +196,10 @@ Keputusan encoding juga perlu mempertimbangkan *pipeline*, kategori baru, *rare 
 
 - Weinberger dkk. (2009), Feature Hashing (ICML) --- <https://arxiv.org/abs/0902.2206>. Hashing trick untuk kardinalitas sangat tinggi.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Micci-Barreca, Daniele. 2001. "A Preprocessing Scheme for High-Cardinality Categorical Attributes in Classification and Prediction Problems." *ACM SIGKDD Explorations Newsletter* 3 (1): 27--32.
+
+:::

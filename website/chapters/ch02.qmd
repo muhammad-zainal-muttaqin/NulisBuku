@@ -19,7 +19,9 @@ Dengan $X$ sebagai data yang akan diubah, $T$ sebagai transformasi, dan $\theta_
 Contoh kecil membuat aturan ini lebih jelas. Misalkan sebuah scaler dipelajari dari data *train* dan memperoleh rata-rata 5,0 serta standar deviasi 2,0. Angka 5,0 dan 2,0 harus tetap dipakai untuk mengubah data validasi, *test*, dan data baru beberapa bulan kemudian. Jika data live kemudian memiliki rata-rata 7,0, scaler tidak boleh diam-diam belajar ulang saat inferensi. Perubahan tersebut mungkin menandakan *drift*, tetapi kerangka acuan model tetap berasal dari pelatihan.
 
 Pada Gambar 2.1, data *train* masuk ke `fit` untuk menghasilkan $\theta_{\text{train}}$. Setelah itu, semua data lain hanya melewati `transform`. Panah dari data *test* ke `fit` dicoret karena jalur tersebut membuat *leakage*.
-![Kontrak \texttt{fit} dan \texttt{transform} dalam \emph{pipeline}](../figures/ch02-fig-1.png)
+
+![Kontrak `fit` dan `transform` dalam *pipeline*](../figures/ch02-fig-1.png){#fig-ch02-fig-1}
+
 Jika *preprocessing* saat inferensi berbeda dari *preprocessing* saat pelatihan, kegagalan ini disebut *training-serving skew*. Model dilatih pada satu representasi, tetapi dipakai pada representasi lain. Akibatnya, evaluasi eksperimen tidak lagi menjamin perilaku produksi. *Pipeline* menjaga validitas eksperimen sekaligus keandalan *deployment*. Kontrak ini juga menjelaskan mengapa transformer perlu disimpan sebagai bagian dari sistem, bukan sebagai langkah sementara.
 
 ## Transformer yang Dapat Dipakai Ulang, Serialisasi, dan *Random State*
@@ -36,7 +38,13 @@ Beberapa utilitas membantu keterbacaan dan efisiensi. `set_output(transform="pan
 
 Transformer yang menyimpan parameter memperlihatkan sumber *leakage* dengan lebih jelas. Masalah muncul ketika parameter, kolom, atau ruang representasi terbentuk dari informasi yang seharusnya berada di luar batas evaluasi.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### *Pipeline* untuk *resampling* data tidak seimbang {.pendalaman-title .unnumbered .unlisted}
+
 *Resampling* seperti SMOTE berbeda dari transformer biasa karena mengubah jumlah baris. Pada kontrak transformer standar, jumlah baris sebelum dan sesudah transformasi biasanya tetap. Karena itu, *resampling* harus ditempatkan dengan hati-hati. *Pipeline* dari imbalanced-learn menyediakan langkah `fit_resample` yang aktif pada data pelatihan, tetapi dilewati saat prediksi. Jika *resampling* dilakukan sebelum pemisahan data, atau diterapkan pada lipatan validasi, sampel sintetis dapat membawa informasi melintasi batas evaluasi. Skor yang diperoleh menjadi terlalu optimistis. *Resampling* adalah keputusan pemodelan, bukan kebiasaan *preprocessing* yang boleh diterapkan ke semua data.
+:::
 
 ## Taksonomi *Leakage*
 
@@ -57,10 +65,18 @@ Jenis kelima adalah kebocoran duplikat atau hampir duplikat. Jika catatan yang s
 Jenis keenam adalah *representation leakage*. Representasi dipelajari dari seluruh korpus sebelum split. Contohnya adalah kosakata TF-IDF, *embedding*, atau reduksi dimensi yang di-*fit* pada semua data. Statistik dari data *test* ikut membentuk ruang fitur. Bab 8 dan Bab 11 akan kembali ke kasus ini pada reduksi dimensi dan representasi teks.
 
 Gambar 2.2 menyatukan keenam jenis tersebut. Intinya sama, yaitu informasi menyeberangi batas evaluasi. Batas itu dapat berupa target, waktu, kelompok, partisi, atau proses representasi.
-![Peta jenis-jenis \emph{data leakage}](../figures/ch02-fig-2.png)
+
+![Peta jenis-jenis *data leakage*](../figures/ch02-fig-2.png){#fig-ch02-fig-2}
+
 Pembedaan nama tersebut membantu diagnosis. Dalam praktik, keenam jalur sering bertemu pada proses pembuatan fitur sebelum batas evaluasinya dikunci.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Mendeteksi *target leakage* lewat *feature importance* {.pendalaman-title .unnumbered .unlisted}
+
 Fitur yang sendirian mendominasi kualitas model dapat menjadi tanda bahaya. Pendekatan ini hanya bermakna jika model yang dilatih sudah memiliki performa di atas tebakan acak. Model yang buruk tidak dapat memberi tahu fitur mana yang penting. *Permutation importance* mengukur kenaikan error ketika nilai satu fitur diacak.
+:::
 
 $$I_j = \text{Error}\big(f(X_{\pi(j)})\big) - \text{Error}\big(f(X)\big)$$
 
@@ -96,12 +112,24 @@ Pada data temporal, split harus meniru prediksi masa depan dari masa lalu. `Time
 
 Tabel 2.1 menyusun pilihan split sebagai keputusan, bukan sebagai katalog alat. Kolom situasi data menjadi titik awal karena bentuk data menentukan risiko, lalu risiko menentukan strategi.
 
-**Tabel 2.1 --- Memilih strategi pemisahan data**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Situasi data | Risiko jika salah | Strategi | Contoh |
+| --- | --- | --- | --- |
+| Baris independen | Rendah, *random split* cukup | *Random split*, dengan stratifikasi bila label langka | Tabel pelanggan yang sudah diringkas satu baris per pelanggan |
+| *Deployment* ke entitas baru dengan baris berulang | Model memanfaatkan ciri identitas entitas yang sudah terlihat | *Group split* (`GroupKFold`) | Generalisasi ke pelanggan baru dari banyak *invoice* per pelanggan |
+| *Deployment* ke entitas baru dan label langka | Ciri identitas berulang atau kelas timpang | `StratifiedGroupKFold` | Pelanggan baru, pembatalan langka |
+| *Deployment* memprediksi masa depan | *Temporal leakage* | *Temporal split* (`TimeSeriesSplit`, dengan `gap` bila buffer berbasis jumlah baris sesuai) | Pembelian ulang, *forecasting*, sensor |
+| *Deployment* ke institusi atau kelompok besar yang baru | Model menghafal kelompok besar yang sudah terlihat | *Group split* di level kelompok besar | Generalisasi ke negara atau cabang baru |
+
+: Memilih strategi pemisahan data {#tbl-ch02-8}
+
+:::
 
 Pada Gambar 2.3, tiga pola tersebut ditempatkan pada sketsa *dataset* kecil. *Random split* memecah baris tanpa memperhatikan identitas atau waktu. *Group split* menjaga entitas tetap utuh. *Temporal split* menjaga arah masa lalu ke masa depan.
-![\emph{Random split}, \emph{group split}, dan \emph{temporal split}](../figures/ch02-fig-3.png)
+
+![*Random split*, *group split*, dan *temporal split*](../figures/ch02-fig-3.png){#fig-ch02-fig-3}
+
 Jika generalisasi ke kelompok baru, *group integrity*, dan keseimbangan kelas sama-sama penting, `StratifiedGroupKFold` dapat dipertimbangkan, meskipun stratifikasi mungkin hanya bersifat aproksimasi jika kelompok-kelompok mempunyai distribusi kelas yang sangat berbeda. Jika data benar-benar temporal, stratifikasi label tidak boleh mengalahkan urutan waktu. Pilihan split yang nyaman tetapi tidak sesuai proses data biasanya menghasilkan evaluasi yang nyaman juga, tetapi salah. Setelah batasnya dipilih, batas yang sama harus bertahan di dalam setiap pengulangan validasi, bukan hanya pada satu pemisahan awal.
 
 ## *Pipeline* di Dalam *Cross-Validation*
@@ -119,12 +147,20 @@ $$CV_{(K)} = \frac{1}{K}\sum_{k=1}^{K} E_k$$
 Dengan $K$ sebagai jumlah lipatan dan $E_k$ sebagai error pada lipatan ke-$k$, nilai rata-rata ini bermakna hanya jika setiap $E_k$ diperoleh dari *pipeline* yang di-*fit* tanpa melihat lipatan validasinya.
 
 Gambar 2.4 membandingkan pola yang salah dan benar. Pada jalur yang salah, *preprocessing* dilakukan sekali pada seluruh data, lalu *cross-validation* hanya mengelilingi model. Pada jalur yang benar, seluruh *pipeline* berada di dalam setiap lipatan.
-![\emph{Preprocessing} di luar vs di dalam \emph{cross-validation}](../figures/ch02-fig-4.png)
+
+![*Preprocessing* di luar vs di dalam *cross-validation*](../figures/ch02-fig-4.png){#fig-ch02-fig-4}
+
 Aturan ini berlaku untuk *scaling*, *imputation*, *encoding*, seleksi fitur, reduksi dimensi, dan *target encoding*. Semua langkah yang mempelajari sesuatu dari data harus berada dalam *pipeline* yang divalidasi. Logika ini tidak bergantung pada scikit-learn. Dalam R, SQL, Spark, atau *workflow* *deep learning*, batasnya tetap sama, yaitu lipatan validasi tidak boleh ikut membentuk representasi yang menilainya.
 
 Biaya komputasi memang bertambah karena transformer di-*fit* berulang. Dalam pencarian model yang mengulang konfigurasi serupa, caching seperti `Pipeline(memory=...)` dapat membantu. Akan tetapi, caching hanya mempercepat perhitungan. Aturan validasi tetap sama.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### *Nested cross-validation* {.pendalaman-title .unnumbered .unlisted}
+
 Ketika hiperparameter dipilih dan performa dilaporkan dari lipatan yang sama, estimasi performa dapat terlalu optimistis. Pilihan hiperparameter sudah terpengaruh oleh lipatan tersebut melalui proses tuning. *Nested cross-validation* memisahkan dua pekerjaan. *Inner loop* memilih hiperparameter, termasuk ambang seleksi fitur atau kekuatan regularisasi. *Outer loop* mengukur generalisasi pada data yang tidak dipakai untuk tuning. Biayanya lebih besar karena jumlah pelatihan berlipat, tetapi pemisahan ini penting pada *dataset* kecil, pencarian agresif, atau laporan eksperimen yang harus dipercaya.
+:::
 
 ## Anti-Pola Umum
 
@@ -142,11 +178,28 @@ Ada pula kesalahan eksperimental seperti melaporkan hanya fold terbaik, atau men
 
 Tabel 2.2 menyatukan anti-pola yang perlu dihindari. Isinya dapat dipakai sebagai daftar periksa sebelum mempercayai hasil eksperimen.
 
-**Tabel 2.2 --- Anti-pola umum dan perbaikannya**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Anti-pola | Mengapa berbahaya | Perbaikan |
+| --- | --- | --- |
+| *Scaling* atau imputasi seluruh *dataset* sebelum split | Statistik *test* masuk ke transformasi | Fit transformer hanya pada data *train* |
+| Seleksi fitur pada semua data sebelum *cross-validation* | Lipatan validasi ikut memilih fitur | Letakkan seleksi fitur di dalam *pipeline* CV |
+| Split acak ketika jendela target atau ketersediaan label melintasi batas | Evaluasi memakai sampel yang belum semestinya tersedia | Gunakan *temporal split* atau *purged split* sesuai jendela target. Pakai *group split* hanya untuk generalisasi ke unit baru |
+| Encoding kategori dengan mapping dari data *test* | Kategori *test* ikut membentuk ruang fitur | Pelajari mapping dari *train*, tangani kategori baru secara eksplisit (strategi kategori baru dibahas di Bab 4) |
+| Agregat memasukkan kejadian setelah *cutoff* baris | Informasi yang belum tersedia masuk ke fitur | Hitung agregat *point-in-time* dari riwayat mentah yang tersedia sebelum *cutoff* setiap baris |
+| Field turunan target dipakai sebagai prediktor | Fitur sudah memuat jawaban atau akibat target | Hapus field pascatarget dari fitur |
+| `fit_transform` dipanggil pada data *test* | Parameter transformasi dipelajari ulang dari *test* | Gunakan `transform` dengan parameter *train* |
+| Hanya fold atau eksperimen terbaik yang dilaporkan | Estimasi performa bias optimistis | Laporkan protokol lengkap dan hasil agregat |
+
+: Anti-pola umum dan perbaikannya {#tbl-ch02-9}
+
+:::
 
 Daftar tersebut menyatukan satu prinsip yang sama bahwa data yang dipakai untuk menilai model tidak boleh ikut membentuk representasi yang sedang dinilai.
+
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
 
 *Pipeline* menjaga batas pengetahuan antara pelatihan, validasi, dan inferensi. Setiap transformasi yang belajar dari data memiliki parameter. Parameter tersebut dipelajari dari data pelatihan sesuai batas evaluasi, lalu dipakai kembali untuk validasi, *test*, dan data baru.
 
@@ -155,6 +208,9 @@ Daftar tersebut menyatukan satu prinsip yang sama bahwa data yang dipakai untuk 
 Strategi split menerjemahkan batas evaluasi ke bentuk data. *Random split* cocok ketika sampel cukup independen, *group split* diperlukan ketika model harus melakukan generalisasi ke kelompok yang belum terlihat, dan *temporal split* diperlukan ketika model akan memprediksi masa depan. Dalam *cross-validation*, seluruh *pipeline* harus berada di dalam setiap lipatan.
 
 Praktik pipeline yang benar memang menambah disiplin dan kadang biaya komputasi. Akan tetapi, tanpa disiplin tersebut, angka evaluasi dapat tampak tinggi tetapi tidak bermakna. Buku ini memperlakukan validasi dan representasi sebagai dua sisi dari pekerjaan yang sama. Fitur hanya berguna jika cara membuatnya sah pada saat model benar-benar dipakai.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - scikit-learn --- Common Pitfalls --- <https://scikit-learn.org/stable/common_pitfalls.html>. Anti-pola umum dan kebocoran data saat praproses.
 
@@ -168,8 +224,14 @@ Praktik pipeline yang benar memang menambah disiplin dan kadang biaya komputasi.
 
 - Kaufman dkk. (2012), "Leakage in Data Mining" (ACM TKDD) --- <https://doi.org/10.1145/2382577.2382579>. Taksonomi formal kebocoran data.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Kaufman, Shachar, Saharon Rosset, Claudia Perlich, and Ori Stitelman. 2012. "Leakage in Data Mining: Formulation, Detection, and Avoidance." *ACM Transactions on Knowledge Discovery from Data* 6 (4): 1--21. <https://doi.org/10.1145/2382577.2382579>.
 
 Kohavi, Ron. 1995. "A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection." *Proceedings of the 14th International Joint Conference on Artificial Intelligence (IJCAI)*.
 
 Pedregosa, Fabian, Gaël Varoquaux, Alexandre Gramfort, et al. 2011. "Scikit-Learn: Machine Learning in Python." *Journal of Machine Learning Research* 12: 2825--30.
+
+:::

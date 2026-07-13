@@ -50,6 +50,7 @@ book:
 format:
   html:
     theme: cosmo
+    css: assets/book-elements.css
     toc: true
     number-sections: true
     fig-align: center

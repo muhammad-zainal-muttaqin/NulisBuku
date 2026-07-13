@@ -20,9 +20,20 @@ Kekuatan rasio, selisih, dan interaksi terletak pada maknanya. Fitur tersebut me
 
 Tabel 6.1 merangkum keluarga fitur turunan yang digunakan dalam bab ini. Setiap baris menunjukkan struktur yang ingin dinyatakan, contoh bentuknya, dan risiko yang perlu diperiksa kembali saat fitur dievaluasi.
 
-**Tabel 6.1 --- Keluarga fitur turunan**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Keluarga | Mengekspresikan | Contoh | Risiko utama |
+| --- | --- | --- | --- |
+| Rasio | Proporsi relatif, skala terhadap acuan | Belanja per invoice | Penyebut nolkecil dan *outlier* |
+| Selisih | Perubahan, defisit, gap | Hari sejak pembelian terakhir | Satuan tidak sepadan |
+| Interaksi | Efek gabungan bersyarat | Quantity x UnitPrice | Ledakan kombinasi |
+| Agregat grupriwayat | Konteks entitas dan sejarah | Belanja 30 hari terakhir | *Leakage* lintas *cutoff* |
+| Temporalsiklik | Ritme dan jarak waktu | Jam, hari, sincos | Pilihan periode salah |
+| Domain | Pengetahuan pakar | BMI, LTV | Aturan usang, proksi sensitif |
+
+: Keluarga fitur turunan {#tbl-ch06-8}
+
+:::
 
 Pola pada tabel tersebut menunjukkan bahwa fitur turunan tidak perlu dikumpulkan sebanyak mungkin. Fitur dipilih ketika ada struktur yang memang perlu dinyatakan. Setelah operasi aritmetika dasar, pangkat dan interaksi otomatis menjadi bentuk yang paling cepat memperbesar ruang fitur.
 
@@ -35,7 +46,9 @@ $$\phi(x_1, x_2) = [\,1,\ x_1,\ x_2,\ x_1^2,\ x_1 x_2,\ x_2^2\,]$$
 Angka 1 pada vektor tersebut merupakan *bias term*. Dua anggota berikutnya adalah fitur linear asli. Setelah itu muncul dua suku kuadrat, $x_1^2$ dan $x_2^2$, serta satu suku interaksi, $x_1 x_2$. Dengan pemetaan ini, model linear tidak hanya bekerja pada garis lurus di ruang asli. Model menerima data pada ruang fitur yang lebih tinggi, sehingga batas linear di ruang baru dapat tampak sebagai kurva ketika diproyeksikan kembali ke ruang awal. Jika model hilir sudah mengestimasi *intercept*, gunakan `include_bias=False` pada ekspansi polinomial agar hanya ada satu mekanisme konstanta.
 
 Gambar 6.1 menampilkan intuisi tersebut. Panel kiri memperlihatkan data dua dimensi yang tidak bisa dipisahkan oleh satu garis. Panel kanan menambahkan sumbu kuadrat atau interaksi. Pemisah datar di ruang baru kemudian berpadanan dengan batas melengkung pada ruang asli.
-![Proyeksi polinomial dari ruang asli ke ruang fitur](../figures/ch06-fig-1.png)
+
+![Proyeksi polinomial dari ruang asli ke ruang fitur](../figures/ch06-fig-1.png){#fig-ch06-fig-1}
+
 Manfaat tersebut dibayar dengan pertumbuhan jumlah kolom. Dengan $d$ fitur *input* dan derajat 2, ekspansi memuat $d$ fitur linear, $\binom{d}{2}$ interaksi pasangan, dan $d$ suku kuadrat. Untuk $d = 100$, jumlahnya menjadi 100 + 4.950 + 100 = 5.150 kolom tanpa *bias*, atau 5.151 jika *bias* dihitung. Jika derajat naik menjadi 3, jumlah kolom dapat masuk ke ratusan ribu untuk skala *input* yang sama.
 
 Pertumbuhan ini mempunyai konsekuensi langsung. Suku polinomial dapat memiliki magnitudo yang jauh berbeda dari fitur asal, sehingga *scaling* sering diperlukan, terutama untuk model linear atau model berbasis jarak. Derajat yang terlalu tinggi juga mudah *overfit* dan sulit dijelaskan. Interaksi $x_1 x_2 x_3$ mungkin meningkatkan skor validasi pada satu *split*, tetapi belum tentu stabil atau wajar secara domain.
@@ -54,9 +67,18 @@ Batas waktunya harus jelas. Jika prediksi dibuat pada 1 Agustus, agregat "total 
 
 Tabel 6.2 merangkum empat pola jendela agregasi yang umum. Kolom tengah menunjukkan pertanyaan yang dijawab oleh tiap pola, sehingga pilihan jendela tidak hanya menjadi pilihan teknis, tetapi juga pilihan makna.
 
-**Tabel 6.2 --- Pola jendela agregasi**
+::: {.tabel-buku}
 
-*Tabel lengkap tersedia pada edisi cetak.*
+| Pola | Menjawab pertanyaan | Contoh |
+| --- | --- | --- |
+| Sliding window | Bagaimana perilaku terkini? | Total belanja 30 hari terakhir |
+| Expanding window | Bagaimana akumulasi sejarah? | Total transaksi sejak akun dibuat |
+| Recency-weighted | Pentingnya tren terbaru | Rata-rata berbobot peluruhan eksponensial |
+| Session-based | Bagaimana perilaku per episode? | Agregat di-reset setelah jeda inaktif |
+
+: Pola jendela agregasi {#tbl-ch06-9}
+
+:::
 
 Pada jendela berbobot kebaruan, bobot sebuah event dapat ditulis sebagai berikut.
 
@@ -65,10 +87,18 @@ $$w_i = e^{-\lambda \cdot \Delta t_i}$$
 dengan $\Delta t_i$ sebagai umur event terhadap waktu prediksi, dan $\lambda$ sebagai pengatur kecepatan penurunan bobot. Event terbaru mendapat bobot lebih besar daripada event lama.
 
 Gambar 6.2 meletakkan keempat pola tersebut pada satu timeline pelanggan. *Cutoff* menjadi garis batas. Semua bracket dan shading berada sebelum garis itu, karena hanya masa lalu yang sah dipakai sebagai fitur.
-![Pola jendela agregasi pada timeline pelanggan](../figures/ch06-fig-2.png)
+
+![Pola jendela agregasi pada timeline pelanggan](../figures/ch06-fig-2.png){#fig-ch06-fig-2}
+
 Ekstraksi fitur deret waktu dapat diotomatisasi. *Library* seperti tsfresh, misalnya, dapat menghasilkan ratusan fitur ringkasan dari tiap seri dan menyediakan penyaringan signifikansi. Kekuatan ini berguna, tetapi juga menjadi pintu masuk ke *feature explosion*. Otomatisasi agregasi tetap membutuhkan *cutoff* yang benar dan evaluasi kontribusi fitur. Ide jendela tersebut menjadi lebih penting lagi ketika riwayat tersimpan dalam banyak tabel dan banyak *event log*.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Agregasi berbobot kebaruan {.pendalaman-title .unnumbered .unlisted}
+
 Rata-rata berbobot kebaruan dapat ditulis sebagai $\bar{v} = \dfrac{\sum_i v_i\, e^{-\lambda \Delta t_i}}{\sum_i e^{-\lambda \Delta t_i}}$. Nilai $v_i$ adalah nilai event ke-$i$, sedangkan $\Delta t_i$ adalah jarak waktu event itu dari *cutoff*. Parameter $\lambda$ menentukan kecepatan peluruhan. Half-life menyatakan jumlah hari hingga bobot sebuah event tinggal setengah. Session reset mengejar tujuan serupa untuk perilaku yang episodik. Semua $\Delta t_i$ diukur terhadap *cutoff*, sehingga aturan waktu dari Bab 1 masuk langsung ke dalam rumus.
+:::
 
 ## Fitur Relasional dan *Event Log* untuk Join, Agregasi, dan *Point-in-Time Correctness*
 
@@ -81,7 +111,9 @@ Kesalahan kedua lebih halus. Bentuk *join* sudah benar, tetapi waktunya salah. *
 *As-of join* membantu menjaga batas waktu tersebut. Alih-alih mengambil sembarang baris yang cocok, *as-of join* mencocokkan setiap sampel dengan catatan terakhir yang waktu berlaku atau waktu kejadiannya tidak melewati *cutoff* dan sudah tersedia pada saat itu. Snapshot pelanggan pada 1 Agustus, misalnya, memakai alamat terakhir yang diketahui pada 1 Agustus, bukan alamat terbaru di database saat *query* dijalankan. Pada data kesehatan, prediksi saat pasien masuk rumah sakit hanya boleh memakai hasil lab yang sudah keluar sebelum waktu prediksi, bukan hasil yang sampelnya sudah diambil tetapi baru tersedia setelahnya.
 
 Gambar 6.3 membandingkan dua alur. Panel kiri menunjukkan *join* naif yang membuat satu baris pelanggan menjadi banyak baris transaksi. Panel kanan menunjukkan pre-aggregation dan *as-of join*. Semua event dipotong oleh *index time*, diringkas ke unit pelanggan, lalu menghasilkan satu baris fitur.
-![Fan-out join dan \emph{as-of join} pada fitur relasional](../figures/ch06-fig-3.png)
+
+![Fan-out join dan *as-of join* pada fitur relasional](../figures/ch06-fig-3.png){#fig-ch06-fig-3}
+
 *Relational feature synthesis* dapat mengotomatisasi sebagian pola ini. Alat seperti Featuretools membangun fitur dari relasi antarentitas mengikuti gagasan *deep feature synthesis* (Kanter and Veeramachaneni 2015), misalnya agregasi transaksi per pelanggan atau statistik produk per kategori. Namun, otomatisasi tidak menghapus keputusan konseptual. Analis tetap harus mendefinisikan entitas, relasi, *time index*, *cutoff*, dan unit prediksi. Pada praktik harian dalam SQL atau pandas, *point-in-time correctness* dari Bab 1 berubah menjadi aturan kerja. Setelah bentuk relasi dan waktu ketersediaannya aman, masih ada fitur yang tidak lahir dari struktur tabel, melainkan dari pengetahuan domain.
 
 ## Fitur Berbasis Domain
@@ -111,7 +143,9 @@ $$x_{\sin} = \sin\!\left(\dfrac{2\pi x}{P}\right), \qquad x_{\cos} = \cos\!\left
 dengan $x$ sebagai nilai dalam siklus, dan $P$ sebagai periode. Nilainya 24 untuk jam, 12 untuk bulan, atau 7 untuk hari dalam minggu. Periode harus mengikuti siklus, bukan nilai maksimum yang kebetulan muncul di data. Untuk jam, pembaginya 24, bukan 23, karena setelah pukul 23 siklus kembali ke 0.
 
 Gambar 6.4 memperlihatkan perbedaannya. Pada garis lurus, 0 dan 23 tampak berjauhan. Pada lingkaran sin/cos, keduanya bersebelahan, sesuai makna waktu.
-![Encoding siklik untuk jam dalam sehari](../figures/ch06-fig-4.png)
+
+![Encoding siklik untuk jam dalam sehari](../figures/ch06-fig-4.png){#fig-ch06-fig-4}
+
 Transformasi siklik dapat membuang kolom linear asli atau mempertahankannya. Implementasi seperti `CyclicalFeatures` secara bawaan dapat membagi dengan nilai maksimum yang muncul di data, bukan periode siklus. Untuk jam 0-23, pembagi bawaannya dapat menjadi 23, bukan 24. Pengguna perlu memberi periode yang benar secara eksplisit melalui parameter seperti `max_values`. Menyimpan jam asli kadang membantu jika ada tren hampir linear sepanjang hari, tetapi pilihan itu dapat mengembalikan masalah jarak palsu. Membuangnya membuat representasi murni siklik. Pilihan ini perlu divalidasi, terutama jika model yang dipakai sensitif terhadap geometri fitur.
 
 ## Risiko *Feature Explosion*
@@ -123,10 +157,18 @@ Risiko pertama adalah *noise domination*. Sebagian besar fitur otomatis mungkin 
 *Feature explosion* juga menyulitkan manusia. Interpretasi model menjadi kabur, debugging *pipeline* lebih berat, dan perubahan definisi satu kolom mentah dapat berdampak ke banyak fitur turunan. Redundansi antarfitur juga dapat menyebabkan multikolinearitas, terutama pada model linear, sehingga koefisien menjadi tidak stabil walaupun performa prediksi tampak cukup baik.
 
 Gambar 6.5 menunjukkan pertumbuhan jumlah fitur. Kurva polinomial derajat 2, derajat 3, dan rasio pasangan naik cepat ketika jumlah fitur *input* bertambah. Titik ketika jumlah fitur melebihi jumlah observasi perlu diberi perhatian khusus. Kondisi itu tidak selalu salah, tetapi risiko *overfitting* dan biaya evaluasi meningkat tajam.
-![Pertumbuhan jumlah fitur turunan](../figures/ch06-fig-5.png)
+
+![Pertumbuhan jumlah fitur turunan](../figures/ch06-fig-5.png){#fig-ch06-fig-5}
+
 Kendali paling baik adalah generasi berbasis hipotesis. Buat fitur karena ada alasan domain atau mekanisme, bukan karena semua kombinasi bisa dibuat. Setelah itu, gunakan regularisasi, seleksi fitur, *ablation*, atau validasi lintas waktu untuk memeriksa manfaatnya. Bab 7 melanjutkan persoalan ini dengan metode seleksi fitur yang lebih sistematis.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Mendeteksi redundansi dengan VIF {.pendalaman-title .unnumbered .unlisted}
+
 *Variance inflation factor* untuk fitur $i$ dapat ditulis $\text{VIF}_i = \dfrac{1}{1 - R_i^2}$, dengan $R_i^2$ diperoleh dari regresi fitur $i$ terhadap semua fitur lain. VIF tinggi berarti fitur tersebut sebagian besar dapat direkonstruksi dari fitur lain. Secara konvensional, rentang 5 sampai 10 sering dipakai sebagai sinyal pemeriksaan lebih lanjut, bukan hukum mutlak. Diagnostik ini berguna untuk himpunan fitur turunan yang masuk ke model linear atau parametrik. *Tree ensemble* lebih toleran terhadap redundansi, tetapi tetap membayar biaya komputasi dan interpretabilitas.
+:::
 
 ## Memvalidasi Apakah Fitur Baru Membantu
 
@@ -138,13 +180,26 @@ Evaluasi juga harus mempertimbangkan ketersediaan dan biaya. Fitur yang tampak m
 
 Validasi akhir perlu melampaui kenaikan skor semata. Kenaikan tersebut harus sah, stabil, tersedia pada waktu prediksi, wajar secara domain, dan sepadan dengan biayanya. Bab 9 membahas evaluasi kualitas fitur secara lebih sistematis.
 
+::: {.pendalaman}
+<div class="pendalaman-label">Pendalaman</div>
+
+### Diagnostik kontribusi fitur melalui ablation, probe, dan atribusi {.pendalaman-title .unnumbered .unlisted}
+
 *Group ablation* menghapus satu keluarga fitur turunan sekaligus, misalnya rasio, agregat, atau temporal, lalu mengukur penurunan skor validasi. *Probe features* menambahkan kolom acak sebagai pembanding. Fitur rekayasa yang kalah penting dari probe acak sulit dibedakan dari *noise*, mengikuti ide *shadow features* pada Boruta. SHAP menjelaskan bagaimana model terlatih mengalokasikan prediksi kepada fitur; pada fitur yang berkorelasi, pembagian kreditnya dapat bergantung pada asumsi *explainer*. Nilai SHAP bukan bukti bahwa fitur memberi nilai prediktif tambahan. Untuk menguji nilai tambahan tersebut, gunakan *group ablation* atau uji permutasi pada prediksi *out-of-fold*. Semua ini adalah alat diagnosis dan penyaringan, bukan keputusan akhir.
+:::
+
+::: {.sintesis-bab}
+
+## Sintesis Bab {.unnumbered .unlisted}
 
 Fitur turunan adalah hipotesis tentang struktur data. Rasio, selisih, interaksi, agregat riwayat, fitur waktu, dan fitur domain masing-masing menyatakan jenis struktur yang berbeda. Tabel 6.1 dapat dipakai sebagai peta awal saat fitur baru dipertimbangkan. Namun, setiap fitur baru membawa asumsi. Satuan harus sepadan, penyebut harus aman, *cutoff* harus dihormati, periode siklik harus benar, dan definisi domain harus masih relevan.
 
 Agregasi dan *join* relasional menuntut *point-in-time correctness*. Fitur yang memakai masa depan melanggar batas evaluasi dan menjadi *leakage*. Fitur polinomial dan ekstraksi otomatis dapat memperkaya representasi, tetapi juga memicu *feature explosion*. Pembentukan fitur perlu selalu diikuti alasan yang jelas dan evaluasi yang sah.
 
 Prinsip kerjanya sederhana. Buat fitur karena ada alasan, pasang transformasinya secara *reproducible*, dan uji kontribusinya dengan evaluasi yang sah. Bab berikutnya melanjutkan pekerjaan ini dari sisi sebaliknya, yaitu memilih fitur mana yang benar-benar layak dipertahankan.
+:::
+
+## Bacaan Lanjutan {.bacaan-lanjutan .unnumbered .unlisted}
 
 - Feature-engine --- Feature creation --- <https://feature-engine.trainindata.com/en/latest/api_doc/creation/index.html>. MathFeatures, RelativeFeatures, dan CyclicalFeatures.
 
@@ -160,6 +215,12 @@ Prinsip kerjanya sederhana. Buat fitur karena ada alasan, pasang transformasinya
 
 - Kursa & Rudnicki (2010), Boruta (JStatSoft) --- <https://doi.org/10.18637/jss.v036.i11>. Seleksi fitur all-relevant.
 
+## Rujukan {.rujukan .unnumbered .unlisted}
+
+::: {.references}
+
 Kanter, James Max, and Kalyan Veeramachaneni. 2015. "Deep Feature Synthesis: Towards Automating Data Science Endeavors." *IEEE International Conference on Data Science and Advanced Analytics (DSAA)*. <https://doi.org/10.1109/DSAA.2015.7344858>.
 
 Zheng, Alice, and Amanda Casari. 2018. *Feature Engineering for Machine Learning: Principles and Techniques for Data Scientists*. O'Reilly Media.
+
+:::
