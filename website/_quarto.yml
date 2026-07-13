@@ -5,7 +5,9 @@ project:
 book:
   title: "Rekayasa Fitur Modern"
   subtitle: "Representasi Data untuk Machine Learning dan Deep Learning"
-  author: "Fatma Indriani"
+  author:
+    - "Fatma Indriani"
+    - "Muhammad Zainal Muttaqin"
   language: id
   chapters:
     - index.qmd

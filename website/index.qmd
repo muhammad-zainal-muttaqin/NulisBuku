@@ -1,7 +1,18 @@
-# Pengantar {.unnumbered}
+# Prakata {.unnumbered}
 
-Selamat datang di buku **Rekayasa Fitur Modern: Representasi Data untuk Machine Learning dan Deep Learning**.
+Pada kelas pengantar *machine learning* atau *data mining*, perhatian utama biasanya diarahkan pada alur dasar pemodelan. Topik seperti klasifikasi, regresi, *clustering*, validasi, dan evaluasi model membentuk fondasi awal yang perlu dipahami terlebih dahulu. Pada tahap tersebut, data yang digunakan sering kali telah berada dalam bentuk yang cukup siap pakai, atau hanya memerlukan beberapa transformasi dasar, agar pembelajaran dapat berfokus pada cara kerja model dan cara menilai hasilnya.
 
-Buku ini membahas bagaimana kita merepresentasikan data, baik secara dirancang oleh manusia (*designed by human*) maupun dipelajari oleh mesin (*learned by machine*), agar dapat digunakan secara optimal oleh algoritma *machine learning* dan *deep learning*.
+Buku ini disusun untuk pembaca yang telah mengenal dasar-dasar *machine learning* dan ingin melangkah lebih jauh ke aspek representasi data. Mahasiswa dapat menggunakannya untuk memahami mengapa dua eksperimen dengan algoritma yang sama dapat memberi hasil berbeda ketika fitur yang digunakan berbeda. Peneliti dapat menggunakannya sebagai rujukan untuk merancang fitur, menyusun *pipeline*, memilih bentuk validasi, dan menjelaskan keputusan metodologis dengan lebih terstruktur.
 
-(Bagian ini akan terus diperbarui seiring dengan penyelesaian draf per bab.)
+Sebagian materi dalam buku ini bersifat konseptual, sebagian lainnya bersifat teknis. Pendekatan yang digunakan tidak dimaksudkan untuk menghafalkan daftar transformasi, melainkan untuk memahami fungsi setiap keputusan. Standardisasi, pengodean kategorikal, *temporal window*, *embedding*, atau model pralatih memiliki kegunaan yang berbeda bergantung pada struktur data, tujuan, dan cara evaluasi yang digunakan.
+
+Sebagai sebuah diskursus keilmuan yang terus berkembang, buku ini tentu masih memiliki ruang untuk penyempurnaan. Oleh karena itu, masukan serta kritik yang konstruktif dari para pembaca sangat dinantikan. Ucapan terima kasih yang tulus juga ditujukan kepada Fakultas Matematika dan Ilmu Pengetahuan Alam (FMIPA) Universitas Lambung Mangkurat (ULM) atas pelatihan menulis bukunya serta dukungan dan iklim akademis yang memungkinkan perumusan gagasan di dalam buku ini dapat terwujud.
+
+Semoga literatur ini dapat memperkaya referensi riset tingkat lanjut sekaligus menjadi fondasi yang kokoh bagi siapa saja yang sedang membangun model prediktif. Sebab, sebuah model yang tangguh tidak pernah bermula dari kerumitan algoritmanya, melainkan dari seberapa baik data tersebut direpresentasikan.
+
+Selamat mendalami.
+
+::: {.text-end}
+Banjarbaru, Juli 2026\
+Penulis
+:::

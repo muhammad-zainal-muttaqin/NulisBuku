@@ -20,6 +20,8 @@ CH_DIR = OUT_ROOT / "chapters"
 FIGSRC_DIR = OUT_ROOT / "figures" / "_src"
 QMD_DIR = ROOT / "website" / "chapters"
 WEB_FIG_DIR = ROOT / "website" / "figures"
+WEB_INDEX = ROOT / "website" / "index.qmd"
+WEB_CONFIG = ROOT / "website" / "_quarto.yml"
 
 BODY_MARK = "% >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>"
 FIG_RE = re.compile(r"\\begin\{figure\}.*?\\end\{figure\}", re.S)
@@ -348,9 +350,40 @@ def reverse_chapter(stem: str) -> None:
     print(f"  {stem}: {len(replacements)} gambar dipulihkan, {len(markdown.splitlines())} baris qmd")
 
 
+def reverse_front_matter() -> None:
+    """Sync the website title, authors, and preface from the LaTeX source."""
+    metadata = (OUT_ROOT / "metadata.tex").read_text(encoding="utf-8")
+    title_match = re.search(r"\\title\{([^}]*)\}", metadata)
+    author_match = re.search(r"\\author\{(.*?)\}", metadata, re.S)
+    if not title_match or not author_match:
+        raise ValueError("Metadata buku tidak lengkap")
+    title = clean_table_cell(title_match.group(1))
+    authors = [clean_table_cell(author) for author in author_match.group(1).split(r"\and")]
+
+    config = WEB_CONFIG.read_text(encoding="utf-8")
+    config = re.sub(r'(?m)^  title: ".*"$', f'  title: "{title}"', config)
+    config = re.sub(
+        r'(?m)^  author:.*(?:\n    - .*?)*(?=\n  [a-z]|\n\w|\Z)',
+        "  author:\n" + "\n".join(f"    - \"{author}\"" for author in authors),
+        config,
+    )
+    WEB_CONFIG.write_text(config, encoding="utf-8")
+
+    preface = (OUT_ROOT / "prakata.tex").read_text(encoding="utf-8")
+    start = preface.find(r"\markboth{Prakata}{}")
+    end = preface.rfind(r"\endgroup")
+    if start < 0 or end < 0:
+        raise ValueError("Isi prakata tidak ditemukan")
+    content = convert_fragment(preface[start + len(r"\markboth{Prakata}{}") : end])
+    content = content.replace("::: flushright", "::: {.text-end}")
+    WEB_INDEX.write_text(f"# Prakata {{.unnumbered}}\n\n{content}", encoding="utf-8")
+    print("  Front matter: metadata dan prakata disinkronkan")
+
+
 def main() -> None:
     stems = [argument for argument in sys.argv[1:] if not argument.startswith("-")] or [f"ch{number:02d}" for number in range(1, 18)]
     print(f"Reverse-sync {len(stems)} bab: .tex -> .qmd")
+    reverse_front_matter()
     for stem in stems:
         reverse_chapter(stem)
     print("Selesai.")
