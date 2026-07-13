@@ -1,0 +1,6 @@
+[
+"covtype_50k.parquet",
+"covtype_50k_class_counts.csv",
+"covtype_model_scores.csv",
+"verified_stats.json"
+]

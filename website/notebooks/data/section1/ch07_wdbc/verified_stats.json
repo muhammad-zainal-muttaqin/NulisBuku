@@ -1,0 +1,133 @@
+{
+  "source": "sklearn.datasets.load_breast_cancer copy of UCI WDBC",
+  "rows": 569,
+  "real_feature_count": 30,
+  "missing_cells": 0,
+  "target_counts": {
+    "benign": 357,
+    "malignant": 212
+  },
+  "malignant_rate": 0.37258347978910367,
+  "abs_corr_pairs_gt_0_90": 21,
+  "abs_corr_pairs_gt_0_95": 15,
+  "top_abs_corr_pairs": [
+    {
+      "feature_a": "mean radius",
+      "feature_b": "mean perimeter",
+      "abs_corr": 0.9978552814938109
+    },
+    {
+      "feature_a": "worst radius",
+      "feature_b": "worst perimeter",
+      "abs_corr": 0.993707916102949
+    },
+    {
+      "feature_a": "mean radius",
+      "feature_b": "mean area",
+      "abs_corr": 0.9873571700566127
+    },
+    {
+      "feature_a": "mean perimeter",
+      "feature_b": "mean area",
+      "abs_corr": 0.9865068039913907
+    },
+    {
+      "feature_a": "worst radius",
+      "feature_b": "worst area",
+      "abs_corr": 0.9840145644590742
+    },
+    {
+      "feature_a": "worst perimeter",
+      "feature_b": "worst area",
+      "abs_corr": 0.9775780914063871
+    },
+    {
+      "feature_a": "radius error",
+      "feature_b": "perimeter error",
+      "abs_corr": 0.9727936770160764
+    },
+    {
+      "feature_a": "mean perimeter",
+      "feature_b": "worst perimeter",
+      "abs_corr": 0.9703868870426394
+    },
+    {
+      "feature_a": "mean radius",
+      "feature_b": "worst radius",
+      "abs_corr": 0.9695389726112055
+    },
+    {
+      "feature_a": "mean perimeter",
+      "feature_b": "worst radius",
+      "abs_corr": 0.9694763634663146
+    }
+  ],
+  "probe_noise_count_for_notebook_demo": 20,
+  "cv_protocol": "5-fold StratifiedKFold(shuffle=True, random_state=42), selectors inside Pipeline, scoring=roc_auc",
+  "model_scores": {
+    "all_50": {
+      "mean_roc_auc": 0.9939997001821437,
+      "std_roc_auc": 0.007641275360864339
+    },
+    "filter_k10": {
+      "mean_roc_auc": 0.9914875124996317,
+      "std_roc_auc": 0.006215088437163123
+    },
+    "rfe_k10": {
+      "mean_roc_auc": 0.9961728813882434,
+      "std_roc_auc": 0.002662348357363234
+    },
+    "l1_embedded": {
+      "mean_roc_auc": 0.9958409154323009,
+      "std_roc_auc": 0.0042310776535296165
+    }
+  },
+  "selected_features_fit_on_full_demo_table": {
+    "filter_k10": {
+      "feature_count": 10,
+      "probe_count": 0,
+      "features": [
+        "mean radius",
+        "mean perimeter",
+        "mean area",
+        "mean concavity",
+        "mean concave points",
+        "area error",
+        "worst radius",
+        "worst perimeter",
+        "worst area",
+        "worst concave points"
+      ]
+    },
+    "rfe_k10": {
+      "feature_count": 10,
+      "probe_count": 0,
+      "features": [
+        "mean compactness",
+        "mean concave points",
+        "radius error",
+        "area error",
+        "worst radius",
+        "worst texture",
+        "worst perimeter",
+        "worst area",
+        "worst smoothness",
+        "worst concave points"
+      ]
+    },
+    "l1_embedded": {
+      "feature_count": 8,
+      "probe_count": 0,
+      "features": [
+        "mean concave points",
+        "radius error",
+        "worst radius",
+        "worst texture",
+        "worst smoothness",
+        "worst concavity",
+        "worst concave points",
+        "worst symmetry"
+      ]
+    }
+  }
+}

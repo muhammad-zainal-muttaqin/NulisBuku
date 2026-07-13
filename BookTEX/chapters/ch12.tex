@@ -1,113 +1,309 @@
 % ==========================================================================
-% ch12.tex — dihasilkan otomatis dari website/chapters/ch12.qmd
-% Boleh disunting manual. 'sync' hanya menimpa bila .qmd berubah DAN .tex
-% belum disunting; kalau keduanya berubah, dilewati (pakai --force).
-% qmd-sha1: f01f4d5e99a6
-% tex-sha1: 3a4b9fd4437f
+% ch12.tex — dihasilkan dari v2/drafts oleh tools/md2tex.py
+% Sumber: v2\drafts\ch12\ch12_draft_v2.md
+% Boleh disunting manual; menjalankan md2tex.py lagi akan menimpa.
 % ==========================================================================
-% >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
-\chapter{Citra \& Audio}\label{citra-audio}
+\chapter{Citra dan Audio}\label{citra-dan-audio}
 
-\section{Citra: Normalisasi dan Augmentasi}\label{citra-normalisasi-dan-augmentasi}
+Sinyal padat seperti gambar dan suara masuk ke model sebagai angka dalam bentuk nilai piksel, amplitudo gelombang, atau spektrum frekuensi. Model tidak menerima pengalaman manusia yang langsung melihat pakaian atau mendengar angka. Struktur yang terasa jelas bagi manusia harus diterjemahkan menjadi representasi yang dapat dipakai model. Inti persoalannya adalah representasi apa yang membuat struktur penting menjadi terlihat oleh model.
 
-Data citra digital pada dasarnya merupakan matriks numerik spasial berdimensi tinggi. Sebuah gambar berwarna tersusun atas kisi dua dimensi yang merekam tiga kanal warna (RGB), dengan setiap titik piksel menyimpan nilai intensitas dari 0 hingga 255. Sebelum arsitektur \emph{computer vision} dapat mengekstraksi representasi polanya, data mentah ini harus distandarkan melalui dua mekanisme utama: normalisasi dan augmentasi.
+Bab ini membahas dua jalur representasi untuk citra dan audio. Jalur pertama adalah representasi yang dirancang manusia, seperti HOG untuk citra serta spectrogram, MFCC, dan chroma untuk audio. Jalur kedua adalah representasi yang dipelajari mesin, seperti CNN, Vision Transformer, dan encoder audio pratelatih yang belajar langsung dari waveform. Bab ini menguraikan penskalaan kanal, augmentasi sebagai keputusan representasi, embedding citra dan audio, serta penggabungan (\emph{pooling}) frame berdurasi variabel menjadi vektor berukuran tetap. Tujuannya memahami kapan suatu representasi cukup dan bagaimana validasinya dijaga tetap jujur.
 
-\textbf{Normalisasi Citra}
-Normalisasi menstandarkan rentang nilai piksel untuk memastikan gradien algoritma \emph{machine learning} tetap stabil saat konvergensi. Praktik industri modern umumnya menerapkan standardisasi \emph{Z-score} per kanal warna melalui persamaan \( x_{c}^{\text{norm}} = \frac{x_c - \mu_c}{\sigma_c} \). Dalam rumusan tersebut, \(x_c\) mewakili intensitas piksel asli pada kanal warna spasial \(c\) (misalnya merah, hijau, atau biru), \(\mu_c\) menyatakan rata-rata intensitas piksel, dan \(\sigma_c\) merepresentasikan simpangan bakunya pada kanal tersebut. Untuk menjaga integritas \emph{pipeline}, parameter rata-rata dan simpangan baku wajib dihitung secara eksklusif dari himpunan data latih. Konstanta ini kemudian dikunci dan diaplikasikan pada data pengujian. Apabila menggunakan \emph{pretrained model}, praktisi harus menormalisasi citra mengikuti distribusi statistik asal model tersebut, seperti konstanta rata-rata standar ImageNet \passthrough{\lstinline![0.485, 0.456, 0.406]!}.
+\section{Penskalaan Kanal dan Augmentasi Citra}\label{penskalaan-kanal-dan-augmentasi-citra}
 
-\textbf{Augmentasi Data}
-Augmentasi menyisipkan transformasi sintetis di dalam \emph{pipeline} untuk mencegah model menghafal tata letak piksel (\emph{overfitting}). Transformasi ini secara khusus hanya dijalankan pada fase pelatihan. Teknik augmentasi mencakup manipulasi geometris dan visual dasar, seperti pemotongan acak, pembalikan horizontal, distorsi prespektif, dan injeksi \emph{noise} warna. Selain itu, kerangka kerja modern menggunakan kebijakan otomatis (\emph{AutoAugment} atau \emph{RandAugment}) yang secara acak mengundi kombinasi transformasi dari kumpulan prosedur operasi standar. Terdapat juga pendekatan tingkat lanjut seperti augmentasi lintas sampel (\emph{Mixup} atau \emph{CutMix}) yang menggabungkan potongan citra dari kelas berbeda untuk melatih model memprediksi rasio probabilitas gabungan, sehingga model difokuskan pada morfologi lokal dibandingkan latar belakang global.
+Citra yang tampak utuh bagi manusia masuk ke model sebagai tensor angka. Tahap pertama adalah menyepakati bentuk tensor dan skala nilainya. Citra digital biasanya direpresentasikan dengan dimensi tinggi, lebar, dan kanal. Pada citra RGB, satu piksel mempunyai tiga nilai, yaitu merah, hijau, dan biru. Jika citra berukuran 224 x 224, bentuknya dapat ditulis sebagai 224 x 224 x 3 pada konvensi \emph{channels-last} seperti TensorFlow/Keras, atau 3 x 224 x 224 pada konvensi \emph{channels-first} seperti PyTorch. Nilai piksel sering datang sebagai bilangan 0 sampai 255, lalu diubah menjadi rentang seperti 0 sampai 1 sebelum masuk ke model.
 
-Kedua tahapan prapemrosesan ini menentukan apakah representasi fitur dapat mengekstraksi objek dengan konsisten atau terdistorsi oleh variasi pencahayaan.
+Langkah awal ini tampak administratif, tetapi sebenarnya merupakan bagian dari representasi. Model pretrained biasanya dilatih dengan aturan input tertentu, mulai dari ukuran citra, urutan kanal, rentang nilai, sampai statistik penskalaan. Jika aturan tersebut berubah, angka yang masuk ke lapisan pertama tidak lagi mengikuti asumsi pelatihan model. Akibatnya, fitur yang seharusnya kuat dapat melemah hanya karena input dipersiapkan dengan cara berbeda.
 
-\section{Fitur Rancangan Tangan (HOG) dan Keterbatasannya}\label{fitur-rancangan-tangan-hog-dan-keterbatasannya}
+Penskalaan per kanal mengikuti ide standardization dari Bab 3, tetapi diterapkan pada kanal warna. Untuk kanal \(c\), nilai piksel \(x_c\) dapat ditulis ulang dengan rumus berikut.
 
-Sebelum representasi mendalam digunakan secara luas, pemahaman citra bertumpu pada representasi rancangan manusia. Pendekatan ini menghindari penggunaan piksel mentah yang sensitif terhadap perubahan cahaya atau pergeseran posisi. Pergeseran pencahayaan dapat mengubah susunan angka piksel secara drastis, meskipun objek yang ditangkap tetap sama. Ekstraksi fitur difokuskan pada perhitungan lokal yang memanfaatkan operasi matematika untuk mendeteksi tepian atau sudut pada area kecil gambar. Hasil perhitungan tersebut mengubah matriks piksel menjadi vektor fitur yang konsisten terhadap gangguan visual lingkungan.
+\[
+x_c' = \dfrac{x_c - \mu_c}{\sigma_c}
+\]
 
-Contoh paling menonjol dari pendekatan ini adalah algoritma \emph{Histogram of Oriented Gradients} (HOG). Algoritma ini membagi citra ke dalam kisi-kisi blok berukuran kecil dan menghitung arah perubahan intensitas warna (\emph{gradient}). Dalam kalkulasi ini, gradien citra dihitung berdasarkan perbedaan intensitas antara piksel yang bersebelahan. Jika \(I(x,y)\) mewakili intensitas piksel pada koordinat \((x,y)\), komponen gradien horizontal (\(G_x\)) dan vertikal (\(G_y\)) dirumuskan sebagai \(G_x = I(x+1, y) - I(x-1, y)\) dan \(G_y = I(x, y+1) - I(x, y-1)\). Variabel \(G_x\) mengukur perubahan intensitas secara horizontal untuk memetakan tepian vertikal, sedangkan \(G_y\) mengukur perubahan vertikal untuk memetakan tepian horizontal. Dari kedua nilai tersebut, algoritma HOG menghitung magnitudo dan orientasi arah gradien untuk menyusun siluet kontur fisik objek.
+Dalam rumus tersebut, \(\mu_c\) adalah rata-rata kanal dan \(\sigma_c\) adalah \emph{standard deviation} kanal. Untuk model yang dilatih dari awal, statistik ini dihitung dari \emph{training split} saja. Model \emph{pretrained} menggunakan statistik yang didokumentasikan khusus untuk bobotnya. Sebagai contoh, sebagian bobot \emph{vision pretrained} yang dilatih pada ImageNet mendokumentasikan \emph{mean} RGB {[}0.485, 0.456, 0.406{]} beserta \emph{standard deviation} tertentu. Angka tersebut tidak berlaku untuk semua model \emph{vision pretrained}. Mengganti statistik bawaan dengan statistik \emph{dataset} lokal juga tidak selalu benar, karena lapisan awal model sudah belajar membaca \emph{input} dengan konvensi lama.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch12-fig-1}
-\caption{Ekstraksi Fitur Histogram of Oriented Gradients (HOG) pada Citra}
+Gambar 12.1 memperlihatkan perbedaan antara jalur pelatihan dan jalur evaluasi. Jalur pelatihan boleh memakai augmentasi acak, sedangkan \emph{preprocessing} validasi dan \emph{test} secara default dibuat deterministik agar evaluasi dapat direproduksi. \emph{Test-time augmentation} yang ditetapkan sebelumnya tetap sah jika transformasi dan aturan penggabungan prediksinya reproducible serta sesuai dengan prosedur \emph{serving}.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch12-fig-1}
+\caption{Tensor citra, augmentasi pelatihan, dan preprocessing evaluasi}
 \label{fig:ch12-fig-1}
 \end{figure}
 
-Pada kasus deteksi pejalan kaki, model tidak mengevaluasi warna pakaian target. Ekstraktor HOG memetakan siluet target dengan mengidentifikasi garis vertikal tubuh serta lengkungan kepala melalui nilai gradien. Perhitungan tersebut kemudian dikelompokkan ke dalam blok-blok spasial berukuran tetap. Algoritma merangkum dominasi arah gradien tersebut ke dalam sebuah histogram distribusi orientasi lokal. Representasi spasial ini bertindak sebagai fitur akhir, sehingga target terdeteksi secara konsisten di dalam ruang gradien HOG tanpa terpengaruh variasi visual pakaian.
+Contoh citra pada bab ini memakai Fashion-MNIST. Setiap baris mewakili satu citra pakaian grayscale berukuran 28 x 28 piksel dengan label kelas pakaian. Contoh audio memakai Free Spoken Digit Dataset (FSDD), yang berisi rekaman pendek pengucapan digit 0 sampai 9. Kedua contoh ini menunjukkan bahwa augmentasi hanya sah jika label tetap dapat dipertahankan.
 
-Pendekatan ekstraksi manual ini memiliki keterbatasan struktural. Pembuatan algoritma menuntut pemahaman domain spesifik mengenai manipulasi citra dan proses rekayasa parametrik. Parameter sistem seperti dimensi sel, ukuran blok, dan ambang batas intensitas harus dikonfigurasi secara manual untuk target deteksi yang berbeda. Selain itu, fitur rancangan tangan tidak memetakan konteks tingkat tinggi. HOG memetakan batas siluet objek dengan baik, tetapi tidak mampu menyerap konteks semantik, seperti membedakan objek fisik dari gambar dua dimensi. Keterbatasan ini memfasilitasi transisi penggunaan representasi yang dipelajari secara langsung dari data pelatihan.
+Augmentasi membuat contoh pelatihan baru melalui transformasi yang dianggap tidak mengubah label, misalnya crop, flip, rotasi kecil, color jitter, blur, atau \emph{noise}. Pada Fashion-MNIST, rotasi kecil atau translasi ringan dapat membantu jika label pakaian tetap terbaca. Crop tidak selalu aman. Jika gambar ankle boot dipotong sampai sol atau bentuk utamanya hilang, label lama menjadi meragukan. Pada audio digit FSDD, time shift atau \emph{noise} ringan dapat aman, tetapi transformasi yang memotong awal ucapan dapat menghapus informasi digit.
 
-\section{\texorpdfstring{CNN \emph{Feature Extractor} dan \emph{Pretrained Model}}{CNN Feature Extractor dan Pretrained Model}}\label{cnn-feature-extractor-dan-pretrained-model}
+Dengan kata lain, augmentasi bukan data gratis. Augmentasi adalah pernyataan bahwa label tetap benar di bawah transformasi tertentu. Pernyataan tersebut harus sesuai dengan domain, tugas, dan cara data dipakai saat deployment. Setelah input citra dipersiapkan, pertanyaan berikutnya adalah apakah struktur visual perlu ditulis manusia sebagai \emph{descriptor}, atau dibiarkan dipelajari oleh model.
 
-Pemrosesan citra berkembang secara signifikan melalui arsitektur \emph{Convolutional Neural Network} (CNN) yang memfasilitasi ekstraksi representasi melalui pembelajaran mesin. Algoritma ini memetakan pola visual dari data pelatihan tanpa menggunakan aturan matematis yang statis. CNN bekerja dengan menggeser sekumpulan filter melintasi area citra untuk mengekstraksi berbagai fitur. Operasi konvolusi dasar dirumuskan sebagai \( \mathbf{Y}_{i,j} = \sum_{m} \sum_{n} \mathbf{W}_{m,n} \cdot \mathbf{X}_{i+m, j+n} \). Dalam perumusan tersebut, \(\mathbf{Y}\) melambangkan \emph{feature map} keluaran, \(\mathbf{W}\) merupakan matriks filter pembawa bobot yang dioptimalkan selama pelatihan, dan \(\mathbf{X}\) merepresentasikan area piksel citra masukan.
+\begin{pendalaman}{Kebijakan augmentasi otomatis dan augmentasi lintas sampel}
+Selain transformasi yang dipilih manual, AutoAugment dan RandAugment mencari atau memilih kombinasi augmentasi secara otomatis. Augmentasi lintas sampel seperti mixup dan CutMix mencampur dua citra, dan kadang dua label, agar prediksi tidak terlalu bergantung pada satu latar atau pola global. Pendekatan ini menekankan morfologi lokal yang stabil. Namun, setiap augmentasi tetap merupakan asumsi invariance. Flip pada X-ray dada dapat menukar anatomi kiri dan kanan. Kebijakan otomatis pun perlu diperiksa terhadap invariance yang benar-benar berlaku.
+\end{pendalaman}
 
-Melalui operasi konvolusi berulang, CNN membangun pemahaman visual secara hierarkis. Pada lapisan awal, filter merespons komponen spasial sederhana seperti garis vertikal, sudut, lengkungan, dan gradasi warna. Pada lapisan menengah, jaringan menyatukan komponen tersebut menjadi struktur tekstur atau fitur spesifik objek. Pada lapisan dalam, fitur parsial dikonsolidasi menjadi representasi semantik tingkat tinggi yang membedakan objek secara utuh. Kemampuan pembelajaran berjenjang ini mendukung implementasi \emph{transfer learning}. CNN yang telah dilatih dengan jutaan citra memiliki representasi spasial yang universal. Model dasar ini bertindak sebagai \emph{pretrained model}, di mana kemampuan ekstraksinya digunakan kembali untuk mengevaluasi domain data baru.
+\section{HOG dan Batas Fitur Citra yang Dirancang Manusia}\label{hog-dan-batas-fitur-citra-yang-dirancang-manusia}
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch12-fig-2}
-\caption{Arsitektur CNN Menghilangkan Lapisan Klasifikasi Akhir Menjadi Feature Extractor}
+Jika piksel mentah dipakai langsung, perubahan kecil pada posisi, pencahayaan, atau latar dapat mengubah banyak angka sekaligus. Objek yang sama dapat terlihat berbeda hanya karena lampu lebih terang, kamera bergeser sedikit, atau warna pakaian berubah. Karena itu, sebelum \emph{deep learning} menjadi dominan, banyak representasi citra dirancang untuk menangkap struktur yang lebih stabil daripada nilai piksel mentah.
+
+Salah satu contoh penting adalah HOG, atau \emph{histogram of oriented gradients} (Dalal and Triggs 2005). HOG tidak mencoba mengingat warna setiap piksel. Descriptor ini menghitung arah perubahan intensitas lokal, lalu merangkum pola arah tersebut dalam histogram kecil. Secara intuitif, HOG menangkap bentuk seperti tepi vertikal, sudut, kontur, atau siluet. Pada Fashion-MNIST, HOG lebih peduli pada kontur tas, sol sepatu, atau garis kerah daripada nilai piksel mentah satu per satu.
+
+Gradien sederhana pada citra \(I\) dapat ditulis sebagai perubahan intensitas di arah horizontal dan vertikal.
+
+\[
+G_x = I(x{+}1, y) - I(x{-}1, y)
+\]
+
+\[
+G_y = I(x, y{+}1) - I(x, y{-}1)
+\]
+
+Dalam rumus tersebut, \(I(x, y)\) adalah intensitas piksel pada posisi \((x, y)\). Nilai \(G_x\) dan \(G_y\) memberi bahan untuk menghitung besar dan arah perubahan lokal. HOG kemudian mengumpulkan arah-arah itu dalam cell kecil, menormalkannya per block, lalu menggabungkannya menjadi descriptor panjang tetap.
+
+Gambar 12.2 menunjukkan alur ini. Patch citra masuk sebagai intensitas, diubah menjadi panah gradien, diringkas menjadi histogram orientasi per cell, lalu disusun menjadi descriptor HOG.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch12-fig-2}
+\caption{Dari patch citra ke descriptor HOG}
 \label{fig:ch12-fig-2}
 \end{figure}
 
-Dalam implementasinya, varian arsitektur seperti ResNet dapat dimodifikasi dengan menghilangkan lapisan klasifikasi akhir. Sisa jaringan dialihfungsikan sebagai \emph{feature extractor} murni. Ketika citra medis atau foto industri dimasukkan ke dalam jaringan ini, model tidak memprediksi probabilitas kelas, melainkan memproduksi vektor fitur yang memuat representasi visual citra. Vektor inilah yang kemudian dialirkan ke model prediktif sederhana untuk mendeteksi anomali. Pendekatan ini menghasilkan representasi dengan akurasi tinggi tanpa mengharuskan sistem melatih parameter dari awal.
+Fitur seperti HOG, edge descriptor, dan texture descriptor tetap berguna untuk beberapa situasi. Dataset kecil, sistem dengan komputasi terbatas, inspeksi visual sederhana, atau kebutuhan interpretabilitas kadang lebih cocok dengan descriptor yang jelas maknanya. Model klasik seperti SVM atau logistic regression dapat bekerja baik bila descriptor memang menangkap sinyal utama.
 
-Meskipun model berbasis \emph{Vision Transformer} (ViT) menjadi standar alternatif yang populer, CNN tetap dipertahankan pada lini komputasi industri. Evaluasi empiris menunjukkan bahwa arsitektur CNN seperti ConvNeXt v2 memiliki kinerja yang sebanding atau mengungguli ViT pada himpunan data berukuran menengah. Struktur operasi konvolusi memungkinkan model mengekstraksi informasi visual dengan efisien saat ketersediaan data pelatihan sangat terbatas.
+Batasnya juga jelas. Parameter seperti cell size, block size, jumlah orientation bins, dan skema penskalaan harus dipilih manusia. Jika tugas berubah dari siluet pakaian grayscale ke foto produk berwarna atau citra medis, descriptor mungkin perlu diatur ulang. Fitur yang dirancang manusia juga sulit membangun hierarki visual yang fleksibel. Tepi perlu menjadi tekstur, tekstur menjadi bagian objek, dan bagian objek menjadi konsep semantik. CNN dan model pretrained muncul untuk membangun hierarki seperti itu langsung dari data.
 
-\section{Image Embedding dan Patch}\label{image-embedding-dan-patch}
+\section{CNN sebagai Feature Extractor dan Model Vision Pretrained}\label{cnn-sebagai-feature-extractor-dan-model-vision-pretrained}
 
-Arsitektur \emph{Vision Transformer} (ViT) menyediakan pendekatan alternatif yang memproses seluruh area citra sebagai urutan sekuensial. Langkah awal metode ini membagi citra menjadi kumpulan \emph{patch} persegi yang diletakkan berdampingan tanpa tumpang tindih. Setiap \emph{patch} kemudian diratakan dan diproses sebagai sebuah \emph{token} independen, yang memiliki peran identik dengan representasi kata dalam model bahasa. Pemotongan area spasial ini dirumuskan melalui persamaan \( N = \frac{H \times W}{P^2} \). Dalam persamaan tersebut, \(N\) menyatakan total \emph{patch} keluaran, \(H\) dan \(W\) mewakili dimensi tinggi dan lebar citra asli, serta \(P\) merepresentasikan ukuran sisi setiap \emph{patch}. Sebagai contoh, citra beresolusi 224×224 piksel dengan ukuran \emph{patch} 16×16 piksel akan direpresentasikan menjadi 256 \emph{patch} terpisah.
+CNN belajar fitur visual melalui filter yang digeser di atas citra. Pada lapisan awal, filter sering merespons garis, sudut, kontras warna, dan pola sederhana. Lapisan tengah menggabungkan respons tersebut menjadi tekstur dan bagian objek. Lapisan dalam membawa representasi yang lebih semantik, seperti pola daun sakit, bentuk kendaraan, wajah hewan, atau objek yang lebih utuh.
 
-Komponen komputasi \emph{attention} mengevaluasi keterkaitan seluruh \emph{token} tersebut secara bersamaan. Mekanisme ini memfasilitasi identifikasi korelasi antara objek yang terpisah secara spasial dalam satu gambar.
+Operasi dasar convolution dapat ditulis ringkas dengan rumus berikut.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch12-fig-3}
-\caption{Pemotongan Citra Menjadi Kisi Patch dan Mekanisme Attention pada Vision Transformer}
+\[
+\mathbf{Y}_{i,j} = \sum_m \sum_n \mathbf{W}_{m,n} \cdot \mathbf{X}_{i+m,\, j+n}
+\]
+
+Dalam rumus tersebut, \(\mathbf{X}\) adalah input lokal dari citra atau feature map sebelumnya, \(\mathbf{W}\) adalah filter kecil yang dipelajari, dan \(\mathbf{Y}_{i,j}\) adalah nilai feature map pada posisi \((i,j)\). Rumus ini menggambarkan konvolusi 2-D pada satu kanal. Pada citra RGB, filter sekaligus menjumlahkan ketiga kanal input. Bagian pentingnya bukan rumusnya semata, tetapi ide bahwa filter yang sama dipakai berulang di banyak lokasi. Dengan cara ini, model dapat mengenali pola lokal tanpa harus belajar ulang untuk setiap posisi piksel.
+
+Model vision pretrained memanfaatkan hierarki ini. Kita dapat mengambil ResNet (He et al. 2016), EfficientNet, atau keluarga CNN lain yang sudah dilatih pada dataset besar, membuang atau melewati classification head terakhir, lalu memakai vektor sebelum head sebagai fitur. Fitur itu kemudian masuk ke model hilir seperti linear classifier, SVM, atau gradient boosting.
+
+Gambar 12.3 memperlihatkan pola feature extraction ini. Classification head asli dicoret, sedangkan pooled vector dari lapisan akhir diarahkan ke classifier lokal.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch12-fig-3}
+\caption{CNN pretrained sebagai feature extractor}
 \label{fig:ch12-fig-3}
 \end{figure}
 
-Pemrosesan relasi antarkepingan ini mengonsolidasi makna semantik visual ke dalam ruang kontinu tunggal yang disebut \emph{image embedding}. Representasi ini memetakan konsep objek secara utuh. Jika dua citra menampilkan kelas objek yang sama, vektor \emph{embedding} dari keduanya akan dipetakan berdekatan secara matematis tanpa dipengaruhi oleh variasi latar belakang visual.
+Transfer learning membantu ketika data berlabel lokal terbatas. Untuk Fashion-MNIST, fitur dari model pretrained dapat menjadi \emph{baseline} cepat, tetapi domain mismatch tetap harus diperiksa karena gambar grayscale kecil tidak sama dengan foto natural ImageNet. Citra medis, foto satelit, atau citra mikroskop juga tidak selalu mengikuti distribusi ImageNet. Performa validasi yang jauh di bawah ekspektasi pretrained, atau visualisasi embedding yang mengelompokkan sumber citra alih-alih kelas, merupakan sinyal kuat adanya domain mismatch yang perlu ditangani. Frozen extraction memakai representasi lama apa adanya. Partial atau full fine-tuning mengubah representasi agar lebih cocok dengan label lokal. Logikanya sama dengan keputusan feature extraction vs fine-tuning pada Bab 11 dan Tabel 11.2.
 
-Dalam praktik rekayasa fitur modern, terdapat beberapa keluarga \emph{pretrained model} yang menjadi standar ekstraksi citra. Model keluarga CLIP dan SigLIP dilatih menggunakan jutaan pasangan citra dan teks, dengan bagian \emph{encoder} visual dari SigLIP sering digunakan sebagai pengekstraksi fitur serbaguna karena memiliki rentang representasi yang lebih umum dibanding arsitektur konvensional. Alternatif lainnya adalah DINOv2, arsitektur \emph{self-supervised learning} yang dioptimalkan untuk mengekstraksi struktur spasial. DINOv2 memproduksi \emph{token} CLS yang merangkum \emph{image embedding} global, bersama fitur tingkat \emph{patch} yang mendukung resolusi tinggi untuk memfasilitasi tugas prediksi padat seperti segmentasi spasial. Untuk aplikasi tingkat lanjut, fitur direpresentasikan menggunakan pendekatan multi-skala dan hibrida. Arsitektur modern seperti ConvNeXt v2 menggabungkan hierarki CNN dengan protokol pelatihan transformer untuk mengompilasi fitur yang merekam detail lokal dan konteks global sekaligus.
+Preprocessing harus mengikuti bobot model. Resize, crop, urutan kanal, dan statistik penskalaan perlu sesuai dokumentasi. Split data juga harus dijaga. Near-duplicate image, frame dari video yang sama, patch dari citra besar yang sama, atau foto subjek yang sama tidak boleh tersebar sembarangan ke train dan test jika deployment menuntut generalisasi ke subjek atau lokasi baru.
 
-Pendekatan sekuensial ini menyelaraskan pemrosesan data lintas modalitas, di mana representasi visual dan tekstual disatukan menggunakan struktur komputasi yang seragam pada arsitektur pembelajaran multimodal.
+Pilihan arsitektur sebaiknya praktis, bukan ideologis. Vision Transformer memang penting, tetapi CNN modern seperti ConvNeXt V2 tetap kompetitif, terutama pada skala data kecil sampai menengah. Pertanyaan yang lebih berguna adalah representasi mana yang bekerja pada domain ini, dengan data, komputasi, dan kebutuhan interpretasi yang tersedia. Salah satu jawaban modern terhadap pertanyaan tersebut adalah memperlakukan citra sebagai embedding, baik untuk seluruh gambar maupun untuk patch kecil di dalamnya.
 
-\section{Audio: Waveform, Spektrogram, MFCC, dan Chroma}\label{audio-waveform-spektrogram-mfcc-dan-chroma}
+\section{Image Embedding dan Patch}\label{image-embedding-dan-patch}
 
-Data audio pada dasarnya merupakan sinyal \emph{waveform} mentah berdimensi tunggal yang mencatat perubahan amplitudo tekanan udara seiring waktu. Pada setiap titik temporal, berbagai sumber suara berakumulasi menjadi satu nilai amplitudo. Mengingat sinyal ini menuntut pemisahan komponen akustik, pendekatan klasik merancang transformasi untuk mengonversi sinyal dari domain waktu ke domain frekuensi melalui spektrogram. Transformasi ini memetakan fluktuasi satu dimensi menjadi representasi visual dua dimensi. Rentang waktu diposisikan pada sumbu horizontal, frekuensi pada sumbu vertikal, dan amplitudo direpresentasikan melalui intensitas piksel. Perubahan format menjadi citra spektrum memfasilitasi penerapan algoritma \emph{computer vision} pada data audio.
+Image embedding adalah vektor padat yang mewakili citra, region, atau patch. Jika descriptor handcrafted menulis asumsi manusia secara eksplisit, embedding modern biasanya dipelajari dari data besar. Vektor ini dapat dipakai untuk klasifikasi, retrieval, clustering, anomaly detection, atau pencarian citra mirip.
 
-Untuk memodelkan persepsi pendengaran biologis, dirancang representasi frekuensi yang mengikuti skala Mel. Pendengaran manusia beroperasi secara non-linear, menunjukkan sensitivitas tinggi terhadap pergeseran nada pada frekuensi rendah dan penurunan sensitivitas pada frekuensi tinggi. Korelasi antara frekuensi asli dengan skala Mel dinyatakan melalui persamaan \( m = 2595 \log_{10} \left( 1 + \frac{f}{700} \right) \). Dalam perumusan tersebut, \(m\) menyatakan frekuensi pada skala Mel dan \(f\) menyatakan frekuensi aktual dalam satuan Hertz.
+Vision Transformer membuat jembatan yang sangat dekat dengan Bab 11. Teks dipecah menjadi token, sedangkan citra dipecah menjadi patch. Setiap patch diratakan dan diproyeksikan menjadi token embedding, lalu dilengkapi \emph{positional embedding} atau informasi posisi lain sebelum diproses oleh transformer encoder. Informasi posisi menjaga letak patch dalam grid tetap terbaca. Dengan cara ini, citra tidak lagi hanya diperlakukan sebagai grid piksel, tetapi sebagai urutan potongan visual.
 
-Berdasarkan konversi persepsi tersebut, terdapat beberapa teknik ekstraksi fitur spesifik untuk pemrosesan audio. Mel-spektrogram memetakan sumbu frekuensi ke skala Mel sambil mempertahankan dimensi spasial komponen suara, menjadikannya format standar bagi pengklasifikasi audio berbasis CNN. Teknik \emph{Mel-Frequency Cepstral Coefficients} (MFCC) menghasilkan representasi yang mengekstraksi selubung spektrum suara dari Mel-spektrogram. MFCC umumnya diimplementasikan ketika data latih berjumlah kecil untuk pemodelan klasik, atau pada arsitektur \emph{edge deployment} dengan kendala memori. Untuk analisis musik, \emph{chroma feature} meringkas energi frekuensi ke dalam dua belas kelas nada dasar. Teknik ini mengeliminasi informasi oktaf untuk menonjolkan identitas harmoni, sehingga mendukung inferensi progresi kord dan klasifikasi genre lagu. 
+Jumlah patch ditentukan oleh ukuran citra dan ukuran patch.
 
-Teknik-teknik ekstraksi ini merepresentasikan fitur berbasis rancangan manusia yang digunakan untuk mereduksi dimensi sekaligus mengisolasi pola sinyal akustik sebelum dievaluasi oleh sistem prediktif.
+\[
+N = \dfrac{H \times W}{P^2}
+\]
 
-\section{Pretrained Audio Encoder: Model Raw-Waveform}\label{pretrained-audio-encoder-model-raw-waveform}
+Dalam rumus tersebut, \(H\) dan \(W\) adalah tinggi dan lebar citra, sedangkan \(P\) adalah ukuran sisi patch. Rumus ini mengasumsikan \(H\) dan \(W\) habis dibagi \(P\); jika tidak, citra perlu di-\emph{resize}, di-\emph{pad}, atau di-\emph{crop} sesuai aturan model. Citra 224 x 224 dengan patch 16 x 16 menghasilkan \(224 \times 224 / 16^2 = 196\) token patch. Angka ini penting karena \emph{patch size} langsung memengaruhi resolusi lokal dan biaya komputasi.
 
-Pemrosesan audio mutakhir menggunakan representasi yang dipelajari mesin untuk mengolah \emph{raw waveform} secara langsung. Arsitektur \emph{state-of-the-art} mengekstrak pola akustik dari fluktuasi amplitudo tanpa menggunakan transformasi domain frekuensi statis. Model \emph{raw-waveform} seperti wav2vec 2.0 dan HuBERT memproses deret amplitudo 1D menggunakan tumpukan konvolusi 1D. Alih-alih mengekstraksi fitur diskrit melalui konversi tetap, model ini menggunakan matriks bobot yang dioptimalkan dari data pelatihan untuk memetakan gelombang suara menjadi matriks fitur kontinu.
+Gambar 12.4 memperlihatkan alur patch. Citra dibagi menjadi grid, setiap patch menjadi token embedding, lalu transformer menghasilkan dua jenis representasi yang dapat dipakai.
 
-Peningkatan metrik arsitektur ini didukung oleh metode \emph{self-supervised learning} (SSL). Selama pelatihan, model mengevaluasi puluhan ribu jam rekaman wicara tanpa label. Sistem menerapkan penyembunyian (\emph{masking}) pada sebagian segmen deret representasi, dan model dioptimalkan untuk memprediksi fitur dari porsi yang disembunyikan. Tugas rekonstruksi ini memungkinkan model mengenali hierarki fonetik secara otonom.
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch12-fig-4}
+\caption{Citra sebagai urutan patch embedding}
+\label{fig:ch12-fig-4}
+\end{figure}
 
-Implementasi rekayasa fitur saat ini bergeser pada penggunaan \emph{pretrained model} untuk menghasilkan vektor representatif. Keluarga model wav2vec 2.0 dan HuBERT bertindak sebagai standar untuk tugas pengenalan ucapan (\emph{speech recognition}), dengan iterasi besar seperti Wav2Vec2-BERT 2.0 yang dilatih menggunakan jutaan jam audio. Model WavLM mengembangkan arsitektur HuBERT menggunakan mekanisme pencampuran ucapan (\emph{utterance mixing}) untuk menahan retensi identitas pembicara, yang diutamakan pada tugas \emph{speaker verification}. Pada klasifikasi alternatif, status tersembunyi (\emph{hidden state}) dari blok akhir \emph{encoder} model Whisper digunakan sebagai pengekstraksi fitur semantik. Selain arsitektur wicara, terdapat model spesifik-domain seperti AudioMAE dan BEATs yang dikalibrasi untuk pengenalan kejadian suara lingkungan (\emph{sound event detection}), serta model MERT untuk mengekstraksi fitur kemusikan.
+Granularitas embedding merupakan keputusan desain. Untuk klasifikasi satu citra, global image vector, misalnya token CLS atau pooled vector, sering cukup. Untuk segmentation, deteksi, atau pencarian bagian citra, per-patch vectors dapat lebih berguna karena masih menyimpan struktur spasial. Jika patch terlalu besar, detail kecil hilang. Jika patch terlalu kecil, jumlah token dan biaya attention meningkat.
 
-Pada tahapan pra-pemrosesan, rentang sampel \emph{waveform} distandarkan durasinya melalui pemotongan atau penambahan bantalan (\emph{padding}), dan laju sampelnya (\emph{sampling rate}) diseragamkan ke batas spesifikasi arsitektur sebelum dievaluasi oleh \emph{encoder}. Keluaran dari tahap ini kemudian difungsikan sebagai masukan bagi klasifikasi hilir.
+Embedding visual juga tidak otomatis netral. Model dapat belajar latar, watermark, pose, alat perekam, atau bias dataset lain sebagai shortcut. Karena itu, embedding harus dievaluasi berdasarkan tugas, domain, dan failure mode. Retrieval yang tampak bagus secara visual mungkin gagal pada kasus minoritas. Clustering yang rapi mungkin sebenarnya mengelompokkan sumber kamera, bukan objek. Pola keputusan yang sama muncul lagi pada audio. Sinyal mentah dapat ditransformasikan dengan aturan manusia, atau dipelajari oleh encoder modern.
 
-\section{\texorpdfstring{\emph{Audio Embedding} dan Agregasi Sepanjang Waktu}{Audio Embedding dan Agregasi Sepanjang Waktu}}\label{audio-embedding-dan-agregasi-sepanjang-waktu}
+\begin{pendalaman}{Ekosistem ekstraktor visual pretrained}
+Tiga keluarga sering muncul dalam praktik. Pertama, model image-text contrastive seperti CLIP (Radford et al. 2021) dan penerusnya menghasilkan encoder visual dengan semantik luas karena dilatih menyelaraskan citra dan teks. Kedua, model self-supervised seperti DINOv2 banyak dipakai ketika struktur spasial dan fitur per patch penting. Ketiga, model supervised klasik dari garis ResNet atau EfficientNet tetap kuat pada data kecil. Pelajaran dari Bab 11 tentang MTEB berlaku lagi: reputasi model adalah petunjuk awal, bukan bukti. Uji pada tugas sendiri. Penyelarasan lintas modalitas dibahas lebih penuh pada Bab 14, sedangkan reuse representasi pretrained kembali menjadi tema pada Bab 15.
+\end{pendalaman}
 
-Rekaman audio memuat dimensi temporal melintasi deret waktu. Pemrosesan rekaman melalui ekstraktor fitur menghasilkan rentetan matriks observasi dalam orde milidetik. Karakteristik sekuensial ini menuntut mekanisme agregasi, mengingat pengklasifikasi hilir (\emph{downstream classifier})—seperti model deteksi kelas suara—membutuhkan masukan dengan dimensi statis yang tidak bergantung pada panjang durasi asli. Deretan fitur tingkat \emph{frame} dikompresi menjadi vektor representatif tunggal yang disebut \emph{audio embedding}.
+\section{Audio dari Waveform, Spectrogram, MFCC, dan Chroma}\label{audio-dari-waveform-spectrogram-mfcc-dan-chroma}
 
-Pemadatan (\emph{pooling}) representasi temporal ini dieksekusi melalui beberapa mekanisme agregasi. Metode \emph{average pooling} menghitung nilai rata-rata dari seluruh kepingan \emph{frame} dan diterapkan untuk representasi sinyal kontinu dengan profil statis, seperti dengung mesin. Metode \emph{max pooling} menyeleksi nilai aktivasi matriks tertinggi untuk mempertahankan sinyal akustik impulsif yang berdurasi singkat, sehingga mencegah pengenceran nilai oleh \emph{frame} hening. Pada arsitektur yang lebih kompleks, mekanisme \emph{attention} dinamis memindai rekaman secara adaptif dan memberikan bobot fitur yang lebih besar pada kepingan waktu yang memuat relevansi semantik.
+Pada sisi audio, sinyal yang terdengar sebagai digit lisan pertama-tama hanyalah \emph{waveform}, yaitu amplitudo sebagai fungsi waktu. Setiap saat hanya memuat satu atau beberapa nilai, bergantung pada jumlah kanal. Semua sumber suara sudah tercampur di sana, mulai dari ucapan, musik, langkah kaki, mesin, ruangan, sampai \emph{noise}. Model yang menerima \emph{waveform} mentah harus belajar sendiri struktur frekuensi, ritme, dan pola temporal.
 
-Integrasi ini menghasilkan \emph{embedding} seragam yang mengonversi variabilitas temporal menjadi representasi geometri spasial yang stabil. Representasi berdimensi tetap ini mendukung kompatibilitas format masukan untuk pengklasifikasi standar dan memfasilitasi fusi fitur lintas modalitas pada arsitektur pembelajaran multimodal.
+Representasi klasik audio memisahkan sebagian struktur itu sebelum model belajar. Spectrogram menunjukkan bagaimana energi frekuensi berubah terhadap waktu. Hasilnya tampak seperti objek 2-D dengan sumbu waktu, sumbu frekuensi, dan intensitas energi. Ini menjadi salah satu jembatan ke tooling vision, karena spectrogram dapat diproses mirip citra. Namun, spectrogram sebagai citra bukan satu-satunya jalan modern. Representasi tersebut hanya salah satu pilihan yang berguna. Mesin FFT dari Bab 10 adalah dasar teknis di balik transformasi frekuensi ini.
 
-\section{Studi Kasus: Fitur Rancangan Tangan vs.~Representasi Mendalam}\label{studi-kasus-fitur-rancangan-tangan-vs.-representasi-mendalam}
+Mel spectrogram mengubah sumbu frekuensi agar lebih dekat dengan persepsi pendengaran manusia. Frekuensi rendah dibedakan lebih halus, sedangkan frekuensi tinggi dipadatkan lebih kasar. Skala mel dapat ditulis dengan rumus berikut.
 
-Notebook praktikum pada bab ini mendemonstrasikan perbandingan antara representasi yang dirancang manusia dengan representasi yang dipelajari mesin dalam menangani variasi observasi.
+\[
+m = 2595 \log_{10}\!\left(1 + \dfrac{f}{700}\right)
+\]
 
-Pada domain visual untuk klasifikasi kendaraan, pengklasifikasi \emph{baseline} menggunakan representasi HOG yang memetakan distribusi kemiringan tepi spasial. Evaluasi menunjukkan bahwa oklusi parsial pada objek merusak siluet fitur HOG, sehingga akurasi identifikasi menurun drastis. Sebaliknya, \emph{pretrained model} berbasis CNN mampu mengidentifikasi komponen semantik dari fitur lokal seperti lampu atau roda. Arsitektur ini dapat mempertahankan kinerja klasifikasi pada kondisi oklusi tanpa memerlukan visibilitas siluet objek yang utuh.
+Dalam rumus tersebut, \(f\) adalah frekuensi fisik dalam Hertz, dan \(m\) adalah nilai pada skala mel. Rumus ini menunjukkan bahwa mel spectrogram bukan hanya spectrogram biasa. Sumbu frekuensinya sudah dibengkokkan oleh asumsi persepsi.
 
-Pada klasifikasi domain akustik, ekstraktor klasik MFCC memampatkan rentang spektrum ke dalam representasi berdimensi rendah. Proses pemadatan ini menyebabkan sinyal derau lingkungan melebur dengan frekuensi suara target. Sebaliknya, \emph{audio embedding} yang diekstraksi dari model \emph{raw-waveform} mengisolasi korelasi ruang frekuensi dan merepresentasikan pola suara target dari spektrum latarnya.
+MFCC, atau \emph{Mel-frequency cepstral coefficients}, melangkah lebih jauh. Representasi ini merangkum bentuk envelope spektral menjadi koefisien yang lebih ringkas setelah mentransformasikan energi per filterbank mel melalui \emph{discrete cosine transform} (DCT). DCT mendekorelasikan energi filterbank mel secara aproksimatif, tetapi tidak menjamin koefisien MFCC tidak berkorelasi secara statistik pada setiap \emph{dataset}. Secara historis, MFCC sangat kuat untuk tugas speech dan tetap berguna pada dataset kecil atau edge deployment yang membutuhkan fitur padat dan murah. Chroma berbeda lagi. Representasi ini merangkum energi ke dua belas pitch class, dengan octave yang dilipat. Karena itu, chroma lebih cocok untuk musik, chord, genre, atau tugas yang bergantung pada harmoni.
 
-{[}GAMBAR 12.4: Heatmap - Visualisasi MFCC yang memampatkan rentang frekuensi suara, menunjukkan peleburan derau lingkungan dengan sinyal target{]}
+Gambar 12.5 merangkum tangga representasi audio. Semakin naik, representasi makin terstruktur oleh asumsi manusia tentang frekuensi, persepsi, dan musik.
 
-Penurunan resolusi pada MFCC terkait erat dengan mekanisme transformasinya yang menggunakan persamaan skala Mel \( m = 2595 \log_{10} \left(1 + \frac{f}{700}\right) \). Fungsi logaritmik dalam persamaan ini secara inheren mereduksi resolusi pada pita frekuensi tinggi. Sebagai konsekuensinya, pada observasi yang mengandung distorsi derau, variasi sinyal suara target tidak dapat dipisahkan secara optimal oleh arsitektur pengklasifikasi hilir.
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch12-fig-5}
+\caption{Tangga representasi audio klasik}
+\label{fig:ch12-fig-5}
+\end{figure}
 
-Implementasi rekayasa fitur pada sekuens berkelanjutan memiliki kerentanan terhadap kebocoran data (\emph{data leakage}). Skema partisi (\emph{split}) data tingkat klip—di mana satu sesi rekaman utuh dipotong dan didistribusikan secara acak ke set pelatihan dan pengujian—akan memvalidasi model pada pola akustik lingkungan yang persis sama. Partisi ini memicu model untuk sekadar mempelajari korelasi latar belakang. Praktik rekayasa standar mensyaratkan pembagian pada tingkat sumber rekaman (\emph{source-level split}). Pada skema ini, seluruh klip dari sesi perekaman fisik tertentu dialokasikan secara utuh ke dalam himpunan pelatihan atau himpunan pengujian tanpa perpotongan.
+Window length, hop length, sampling rate, dan penskalaan amplitudo mengubah representasi. Window pendek memberi resolusi waktu lebih baik tetapi resolusi frekuensi lebih kasar. Window panjang memberi frekuensi lebih rapi tetapi peristiwa singkat dapat melebur. Pada FSDD, fitur MFCC-like dapat cukup kuat untuk membedakan digit lisan bila split menjaga sumber rekaman dengan benar. Untuk musik, chroma membantu membaca hubungan pitch. Untuk mesin atau getaran, spectrogram dan band-energy sering lebih informatif daripada amplitude sesaat.
+
+Semua transformasi ini adalah representasi yang dirancang manusia. Bahkan jika spectrogram kemudian masuk ke CNN, keputusan awal tentang window, hop, mel, MFCC, atau chroma tetap menentukan sinyal apa yang terlihat dan apa yang dibuang. Pilihan berikutnya lebih dekat dengan representasi yang dipelajari mesin, yaitu encoder yang langsung belajar dari waveform.
+
+\section{Encoder Audio Pretrained Berbasis Raw Waveform}\label{encoder-audio-pretrained-berbasis-raw-waveform}
+
+Jika spectrogram dan MFCC menulis asumsi manusia ke dalam fitur, raw-waveform encoder mencoba belajar representasi langsung dari sinyal audio. Model seperti wav2vec 2.0 (Baevski et al. 2020) dan HuBERT belajar dari audio tidak berlabel dalam jumlah besar sebelum diadaptasi ke tugas hilir. Pada speech, pola ini penting karena label transkripsi mahal, sementara audio mentah jauh lebih banyak.
+
+Resep self-supervised learning pada audio dapat dijelaskan sederhana. Model melihat representasi audio yang sebagian segmennya ditutup atau di-\emph{mask}, lalu dilatih memprediksi bagian yang hilang atau unit target tertentu. Dengan latihan seperti ini, model dipaksa menyerap struktur fonetik dan akustik tanpa membutuhkan label manual untuk setiap potongan suara.
+
+Representasi yang dihasilkan dapat dipakai seperti embedding. Hidden states diambil, pooling atau segmentasi dilakukan, lalu classifier hilir dilatih. Untuk pengenalan emosi, speaker verification, diarization, atau klasifikasi ucapan, encoder pretrained dapat mengurangi ketergantungan pada MFCC atau fitur yang dirancang manusia. Namun, encoder seperti ini tidak menghapus keputusan representasi. Kita tetap harus memilih sampling rate, durasi chunk, cara pad atau trim, strategi pooling, bahasa atau domain pretraining, serta apakah encoder dibekukan atau di-fine-tune.
+
+Dokumentasi pipeline audio biasanya menentukan sampling rate yang diharapkan. Jika model mengharapkan 16 kHz, rekaman 44.1 kHz harus di-resample dengan benar. Klip yang terlalu panjang perlu dipotong atau diproses bertahap. Klip yang terlalu pendek perlu padding. Perubahan kecil seperti ini dapat menggeser representasi, sama seperti preprocessing citra dapat menggeser fitur vision pretrained.
+
+Perpindahan ini adalah titik penting menuju representasi yang dipelajari mesin pada audio. Model tidak lagi hanya menerima \emph{spectrogram} yang dirancang manusia, tetapi belajar struktur dari \emph{waveform}. Meski begitu, \emph{compute}, \emph{latency}, dan \emph{domain mismatch} tetap nyata. Untuk \emph{environmental sound}, musik, atau suara mesin, model \emph{pretrained speech} belum tentu pilihan terbaik. Pendekatan berbasis \emph{spectrogram} atau encoder \emph{pretrained} khusus \emph{non-speech} bisa lebih sesuai. Setelah encoder dipilih, rangkaian frame atau \emph{chunk} perlu diubah menjadi representasi berukuran tetap.
+
+\begin{pendalaman}{Peta ekstraktor audio pretrained}
+Ekosistem audio cukup terspesialisasi. wav2vec 2.0 dan HuBERT kuat dalam garis speech recognition. WavLM sering dipakai untuk berbagai tugas speech sekaligus, seperti pengenalan ucapan, verifikasi pembicara, diarisasi, dan pengenalan emosi, karena dirancang sebagai fondasi speech yang menyeluruh. Hidden states dari encoder Whisper dapat dipakai sebagai fitur speech umum. Untuk environmental audio, nama seperti AudioMAE dan BEATs sering muncul. Untuk musik, MERT adalah salah satu keluarga yang relevan. Nama-nama ini bukan daftar rekomendasi otomatis. Pelajaran Bab 11 tetap berlaku. Cocokkan domain pretraining dengan sinyal sendiri, lalu validasi lokal sebelum percaya leaderboard.
+\end{pendalaman}
+
+\section{Audio Embedding dan Agregasi Sepanjang Waktu}\label{audio-embedding-dan-agregasi-sepanjang-waktu}
+
+Audio jarang memiliki panjang yang rapi. Satu klip dapat berdurasi dua detik, klip lain dua menit. Encoder audio juga sering menghasilkan frame-level vectors setiap beberapa puluh milidetik. Sementara itu, banyak classifier hilir membutuhkan satu vektor ukuran tetap per klip. Karena itu, representasi audio perlu strategi agregasi.
+
+Cara paling sederhana adalah average pooling. Semua frame vector dirata-ratakan menjadi satu clip vector. Ini cocok ketika informasi digit tersebar cukup merata sepanjang klip pendek. Namun, average pooling dapat menghapus bagian penting jika klip didominasi silence. Max pooling menjaga kejadian singkat seperti onset ucapan, tetapi mudah bereaksi terhadap \emph{noise} ekstrem. Attention pooling belajar memilih frame penting, tetapi membutuhkan data dan pelatihan tambahan. Pilihan lain adalah tidak memaksa pooling awal. Sequence model mempertahankan urutan frame agar timing tetap lebih utuh.
+
+Label clip-level juga bisa lemah. Pada FSDD, label digit berlaku untuk satu klip pendek, tetapi silence di awal atau akhir tetap dapat mengencerkan sinyal jika pooling terlalu kasar. Pada audio event yang lebih panjang, masalahnya lebih berat karena peristiwa penting mungkin hanya muncul beberapa detik. Segmentasi atau \emph{chunk-level embedding} membantu ketika lokasi waktu peristiwa penting perlu dipertahankan dan satu vektor global akan mengaburkannya.
+
+Setelah dua jalur citra dan audio itu terlihat, Tabel 12.1 merangkum peta representasi keduanya dalam satu tampilan. Kolom ``jenis representasi'' membedakan representasi yang dirancang manusia dari representasi yang dipelajari mesin. Kolom batas utama perlu dibaca sebagai peringatan desain, bukan alasan untuk menolak representasi tersebut.
+
+\tabeljudul{Tabel 12.1 — Peta representasi citra dan audio}
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.160}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.149}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.244}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.210}} >{\raggedright\arraybackslash}p{(\linewidth-8\tabcolsep)*\real{0.237}}@{}}
+\toprule
+
+Representasi
+ & 
+Modalitas
+ & 
+Jenis representasi
+ & 
+Penggunaan khas
+ & 
+Batas utama
+ \\
+\midrule
+\endhead
+
+
+
+
+HOG & Citra & Representasi yang dirancang manusia & Shape cue, baseline klasik & Sensitif pada parameter dan tugas \\
+CNN features pretrained & Citra & Representasi yang dipelajari mesin & Klasifikasi citra, transfer learning & Domain mismatch dan preprocessing \\
+ViT patch embeddings & Citra & Representasi yang dipelajari mesin & Retrieval, klasifikasi, dense tasks & Biaya komputasi dan bias embedding \\
+Spectrogram\slash{}mel & Audio & Representasi yang dirancang manusia & Speech, mesin, environmental sound & Window, hop, dan sampling menentukan sinyal \\
+MFCC & Audio & Representasi yang dirancang manusia & Speech kecil, edge deployment & Mengompres banyak detail spektral \\
+Chroma & Audio & Representasi yang dirancang manusia & Musik, chord, genre & Kurang cocok untuk non-pitch tasks \\
+Raw-waveform encoder embeddings & Audio & Representasi yang dipelajari mesin & Speech\slash{}audio transfer learning & Compute, domain match, pooling \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+Tabel 12.2 berfokus pada keputusan \emph{pooling} temporal audio. Baris-barisnya membantu memilih strategi berdasarkan apakah peristiwa tersebar merata, muncul singkat, atau membutuhkan urutan.
+
+\tabeljudul{Tabel 12.2 — Strategi pooling temporal audio}
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.170}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.467}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.363}}@{}}
+\toprule
+
+Strategi
+ & 
+Cocok untuk
+ & 
+Risiko
+ \\
+\midrule
+\endhead
+
+
+
+
+Average pooling & Tekstur suara stasioner, misalnya machine hum & Peristiwa singkat hilang dalam rata-rata \\
+Max pooling & Peristiwa impulsif, misalnya kaca pecah & Sensitif pada \emph{noise} ekstrem \\
+Attention pooling & Klip dengan bagian penting yang tidak selalu sama & Butuh label dan pelatihan cukup \\
+Sequence model & Tugas yang membutuhkan urutan waktu & Biaya dan kompleksitas lebih tinggi \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+Split data audio harus menghormati sumber. Frame atau chunk dari rekaman yang sama tidak boleh tersebar ke train dan test jika deployment menuntut generalisasi ke rekaman baru. Untuk FSDD, rekaman dari pembicara yang sama perlu dijaga tetap di satu sisi split bila tujuan evaluasi adalah generalisasi ke pembicara baru. Jika tidak, embedding dapat tampak kuat hanya karena mengenali suara pembicara, bukan digit.
+
+\begin{sintesis}
+
+Benang merah Bab 12 adalah bahwa gambar dan suara tidak pernah hanya file yang netral. Keduanya bermula dari sinyal padat, tetapi representasi yang dipilih menentukan struktur apa yang tampak bagi model. Pada citra, tensor piksel perlu dipersiapkan sesuai aturan model, HOG merangkum gradien yang dirancang manusia, CNN belajar hierarki visual, dan Vision Transformer membaca patch sebagai token. Pada audio, waveform dapat diubah menjadi spectrogram, mel, MFCC, chroma, atau embedding raw-waveform encoder.
+
+Tabel 12.1 memperlihatkan pola umum bab ini. Representasi klasik memberi kontrol dan interpretasi, sedangkan representasi pretrained memberi kekuatan transfer dengan biaya domain match, preprocessing, dan validasi. Tabel 12.2 menambahkan keputusan khas audio. Sinyal berdurasi variabel harus diringkas atau dipertahankan sebagai urutan.
+
+Prinsip akhirnya sederhana. Resize, crop, patch size, window length, hop length, pooling, dan pilihan encoder semuanya adalah keputusan representasi. Keputusan itu harus sesuai dengan tugas, menjaga split tetap jujur, dan diuji terhadap failure mode yang masuk akal untuk domainnya.
+
+\end{sintesis}
+
+\begin{bacaan}
+
+\begin{itemize}
+\tightlist
+\item
+  TorchVision --- Models and pre-trained weights --- \url{https://pytorch.org/vision/stable/models.html}. Backbone citra pralatih siap pakai.
+\item
+  Dosovitskiy dkk. (2020), Vision Transformer --- \url{https://arxiv.org/abs/2010.11929}. Transformer untuk citra (ViT).
+\item
+  librosa --- \url{https://librosa.org/doc/latest/}. Ekstraksi fitur audio (spektrogram, MFCC).
+\item
+  Baevski dkk. (2020), wav2vec 2.0 --- \url{https://arxiv.org/abs/2006.11477}. Representasi audio self-supervised.
+\item
+  Radford dkk. (2021), CLIP --- \url{https://arxiv.org/abs/2103.00020}. Embedding citra--teks bersama.
+\item
+  Oquab dkk. (2023), DINOv2 --- \url{https://arxiv.org/abs/2304.07193}. Fitur citra self-supervised umum.
+\item
+  Radford dkk. (2022), Whisper --- \url{https://arxiv.org/abs/2212.04356}. Model pengenalan wicara robust.
+\item
+  Zhang dkk. (2017), mixup --- \url{https://arxiv.org/abs/1710.09412}. Augmentasi interpolasi untuk pelatihan.
+\end{itemize}
+
+\end{bacaan}
+
+\rujukanheading
+
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-baevski2020wav2vec2}
+Baevski, Alexei, Henry Zhou, Abdelrahman Mohamed, and Michael Auli. 2020. {``Wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations.''} \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
+
+\bibitem[\citeproctext]{ref-dalal2005hog}
+Dalal, Navneet, and Bill Triggs. 2005. {``Histograms of Oriented Gradients for Human Detection.''} \emph{IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}.
+
+\bibitem[\citeproctext]{ref-he2016resnet}
+He, Kaiming, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016. {``Deep Residual Learning for Image Recognition.''} \emph{IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}.
+
+\bibitem[\citeproctext]{ref-radford2021clip}
+Radford, Alec, Jong Wook Kim, Chris Hallacy, et al. 2021. {``Learning Transferable Visual Models from Natural Language Supervision.''} \emph{Proceedings of the 38th International Conference on Machine Learning (ICML)}.
+
+\end{CSLReferences}

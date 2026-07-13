@@ -1,0 +1,88 @@
+{
+  "source": "Free Spoken Digit Dataset GitHub release",
+  "source_url": "https://github.com/Jakobovski/free-spoken-digit-dataset",
+  "release_tag": "v1.0.10",
+  "license": "Creative Commons Attribution-ShareAlike 4.0 International",
+  "wav_files": 3000,
+  "sample_rate_hz": 8000,
+  "digits": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "speakers": [
+    "george",
+    "jackson",
+    "lucas",
+    "nicolas",
+    "theo",
+    "yweweler"
+  ],
+  "speaker_count": 6,
+  "digit_counts": {
+    "0": 300,
+    "1": 300,
+    "2": 300,
+    "3": 300,
+    "4": 300,
+    "5": 300,
+    "6": 300,
+    "7": 300,
+    "8": 300,
+    "9": 300
+  },
+  "speaker_counts": {
+    "george": 500,
+    "jackson": 500,
+    "lucas": 500,
+    "nicolas": 500,
+    "theo": 500,
+    "yweweler": 500
+  },
+  "official_train_files": 2700,
+  "official_test_files": 300,
+  "duration_seconds_min": 0.1435,
+  "duration_seconds_median": 0.41981250000000003,
+  "duration_seconds_max": 2.28275,
+  "mfcc_feature_count": 26,
+  "logmel_pca_components": 30,
+  "logmel_pca_explained_variance_ratio_sum": 0.8809266090393066,
+  "official_split_accuracy": {
+    "mfcc_logistic": 0.95,
+    "logmel_pca_logistic": 0.8933333333333333
+  },
+  "speaker_holdout_mfcc_accuracy_mean": 0.5953333333333334,
+  "speaker_holdout_mfcc_accuracy_by_speaker": [
+    {
+      "heldout_speaker": "yweweler",
+      "accuracy": 0.716
+    },
+    {
+      "heldout_speaker": "theo",
+      "accuracy": 0.722
+    },
+    {
+      "heldout_speaker": "nicolas",
+      "accuracy": 0.53
+    },
+    {
+      "heldout_speaker": "lucas",
+      "accuracy": 0.532
+    },
+    {
+      "heldout_speaker": "jackson",
+      "accuracy": 0.656
+    },
+    {
+      "heldout_speaker": "george",
+      "accuracy": 0.416
+    }
+  ]
+}

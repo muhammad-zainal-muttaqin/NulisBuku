@@ -1,0 +1,6 @@
+[
+"karate_edges.csv",
+"karate_node_classification_scores.csv",
+"karate_node_features.parquet",
+"verified_stats.json"
+]

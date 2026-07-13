@@ -1,0 +1,7 @@
+{
+  "representation": "late_tabular_plus_image",
+  "weight_selection": "5-fold train-only OOF average precision grid search",
+  "weight_tabular": 0.9500000000000001,
+  "weight_image": 0.04999999999999993,
+  "oof_average_precision": 0.9016542941810323
+}

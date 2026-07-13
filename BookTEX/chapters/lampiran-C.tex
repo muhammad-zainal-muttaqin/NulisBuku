@@ -1,0 +1,99 @@
+% ==========================================================================
+% lampiran-C.tex — dihasilkan dari lampiran/lampiran-C-matriks-dataset-bab.md oleh tools/lampiran2tex.py
+% Boleh disunting manual; menjalankan lampiran2tex.py lagi akan menimpa.
+% ==========================================================================
+\chapter{Matriks Dataset × Bab}\label{matriks-dataset-bab}
+
+Daftar dataset kurasi yang dipakai di seluruh buku: di bab mana muncul, dan untuk memperlihatkan hal apa (\emph{axis} pengajaran). Berguna sebagai alat perencanaan penggunaan kembali saat menulis, sekaligus rujukan bagi pembaca yang ingin menelusuri satu data sepanjang pipeline. Detail unduhan, versi, dan snapshot ada di repositori. Lampiran ini hanya berfungsi sebagai penunjuk.
+
+\section{Matriks ringkas}\label{matriks-ringkas}
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.248}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.072}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.520}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.160}}@{}}
+\toprule
+
+Dataset
+ & 
+Bab
+ & 
+Axis yang diperlihatkan
+ & 
+Lisensi
+ \\
+\midrule
+\endhead
+
+
+
+
+UCI Online Retail & 1, 2, 6, 16 & log event nyata: unit\slash{}target\slash{}\emph{cutoff}, \emph{split} grup \& waktu, agregasi berjendela, audit fitur otomatis & CC BY 4.0 \\
+UCI Online News Popularity & 3 & skala \& skew numerik heterogen; efek standardisasi pada k-NN & CC BY 4.0 \\
+UCI Census-Income (KDD) & 4 & kardinalitas kategori beragam; kategori tak dikenal (\emph{split} 1994→1995) & CC BY 4.0 \\
+UCI Communities and Crime & 5 & \emph{missingness} terstruktur (blok kolom LEMAS); ekor \& \emph{outlier} & CC BY 4.0 \\
+UCI Breast Cancer Wisconsin (WDBC) & 7, 9 & fitur redundan berkorelasi tinggi: seleksi fitur \& ablasi\slash{}permutasi & CC BY 4.0 \\
+Optical Recognition of Handwritten Digits & 8 & matriks piksel non-negatif: PCA\slash{}SVD\slash{}t-SNE\slash{}UMAP \& NMF & CC BY 4.0 \\
+UCI Bike Sharing & 10 & musiman jam\slash{}pekan: \emph{lag}, \emph{rolling}, \emph{split} temporal \& kebocoran \emph{future} & CC BY 4.0 \\
+UCI SMS Spam Collection & 11, 15 & teks sparse, imbalans kelas, duplikat: BoW\slash{}TF-IDF \& \emph{embedding} & CC BY 4.0 \\
+Fashion-MNIST & 12, 15 & citra grayscale: HOG vs \emph{embedding} PCA piksel; ekstraksi fitur & MIT \\
+Free Spoken Digit Dataset (FSDD) & 12, 15 & audio: MFCC vs log-mel; peringatan \emph{holdout} penutur & CC BY-SA 4.0 \\
+Meuse (\passthrough{\lstinline!sp!}, CRAN) & 13 & koordinat spasial: autokorelasi, \emph{spatial lag}, blok CV vs acak & GPL (≥ 2) \\
+Zachary Karate Club (NetworkX) & 13 & graf sosial: sentralitas \& \emph{spectral embedding}, sisi lintas-\emph{split} & BSD-3-Clause \\
+Open Food Facts (subset) & 14 & multimodal selaras (teks + tabular + citra): fusi \& \emph{joint embedding} & ODbL \slash{} CC BY-SA \\
+UCI Covertype (subset 50k) & 15 & skala tabular besar: \emph{gradient boosting} vs MLP (heuristik ``puluhan ribu baris'') & CC BY 4.0 \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+\emph{Bab 17 (Sintesis) tidak memakai dataset baru. Bab tersebut merangkai kembali contoh dari
+bab-bab sebelumnya.}
+
+\section{Dua data yang digunakan sepanjang pipeline}\label{dua-data-yang-digunakan-sepanjang-pipeline}
+
+Sebagian dataset sengaja dipakai ulang di beberapa bab agar pembaca dapat
+melihat \textbf{satu data yang sama} melewati tahap pipeline yang berbeda:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{UCI Online Retail (Bab 1 → 2 → 6 → 16).} Dari log transaksi mentah yang
+  sama: Bab 1 memperkenalkan unit observasi, target, dan \emph{cutoff}; Bab 2
+  memakainya untuk \emph{split} grup (per-\passthrough{\lstinline!CustomerID!}) dan waktu; Bab 6 membentuk
+  fitur turunan berjendela dan \emph{as-of join}; Bab 16 mengaudit fitur yang
+  dibangkitkan otomatis di atasnya. Ini contoh terbaik ``satu data sepanjang
+  pipeline tabular''.
+\item
+  \textbf{WDBC (Bab 7 → 9).} Dataset diagnosis yang sama menopang dua sudut evaluasi:
+  Bab 7 untuk seleksi fitur (dengan probe sintetis), Bab 9 untuk ablasi
+  kelompok, importansi permutasi, dan importansi berbasis model.
+\end{itemize}
+
+\section{Data yang dibagi antar-modalitas di Bab 15}\label{data-yang-dibagi-antar-modalitas-di-bab-15}
+
+Bab 15 sengaja \textbf{tidak} memperkenalkan data teks/citra baru. Bab tersebut memakai ulang
+SMS Spam (Bab 11) dan Fashion-MNIST/FSDD (Bab 12) untuk ekstraksi \emph{embedding},
+lalu menambahkan \textbf{Covertype} hanya untuk perbandingan skala tabular. Dengan
+begitu, fokus Bab 15 tetap pada representasi yang dipelajari mesin, bukan pada
+pengenalan dataset.
+
+\section{Catatan pemakaian}\label{catatan-pemakaian}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Semua dataset nyata} (bukan sintetis), dengan lisensi yang memperbolehkan
+  penggunaan kembali. Probe sintetis pada Bab 7 dibangkitkan hanya di dalam demo notebook, bukan bagian identitas dataset.
+\item
+  \textbf{Angka baris/versi} merujuk pada \emph{frozen snapshot} di repositori, yang bisa
+  sedikit berbeda dari jumlah yang ditampilkan halaman sumber saat ini
+  (mis. Bike Sharing 17.379 baris pada snapshot vs 17.389 di halaman UCI). Untuk
+  klaim di notebook, gunakan hitungan snapshot.
+\item
+  \textbf{Konten berada di repositori.} Dataset, versi \emph{library}, dan skrip praproses
+  dapat diperbarui pasca-terbit tanpa cetak ulang. Buku berperan sebagai indeks
+  stabil, sedangkan repositori sebagai konten yang bergerak.
+\end{itemize}

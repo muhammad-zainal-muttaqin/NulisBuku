@@ -1,0 +1,6 @@
+[
+"digits.parquet",
+"digits_images.npy",
+"pca_probe_accuracy.csv",
+"verified_stats.json"
+]

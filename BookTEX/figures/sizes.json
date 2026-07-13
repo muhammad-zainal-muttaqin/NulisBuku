@@ -1,0 +1,137 @@
+{
+ "ch01-fig-1": {
+  "width_mm": 56.7,
+  "height_mm": 111.3,
+  "font_pt": 9.5
+ },
+ "ch01-fig-2": {
+  "width_mm": 100.9,
+  "height_mm": 68.0,
+  "font_pt": 9.5
+ },
+ "ch01-fig-3": {
+  "width_mm": 101.5,
+  "height_mm": 29.2,
+  "font_pt": 9.5
+ },
+ "ch01-fig-4": {
+  "width_mm": 110.8,
+  "height_mm": 37.0,
+  "font_pt": 8.8
+ },
+ "ch02-fig-1": {
+  "width_mm": 76.7,
+  "height_mm": 112.0,
+  "font_pt": 9.2
+ },
+ "ch02-fig-2": {
+  "width_mm": 67.6,
+  "height_mm": 112.0,
+  "font_pt": 9.3
+ },
+ "ch02-fig-3": {
+  "width_mm": 71.8,
+  "height_mm": 39.8,
+  "font_pt": 9.5
+ },
+ "ch02-fig-4": {
+  "width_mm": 109.0,
+  "height_mm": 78.6,
+  "font_pt": 9.5
+ },
+ "ch03-fig-2": {
+  "width_mm": 110.8,
+  "height_mm": 36.9,
+  "font_pt": 7.9
+ },
+ "ch05-fig-2": {
+  "width_mm": 110.8,
+  "height_mm": 79.2,
+  "font_pt": 8.5
+ },
+ "ch05-fig-3": {
+  "width_mm": 109.3,
+  "height_mm": 42.0,
+  "font_pt": 9.5
+ },
+ "ch05-fig-4": {
+  "width_mm": 71.4,
+  "height_mm": 40.2,
+  "font_pt": 9.5
+ },
+ "ch05-fig-5": {
+  "width_mm": 50.4,
+  "height_mm": 112.0,
+  "font_pt": 6.5
+ },
+ "ch07-fig-1": {
+  "width_mm": 105.6,
+  "height_mm": 94.5,
+  "font_pt": 9.5
+ },
+ "ch07-fig-2": {
+  "width_mm": 110.8,
+  "height_mm": 25.8,
+  "font_pt": 7.4
+ },
+ "ch09-fig-2": {
+  "width_mm": 85.2,
+  "height_mm": 112.0,
+  "font_pt": 8.7
+ },
+ "ch09-fig-5": {
+  "width_mm": 110.8,
+  "height_mm": 24.9,
+  "font_pt": 8.1
+ },
+ "ch11-fig-3": {
+  "width_mm": 72.4,
+  "height_mm": 29.2,
+  "font_pt": 9.5
+ },
+ "ch15-fig-2": {
+  "width_mm": 110.8,
+  "height_mm": 26.3,
+  "font_pt": 7.3
+ },
+ "ch15-fig-3": {
+  "width_mm": 91.2,
+  "height_mm": 29.2,
+  "font_pt": 9.5
+ },
+ "ch16-fig-1": {
+  "width_mm": 47.6,
+  "height_mm": 81.7,
+  "font_pt": 9.5
+ },
+ "ch16-fig-2": {
+  "width_mm": 110.8,
+  "height_mm": 14.5,
+  "font_pt": 7.2
+ },
+ "ch16-fig-3": {
+  "width_mm": 29.4,
+  "height_mm": 112.0,
+  "font_pt": 6.4
+ },
+ "ch16-fig-4": {
+  "width_mm": 110.8,
+  "height_mm": 39.9,
+  "font_pt": 8.6
+ },
+ "ch17-fig-2": {
+  "width_mm": 60.7,
+  "height_mm": 101.8,
+  "font_pt": 9.5
+ },
+ "ch17-fig-3": {
+  "width_mm": 56.1,
+  "height_mm": 112.0,
+  "font_pt": 7.1
+ },
+ "ch17-fig-4": {
+  "width_mm": 61.0,
+  "height_mm": 100.6,
+  "font_pt": 9.5
+ }
+}

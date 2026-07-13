@@ -1,238 +1,302 @@
 % ==========================================================================
-% ch02.tex — dihasilkan otomatis dari website/chapters/ch02.qmd
-% Boleh disunting manual. 'sync' hanya menimpa bila .qmd berubah DAN .tex
-% belum disunting; kalau keduanya berubah, dilewati (pakai --force).
-% qmd-sha1: ce2e10931ece
-% tex-sha1: ca8fad5a530d
+% ch02.tex — dihasilkan dari v2/drafts oleh tools/md2tex.py
+% Sumber: v2\drafts\ch02\ch02_draft_v2.md
+% Boleh disunting manual; menjalankan md2tex.py lagi akan menimpa.
 % ==========================================================================
-% >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
-\chapter{Pipeline, Validasi, dan Data Leakage}\label{pipeline-validasi-dan-data-leakage}
+\chapter{\texorpdfstring{\emph{Pipeline}, Validasi, dan \emph{Data Leakage}}{Pipeline, Validasi, dan Data Leakage}}\label{pipeline-validasi-dan-data-leakage}
 
-Mengembangkan model pembelajaran mesin yang akurat di laboratorium komputasi adalah satu hal, namun memastikannya tetap tangguh saat menghadapi aliran data dunia nyata adalah tantangan yang sepenuhnya berbeda. Di lingkungan produksi, model sering kali mengalami kegagalan bukan karena kelemahan arsitektur algoritmanya, melainkan karena inkonsistensi prapemrosesan data. Ketika kita menghitung parameter transformasi secara tidak tepat, informasi dari masa depan atau dari data uji dapat bocor ke dalam proses pelatihan. Kebocoran data (\emph{data leakage}) ini menciptakan ilusi performa akademis yang tinggi, namun berujung pada menurunnya metrik saat model dihadapkan pada kenyataan operasional.
+Setelah fitur dan target disusun, pekerjaan selanjutnya mencakup pengisian nilai hilang, penskalaan fitur, pengodean kategori, seleksi fitur, pelatihan model, dan pengukuran performa. Pekerjaan tersebut tampak teknis, tetapi di sinilah banyak eksperimen menjadi tidak sah. Jika statistik dihitung dari seluruh data sebelum pemisahan train dan test, data test sudah ikut memengaruhi representasi. Jika kategori dari data test ikut membentuk kolom encoder, evaluasi tidak lagi menggambarkan keadaan saat model menghadapi data baru.
 
-Bab ini membahas cara memisahkan dan memproses data secara ketat. Melalui penguasaan metode \emph{fit} dan \emph{transform}, perancangan pemisahan data (\emph{data split}) yang valid secara temporal maupun kelompok, serta pengikatan seluruh operasi ke dalam objek \emph{pipeline}, sistem dapat dipertahankan dari anomali informasi. Menguasai disiplin perancangan ini adalah kompetensi mendasar bagi seorang praktisi \emph{machine learning}.
+Prinsip dasarnya sederhana. Setiap langkah yang belajar dari data harus menjadi bagian dari proses pelatihan, bukan pembersihan umum yang dilakukan sekali pada seluruh dataset. Aturan ini berlaku untuk imputasi, penskalaan, pengodean, seleksi fitur, reduksi dimensi, dan penyeimbangan kelas. Bab ini membahas kontrak fit dan transform, jenis-jenis kebocoran informasi (data leakage), strategi pemisahan data, penempatan pipeline di dalam validasi silang, dan anti-pola umum yang melanggar prinsip yang sama.
 
-\section{Fit dan Transform: Pipeline sebagai Kontrak Pelatihan dan Inferensi}\label{fit-dan-transform-pipeline-sebagai-kontrak-pelatihan-dan-inferensi}
+\section{\texorpdfstring{\texttt{fit} dan \texttt{transform} sebagai Kontrak Pelatihan dan Inferensi}{fit dan transform sebagai Kontrak Pelatihan dan Inferensi}}\label{fit-dan-transform-sebagai-kontrak-pelatihan-dan-inferensi}
 
-Transformasi data dalam \emph{machine learning} menuntut konsistensi absolut antara tahap pelatihan dan tahap inferensi. Model mengharapkan fitur dari data masa depan diubah menggunakan aturan dan metrik yang sama persis dengan data pelatihannya. Konsistensi ini adalah inti dari praktik \emph{pipeline} yang benar.
+Kesalahan dapat muncul bahkan sebelum model dilatih. Banyak transformasi terlihat seperti operasi aritmetika biasa, padahal transformasi tersebut menyimpan sesuatu dari data. Standardisasi menyimpan rata-rata dan standar deviasi. \emph{Imputation} menyimpan median atau kategori pengisi. \emph{One-hot encoding} menyimpan daftar negara atau kode produk yang akan menjadi kolom. Seleksi fitur menyimpan keputusan tentang fitur mana yang dianggap cukup informatif. Semua nilai dan keputusan yang dipelajari ini merupakan parameter transformasi.
 
-Kunci untuk menjaga konsistensi terletak pada dua operasi utama: \emph{fit} dan \emph{transform}. Operasi \emph{fit} merupakan proses estimasi parameter dari himpunan data pelatihan; sistem mengalkulasi nilai seperti rata-rata, standar deviasi, atau batas rentang kategori. Selanjutnya, operasi \emph{transform} mengaplikasikan parameter hasil \emph{fit} tersebut ke dalam data untuk menghasilkan matriks representasi akhir. Aturan utamanya sangat jelas: perhitungan parameter pada tahap \emph{fit} hanya dikhususkan untuk data pelatihan. Setelah nilai parameter ini ditetapkan, operasi \emph{transform} wajib menggunakan acuan yang sama persis untuk memodifikasi data pelatihan, data validasi, maupun data inferensi.
+Dalam bahasa \emph{pipeline}, \passthrough{\lstinline!fit!} berarti mempelajari parameter dari data pelatihan. \passthrough{\lstinline!transform!} berarti menerapkan parameter yang sudah dipelajari tersebut pada data lain tanpa mempelajarinya ulang. Perbedaan kecil ini menjadi kontrak dasar antara pelatihan dan inferensi, dan menjadi konvensi API yang dipakai luas pada pustaka seperti scikit-learn (Pedregosa et al. 2011).
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-1}
-\caption{Ilustrasi Tabel ke Matriks Fitur pada Proses Fit dan Transform}
+Kontrak tersebut dapat ditulis sebagai rumus berikut.
+
+\[
+X' = T(X;\ \theta_{\text{train}})
+\]
+
+Dengan \(X\) sebagai data yang akan diubah, \(T\) sebagai transformasi, dan \(\theta_{\text{train}}\) sebagai parameter transformasi yang dipelajari dari data \emph{train}, hasilnya adalah \(X'\), yaitu representasi setelah transformasi. Data \emph{train}, validasi, \emph{test}, dan data live semuanya melewati transformasi \(T\) dengan parameter \(\theta_{\text{train}}\) yang sama.
+
+Contoh kecil membuat aturan ini lebih jelas. Misalkan sebuah scaler dipelajari dari data \emph{train} dan memperoleh rata-rata 5,0 serta standar deviasi 2,0. Angka 5,0 dan 2,0 harus tetap dipakai untuk mengubah data validasi, \emph{test}, dan data baru beberapa bulan kemudian. Jika data live kemudian memiliki rata-rata 7,0, scaler tidak boleh diam-diam belajar ulang saat inferensi. Perubahan tersebut mungkin menandakan \emph{drift}, tetapi kerangka acuan model tetap berasal dari pelatihan.
+
+Pada Gambar 2.1, data \emph{train} masuk ke \passthrough{\lstinline!fit!} untuk menghasilkan \(\theta_{\text{train}}\). Setelah itu, semua data lain hanya melewati \passthrough{\lstinline!transform!}. Panah dari data \emph{test} ke \passthrough{\lstinline!fit!} dicoret karena jalur tersebut membuat \emph{leakage}.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch02-fig-1}
+\caption{Kontrak \texttt{fit} dan \texttt{transform} dalam \emph{pipeline}}
 \label{fig:ch02-fig-1}
 \end{figure}
 
-Secara konseptual, kontrak transformasi ini direpresentasikan dengan rumusan:
+Jika \emph{preprocessing} saat inferensi berbeda dari \emph{preprocessing} saat pelatihan, kegagalan ini disebut \emph{training-serving skew}. Model dilatih pada satu representasi, tetapi dipakai pada representasi lain. Akibatnya, evaluasi eksperimen tidak lagi menjamin perilaku produksi. \emph{Pipeline} menjaga validitas eksperimen sekaligus keandalan \emph{deployment}. Kontrak ini juga menjelaskan mengapa transformer perlu disimpan sebagai bagian dari sistem, bukan sebagai langkah sementara.
 
-\[ X_{transform} = T(X_{raw}; \theta_{pelatihan}) \]
+\section{\texorpdfstring{Transformer yang Dapat Dipakai Ulang, Serialisasi, dan \emph{Random State}}{Transformer yang Dapat Dipakai Ulang, Serialisasi, dan Random State}}\label{transformer-yang-dapat-dipakai-ulang-serialisasi-dan-random-state}
 
-Dalam rumusan ini, data observasi \(X_{raw}\) dimodifikasi melalui fungsi transformasi \(T\) menggunakan parameter \(\theta_{pelatihan}\) yang dihitung murni dari himpunan latih. Informasi dari data pengujian maupun data operasional tidak boleh memengaruhi nilai \(\theta_{pelatihan}\) tersebut.
+Kontrak \passthrough{\lstinline!fit!} dan \passthrough{\lstinline!transform!} hanya dapat dijaga jika transformasi disimpan dengan rapi. Karena menyimpan parameter, transformasi tersebut perlu diperlakukan sebagai objek atau konfigurasi yang dapat dipakai ulang. Imputer menyimpan nilai pengisi. Encoder menyimpan daftar kategori. Scaler menyimpan rata-rata, standar deviasi, minimum, atau maksimum. Jika semua ini dilakukan lewat edit manual pada spreadsheet, sulit memastikan bahwa data baru diproses dengan cara yang sama.
 
-Misalkan kita menstandardisasi sebuah fitur. Tahap \emph{fit} menemukan fitur tersebut memiliki rata-rata 5,0 dengan standar deviasi 2,0 pada populasi data pelatihan. Beberapa bulan kemudian, data inferensi baru masuk dengan rata-rata aktual populasi 7,0. Kita tetap wajib mengurangi setiap nilai pada data inferensi dengan 5,0 dan membaginya dengan 2,0. Acuan distribusi masa pelatihan mutlak dipertahankan.
+\emph{Pipeline} menyusun transformer secara berurutan. Pada data tabular, kolom numerik, kategorikal, teks, dan tanggal sering membutuhkan perlakuan berbeda. \passthrough{\lstinline!ColumnTransformer!} berguna karena dapat mengirim kelompok kolom ke transformasi yang sesuai, lalu menyambungkan kembali kolom-kolom hasil transformasi secara horizontal. Ketika \emph{preprocessing} dan model berada dalam satu \emph{pipeline}, artefak yang disimpan tidak hanya berisi model, tetapi juga cara membentuk fitur untuk model tersebut.
 
-Jika fungsi \emph{fit} dipanggil ulang pada kumpulan data inferensi, acuan parameter akan bergeser dari standar awalnya. Fenomena ini disebut \emph{training-serving skew}, sebuah kondisi ketidaksesuaian yang membuat akurasi model menurun signifikan di lingkungan produksi meskipun metrik pelatihannya terlihat tinggi.
+Serialisasi diperlukan agar \emph{pipeline} yang sudah di-\emph{fit} dapat dipakai kembali untuk inferensi, audit, atau reproduksi. Dalam ekosistem Python, joblib dan pickle lazim dipakai, tetapi keduanya membawa dua catatan penting. Versi pustaka sebaiknya dicatat, dan file pickle hanya boleh dimuat jika sumbernya dipercaya. ONNX dapat menjadi pilihan ketika model atau transformasi perlu dijalankan di luar Python, misalnya pada lingkungan produksi lintas bahasa. ONNX adalah opsi, bukan kewajiban.
 
-Mengingat proses modifikasi rentan terhadap kesalahan, rangkaian operasi ini disatukan ke dalam sebuah \emph{pipeline}. Objek \emph{pipeline} merangkum tahapan pemrosesan data dan algoritma untuk menjaga siklus \emph{fit} dan \emph{transform} berpusat di satu kendali. Saat diinisiasi, \emph{pipeline} membatasi pencarian parameter murni pada himpunan data latih. Objek ini kemudian menerapkan parameter tersebut melalui tahap \emph{transform} agar data ditangani secara konsisten.
+Komponen acak juga perlu dikendalikan. Split data, proyeksi acak, inisialisasi model, atau pencarian hiperparameter dapat memberi hasil berbeda jika sumber acaknya berubah. Pada eksperimen yang membandingkan beberapa model, splitter sebaiknya menerima \passthrough{\lstinline!random_state!} yang tetap agar lipatan datanya sama. Pada sistem yang lebih besar, lebih aman mendokumentasikan sumber acak yang penting daripada mengandalkan seed global yang mudah berubah tanpa disadari.
 
-Praktik rekayasa modern melengkapi abstraksi \emph{pipeline} ini dengan berbagai utilitas. Ekosistem pustaka seperti scikit-learn menyediakan konfigurasi \passthrough{\lstinline!set_output(transform='pandas')!} agar setiap \emph{transformer} mengembalikan \emph{DataFrame} pandas, bukan \emph{array} tanpa label. Fitur ini menjaga nama kolom tetap utuh sepanjang rantai transformasi untuk memudahkan pelacakan asal-usul fitur. Untuk eksekusi skala besar, pengembang juga dapat memanfaatkan mekanisme \emph{caching} lewat parameter \passthrough{\lstinline!memory!} guna mencegah komputasi ulang \emph{transformer} pada objek yang sama. Integrasi antara disiplin kontrak transformasi dan utilitas kode ini memastikan seluruh representasi data selaras dan stabil.
+Beberapa utilitas membantu keterbacaan dan efisiensi. \passthrough{\lstinline!set_output(transform="pandas")!} dapat mempertahankan nama kolom setelah transformasi tertentu. \passthrough{\lstinline!Pipeline(memory=...)!} dapat menyimpan transformer yang sudah di-\emph{fit} dalam cache, sehingga langkah yang sama tidak perlu dipelajari ulang ketika pencarian model mengulang konfigurasi serupa. Fasilitas ini bukan inti konsep, tetapi membuat \emph{pipeline} lebih mudah diperiksa.
 
-\section{Transformer yang Dapat Digunakan Ulang, Serialisasi, dan Random State}\label{transformer-yang-dapat-digunakan-ulang-serialisasi-dan-random-state}
+Transformer yang menyimpan parameter memperlihatkan sumber \emph{leakage} dengan lebih jelas. Masalah muncul ketika parameter, kolom, atau ruang representasi terbentuk dari informasi yang seharusnya berada di luar batas evaluasi.
 
-Banyak praktisi merangkai pemrosesan data sebagai rentetan skrip \emph{ad-hoc}. Mereka menambal sel kosong, mengubah rentang skala, atau mengevaluasi fitur secara langsung pada tabel utama. Sebagai contoh, saat menyaring kolom berdasarkan rasio kekosongan data (\(r_{missing} = \frac{N_{na}}{N_{total}}\)). Kalkulasi ini membagi jumlah baris yang tidak memiliki nilai (\(N_{na}\)) dengan jumlah observasi keseluruhan (\(N_{total}\)). Melakukan modifikasi lepas di luar kerangka arsitektur utama sering menyebabkan inkonsistensi. Hasilnya, format matriks pada saat pelatihan berbeda dengan data yang diterima pada saat inferensi di lingkungan produksi.
+\begin{pendalaman}{\emph{Pipeline} untuk \emph{resampling} data tidak seimbang}
+\emph{Resampling} seperti SMOTE berbeda dari transformer biasa karena mengubah jumlah baris. Pada kontrak transformer standar, jumlah baris sebelum dan sesudah transformasi biasanya tetap. Karena itu, \emph{resampling} harus ditempatkan dengan hati-hati. \emph{Pipeline} dari imbalanced-learn menyediakan langkah \passthrough{\lstinline!fit_resample!} yang aktif pada data pelatihan, tetapi dilewati saat prediksi. Jika \emph{resampling} dilakukan sebelum pemisahan data, atau diterapkan pada lipatan validasi, sampel sintetis dapat membawa informasi melintasi batas evaluasi. Skor yang diperoleh menjadi terlalu optimistis. \emph{Resampling} adalah keputusan pemodelan, bukan kebiasaan \emph{preprocessing} yang boleh diterapkan ke semua data.
+\end{pendalaman}
 
-Setiap proses modifikasi fitur sebaiknya diintegrasikan ke dalam sebuah \emph{transformer}. Objek mandiri ini memisahkan fase estimasi parameter (\passthrough{\lstinline!fit!}) dari fase penerapan modifikasi (\passthrough{\lstinline!transform!}). Parameter yang didapat dari baris \(N_{total}\) - seperti rentang normalisasi atau metrik pengisi nilai - disimpan di dalam objek tersebut dan terhindar dari intervensi variabel secara tidak sengaja.
+\section{\texorpdfstring{Taksonomi \emph{Leakage}}{Taksonomi Leakage}}\label{taksonomi-leakage}
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-2}
-\caption{Siklus Eksplorasi-Ekstraksi-Seleksi dalam Objek Transformer Mandiri}
+Contoh-contoh pada bagian ini kembali memakai catatan transaksi toko \emph{online} dari Bab 1. Setiap baris mencatat sebuah item pada \emph{invoice}, sedangkan pelanggan dapat muncul pada banyak \emph{invoice} dan transaksi dapat diberi tanda pembatalan. Struktur ini membuat batas waktu, batas pelanggan, dan definisi target perlu dijaga ketika data dipisahkan untuk evaluasi.
+
+Setelah kontrak \emph{pipeline} jelas, kegagalan yang melanggarnya dapat diberi nama (Kaufman et al. 2012). \emph{Leakage} terjadi ketika informasi yang seharusnya tidak tersedia pada saat pelatihan, validasi, atau inferensi masuk ke representasi yang dipakai model. Bentuknya tidak selalu sejelas memasukkan target sebagai fitur. Banyak kebocoran datang melalui statistik, waktu, kelompok, duplikasi, atau proses representasi.
+
+Jenis pertama adalah \emph{target leakage}. Sebuah fitur mengandung jawaban, proksi jawaban, atau informasi yang baru dibuat setelah kejadian target. Pada model yang memprediksi pembatalan \emph{invoice}, penanda bahwa \passthrough{\lstinline!InvoiceNo!} diawali huruf \passthrough{\lstinline!C!} atau \passthrough{\lstinline!Quantity!} bernilai negatif tidak boleh menjadi fitur karena keduanya merupakan bagian dari definisi pembatalan. Model yang memakai fitur seperti ini tampak sangat akurat, tetapi sinyalnya berasal dari akibat, bukan tanda awal.
+
+Jenis kedua adalah kontaminasi \emph{train-test}. Ini terjadi ketika data validasi atau \emph{test} ikut dipakai saat mempelajari \emph{preprocessing}, memilih fitur, atau menetapkan parameter representasi. Menghitung median global sebelum split adalah contoh sederhana.
+
+Jenis ketiga adalah \emph{temporal leakage}. Informasi masa depan masuk ke prediksi masa lalu. Kesalahan ini umum pada agregasi transaksi, jendela waktu, atau split acak untuk data yang sebenarnya berurutan. Jika total belanja pelanggan dihitung menggunakan transaksi setelah \emph{index time}, fitur tersebut tidak sah.
+
+Jenis keempat adalah \emph{between-group leakage}. Sampel yang saling terkait masuk ke partisi berbeda. Pada data ritel, banyak \emph{invoice} dari pelanggan yang sama tidak boleh tersebar antara \emph{train} dan \emph{test} jika tujuan evaluasi adalah generalisasi ke pelanggan baru. Model dapat belajar ciri pelanggan, bukan pola yang berlaku pada pelanggan lain.
+
+Jenis kelima adalah kebocoran duplikat atau hampir duplikat. Jika catatan yang sama muncul di \emph{train} dan \emph{test}, model tampak mampu memprediksi padahal hanya mengenali ulang contoh yang sudah pernah dilihat.
+
+Jenis keenam adalah \emph{representation leakage}. Representasi dipelajari dari seluruh korpus sebelum split. Contohnya adalah kosakata TF-IDF, \emph{embedding}, atau reduksi dimensi yang di-\emph{fit} pada semua data. Statistik dari data \emph{test} ikut membentuk ruang fitur. Bab 8 dan Bab 11 akan kembali ke kasus ini pada reduksi dimensi dan representasi teks.
+
+Gambar 2.2 menyatukan keenam jenis tersebut. Intinya sama, yaitu informasi menyeberangi batas evaluasi. Batas itu dapat berupa target, waktu, kelompok, partisi, atau proses representasi.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch02-fig-2}
+\caption{Peta jenis-jenis \emph{data leakage}}
 \label{fig:ch02-fig-2}
 \end{figure}
 
-\textbf{Serialisasi dan Persistensi Model.}\label{serialisasi-dan-persistensi-model}
+Pembedaan nama tersebut membantu diagnosis. Dalam praktik, keenam jalur sering bertemu pada proses pembuatan fitur sebelum batas evaluasinya dikunci.
 
-Objek \emph{transformer} yang telah menampung parameter dapat disimpan secara permanen. Proses mentransfer wujud komputasi dari memori menuju berkas fisik ini dinamakan serialisasi. Praktik rekayasa fitur modern berpegang pada beberapa standar. Jika bekerja di ekosistem Python, format \emph{native} seperti pustaka \passthrough{\lstinline!joblib!} atau \passthrough{\lstinline!pickle!} merupakan spesifikasi resmi yang dianjurkan. Namun, jika algoritma diproyeksikan untuk beroperasi di luar kerangka Python (misalnya pada arsitektur mesin C++ atau Java), spesifikasi ONNX (\emph{Open Neural Network Exchange}) sebagai format lintas bahasa harus diprioritaskan. Berkas biner hasil serialisasi ini kelak dikirimkan mendampingi model prediktif utama ke \emph{server} produksi, demi menjamin data baru diproses dengan takaran yang mutlak sama dengan tahapan pelatihan.
+\begin{pendalaman}{Mendeteksi \emph{target leakage} lewat \emph{feature importance}}
+Fitur yang sendirian mendominasi kualitas model dapat menjadi tanda bahaya. Pendekatan ini hanya bermakna jika model yang dilatih sudah memiliki performa di atas tebakan acak. Model yang buruk tidak dapat memberi tahu fitur mana yang penting. \emph{Permutation importance} mengukur kenaikan error ketika nilai satu fitur diacak.
+\end{pendalaman}
 
-\textbf{Pipeline Khusus untuk Resampling.}\label{pipeline-khusus-untuk-resampling}
+\[
+I_j = \text{Error}\big(f(X_{\pi(j)})\big) - \text{Error}\big(f(X)\big)
+\]
 
-Data yang tidak seimbang (\emph{imbalanced data}) memunculkan tantangan struktural terhadap kontrak desain \emph{transformer}. Algoritma \emph{resampling} seperti SMOTE secara aktif mengubah jumlah baris sampel pada titik eksekusinya. Dalam hal ini, kita harus menghindari skema \emph{pipeline} standar karena ia mengasumsikan konsistensi jumlah baris secara persis. Memaksakan penerapan algoritma \emph{resampling} pada kerangka bawaan ini sering kali memicu perubahan matriks inferensi yang keliru. Solusinya adalah menggunakan \emph{pipeline} ekstensi seperti \passthrough{\lstinline!imblearn.pipeline.Pipeline!} yang memastikan penambahan sampel sintetis (\passthrough{\lstinline!fit_resample!}) hanya aktif selama berlangsungnya fase pelatihan. Tahapan tersebut secara otomatis diabaikan pada saat inferensi berjalan tunggal (\passthrough{\lstinline!transform!}). Tanpa penyekatan fungsional ini, sampel tiruan akan meluber ke dalam himpunan data pengujian murni, sehingga memproduksi estimasi performa akurasi yang tidak valid.
+Dengan \(X_{\pi(j)}\) sebagai data dengan fitur \(j\) dipermutasi, sedangkan fitur lain dibiarkan, nilai \(I_j\) menyatakan kenaikan error akibat pengacakan fitur tersebut. Jika sebuah fitur yang seharusnya biasa saja menghasilkan \(I_j\) sangat besar dan performa hampir sempurna saat dipakai sendiri, \emph{target leakage} perlu dicurigai. Akan tetapi, ini hanya sinyal heuristik. Fitur yang sah dapat benar-benar kuat, dan \emph{leakage} juga dapat tersembunyi dalam kombinasi beberapa fitur.
 
-\textbf{Pengendalian Keacakan (Random State).}\label{pengendalian-keacakan-random-state}
+\section{\texorpdfstring{Mengapa \emph{Leakage} Sering Lahir pada Rekayasa Fitur}{Mengapa Leakage Sering Lahir pada Rekayasa Fitur}}\label{mengapa-leakage-sering-lahir-pada-rekayasa-fitur}
 
-Keterulangan rekayasa fitur bertumpu pada kontrol elemen keacakan matematis. Generator nomor acak mengoperasikan proses sentral seperti pemisahan dataset awal, dan pengendaliannya (\emph{random state}) menyusun fondasi keakuratan pengujian silang (\emph{cross-validation}). Untuk objek pemisah (\emph{splitter}), memberikan nilai bilangan bulat (\emph{integer}) secara langsung merupakan langkah teraman yang menggaransi struktur lipatan pengujian akan selalu identik ketika teknisi membandingkan kinerja dari beberapa model. Sementara itu, untuk \emph{estimator} atau \emph{transformer}, menyerahkan instans objek \passthrough{\lstinline!RandomState!} memastikan tiap siklus lipatan data menerima urutan acak yang independen serta solid secara statistik. Terakhir, kita wajib menghindari penyetelan angka acak (\emph{seed}) secara global pada tingkat \emph{runtime} pustaka numerik, karena berisiko menimbulkan komplikasi algoritma sekunder yang sulit dilacak pada landasan kode berskala luas.
+Pola pada taksonomi tadi sama. Kebocoran biasanya lahir ketika representasi dibangun. Model jarang menjadi sumber pertama \emph{leakage}. Model hanya mengoptimalkan sinyal yang ada di dalam representasi. Kebocoran masuk ketika statistik dihitung, jendela waktu dibentuk, target diringkas, fitur dipilih, atau data dari banyak entitas digabung.
 
-\section{\texorpdfstring{Taksonomi \emph{Data Leakage}}{Taksonomi Data Leakage}}\label{taksonomi-data-leakage}
+Misalkan median \passthrough{\lstinline!UnitPrice!} dihitung dari seluruh \emph{dataset}, lalu dipakai untuk mengisi nilai hilang sebelum split. Langkah ini tampak seperti pembersihan data, tetapi median tersebut sudah memakai informasi dari data \emph{test}. Contoh lain adalah fitur total belanja seumur hidup pelanggan. Jika total itu dihitung sampai akhir database, padahal prediksi dibuat pada awal bulan tertentu, transaksi masa depan ikut masuk ke fitur.
 
-Validasi evaluasi \emph{machine learning} sering kali menunjukkan akurasi yang tinggi, namun gagal saat model diterapkan. Penyebab paling umum adalah terjadinya \emph{data leakage}. Kondisi ini berlangsung ketika parameter pengujian atau wujud target terikut masuk ke dalam komputasi pelatihan. Model cenderung menggunakan informasi tersebut tanpa memetakan pola kausalitas yang sebenarnya.
+Seleksi fitur juga mudah bocor. Jika fitur dipilih berdasarkan hubungannya dengan target pada seluruh \emph{dataset}, lalu model dievaluasi dengan \emph{cross-validation}, setiap lipatan validasi sebenarnya sudah ikut memengaruhi daftar fitur. Hasilnya dapat jauh lebih baik daripada performa pada data baru.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-3}
-\caption{Mekanisme Data Leakage: Masuknya Informasi Pengujian ke Latih}
+Kebiasaan paling aman adalah menentukan split atau protokol validasi sebelum setiap transformasi yang bergantung pada data. Setelah batas evaluasi jelas, semua proses yang belajar dari data harus hidup di dalam batas tersebut. \emph{Scaling}, \emph{imputation}, \emph{encoding}, \emph{target encoding}, seleksi fitur, reduksi dimensi, \emph{text vectorizer}, dan \emph{learned embedding} mengikuti prinsip yang sama.
+
+Batas tersebut perlu dibedakan dari batas waktu pada agregasi historis. Pemetaan dan statistik yang di-\emph{fit}, seperti median, kosakata, atau rata-rata target per kategori, harus dipelajari hanya dari bagian pelatihan setiap lipatan. Sebaliknya, satu baris yang ditahan untuk validasi boleh memakai riwayat mentah yang memang sudah tersedia sebelum \emph{cutoff} baris itu sendiri. Agregasi seperti ini ditentukan oleh ketersediaan informasi pada waktu prediksi, bukan oleh keanggotaan baris mentah dalam partisi sampel belajar.
+
+Sistem produksi sering memformalkan aturan waktu melalui \emph{feature store} dan \emph{point-in-time joins}. Bab 1 sudah memperkenalkan konsep ini, dan Bab 6 serta Bab 17 akan membahasnya lagi. Untuk saat ini, pegang aturan dasar bahwa representasi tidak boleh memuat informasi yang belum tersedia pada saat prediksi, dan batas itu harus diterjemahkan ke strategi pemisahan data sebelum eksperimen dimulai.
+
+\section{Memilih Strategi Pemisahan Data}\label{memilih-strategi-pemisahan-data}
+
+Setelah sumber kebocoran dikenali, batas evaluasi harus dipilih sesuai cara data dihasilkan dan cara model akan dipakai. \emph{Random split} wajar jika baris-baris data dapat dianggap cukup independen dan berasal dari distribusi yang serupa. Tabel pelanggan yang sudah diringkas menjadi satu baris per pelanggan, misalnya, sering dapat dibagi secara acak. Jika label langka, stratifikasi membantu menjaga proporsi kelas pada \emph{train} dan \emph{test}. Rasio seperti 80 banding 20 atau 70 banding 30 bisa menjadi awal, tetapi yang lebih penting adalah protokol validasi mengikuti struktur data, bukan mengejar rasio tertentu.
+
+Stratifikasi tidak menyelesaikan ketidakcocokan kelompok atau waktu. Pelanggan yang sama muncul di \emph{train} dan \emph{test} bukan otomatis \emph{leakage}. Jika model akan dipakai untuk pelanggan yang belum pernah terlihat, \emph{random split} dapat membiarkan model memanfaatkan ciri identitas pelanggan sehingga \emph{group split} diperlukan. Jika model justru memprediksi masa depan untuk pelanggan yang sudah dikenal, pelanggan yang sama boleh muncul pada kedua sisi selama evaluasinya temporal dan setiap fitur dibangun secara \emph{point-in-time} dari informasi yang tersedia sebelum \emph{cutoff} masing-masing baris. Pada data berurutan waktu, \emph{random split} tetap bermasalah jika menaruh masa depan di \emph{train} dan masa lalu di \emph{test}.
+
+Ketika tujuan \emph{deployment} adalah generalisasi ke kelompok yang belum pernah terlihat, \emph{group split} menjaga agar identitas yang sama tidak muncul di dua sisi evaluasi. Secara ringkas, aturannya dapat ditulis seperti berikut.
+
+\[
+G_{\text{train}} \cap G_{\text{test}} = \emptyset
+\]
+
+Artinya, himpunan identitas kelompok pada \emph{train} dan \emph{test} tidak boleh beririsan. Kelompok tersebut dapat berupa pelanggan, \emph{invoice} induk, pasien, sekolah, perangkat, dokumen induk, atau institusi.
+
+Pada data temporal, split harus meniru prediksi masa depan dari masa lalu. \passthrough{\lstinline!TimeSeriesSplit!} adalah salah satu pola umum, tetapi pemisah ini bekerja berdasarkan indeks baris, bukan stempel waktu. Karena itu, data harus diurutkan secara kronologis sebelum \passthrough{\lstinline!TimeSeriesSplit!} diterapkan. Parameter \passthrough{\lstinline!gap!} menghitung jumlah baris atau sampel, bukan lama waktu. Pada stempel waktu yang tidak teratur, \passthrough{\lstinline!gap=500!} tidak selalu berarti jeda waktu yang sama antarlipatan. Jika protokol memerlukan jeda durasi tertentu atau perlu mengeluarkan sampel karena jendela target bertumpang tindih, gunakan pemisah khusus berbasis stempel waktu atau logika \emph{purged split} yang mengikuti ketersediaan label dan jendela target.
+
+Tabel 2.1 menyusun pilihan split sebagai keputusan, bukan sebagai katalog alat. Kolom situasi data menjadi titik awal karena bentuk data menentukan risiko, lalu risiko menentukan strategi.
+
+\tabeljudul{Tabel 2.1 — Memilih strategi pemisahan data}
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.232}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.240}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.257}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.271}}@{}}
+\toprule
+
+Situasi data
+ & 
+Risiko jika salah
+ & 
+Strategi
+ & 
+Contoh
+ \\
+\midrule
+\endhead
+
+
+
+
+Baris independen & Rendah, \emph{random split} cukup & \emph{Random split}, dengan stratifikasi bila label langka & Tabel pelanggan yang sudah diringkas satu baris per pelanggan \\
+\emph{Deployment} ke entitas baru dengan baris berulang & Model memanfaatkan ciri identitas entitas yang sudah terlihat & \emph{Group split} (\passthrough{\lstinline!GroupKFold!}) & Generalisasi ke pelanggan baru dari banyak \emph{invoice} per pelanggan \\
+\emph{Deployment} ke entitas baru dan label langka & Ciri identitas berulang atau kelas timpang & \texttt{\seqsplit{StratifiedGroupKFold}} & Pelanggan baru, pembatalan langka \\
+\emph{Deployment} memprediksi masa depan & \emph{Temporal leakage} & \emph{Temporal split} (\texttt{\seqsplit{TimeSeriesSplit}}, dengan \passthrough{\lstinline!gap!} bila buffer berbasis jumlah baris sesuai) & Pembelian ulang, \emph{forecasting}, sensor \\
+\emph{Deployment} ke institusi atau kelompok besar yang baru & Model menghafal kelompok besar yang sudah terlihat & \emph{Group split} di level kelompok besar & Generalisasi ke negara atau cabang baru \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+Pada Gambar 2.3, tiga pola tersebut ditempatkan pada sketsa \emph{dataset} kecil. \emph{Random split} memecah baris tanpa memperhatikan identitas atau waktu. \emph{Group split} menjaga entitas tetap utuh. \emph{Temporal split} menjaga arah masa lalu ke masa depan.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch02-fig-3}
+\caption{\emph{Random split}, \emph{group split}, dan \emph{temporal split}}
 \label{fig:ch02-fig-3}
 \end{figure}
 
-Anomali \emph{data leakage} ini umumnya terjadi melalui beberapa pola utama. Pola pertama adalah \emph{target leakage}, yang muncul ketika fitur prediksi menyertakan variabel yang baru diisi sesudah status target tercapai. Informasi semacam ini tidak relevan untuk digunakan sebagai parameter simulasi prediksi. Sebagai contoh, sebuah sistem prediksi pembatalan layanan menggunakan variabel "tanggal penutupan akun"—sebuah atribut yang terisi usai pengguna memutuskan untuk membatalkan layanan. Kasus \emph{target leakage} menyebabkan peningkatan anomali pada tingkat metrik urgensi fitur tersebut. Melalui pendekatan matematis, metrik \emph{permutation feature importance} dievaluasi dari formula \(I_j = \text{Error}(f(X_{\pi(j)}), Y) - \text{Error}(f(X), Y)\). Formula ini membandingkan besaran nilai penyimpangan prediktif (\emph{Error}) dari model \(f\) pada data aktual \(X\) terhadap kerugian dari data uji yang bagian \(j\)-nya telah diacak (\(X_{\pi(j)}\)). Fitur prediksi yang memiliki indikasi \emph{target leakage} akan sangat memengaruhi persentase \(I_j\). Tingkat signifikansi fiturnya akan mendominasi dan mengaburkan metrik keseluruhan secara tidak proporsional.
-
-Pola berikutnya adalah kontaminasi latih-uji (\emph{train-test contamination}). Fase pelatihan menyerap parameter dan distribusi statistik dari seluruh set partisi, akibat urutan implementasi agregasi yang dilakukan mendahului tahapan inisialisasi blok partisinya. Kesalahan operasional lazim ini biasa dilakukan saat tahap penambalan kolom tabel, contohnya menggunakan hitungan \emph{mean} rata-rata gabungan dari semua partisi sebelum himpunan \emph{train-test}-nya dipecah. Acuan imputasinya menjadi bias karena memuat elemen statistik kelompok data pengujian. Langkah yang tepat dilakukan adalah menghitung acuan pada blok pelatihan (\emph{fit}), lalu hasilnya digunakan ke keseluruhan himpunan pengujian.
-
-Permasalahan kronologi dan sinkronisasi turut mendasari anomali yang disebut \emph{temporal leakage}. Saat melakukan observasi dengan basis riwayat runtutan waktu, menggunakan fitur atau baris masa depan untuk memberikan skor kalkulasi kejadian sebelumnya dapat mengganggu kausalitas yang sesungguhnya. Misalnya dalam proses partisi \emph{random split} tanpa mempertahankan parameter interval waktu, yang mengakibatkan model dapat memvalidasi log aktivitas pada hari Jumat untuk memberikan konklusi terhadap prediksi status hari Selasa.
-
-Dalam observasi berskala masif yang dikelompokkan secara unit, kegagalan menjaga batas partisi berisiko memunculkan kontaminasi antar-kelompok (\emph{between-group leakage}). Kesalahan pembagian \emph{random split} dapat membagi identitas baris unit data (seperti ID pasien, nomor ID konsumen) masuk berdampingan ke dalam kelompok validasi maupun pengujian secara simultan. Jika hal ini terjadi, pola klasifikasi hanya mengevaluasi identitas subjek atau anatomi pasien sebagai representasi ketimbang belajar mengambil konklusi dari variasi atributnya.
-
-Risiko penyerapan rentang sampel pengujian juga terjadi saat menginisialisasi vektor menggunakan \emph{embedding leakage}. Beberapa metode mengandalkan matriks pra-terlatih untuk menarik parameter numeriknya. Bila vektor model dipetakan ke himpunan gabungan data tanpa dipisah, representasi observasi tersebut dapat memengaruhi struktur bahasa latih dari baris partisi dokumen pengujian. Selanjutnya pada operasi yang mengumpulkan matriks dengan variasi linguistik luas, pengujian ini terindikasi menyebabkan anomali \emph{LLM fine-tuning leakage}. Evaluasinya hanya bertumpu pada probabilitas teks acuan dokumen latih, akibat tereksposnya parameter uji teks sebelum validasi dieksekusi secara penuh.
-
-\section{Mengapa Leakage Bermula pada Tahap Rekayasa Fitur}\label{mengapa-leakage-bermula-pada-tahap-rekayasa-fitur}
-
-Kebocoran data (\emph{data leakage}) hampir tidak pernah bersumber dari algoritma \emph{machine learning}. Algoritma pada dasarnya hanyalah pengoptimal matematis yang menyesuaikan bobot berdasarkan pola pada set data yang diterimanya. Sebaliknya, kebocoran informasi justru terjadi jauh lebih awal, yakni pada tahap persiapan data dan rekayasa fitur. Saat kita mengubah tabel struktural mentah menjadi matriks representasi numerik, risiko masuknya informasi dari himpunan uji (\emph{test set}) ke dalam parameter pelatihan (\emph{training set}) menjadi sangat tinggi.
-
-Tujuan utama rekayasa fitur adalah mengekstraksi representasi data yang membuat pola target lebih mudah dikenali oleh model. Karena proses ekstraksi senantiasa menuntut kalkulasi pada cakupan populasi, \emph{data leakage} terjadi manakala praktik operasional gagal menjaga integritas isolasi partisi. Kesalahan ini sering bermula dari pembuatan agregat fitur lintas observasi, semisal akumulasi rasio keberhasilan historis, yang dilakukan bersamaan pada satu tabel utuh. Kebiasaan ini diperparah ketika praktisi menerapkan transformasi skala seperti \emph{Standard Scaler} sebelum data dipotong (\emph{splitting}). Celah \emph{data leakage} kian membesar pada tahapan komputasi imputasi; statistik pengganti nilai kosong atau metrik evaluasi atribut kerap kali diukur menggunakan seluruh populasi data alih-alih ditarik murni hanya dari himpunan latih.
-
-Sebagai contoh operasional, praktisi sering menghitung proporsi rasio kekosongan fitur (\(r_{missing} = \frac{N_{missing}}{N_{total}}\)) saat mengevaluasi kelayakan atribut. Angka rasio ini didapat dengan membagi jumlah sel kosong (\(N_{missing}\)) dengan hitungan total observasi (\(N_{total}\)). Apabila penyebut \(N_{total}\) menggunakan populasi gabungan sebelum \emph{dataset} dipisah, keputusan seleksi fitur tersebut telah dipengaruhi oleh data pengujian. Pemisahan data yang dilakukan setelah tahapan ini menjadi kurang bermakna karena struktur matriks pada himpunan latih telah menyerap informasi dari kelompok pengujian.
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-4}
-\caption{Mekanisme Data Leakage Akibat Transformasi Agregasi Sebelum Pemisahan Dataset}
-\label{fig:ch02-fig-4}
-\end{figure}
-
-Kerentanan operasi fitur terhadap kontaminasi inilah yang menjadi pemicu perlunya praktik \emph{pipeline} yang benar. Mengisolasi partisi evaluasi secara konsisten tidak dapat digantungkan pada kehati-hatian penulisan skrip manual, melainkan harus dikunci melalui instrumen pemrograman yang terstruktur. Isolasi ini pertama-tama dapat dilakukan di tingkat pustaka menggunakan kelas pembungkus seperti \passthrough{\lstinline!ColumnTransformer!} yang dijahit di dalam objek utama \passthrough{\lstinline!Pipeline!}. Dalam eksekusi validasi (\emph{cross-validation}), struktur ini menjamin bahwa seluruh perhitungan varians atau proporsi dipaksa untuk \emph{fit} ulang pada setiap sub-partisi latih, sehingga membiarkan partisi evaluasinya mutlak terisolasi dari parameter kalkulasi. Selanjutnya, isolasi juga diterapkan di tingkat infrastruktur. Pada arsitektur produksi, fitur-fitur kompleks disajikan melalui perantara \emph{feature store} seperti Feast. Komponen infrastruktur ini memberlakukan operasi \emph{point-in-time join} yang mengamankan konsistensi waktu; algoritma hanya diizinkan mengakses fitur agregat yang telah divalidasi dan tercatat secara utuh sebelum stempel kedatangan \emph{event} data prediksi.
-
-\section{Strategi Pemisahan Data yang Benar}\label{strategi-pemisahan-data-yang-benar}
-
-Pemisahan data berfungsi sebagai mekanisme karantina untuk mencegah \emph{leakage} sebelum kita mengeksekusi rekayasa fitur. Memilih strategi pemisahan yang keliru akan menghasilkan evaluasi model yang menyesatkan. Strategi yang tepat sangat bergantung pada struktur asal data dan kemandirian antar-unit observasi.
-
-Isolasi data pada praktiknya menggunakan beberapa pendekatan pemisahan. Pendekatan dasar adalah \emph{random split}, di mana observasi dialokasikan secara acak. Pemisahan ini relevan ketika setiap titik observasi murni bersifat independen tanpa dependensi antar-entitas. Namun, jika kumpulan data memiliki dependensi kronologis, \emph{random split} tidak lagi sesuai. Pendekatan \emph{temporal split} diperlukan untuk memisahkan data berdasarkan urutan waktu, sehingga model belajar dari data historis untuk memprediksi data di periode selanjutnya. Selain itu, saat data berisi kelompok observasi dari entitas yang sama (seperti riwayat medis dari pasien yang sama berulang kali), pendekatan \emph{group split} perlu diterapkan agar anggota dari entitas tersebut tidak terpisah ke partisi pelatihan dan pengujian secara bersamaan.
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-5}
-\caption{Perbandingan Strategi Pemisahan Data: Random, Group, dan Temporal Split}
-\label{fig:ch02-fig-5}
-\end{figure}
-
-\textbf{Pemisahan Berbasis Kelompok (Group Split)}
-
-Apabila pemisahan acak dilakukan pada data rekam medis, rontgen milik satu pasien dapat masuk ke kelompok latih, sementara sisa rontgen lainnya masuk ke kelompok uji. Model berpotensi mengidentifikasi karakteristik anatomi spesifik pasien tersebut ketimbang mempelajari representasi penyakitnya. \emph{Group split} menggeser pengelompokan pemisahan dari level baris ke level entitas. Syarat utamanya diformulasikan sebagai \(G_{latih} \cap G_{uji} = \emptyset\), yang berarti irisan himpunan identitas unik subjek pada blok pelatihan (\(G_{latih}\)) dan blok pengujian (\(G_{uji}\)) harus kosong (\(\emptyset\)). Implementasi algoritma seperti \passthrough{\lstinline!GroupKFold!} atau \passthrough{\lstinline!StratifiedGroupKFold!} pada pustaka \emph{machine learning} memastikan rekam jejak satu subjek ditempatkan secara utuh ke dalam salah satu partisi, dengan tetap menjaga keseimbangan persentase targetnya.
-
-\textbf{Pemisahan Temporal (Temporal Split)}
-Sistem yang beroperasi di dunia nyata tidak memiliki akses ke data masa depan. \emph{Temporal split} menyimulasikan batasan ini melalui titik potong waktu yang tegas. Pada proses \emph{cross-validation} untuk data sekuensial, kelas utilitas seperti \passthrough{\lstinline!TimeSeriesSplit!} memastikan partisi pelatihan selalu berasal dari periode sebelum partisi pengujian. Kita juga dapat mendefinisikan parameter \emph{gap} untuk memberikan jeda observasi antara partisi latih dan uji, yang berguna untuk menyimulasikan latensi ketersediaan fitur saat model diterapkan di lingkungan produksi.
-
-\textbf{Validasi Silang Bersarang (Nested Cross-Validation)}
-Bentuk \emph{leakage} lain terjadi ketika kita menala hiperparameter (misalnya ambang batas seleksi fitur) lalu mengevaluasi performa akhir pada partisi data yang sama. Praktik ini memicu bias optimistis karena keputusan penalaan dipengaruhi oleh partisi uji. \emph{Nested cross-validation} menyelesaikan masalah ini dengan menyekat dua proses secara hierarkis: putaran dalam (\emph{inner loop}) digunakan murni untuk menala dan mencari hiperparameter terbaik, sedangkan putaran luar (\emph{outer loop}) digunakan khusus untuk mengestimasi performa generalisasi pada sisa data yang sama sekali tidak tersentuh oleh putaran dalam.
-
-Disiplin pemisahan data ini menjamin bahwa seluruh transformasi fitur selanjutnya dikalibrasi pada partisi yang bersih, sehingga estimasi performa model tetap jujur.
+Jika generalisasi ke kelompok baru, \emph{group integrity}, dan keseimbangan kelas sama-sama penting, \passthrough{\lstinline!StratifiedGroupKFold!} dapat dipertimbangkan, meskipun stratifikasi mungkin hanya bersifat aproksimasi jika kelompok-kelompok mempunyai distribusi kelas yang sangat berbeda. Jika data benar-benar temporal, stratifikasi label tidak boleh mengalahkan urutan waktu. Pilihan split yang nyaman tetapi tidak sesuai proses data biasanya menghasilkan evaluasi yang nyaman juga, tetapi salah. Setelah batasnya dipilih, batas yang sama harus bertahan di dalam setiap pengulangan validasi, bukan hanya pada satu pemisahan awal.
 
 \section{\texorpdfstring{\emph{Pipeline} di Dalam \emph{Cross-Validation}}{Pipeline di Dalam Cross-Validation}}\label{pipeline-di-dalam-cross-validation}
 
-Menguji model dengan satu kali pemisahan data latih dan uji rentan menghasilkan estimasi kinerja yang tidak stabil. Skor akurasi tinggi bisa saja muncul akibat distribusi acak pada satu pemisahan tertentu. Praktisi menggunakan \emph{cross-validation} (validasi silang) untuk mengevaluasi kinerja secara iteratif dan mendapatkan taksiran yang lebih andal.
+Setelah strategi split dipilih, aturan yang sama harus berlaku di dalam \emph{cross-validation} (Kohavi 1995). \emph{Cross-validation} mengulang proses pelatihan dan validasi pada beberapa lipatan data. Pada setiap lipatan, sebagian data menjadi bagian pelatihan dan sebagian lainnya ditahan sebagai validasi. Karena setiap lipatan mensimulasikan data baru, \emph{preprocessing} harus dipelajari hanya dari bagian pelatihan lipatan tersebut.
 
-Secara matematis, estimasi kesalahan melalui manuver \(K\)-Fold \emph{Cross-Validation} mengakumulasikan rata-rata kerugian dari keseluruhan siklus melalui formula \(CV_{(K)} = \frac{1}{K} \sum_{k=1}^K E_k\). Penjumlahan rotasi algoritma ini akan menghitung rasio keseluruhan deviasi model (\(E_k\)) saat beroperasi melawan blok validasi ke-\(k\), lalu membaginya ke total partisi data latih yang ditugaskan semenjak awal (\(K\)).
+Siklus satu lipatan berjalan dengan urutan yang sama. \emph{Pipeline} di-\emph{fit} pada bagian pelatihan, bagian validasi diubah memakai parameter dari pelatihan tersebut, skor dihitung, lalu \emph{pipeline} dibuang. Pada lipatan berikutnya, proses yang sama diulang dari awal. Perulangan ini terasa mahal, tetapi itulah harga evaluasi yang jujur.
 
-Skema ini membagi himpunan data menjadi kumpulan \emph{fold} berukuran seimbang. Di setiap perputaran, satu \emph{fold} bertindak sebagai blok validasi, dan kumpulan \emph{fold} sisanya disatukan sebagai data pelatihan. Masalah muncul ketika tahapan rekayasa fitur diimplementasikan keliru bersamaan dengan rotasi iteratif ini.
+Jika transformer diletakkan di luar \emph{cross-validation}, prosesnya bocor. Contohnya, scaler di-\emph{fit} sekali pada semua data, lalu hanya model yang divalidasi silang. Dalam keadaan ini, setiap lipatan validasi sudah ikut menentukan rata-rata dan standar deviasi. Kesalahannya mungkin kecil pada \emph{dataset} besar dan stabil, tetapi prinsip evaluasinya tetap rusak.
 
-\textbf{Risiko Kebocoran Data dalam Validasi Silang}
+Rumus rata-rata K-fold dapat ditulis sebagai berikut.
 
-Kesalahan paling umum adalah menjalankan fungsi transformasi pada seluruh dataset sebelum fungsi \emph{cross-validation} dipanggil. Jika perhitungan parameter standardisasi dilakukan secara global di awal, nilai statistik tersebut ikut menyerap informasi dari baris-baris data yang nantinya bertindak sebagai blok validasi. Dampaknya terhadap evaluasi metrik sangat menipu: skor validasi akan meningkat tinggi karena distribusi data validasi sudah terdeteksi di tahap pelatihan. Model sebenarnya mempelajari pola observasi yang seharusnya tertutup rapat, sehingga pada akhirnya performa model akan menurun drastis ketika dihadapkan pada data baru di lingkungan produksi.
+\[
+CV_{(K)} = \frac{1}{K}\sum_{k=1}^{K} E_k
+\]
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-6}
-\caption{Aliran Data Cross-Validation yang Salah (Bocor)}
-\label{fig:ch02-fig-6}
+Dengan \(K\) sebagai jumlah lipatan dan \(E_k\) sebagai error pada lipatan ke-\(k\), nilai rata-rata ini bermakna hanya jika setiap \(E_k\) diperoleh dari \emph{pipeline} yang di-\emph{fit} tanpa melihat lipatan validasinya.
+
+Gambar 2.4 membandingkan pola yang salah dan benar. Pada jalur yang salah, \emph{preprocessing} dilakukan sekali pada seluruh data, lalu \emph{cross-validation} hanya mengelilingi model. Pada jalur yang benar, seluruh \emph{pipeline} berada di dalam setiap lipatan.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch02-fig-4}
+\caption{\emph{Preprocessing} di luar vs di dalam \emph{cross-validation}}
+\label{fig:ch02-fig-4}
 \end{figure}
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-7}
-\caption{Aliran Data Cross-Validation yang Benar (Terisolasi)}
-\label{fig:ch02-fig-7}
-\end{figure}
+Aturan ini berlaku untuk \emph{scaling}, \emph{imputation}, \emph{encoding}, seleksi fitur, reduksi dimensi, dan \emph{target encoding}. Semua langkah yang mempelajari sesuatu dari data harus berada dalam \emph{pipeline} yang divalidasi. Logika ini tidak bergantung pada scikit-learn. Dalam R, SQL, Spark, atau \emph{workflow} \emph{deep learning}, batasnya tetap sama, yaitu lipatan validasi tidak boleh ikut membentuk representasi yang menilainya.
 
-\textbf{Mekanisme Isolasi Transformasi}
+Biaya komputasi memang bertambah karena transformer di-\emph{fit} berulang. Dalam pencarian model yang mengulang konfigurasi serupa, caching seperti \passthrough{\lstinline!Pipeline(memory=...)!} dapat membantu. Akan tetapi, caching hanya mempercepat perhitungan. Aturan validasi tetap sama.
 
-Untuk menjamin evaluasi tidak bias, seluruh urutan penyesuaian fitur harus dirangkai ke dalam satu objek \emph{pipeline}. Tabel observasi asli diteruskan beriringan dengan objek \emph{pipeline} ke dalam fungsi silang. Metode ini mengunci ruang eksekusi transformasi berada di dalam perputaran internal setiap tahapan \emph{cross-validation}.
+\begin{pendalaman}{\emph{Nested cross-validation}}
+Ketika hiperparameter dipilih dan performa dilaporkan dari lipatan yang sama, estimasi performa dapat terlalu optimistis. Pilihan hiperparameter sudah terpengaruh oleh lipatan tersebut melalui proses tuning. \emph{Nested cross-validation} memisahkan dua pekerjaan. \emph{Inner loop} memilih hiperparameter, termasuk ambang seleksi fitur atau kekuatan regularisasi. \emph{Outer loop} mengukur generalisasi pada data yang tidak dipakai untuk tuning. Biayanya lebih besar karena jumlah pelatihan berlipat, tetapi pemisahan ini penting pada \emph{dataset} kecil, pencarian agresif, atau laporan eksperimen yang harus dipercaya.
+\end{pendalaman}
 
-Cara kerja \emph{pipeline} di setiap rotasi silang terbagi menjadi tiga langkah terisolasi. Pertama, tahap penghitungan parameter (\passthrough{\lstinline!fit()!}) pada \emph{pipeline} dibatasi secara ketat hanya pada blok data pelatihan iterasi yang sedang berjalan. Kedua, objek \emph{pipeline} yang sudah menyimpan parameter dari data pelatihan meluncurkan modifikasi data (\passthrough{\lstinline!transform()!}) secara mandiri pada blok validasi yang sedang disisihkan. Ketiga, pada transisi rotasi berikutnya, ukuran acuan seperti nilai tengah imputasi atau simpangan baku akan dibuang dan dihitung ulang dari nol berdasarkan himpunan pelatihan iterasi yang baru.
+\section{Anti-Pola Umum}\label{anti-pola-umum}
 
-\textbf{Optimalisasi Komputasi dan Nested CV}
+Setelah kontrak, taksonomi, split, dan \emph{cross-validation} ditempatkan dalam satu alur, beberapa kesalahan berulang tampak sebagai pelanggaran prinsip yang sama. Ada yang melakukan \emph{scaling} atau imputasi pada seluruh \emph{dataset} sebelum split. Ada yang memilih fitur dengan seluruh data sebelum \emph{cross-validation}. Ada pula yang memanggil \passthrough{\lstinline!fit_transform!} pada data \emph{test}, padahal data \emph{test} seharusnya hanya menerima parameter dari data \emph{train}.
 
-Menjalankan rekayasa fitur berulang kali di dalam skema silang, terlebih bila digabung dengan pencarian \emph{hyperparameter} (\emph{GridSearchCV}), memakan beban komputasi yang masif. Pustaka \emph{machine learning} modern menyediakan dua fasilitas utama untuk mengoptimalkan kendala teknis ini. Fasilitas pertama adalah \emph{caching} transformasi, di mana objek \passthrough{\lstinline!Pipeline!} mendukung argumen \passthrough{\lstinline!memory!} untuk merekam status keluaran langkah \emph{transformer} ke dalam penyimpanan diska. \emph{Pipeline} otomatis akan memanggil hasil kalkulasi yang tersimpan jika parameter dan observasi masukan tidak berubah di perputaran selanjutnya. Fasilitas kedua adalah pendekatan \emph{nested cross-validation}. Untuk mencegah kebocoran informasi melalui pemilihan \emph{hyperparameter}, evaluasi model terbaik dilakukan lewat validasi silang bersarang, di mana perputaran dalam berfokus menala setelan rekayasa fitur, sementara perputaran luar bekerja menaksir kinerja generalisasi murni tanpa intervensi penyetelan algoritma.
+Untuk standardisasi, transformasi data \emph{test} yang benar ditulis sebagai berikut.
 
-\begin{lstlisting}[language=Python]
-import tempfile
-from shutil import rmtree
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
-from sklearn.datasets import make_classification
+\[
+x'_{\text{test}} = \frac{x_{\text{test}} - \mu_{\text{train}}}{\sigma_{\text{train}}}
+\]
 
-# 1. Inisialisasi data dummy untuk simulasi klasifikasi
-X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
+Dengan \(x_{\text{test}}\) sebagai nilai mentah pada data \emph{test}, sedangkan \(\mu_{\text{train}}\) dan \(\sigma_{\text{train}}\) sebagai rata-rata dan standar deviasi dari data \emph{train}, data \emph{test} hanya ditempatkan pada kerangka acuan yang sudah dipelajari dari pelatihan. Jika data \emph{test} menghitung rata-rata dan standar deviasinya sendiri, kontrak pada Bagian 2.1 dilanggar.
 
-# 2. Membuat direktori temporer khusus untuk menyimpan cache pipeline
-cachedir = tempfile.mkdtemp()
+Anti-pola lain berkaitan dengan waktu dan kelompok. Membuat jendela \emph{time series} yang saling tumpang tindih, lalu membaginya secara acak, dapat menaruh potongan hampir sama di \emph{train} dan \emph{test}. Tumpang tindih riwayat tidak otomatis menjadi \emph{leakage}, tetapi split menjadi tidak sah jika jendela target atau ketersediaan label melintasi batas evaluasi dan protokol \emph{deployment} tidak lagi ditiru. Agregat pelanggan juga baru bocor jika memakai kejadian yang belum tersedia pada \emph{cutoff} baris tersebut atau pemetaan yang dipelajari dari bagian tertahan. Baris tertahan tetap boleh memakai riwayat mentah yang tersedia sebelum \emph{cutoff}-nya. Memakai field turunan target seperti ``days until next purchase'' atau penanda pembatalan \emph{invoice} sebagai prediktor adalah \emph{target leakage} yang terang-terangan.
 
-# 3. Mendefinisikan tahapan transformasi dan estimator dalam pipeline
-pipeline_steps = [
-    ('imputer', SimpleImputer(strategy='median')),
-    ('scaler', StandardScaler()),
-    ('classifier', LogisticRegression(random_state=42))
-]
+Ada pula kesalahan eksperimental seperti melaporkan hanya fold terbaik, atau mencoba banyak variasi lalu melaporkan yang paling menguntungkan tanpa prosedur validasi yang jelas. Praktik seperti ini tidak selalu disebut \emph{leakage}, tetapi menghasilkan estimasi yang sama-sama terlalu optimistis.
 
-# 4. Konstruksi pipeline terisolasi dengan parameter cache 'memory'
-pipeline = Pipeline(steps=pipeline_steps, memory=cachedir)
+Tabel 2.2 menyatukan anti-pola yang perlu dihindari. Isinya dapat dipakai sebagai daftar periksa sebelum mempercayai hasil eksperimen.
 
-# 5. Evaluasi performa model menggunakan skema Cross-Validation (K-Fold = 5)
-# Transformasi data terjadi secara aman di dalam putaran internal CV tanpa kebocoran data
-scores = cross_val_score(pipeline, X, y, cv=5, scoring='accuracy')
+\tabeljudul{Tabel 2.2 — Anti-pola umum dan perbaikannya}
 
-# 6. Bersihkan direktori penyimpanan cache secara aman untuk membebaskan ruang memori
-rmtree(cachedir)
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.322}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.272}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.406}}@{}}
+\toprule
 
-print(f"Skor Cross-Validation per lipat: {scores}")
-print(f"Rata-rata Akurasi Model: {scores.mean():.4f}")
-\end{lstlisting}
+Anti-pola
+ & 
+Mengapa berbahaya
+ & 
+Perbaikan
+ \\
+\midrule
+\endhead
 
-\section{Kesalahan Praktik pada Alur Transformasi}\label{kesalahan-praktik-pada-alur-transformasi}
 
-Memahami konsep rekayasa fitur belum tentu menjamin penulisan kode yang bebas masalah. Saat merancang alur transformasi, pengembang sering kali secara tak sengaja melanggar \emph{praktik pipeline yang benar}. Pelanggaran ini merusak integritas model secara diam-diam melalui kebocoran informasi (\emph{data leakage}) atau diskrepansi tipe data. Dokumentasi panduan \emph{Common Pitfalls} dari pustaka \emph{Scikit-Learn} menyoroti beberapa kecerobohan laten yang secara ajek menghantui tahap komputasi lapangan. Salah satu titik paling kritikal adalah pemanggilan perintah \passthrough{\lstinline!fit_transform!} secara berulang pada kelompok uji. Metode ini sedari awal dirakit murni untuk mengukur konstanta distribusi \emph{mean} maupun varians lalu membenturkannya ke data latih. Tragedi bocornya parameter bermula ketika perintah ini diaktifkan ulang pada himpunan partisi uji (\emph{test set}). Aksi fatal tersebut serta-merta menggusur acuan parameter aslinya, mendikte mesin untuk mendirikan rentang skala anyar yang diinfeksi murni oleh sebaran data uji tersebut. Secara matematis, transformasi hitungan standar \emph{Z-score} pada partisi uji dituntut keras untuk selalu merujuk pada distribusi latih melewati penjabaran \(x'_{\text{test}} = \frac{x_{\text{test}} - \mu_{\text{train}}}{\sigma_{\text{train}}}\). Berdasarkan persamaannya, vektor \(\mu_{\text{train}}\) beserta deviasi \(\sigma_{\text{train}}\) adalah milik mutlak kalkulasi \passthrough{\lstinline!fit!} dari partisi latih yang sama sekali tidak boleh diganggu gugat. Mengelabui pakem logis ini dipastikan memicu ledakan eror prediksi secara seketika. Hukum absolutnya tidak dapat ditawar: himpunan observasi validasi maupun pengujian uji hanya sah dieksekusi secara mekanis oleh metode \passthrough{\lstinline!transform!}.
 
-Kecerobohan ini juga sering diiringi oleh seleksi fitur prematur sebelum eksekusi pemisahan data dikerjakan. Pengembang terlalu antusias mengeliminasi atribut dan menghapusnya menggunakan matriks populasi yang masih tergabung. Menyingkap distribusi label target ke dalam mekanisme penyeleksian akan menaikkan skor algoritma, seolah mesin mampu membaca pola akurat dari tumpukan variabel acak yang sebetulnya hanyalah ilusi semu. Keteledoran serupa terjadi secara modern di area pemrosesan linguistik dalam wujud perakitan \emph{embedding} global. Praktisi menerapkan perhitungan terhadap gabungan korpus dokumen utuh dengan inisialisasi perhitungan TF-IDF atau ekstraksi leksikal sebelum partisinya dieksekusi secara tuntas. Praktik semacam ini menjamin fitur pelatihan menyerap secara absolut rasio kata spesifik milik masa depan. Oleh karena itu, formasi matriks perbendaharaan kalimat hanya sah dioperasikan manakala penyekatan baris pelatihan sudah dipisahkan secara struktural.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-8}
-\caption{Aliran Data Imputasi Global yang Salah (Bocor)}
-\label{fig:ch02-fig-8}
-\end{figure}
+\emph{Scaling} atau imputasi seluruh \emph{dataset} sebelum split & Statistik \emph{test} masuk ke transformasi & Fit transformer hanya pada data \emph{train} \\
+Seleksi fitur pada semua data sebelum \emph{cross-validation} & Lipatan validasi ikut memilih fitur & Letakkan seleksi fitur di dalam \emph{pipeline} CV \\
+Split acak ketika jendela target atau ketersediaan label melintasi batas & Evaluasi memakai sampel yang belum semestinya tersedia & Gunakan \emph{temporal split} atau \emph{purged split} sesuai jendela target. Pakai \emph{group split} hanya untuk generalisasi ke unit baru \\
+Encoding kategori dengan mapping dari data \emph{test} & Kategori \emph{test} ikut membentuk ruang fitur & Pelajari mapping dari \emph{train}, tangani kategori baru secara eksplisit (strategi kategori baru dibahas di Bab 4) \\
+Agregat memasukkan kejadian setelah \emph{cutoff} baris & Informasi yang belum tersedia masuk ke fitur & Hitung agregat \emph{point-in-time} dari riwayat mentah yang tersedia sebelum \emph{cutoff} setiap baris \\
+Field turunan target dipakai sebagai prediktor & Fitur sudah memuat jawaban atau akibat target & Hapus field pascatarget dari fitur \\
+\passthrough{\lstinline!fit_transform!} dipanggil pada data \emph{test} & Parameter transformasi dipelajari ulang dari \emph{test} & Gunakan \passthrough{\lstinline!transform!} dengan parameter \emph{train} \\
+Hanya fold atau eksperimen terbaik yang dilaporkan & Estimasi performa bias optimistis & Laporkan protokol lengkap dan hasil agregat \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch02-fig-9}
-\caption{Aliran Data Imputasi dengan Pipeline Tertutup yang Benar}
-\label{fig:ch02-fig-9}
-\end{figure}
+}
 
-Beban operasional kian bertambah ketika pengembang memaksakan manipulasi fitur kustom secara acak di luar perimeter objek \emph{pipeline}. Aksi penyuntingan matriks di luar perlindungan \emph{estimator} (misalnya penambalan ejaan spasi kosong secara langsung) melahirkan eksekusi baris kode yang tak dapat dilacak. Kala sistem harus dimigrasikan ke arena *production*, sekuens kode manual yang terlepas dari rantai fungsional ini kerap kali terlupakan, dan model langsung mengalami kesalahan tipe data cacat. Untuk mengatasi persoalan ini, arsitek sistem merumuskan pewarisan berorientasi objek dalam bentuk \emph{custom transformer}; mereka meleburkan seluruh taktik skrip tersebut ke dalam jubah struktural standar yang tangguh sekaligus tak terpisahkan dalam rantai persinyalan eksekusi \emph{pipeline}.
+Daftar tersebut menyatukan satu prinsip yang sama bahwa data yang dipakai untuk menilai model tidak boleh ikut membentuk representasi yang sedang dinilai.
 
-\section{\texorpdfstring{Studi Kasus: \emph{Pipeline} yang Valid vs.~\emph{Pipeline} yang Bocor}{Studi Kasus: Pipeline yang Valid vs.~Pipeline yang Bocor}}\label{studi-kasus-pipeline-yang-valid-vs.-pipeline-yang-bocor}
+\begin{sintesis}
 
-Dalam skenario pembuatan model penaksir harga \emph{real estate}, sebagian data pada atribut ukuran lahan mungkin kosong. Nilai yang hilang ini dapat diisi menggunakan metode imputasi rata-rata. Urutan eksekusi imputasi menentukan apakah evaluasi model berjalan objektif atau mengalami kebocoran data (\emph{data leakage}). Berikut adalah perbandingan dua pendekatan komputasi untuk menangani kondisi tersebut.
+\emph{Pipeline} menjaga batas pengetahuan antara pelatihan, validasi, dan inferensi. Setiap transformasi yang belajar dari data memiliki parameter. Parameter tersebut dipelajari dari data pelatihan sesuai batas evaluasi, lalu dipakai kembali untuk validasi, \emph{test}, dan data baru.
 
-Pendekatan manipulasi global, misalnya, merupakan skema yang keliru karena jelas-jelas mengundang distorsi parameter. Praktik ini bersandar pada observasi seluruh baris tabel secara utuh untuk mengakumulasikan sentralitas rata-rata tanpa mempedulikan urutan \emph{index time}. Sel yang kosong lantas secara sepihak ditimpa oleh representasi sentralitas global tersebut sebelum tabel itu diiris menuju baris latih dan uji. Dampak komputasinya amat kentara: angka pengganti pada tumpukan pelatihan ikut dikontrol ketat oleh distribusi statistik sampel masa depan. Sebaliknya, pendekatan komputasi silang di balik tembok isolasi \emph{pipeline} adalah arsitektur sah yang mampu menangkis kontaminasi tersebut. Pemotongan partisi antara baris pengamatan latih dan masa depan didirikan sejak awal komputasi. Selepas diiris murni secara struktural, ukuran kalkulasi nilai rata-rata digali esensinya mengacu secara mandiri dan eksklusif pada baris partisi latih. Vektor imputasi tunggal inilah yang akan dibawa konsisten tanpa interupsi matematis untuk menambal nilai kekosongan fitur selama evaluasi maupun operasional harian berjalan.
+\emph{Leakage} muncul ketika batas itu dilanggar. Bentuknya dapat berupa \emph{target leakage}, kontaminasi \emph{train-test}, \emph{temporal leakage}, \emph{between-group leakage}, duplikasi, atau \emph{representation leakage}. Nama-nama tersebut berbeda, tetapi pelajarannya sama. Representasi yang sedang dinilai tidak boleh dibentuk oleh data yang seharusnya menjadi penguji. Karena rekayasa fitur sering menghitung statistik lintas baris, waktu, entitas, atau target, bab-bab berikutnya akan terus merujuk pada prinsip ini.
 
-Secara matematis, jika \(N_{train}\) mewakili agregat total dari porsi sebaran latih yang diputus bersih, estimasi \(\mu_{train}\) mengakumulasi nilai lahan yang ada dengan rumus:
+Strategi split menerjemahkan batas evaluasi ke bentuk data. \emph{Random split} cocok ketika sampel cukup independen, \emph{group split} diperlukan ketika model harus melakukan generalisasi ke kelompok yang belum terlihat, dan \emph{temporal split} diperlukan ketika model akan memprediksi masa depan. Dalam \emph{cross-validation}, seluruh \emph{pipeline} harus berada di dalam setiap lipatan.
 
-\[ \mu_{train} = \frac{1}{N_{train}} \sum_{i=1}^{N_{train}} x_i \]
+Praktik pipeline yang benar memang menambah disiplin dan kadang biaya komputasi. Akan tetapi, tanpa disiplin tersebut, angka evaluasi dapat tampak tinggi tetapi tidak bermakna. Buku ini memperlakukan validasi dan representasi sebagai dua sisi dari pekerjaan yang sama. Fitur hanya berguna jika cara membuatnya sah pada saat model benar-benar dipakai.
 
-Melalui persamaan ini, bobot atribut ukuran luasan lahan \(x_i\) hanya diserap dari baris internal data model tersebut. Estimasi \(\mu_{train}\) yang tervalidasi inilah yang akan menjadi penambal satu-satunya bagi nilai tak kasatmata pada masa observasi eksperimental evaluasi. Melalui strategi defensif ini, probabilitas partisi masa depan sungguh dijamin gagal memengaruhi parameter turunan ruang fitur sejak dari pijakan awal komputasi.
+\end{sintesis}
 
-Saat dievaluasi, performa dari pendekatan kedua umumnya lebih rendah dibandingkan pendekatan pertama. Skor yang menurun ini justru mencerminkan kemampuan prediksi yang realistis saat model menghadapi observasi baru. Tanpa isolasi \emph{pipeline} yang tegas, rekayasa fitur berisiko meloloskan kalkulasi cacat yang membuat validasi model tidak sah. Pada skala produksi, pencegahan kebocoran temporal ini juga dapat diamankan oleh infrastruktur pelengkap seperti \emph{feature store} melalui mekanisme \emph{point-in-time join}, sehingga data dari masa depan terblokir dan tidak memengaruhi perhitungan fitur pelatihan historis.
+\begin{bacaan}
 
-\section{Sintesis Keputusan dan Prinsip Akhir}\label{sintesis-keputusan-dan-prinsip-akhir}
+\begin{itemize}
+\tightlist
+\item
+  scikit-learn --- Common Pitfalls --- \url{https://scikit-learn.org/stable/common_pitfalls.html}. Anti-pola umum dan kebocoran data saat praproses.
+\item
+  scikit-learn --- Pipelines \& composite estimators --- \url{https://scikit-learn.org/stable/modules/compose.html}. Merangkai transformasi dan model tanpa bocor lintas split.
+\item
+  scikit-learn --- Cross-validation --- \url{https://scikit-learn.org/stable/modules/cross_validation.html}. Strategi validasi silang, termasuk untuk data terkelompok dan berurutan.
+\item
+  scikit-learn --- Model persistence --- \url{https://scikit-learn.org/stable/model_persistence.html}. Menyimpan dan memuat kembali pipeline terlatih.
+\item
+  Google --- Rules of Machine Learning --- \url{https://developers.google.com/machine-learning/guides/rules-of-ml}. Praktik rekayasa ML, termasuk training--serving skew.
+\item
+  Kaufman dkk. (2012), ``Leakage in Data Mining'' (ACM TKDD) --- \url{https://doi.org/10.1145/2382577.2382579}. Taksonomi formal kebocoran data.
+\end{itemize}
 
-Keamanan dan konsistensi naskah data yang diumpankan ke dalam model ditentukan murni oleh kedisiplinan kita menegakkan garis isolasi data. Dalam kerangka kerja arsitektur yang tangguh, parameter operasional seperti takaran sentralitas untuk imputasi atau penarikan garis distribusi *scaling* kuantil diwajibkan terkunci pada \emph{fit} murni observasi awal latih. Unit partisi pengujian yang membedah keabsahan evaluasi harus dikarantina dalam lingkungan observasi yang terisolasi; ia sekadar menerima pemetaan serah terima fitur melalui manuver satu arah \emph{transform} tanpa pernah menyumbangkan sinyal intervensi.
+\end{bacaan}
 
-Bongkar pasang rekayasa arsitektural ini turut pula dilandaskan kepada strategi pemotongan naskah populasi. Jika kita menangani matriks baris observasi independen tak bersyarat, \emph{random split} merupakan senjata klasik yang paling wajar. Namun di hadapan tumpukan transaksi nasabah yang bertautan waktu kronologis, arsitek data hanya sah bergerak lewat \emph{temporal split} agar algoritma patuh dan murni membaca alur masa lalu untuk memprediksi hari esok. Ketika subjek unit observasi (seperti rekam riwayat puluhan rumah sakit per pasien) bernaung dalam pengulangan entitas logis yang identik, benteng pertahanan terakhir bernama \emph{group split} mesti dikerahkan guna mengawal distribusi subjek tetap solid tanpa pecah ke blok kompetitor yang berseberangan.
+\rujukanheading
 
-Pada akhirnya, menala dan membangun fondasi rekayasa atribut tidak dapat dilepaskan secara manual tanpa perlindungan pengujian berlapis \emph{cross-validation}. Kecanggihan arsitektur hibrida maupun fleksibilitas pohon keputusan asimetris sekali pun takkan meloloskan arsitek data dari mandat penyusunan modul \emph{pipeline} yang tersegel. Kemapanan dari praktik pengurungan komputasi inilah yang akan menjadi juru selamat kita di ranah penugasan nyata.
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-kaufman2012leakage}
+Kaufman, Shachar, Saharon Rosset, Claudia Perlich, and Ori Stitelman. 2012. {``Leakage in Data Mining: Formulation, Detection, and Avoidance.''} \emph{ACM Transactions on Knowledge Discovery from Data} 6 (4): 1--21. \url{https://doi.org/10.1145/2382577.2382579}.
 
-Kode sumber lengkap dan demonstrasi visual bagaimana membandingkan pipeline yang valid dan yang bocor pada skema evaluasi dapat diuji langsung melalui materi di repositori pendamping buku ini.
+\bibitem[\citeproctext]{ref-kohavi1995cv}
+Kohavi, Ron. 1995. {``A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection.''} \emph{Proceedings of the 14th International Joint Conference on Artificial Intelligence (IJCAI)}.
+
+\bibitem[\citeproctext]{ref-pedregosa2011sklearn}
+Pedregosa, Fabian, Gaël Varoquaux, Alexandre Gramfort, et al. 2011. {``Scikit-Learn: Machine Learning in {P}ython.''} \emph{Journal of Machine Learning Research} 12: 2825--30.
+
+\end{CSLReferences}

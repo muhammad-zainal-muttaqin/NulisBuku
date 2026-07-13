@@ -1,0 +1,53 @@
+{
+  "source": "Reuse summary derived from ch11 SMS Spam and ch12 Fashion-MNIST/FSDD verified stats",
+  "rows": 6,
+  "referenced_snapshots": [
+    "data/section1/ch11_sms_spam",
+    "data/section1/ch12_fashion_mnist",
+    "data/section1/ch12_fsdd"
+  ],
+  "scores": [
+    {
+      "source": "SMS Spam",
+      "modality": "text",
+      "representation": "char_wb TF-IDF",
+      "metric": "average_precision",
+      "score": 0.9857705722319199
+    },
+    {
+      "source": "SMS Spam",
+      "modality": "text",
+      "representation": "char_wb TF-IDF",
+      "metric": "f1",
+      "score": 0.964769647696477
+    },
+    {
+      "source": "Fashion-MNIST",
+      "modality": "image",
+      "representation": "HOG",
+      "metric": "accuracy",
+      "score": 0.809
+    },
+    {
+      "source": "Fashion-MNIST",
+      "modality": "image",
+      "representation": "PCA pixel embedding",
+      "metric": "accuracy",
+      "score": 0.83
+    },
+    {
+      "source": "FSDD",
+      "modality": "audio",
+      "representation": "MFCC",
+      "metric": "accuracy",
+      "score": 0.95
+    },
+    {
+      "source": "FSDD",
+      "modality": "audio",
+      "representation": "log-mel PCA",
+      "metric": "accuracy",
+      "score": 0.8933333333333333
+    }
+  ]
+}

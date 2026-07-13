@@ -1,281 +1,292 @@
 % ==========================================================================
-% ch06.tex — dihasilkan otomatis dari website/chapters/ch06.qmd
-% Boleh disunting manual. 'sync' hanya menimpa bila .qmd berubah DAN .tex
-% belum disunting; kalau keduanya berubah, dilewati (pakai --force).
-% qmd-sha1: 46cc42ad3cb8
-% tex-sha1: f3e6108d4b0e
+% ch06.tex — dihasilkan dari v2/drafts oleh tools/md2tex.py
+% Sumber: v2\drafts\ch06\ch06_draft_v2.md
+% Boleh disunting manual; menjalankan md2tex.py lagi akan menimpa.
 % ==========================================================================
-% >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
 \chapter{Pembentukan Fitur Turunan}\label{pembentukan-fitur-turunan}
 
-\section{Pembentukan Fitur Turunan: Rasio, Selisih, dan Interaksi}\label{pembentukan-fitur-turunan-rasio-selisih-dan-interaksi}
+Data mentah sering belum langsung menjawab pertanyaan prediksi. Pertanyaan seperti apakah belanja pelanggan sedang meningkat atau sudah berapa lama pelanggan tidak aktif memerlukan kolom baru yang diturunkan dari kolom yang sudah ada. Kolom baru tersebut dapat berupa rasio, selisih, interaksi, agregat riwayat, jarak waktu, atau representasi siklik. Setiap fitur turunan merupakan hipotesis tentang struktur masalah yang sedang dihadapi.
 
-Model \emph{machine learning} sering kali membutuhkan representasi data yang secara eksplisit menghubungkan beberapa variabel. Meskipun arsitektur yang kompleks mampu memetakan relasi antar-variabel secara mandiri, proses tersebut membutuhkan komputasi yang tinggi dan volume data yang besar. Dengan menyediakan representasi fitur yang sudah dirancang secara fungsional ini, model menerima sinyal prediktif secara langsung sehingga konvergensi berjalan lebih cepat.
+Hipotesis semacam ini dapat membantu, tetapi dapat juga salah (Zheng and Casari 2018). Penyebut rasio dapat bernilai nol. Agregat riwayat dapat tanpa sengaja memakai masa depan. Kombinasi fitur dapat tumbuh terlalu banyak dan membawa \emph{noise}. Bab ini membahas pembentukan fitur turunan melalui operasi aritmetika dasar, ekspansi polinomial, agregasi berbasis grup, fitur relasional dengan kebenaran titik-dalam-waktu (point-in-time correctness), fitur berbasis domain, serta fitur tanggal dan siklus. Bab ini juga menguraikan risiko ledakan fitur (feature explosion) dan cara memvalidasi apakah fitur baru benar-benar menambah nilai.
 
-Fitur turunan diciptakan melalui operasi matematika pada atribut mentah yang sudah ada. Tiga operasi dasar yang lazim diaplikasikan mencakup pembentukan selisih, rasio, dan interaksi. 
+\section{Rasio, Selisih, dan Fitur Interaksi}\label{rasio-selisih-dan-fitur-interaksi}
 
-Operasi pertama adalah perhitungan selisih atau pengurangan yang berfungsi mengukur nilai defisit, sisa, atau perubahan margin absolut. Algoritma dasar umumnya tidak menghitung selisih antara dua fitur secara otomatis. Sebagai contoh, menyajikan angka pengeluaran bulanan dan pendapatan bulanan secara terpisah sering kali kurang informatif dibandingkan mengalkulasi satu turunan tunggal berupa nilai pendapatan bersih. Fitur hasil pengurangan ini secara langsung mendeskripsikan kapasitas finansial riil dari sebuah observasi entitas.
+Operasi aritmetika sederhana sering menjadi pintu pertama pembentukan fitur turunan. Rasio menjawab pertanyaan relatif tentang pembanding yang membuat suatu nilai terlihat besar atau kecil. Contoh kerja pada Bagian ini menggunakan dataset Online Retail, yaitu catatan transaksi sebuah toko \emph{online}. Setiap baris mencatat satu item dalam \emph{invoice}, dengan identitas pelanggan, waktu transaksi, jumlah barang, dan harga unit. Setelah catatan tersebut diringkas menjadi level pelanggan, rata-rata belanja per \emph{invoice} membagi total belanja dengan jumlah \emph{invoice}, sedangkan nilai per item membandingkan \emph{gross value} dengan jumlah unit. Dua pelanggan dapat mempunyai total belanja yang sama, tetapi pola transaksinya berbeda jika yang satu berbelanja sedikit namun sering, sementara yang lain berbelanja besar hanya sesekali.
 
-Operasi kedua berpusat pada kalkulasi rasio melalui pembagian untuk menangkap proporsi relatif sekaligus menormalkan skala metrik. Dalam analisis kelayakan kredit, nilai utang absolut sulit diinterpretasikan tanpa konteks pembanding yang menyertainya. Membagi nilai utang tersebut dengan total aset akan menghasilkan rasio proporsional yang mengonversi perusahaan rintisan kecil maupun korporasi global ke dalam rentang metrik risiko yang terstandardisasi.
+Selisih menyatakan jarak, perubahan, atau deviasi dari acuan. Nilai \emph{invoice} bulan ini dikurangi rata-rata nilai \emph{invoice} sebelumnya memberi sinyal perubahan perilaku. Nilai aktual dikurangi nilai yang diharapkan memberi sinyal penyimpangan. Dalam data ini, selisih hari sejak pembelian terakhir mengubah tanggal mentah menjadi \emph{recency}, yaitu jarak waktu yang langsung dapat dipakai model sebagai ukuran kebaruan aktivitas. Fitur seperti ini membuat arah dan besar perubahan lebih eksplisit daripada tanggal aslinya.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch06-fig-1}
-\caption{Representasi Rasio Finansial untuk Menormalkan Metrik Berskala Absolut Berbeda}
+Interaksi dipakai ketika dua kondisi bersama-sama mempunyai makna yang tidak muncul dari masing-masing kolom secara terpisah. Secara sederhana, interaksi dua fitur dapat ditulis sebagai berikut.
+
+\[
+x_{\text{interaksi}} = x_i \times x_j
+\]
+
+Jika jumlah unit dikalikan dengan harga unit, fitur baru tersebut menjadi nilai kotor baris item. Pada riwayat pelanggan, jumlah invoice dapat berarti lain ketika \emph{recency} sangat pendek dibanding ketika pelanggan sudah lama tidak bertransaksi. Interaksi menyatakan hubungan bersyarat seperti itu, ketika makna satu fitur berubah saat fitur lain berubah.
+
+Kekuatan rasio, selisih, dan interaksi terletak pada maknanya. Fitur tersebut membantu model yang sederhana menangkap hubungan non-linear atau bersyarat tanpa langsung berpindah ke model yang lebih kompleks. Risikonya juga datang dari operasi yang sama. Rasio harus menjaga penyebut nol atau sangat kecil. Selisih hanya masuk akal jika satuannya sepadan. Interaksi mudah berkembang menjadi terlalu banyak kombinasi. \emph{Outlier} pada salah satu komponen dapat membesar pada fitur hasil.
+
+Tabel 6.1 merangkum keluarga fitur turunan yang digunakan dalam bab ini. Setiap baris menunjukkan struktur yang ingin dinyatakan, contoh bentuknya, dan risiko yang perlu diperiksa kembali saat fitur dievaluasi.
+
+\tabeljudul{Tabel 6.1 — Keluarga fitur turunan}
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.160}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.315}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.238}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.287}}@{}}
+\toprule
+
+Keluarga
+ & 
+Mengekspresikan
+ & 
+Contoh
+ & 
+Risiko utama
+ \\
+\midrule
+\endhead
+
+
+
+
+Rasio & Proporsi relatif, skala terhadap acuan & Belanja per invoice & Penyebut nol\slash{}kecil dan \emph{outlier} \\
+Selisih & Perubahan, defisit, gap & Hari sejak pembelian terakhir & Satuan tidak sepadan \\
+Interaksi & Efek gabungan bersyarat & Quantity x UnitPrice & Ledakan kombinasi \\
+Agregat grup\slash{}riwayat & Konteks entitas dan sejarah & Belanja 30 hari terakhir & \emph{Leakage} lintas \emph{cutoff} \\
+Temporal\slash{}siklik & Ritme dan jarak waktu & Jam, hari, sin\slash{}cos & Pilihan periode salah \\
+Domain & Pengetahuan pakar & BMI, LTV & Aturan usang, proksi sensitif \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+Pola pada tabel tersebut menunjukkan bahwa fitur turunan tidak perlu dikumpulkan sebanyak mungkin. Fitur dipilih ketika ada struktur yang memang perlu dinyatakan. Setelah operasi aritmetika dasar, pangkat dan interaksi otomatis menjadi bentuk yang paling cepat memperbesar ruang fitur.
+
+\section{Fitur Polinomial}\label{fitur-polinomial}
+
+Fitur polinomial memperluas fitur asli menjadi pangkat dan interaksi. Jika dua fitur awal adalah \(x_1\) dan \(x_2\), pemetaan derajat dua dapat ditulis sebagai berikut.
+
+\[
+\phi(x_1, x_2) = [\,1,\ x_1,\ x_2,\ x_1^2,\ x_1 x_2,\ x_2^2\,]
+\]
+
+Angka 1 pada vektor tersebut merupakan \emph{bias term}. Dua anggota berikutnya adalah fitur linear asli. Setelah itu muncul dua suku kuadrat, \(x_1^2\) dan \(x_2^2\), serta satu suku interaksi, \(x_1 x_2\). Dengan pemetaan ini, model linear tidak hanya bekerja pada garis lurus di ruang asli. Model menerima data pada ruang fitur yang lebih tinggi, sehingga batas linear di ruang baru dapat tampak sebagai kurva ketika diproyeksikan kembali ke ruang awal. Jika model hilir sudah mengestimasi \emph{intercept}, gunakan \passthrough{\lstinline!include_bias=False!} pada ekspansi polinomial agar hanya ada satu mekanisme konstanta.
+
+Gambar 6.1 menampilkan intuisi tersebut. Panel kiri memperlihatkan data dua dimensi yang tidak bisa dipisahkan oleh satu garis. Panel kanan menambahkan sumbu kuadrat atau interaksi. Pemisah datar di ruang baru kemudian berpadanan dengan batas melengkung pada ruang asli.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch06-fig-1}
+\caption{Proyeksi polinomial dari ruang asli ke ruang fitur}
 \label{fig:ch06-fig-1}
 \end{figure}
 
-Operasi ketiga adalah pembentukan fitur interaksi melalui perkalian variabel. Proses ini dirancang untuk menangkap efek gabungan dari dua atribut yang memiliki dampak prediktif di luar penjumlahan linear biasa. Efek interaksi perkalian ini direpresentasikan secara matematis sebagai berikut:
+Manfaat tersebut dibayar dengan pertumbuhan jumlah kolom. Dengan \(d\) fitur \emph{input} dan derajat 2, ekspansi memuat \(d\) fitur linear, \(\binom{d}{2}\) interaksi pasangan, dan \(d\) suku kuadrat. Untuk \(d = 100\), jumlahnya menjadi 100 + 4.950 + 100 = 5.150 kolom tanpa \emph{bias}, atau 5.151 jika \emph{bias} dihitung. Jika derajat naik menjadi 3, jumlah kolom dapat masuk ke ratusan ribu untuk skala \emph{input} yang sama.
 
-\[ x_{interaksi} = x_i \times x_j \]
+Pertumbuhan ini mempunyai konsekuensi langsung. Suku polinomial dapat memiliki magnitudo yang jauh berbeda dari fitur asal, sehingga \emph{scaling} sering diperlukan, terutama untuk model linear atau model berbasis jarak. Derajat yang terlalu tinggi juga mudah \emph{overfit} dan sulit dijelaskan. Interaksi \(x_1 x_2 x_3\) mungkin meningkatkan skor validasi pada satu \emph{split}, tetapi belum tentu stabil atau wajar secara domain.
 
-Dalam perumusan tersebut, variabel \(x_{interaksi}\) mewakili fitur turunan baru, sedangkan komponen \(x_i\) dan \(x_j\) merupakan fitur asal. Pada kasus prediksi harga properti, fitur usia bangunan (\(x_i\)) dapat dikalikan dengan penanda biner perbaikan struktural (\(x_j\)). Hasilnya membentuk penalti harga proporsional bagi rumah tua yang sekaligus memiliki struktur rusak. Pola interaksi dasar semacam ini pada akhirnya menjadi landasan utama bagi pembentukan ekspansi polinomial pada derajat yang lebih tinggi.
+Karena itu, fitur polinomial biasanya lebih aman dipakai secara selektif. Pilih fitur asal yang memang mempunyai alasan untuk berinteraksi, batasi derajat pada 2 atau 3, gunakan opsi seperti \passthrough{\lstinline!interaction_only!} bila hanya interaksi yang diinginkan, lalu pasangkan dengan regularisasi atau seleksi fitur. Sinyal dari banyak masalah, meskipun demikian, tidak selalu muncul dari kombinasi kolom dalam satu baris. Sering kali satu sampel baru bermakna setelah ditempatkan di dalam riwayatnya.
 
-Pada tingkat komputasi sistem industri, modifikasi antar kolom semacam ini jarang dilakukan secara manual. Alat operasi transformasi lanjutan—seperti metode pembentukan \passthrough{\lstinline!RelativeFeatures!} atau fungsional parameter \passthrough{\lstinline!MathFeatures!} di dalam ekosistem *Feature-engine*—difungsikan guna menghitung nilai rasio absolut, matriks pertambahan nilai antar selisih observasi, hingga matriks perkalian antar variabel dalam sebuah ikatan komponen \emph{pipeline} yang tervalidasi. Beberapa model komputasi modern juga beroperasi memanfaatkan \emph{embedding} model bahasa besar yang dapat mengusulkan secara otomatis kombinasi rasio probabilitas mengacu terhadap makna teks parameter awal tabel aslinya. Walau inovasi fungsional parameter komputasi tanpa supervisi ini dapat mempercepat observasi simulasi, peningkatan jumlah variabel yang tidak terkontrol (\emph{feature explosion}) justru menimbulkan komplikasi duplikasi parameter yang membutuhkan penerapan protokol klasifikasi eliminasi ketat (\emph{feature selection}).
+\section{Agregasi dan Fitur Berbasis Grup}\label{agregasi-dan-fitur-berbasis-grup}
 
-\section{Fitur Polinomial: Ekspresivitas versus Ledakan Fitur}\label{fitur-polinomial-ekspresivitas-versus-ledakan-fitur}
+Satu baris kejadian jarang cukup untuk menjawab pertanyaan tentang perilaku. Prediksi \emph{churn} membutuhkan riwayat pelanggan. Prediksi risiko pasien membutuhkan kunjungan, obat, dan hasil lab sebelumnya. Prediksi performa siswa membutuhkan riwayat kehadiran, nilai, dan aktivitas belajar. Agregasi mengubah banyak catatan menjadi fitur untuk satu sampel.
 
-Fitur interaksi yang telah dibahas sebelumnya adalah bentuk sederhana dari ekspansi polinomial. Fitur polinomial memperluas konsep ini dengan memangkatkan fitur asli hingga derajat tertentu, sekaligus mengalikan kombinasi antarfitur tersebut.
+Agregasi dapat berupa jumlah, total, rata-rata, median, maksimum, minimum, atau \emph{distinct count}. Unit agregasinya bergantung pada masalah, misalnya pelanggan, sekolah, produk, wilayah, perangkat, pasien, atau akun. Untuk pelanggan, fitur agregat dapat berupa jumlah pembelian 30 hari terakhir, rata-rata nilai transaksi, jumlah komplain sebelum tanggal prediksi, atau jumlah kategori produk yang pernah dibeli.
 
-Sebagai contoh, jika sebuah dataset memiliki dua fitur dasar, \(x_1\) dan \(x_2\), ekspansi polinomial derajat dua tidak hanya menghasilkan fitur interaksi \(x_1 x_2\), tetapi juga fitur kuadrat dari masing-masing variabel:
+Agregasi tidak hanya meringkas banyak baris. Agregasi juga memberi konteks terhadap kebiasaan entitas. Transaksi Rp2.000.000 mungkin biasa bagi satu pelanggan dan aneh bagi pelanggan lain. Jika fitur menyatakan ``transaksi ini dibandingkan dengan rata-rata pelanggan tersebut'', model mendapat ukuran yang lebih dekat dengan sinyal perilaku. Pola ini sering muncul pada deteksi anomali, \emph{churn}, risiko kredit, dan pemantauan operasional.
 
-\[ \phi(x_1, x_2) = [1, x_1, x_2, x_1^2, x_1 x_2, x_2^2] \]
+Batas waktunya harus jelas. Jika prediksi dibuat pada 1 Agustus, agregat ``total komplain tahun ini'' tidak boleh menghitung komplain pada September atau Oktober. Kesalahan seperti ini sering tersembunyi karena \emph{query} tetap berjalan normal dan skor eksperimen tampak baik. Masalahnya baru terlihat saat produksi karena masa depan belum tersedia. Kemunculan pelanggan yang sama di data pelatihan dan validasi bukan otomatis \emph{leakage}. Untuk memprediksi masa depan pelanggan yang sudah dikenal, gunakan evaluasi temporal dan fitur yang benar pada titik waktunya. Gunakan pemisahan sadar grup (\emph{group-aware split}) ketika tujuan penerapan memang generalisasi ke pelanggan baru yang tidak muncul dalam pelatihan.
 
-Dalam proyeksi matematis tersebut, fungsi \(\phi\) merepresentasikan pemetaan observasi ke ruang fitur baru dengan menyertakan nilai \(1\) sebagai suku bias konstanta. Komponen \(x_1\) dan \(x_2\) mewakili fitur asli pada derajat pertama. Variabel dasar ini kemudian dikembangkan secara independen menjadi fitur kuadrat murni \(x_1^2\) dan \(x_2^2\) pada derajat kedua, sekaligus berinteraksi silang untuk menghasilkan kombinasi perkalian \(x_1 x_2\).
+Tabel 6.2 merangkum empat pola jendela agregasi yang umum. Kolom tengah menunjukkan pertanyaan yang dijawab oleh tiap pola, sehingga pilihan jendela tidak hanya menjadi pilihan teknis, tetapi juga pilihan makna.
 
-Tujuan utama dari penerapan ekspansi polinomial ini adalah memperluas kapasitas representasi pada model linear agar mampu mendeteksi pola non-linear. Banyak algoritma standar berasumsi bahwa batasan keputusan berbentuk garis lurus atau bidang datar geometris. Asumsi ini sering kali keliru saat dihadapkan pada realitas observasi data yang membentuk kurva kompleks.
+\tabeljudul{Tabel 6.2 — Pola jendela agregasi}
 
-Dengan memproyeksikan data ke ruang dimensi yang lebih tinggi melalui fitur berpangkat, model linier sederhana menjadi mampu merumuskan batasan keputusan yang melengkung mengikuti kontur data, tanpa perlu mengubah arsitektur dasarnya.
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.225}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.361}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.414}}@{}}
+\toprule
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch06-fig-2}
-\caption{Proyeksi Geometri Ruang Fitur Polinomial dari Dimensi 2D ke 3D}
+Pola
+ & 
+Menjawab pertanyaan
+ & 
+Contoh
+ \\
+\midrule
+\endhead
+
+
+
+
+Sliding window & Bagaimana perilaku terkini? & Total belanja 30 hari terakhir \\
+Expanding window & Bagaimana akumulasi sejarah? & Total transaksi sejak akun dibuat \\
+Recency-weighted & Pentingnya tren terbaru & Rata-rata berbobot peluruhan eksponensial \\
+Session-based & Bagaimana perilaku per episode? & Agregat di-reset setelah jeda inaktif \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+Pada jendela berbobot kebaruan, bobot sebuah event dapat ditulis sebagai berikut.
+
+\[
+w_i = e^{-\lambda \cdot \Delta t_i}
+\]
+
+dengan \(\Delta t_i\) sebagai umur event terhadap waktu prediksi, dan \(\lambda\) sebagai pengatur kecepatan penurunan bobot. Event terbaru mendapat bobot lebih besar daripada event lama.
+
+Gambar 6.2 meletakkan keempat pola tersebut pada satu timeline pelanggan. \emph{Cutoff} menjadi garis batas. Semua bracket dan shading berada sebelum garis itu, karena hanya masa lalu yang sah dipakai sebagai fitur.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch06-fig-2}
+\caption{Pola jendela agregasi pada timeline pelanggan}
 \label{fig:ch06-fig-2}
 \end{figure}
 
-\begin{lstlisting}[language=Python]
-import pandas as pd
-from sklearn.preprocessing import PolynomialFeatures
+Ekstraksi fitur deret waktu dapat diotomatisasi. \emph{Library} seperti tsfresh, misalnya, dapat menghasilkan ratusan fitur ringkasan dari tiap seri dan menyediakan penyaringan signifikansi. Kekuatan ini berguna, tetapi juga menjadi pintu masuk ke \emph{feature explosion}. Otomatisasi agregasi tetap membutuhkan \emph{cutoff} yang benar dan evaluasi kontribusi fitur. Ide jendela tersebut menjadi lebih penting lagi ketika riwayat tersimpan dalam banyak tabel dan banyak \emph{event log}.
 
-# 1. Menyiapkan data observasi sederhana (2 fitur numerik asal)
-data = {
-    'Kecepatan_Kendaraan': [40, 60, 80],
-    'Konsumsi_Bahan_Bakar': [8, 12, 18]
-}
-df = pd.DataFrame(data)
+\begin{pendalaman}{Agregasi berbobot kebaruan}
+Rata-rata berbobot kebaruan dapat ditulis sebagai \(\bar{v} = \dfrac{\sum_i v_i\, e^{-\lambda \Delta t_i}}{\sum_i e^{-\lambda \Delta t_i}}\). Nilai \(v_i\) adalah nilai event ke-\(i\), sedangkan \(\Delta t_i\) adalah jarak waktu event itu dari \emph{cutoff}. Parameter \(\lambda\) menentukan kecepatan peluruhan. Half-life menyatakan jumlah hari hingga bobot sebuah event tinggal setengah. Session reset mengejar tujuan serupa untuk perilaku yang episodik. Semua \(\Delta t_i\) diukur terhadap \emph{cutoff}, sehingga aturan waktu dari Bab 1 masuk langsung ke dalam rumus.
+\end{pendalaman}
 
-# 2. Inisiasi objek PolynomialFeatures dengan derajat 2
-# include_bias=False membuang kolom bias (bernilai 1) untuk fokus pada interaksi murni
-poly = PolynomialFeatures(degree=2, include_bias=False)
+\section{\texorpdfstring{Fitur Relasional dan \emph{Event Log} untuk Join, Agregasi, dan \emph{Point-in-Time Correctness}}{Fitur Relasional dan Event Log untuk Join, Agregasi, dan Point-in-Time Correctness}}\label{fitur-relasional-dan-event-log-untuk-join-agregasi-dan-point-in-time-correctness}
 
-# 3. Menjalankan proses fit_transform pada data observasi
-X_poly = poly.fit_transform(df)
+Riwayat tidak selalu tersimpan sebagai satu timeline yang rapi. Dalam sistem nyata, informasi pelanggan berada di tabel profil, transaksi berada di \emph{event log}, alamat berubah dalam tabel riwayat, sedangkan komplain, pembayaran, login, hasil lab, dan aktivitas aplikasi mempunyai \emph{timestamp} masing-masing. Fitur relasional terbentuk saat tabel-tabel tersebut digabung, dipotong menurut waktu, lalu diringkas ke unit prediksi.
 
-# 4. Mengekstraksi nama-nama fitur baru hasil ekspansi polinomial
-feature_names = poly.get_feature_names_out(df.columns)
+Kesalahan pertama adalah \emph{fan-out}. Misalkan satu baris sampel mewakili satu pelanggan pada satu tanggal prediksi. Jika baris tersebut langsung digabung dengan semua transaksi pelanggan, satu baris pelanggan berubah menjadi banyak baris. Model tidak lagi menerima satu sampel per pelanggan, tetapi duplikasi yang mengubah bobot observasi dan dapat merusak target. Biasanya solusi yang benar bukan \emph{join} mentah, melainkan agregasi event ke unit sampel, seperti jumlah transaksi, total belanja, rata-rata nilai transaksi, atau statistik lain sebelum tanggal prediksi.
 
-# 5. Membungkus hasil transformasi ke dalam DataFrame agar rapi
-df_poly = pd.DataFrame(X_poly, columns=feature_names)
+Kesalahan kedua lebih halus. Bentuk \emph{join} sudah benar, tetapi waktunya salah. \emph{Point-in-time correctness} berarti setiap nilai yang digabung atau dihitung harus valid dan sudah tersedia pada \emph{cutoff}. Karena itu, \emph{event time} perlu dibedakan dari waktu ketersediaan atau waktu ingesti. Catatan yang peristiwanya terjadi sebelum \emph{cutoff}, tetapi baru tiba atau direvisi sesudahnya, belum boleh masuk ke snapshot historis tersebut. Jika model \emph{churn} memakai \emph{cutoff} 1 Agustus, fitur ``total komplain tahun ini'' tidak boleh menghitung komplain September dan Oktober ataupun komplain Juli yang baru tercatat setelah 1 Agustus. Skor validasi dapat tampak sangat baik bila eksperimen memakai informasi yang pada saat keputusan sebenarnya belum tersedia.
 
-print("--- Data Asli ---")
-print(df)
-print("\n--- Hasil Ekspansi Polinomial (Derajat 2) ---")
-print(df_poly.round(2))
-\end{lstlisting}
+\emph{As-of join} membantu menjaga batas waktu tersebut. Alih-alih mengambil sembarang baris yang cocok, \emph{as-of join} mencocokkan setiap sampel dengan catatan terakhir yang waktu berlaku atau waktu kejadiannya tidak melewati \emph{cutoff} dan sudah tersedia pada saat itu. Snapshot pelanggan pada 1 Agustus, misalnya, memakai alamat terakhir yang diketahui pada 1 Agustus, bukan alamat terbaru di database saat \emph{query} dijalankan. Pada data kesehatan, prediksi saat pasien masuk rumah sakit hanya boleh memakai hasil lab yang sudah keluar sebelum waktu prediksi, bukan hasil yang sampelnya sudah diambil tetapi baru tersedia setelahnya.
 
-Meskipun mampu meningkatkan fleksibilitas model terhadap distribusi pola asimetris matriks data mentah, metode pengalian fitur dasar ini mendatangkan risiko konsekuensi operasional utama yang berwujud pertambahan eksponensial nilai redundan (*feature explosion*). Proporsi jumlah variabel parameter bertambah dengan rasio kombinatorial yang masif menyesuaikan tingkat kompleksitas derajat polinomial beserta tingginya kardinalitas nilai fitur referensi orisinalnya.
+Gambar 6.3 membandingkan dua alur. Panel kiri menunjukkan \emph{join} naif yang membuat satu baris pelanggan menjadi banyak baris transaksi. Panel kanan menunjukkan pre-aggregation dan \emph{as-of join}. Semua event dipotong oleh \emph{index time}, diringkas ke unit pelanggan, lalu menghasilkan satu baris fitur.
 
-Fase pertumbuhan varian komputasi yang radikal menekan performa algoritma \emph{pipeline} di dalam tiga titik komplikasi operasional. Kendala fungsional komputasi awal diakibatkan meningkat drastisnya kebutuhan kapabilitas perangkat keras matriks pengolahan (*hardware bottleneck*). Umpamanya saja, rentang ruang berisikan seratus parameter *dataset* dasar, bilamana dikalkulasi dalam fungsi parameter distribusi derajat matriks berderajat dua (\(2^{\text{nd}}\) \emph{degree}), akan melipatgandakan volumenya menuju lima ribu baris varian variabel pengolahan. Menambahkan operasi hingga derajat ruang tingkat tiga berisiko mendelegasikan seratus tujuh puluh ribu matriks parameter yang mengonsumsi proporsi alokasi memori RAM dasar pada perangkat simulasi komputasi *machine learning* biasa. Poin penyulit kedua berlanjut ke isu eskalasi beban durasi pengolahan evaluasi. Skema penalaan fungsi komputasi penyesuaian prediksi nilai menuntut margin perhitungan durasi kalibrasi matriks yang sangat lama lantaran perhitungan algoritma fungsi kerugian wajib mengkalibrasi ulang sebaran ratusan ribu komponen probabilitas interaksi. 
-
-Kendala komputasi akhir yang menjadi anomali fatal algoritma adalah potensi dominasi parameter \emph{overfitting}. Saat arsitektur observasi dibanjiri nilai parameter turunan yang bervariasi tanpa batas, sistem cenderung mengingat letak posisi matriks *noise* (derau) fiktif dari variabel latih ketimbang merumuskan fungsi penarikan rasional yang berlandaskan pola generalisasi *dataset*. Akibat logisnya, model dapat melaporkan tingginya presisi kalkulasi validasi matriks internal *train set*, sedangkan persentase keberhasilan dari parameter klasifikasi penugasan observasi evaluasi di lingkungan produksi operasional (*production inference*) mengalami kegagalan metrik yang sangat drastis saat memproses variabel yang belum terekam dalam perhitungan bobot masa lalu.
-
-Dalam meredam anomali ledakan dimensi ruang observasional ini, metode komputasi perluasan derajat polinomial wajib dieksekusi secara selektif dengan tidak ditargetkan secara pukul rata terhadap seluruh titik kolom parameter \emph{feature}. Para pengembang analisis biasanya mendesain iterasi yang bertahap dengan prosedur eksekusi parsial matriks spesifik yang menampakkan pola korelasi rasio sebaran observasi non-linier ke rentang target sasarannya. Selain parameter pemilihan parsial kolom fitur, praktisi menahan proses pembentukan perluasan pangkat tersebut terbatas pada rentang derajat matematis kalkulasi yang proporsional, paling tinggi dibatasi rentang dimensi derjat tiga. Setelah fungsional generasi kalkulasi *feature* baru telah selesai dibangun, algoritma perlu ditutup dengan eksekusi teknik penyusutan atau eliminasi parameter redundan melalui metode penyeleksian kolom atau pendelegasian variabel eliminasi fungsi matematis Lasso (pemberlakuan fungsi metrik probabilitas L1 \emph{regularization}). Langkah penyeleksian di akhir memastikan matriks perluasan turunan algoritma yang nilai korelasinya di bawah rentang *baseline* model dipotong dari perhitungan bobot evaluasi \emph{machine learning}.
-
-Pendekatan selektif ini menjaga keseimbangan antara peningkatan akurasi dari pola kompleks dan stabilitas model.
-
-\section{Agregasi dan Fitur Berbasis Kelompok}\label{agregasi-dan-fitur-berbasis-kelompok}
-
-Sebagian besar data mentah hanya merekam informasi pada tingkat observasi tunggal. Model yang hanya melihat satu baris data akan kehilangan konteks situasional. Pola prediktif sering kali baru muncul ketika sebuah observasi diletakkan berdampingan dengan observasi lain di kelompok yang sama. Untuk menghadirkan konteks ini, praktisi menggunakan teknik agregasi, yaitu menghitung metrik statistik (seperti \emph{mean}, \emph{median}, varians) dari partisi kategori tertentu (misalnya ID pengguna atau wilayah geografi), lalu menyematkan nilai tersebut kembali ke setiap anggota kelompok.
-
-Dalam praktiknya, proses agregasi tidak lagi sekadar menghitung rata-rata atau jumlah absolut. Terdapat beberapa pola agregasi mutakhir yang memanfaatkan struktur kelompok, terutama ketika observasi memiliki dimensi temporal. Pola pertama adalah ekstraksi berbasis \emph{sliding window}, yaitu operasi agregasi yang dieksekusi berdasarkan jendela mundur berukuran tetap, seperti perhitungan agregat nilai transaksi dalam tujuh hari terakhir. Pola kedua mengimplementasikan \emph{expanding window} yang mengakumulasi matriks observasi secara kontinu dari titik historis pertama hingga stempel waktu (\emph{timestamp}) spesifik. Pada lingkungan produksi, rekayasawan data umumnya menyandarkan eksekusi ini pada *pipeline* transformasi tepercaya menggunakan pustaka mutakhir.
-
-Pola agregasi ketiga memperhitungkan kebaruan observasi atau \emph{recency-weighted aggregation}. Tidak seluruh log historis memiliki bobot relevansi setara. Dalam kerangka kerja ini, nilai transaksi yang lebih baru akan mendominasi perhitungan melalui peredaman eksponensial (\emph{exponential decay}):
-
-\[ w_i = e^{-\lambda \cdot \text{age}_i} \]
-
-Dalam fungsi pembobotan tersebut, konstanta \(\lambda\) mengontrol besaran peluruhan dengan mendasarkan proporsinya pada usia atau jarak waktu (\emph{age}) observasi spesifik ke titik prediksi sasaran. Perhitungan rata-rata tertimbang (\emph{weighted mean}) yang didasarkan dari turunan fungsi eksponensial ini memungkinkan model merespons perubahan pola tren perilaku pengguna secara jauh lebih tajam.
-
-Sebagai tambahan pola komputasi keempat, *pipeline* produksi sering kali menyertakan mekanisme reset berbasis sesi. Pola ini mengatur ulang akumulasi metrik menjadi nol mutlak ketika model mendeteksi periode inaktivitas yang melampaui batas ambang tertentu, demi menjamin metrik riwayat mempresentasikan siklus kontinu secara wajar.
-
-Ekstraksi fitur agregat dapat dilakukan secara masif dan otomatis. Alat khusus seperti \emph{tsfresh} mampu mengekstraksi ratusan fitur ringkasan per kelompok deret waktu (termasuk fitur entropi dan spektral) melalui antarmuka \passthrough{\lstinline!roll_time_series()!}, yang juga dilengkapi penyaring signifikansi statistik bawaan untuk memangkas \emph{noise}.
-
-Nilai tambah utama dari fitur agregasi terletak pada kemampuannya menyajikan nilai relatif. Sebagai contoh pada deteksi anomali, model yang hanya menerima ``nilai transaksi absolut'' memerlukan komputasi intensif untuk memetakan batasan wajar bagi jutaan pelanggan. Namun, dengan menggabungkan rata-rata historis per pengguna, fitur agregat mengubah nilai absolut menjadi deviasi relatif (seberapa menyimpang transaksi ini dari kebiasaan normal kelompoknya), memberikan sinyal tajam bagi algoritma untuk langsung mengenali pola penyimpangan. Kemampuan merangkum pada tingkat sub-kelompok ini menjadi fondasi penting untuk teknik lanjutan dalam agregasi relasional lintas tabel.
-
-\section{Fitur Relasional dan Log Kejadian: Penggabungan dan Kebenaran Point-in-Time}\label{fitur-relasional-dan-log-kejadian-penggabungan-dan-kebenaran-point-in-time}
-
-Data mentah jarang tersaji rapi dalam satu tabel datar. Informasi umumnya tersebar di berbagai tabel relasional. Untuk membangun baris observasi bagi model prediktif, kita harus merangkum informasi lintas sumber. Proses ini mengubah log kejadian, seperti riwayat transaksi, menjadi representasi tingkat-entitas yang siap pakai.
-
-Dalam menyusun observasi komposit, praktisi berhadapan dengan tiga tantangan struktural terkait data relasional. Tantangan paling mendasar disebut sebagai efek \emph{fan-out}. Apabila analis mengeksekusi penggabungan mentah antara tabel profil entitas dan tabel kejadian—yang berelasi satu-ke-banyak—tabel utama akan mengalami duplikasi baris entitas sebanyak riwayat kejadiannya. Duplikasi masif ini secara teknis merusak arsitektur matriks komputasi, mengingat variabel prediktor dan metrik target dievaluasi pada tingkat agregat entitas.
-
-Untuk menghindari kendala duplikasi tersebut, rekayasawan mengatasi tantangan kedua dengan melakukan agregasi kejadian secara spesifik. Berbagai rekaman kejadian historis diringkas dan diekstraksi menjadi sebuah fitur statistik representatif tunggal, seperti total pengeluaran absolut atau nilai rerata metrik. Keseluruhan proses ini wajib diintegrasikan dengan pemenuhan tantangan ketiga, yakni menjamin kebenaran \emph{point-in-time}. Setiap komputasi agregat pada batas waktu indeks observasi mutlak dilarang mengakses rentang riwayat log kejadian yang melampaui batasan stempel referensi tersebut.
-
-Dalam membangun agregasi modern, sistem tidak hanya menghitung rata-rata sederhana. Sering kali diterapkan pembobotan lebih besar pada interaksi yang baru terjadi melalui metode peluruhan eksponensial (\emph{exponential decay}).
-
-\[ \text{Nilai Agregasi} = \frac{\sum_{i=1}^{n} v_i \cdot e^{-\lambda \Delta t_i}}{\sum_{i=1}^{n} e^{-\lambda \Delta t_i}} \]
-
-Dalam formulasi tersebut, variabel \(v_i\) mewakili besaran kejadian ke-\(i\), sementara \(\Delta t_i\) merupakan umur kejadian yang dihitung dari selisih antara waktu prediksi dan waktu kejadian absolut. Parameter konstan \(\lambda\) digunakan untuk mengendalikan seberapa cepat bobot probabilitas nilai riwayat masa lalu menyusut.
-
-Risiko mendasar dari agregasi sembarangan tersebut berakibat pada kegagalan operasional *data leakage*. Semisal analisis regresi difungsikan sebagai pendeteksi parameter angka pelanggan asuransi dengan probabilitas berhenti dari aktivitas pelanggan (*churn*) untuk observasi evaluasi di tanggal indeks perhitungan bulan Agustus. Manakala algoritma diagregasikan secara buta ke titik total log seluruh set keluhan pada kalender tahun tersebut, arsitektur model menyerap distribusi riwayat komputasi laporan dari bulan kelima sampai dengan rentang bulan kalender Oktober (yang mana adalah rentang *dataset* matriks *test* evaluasi di masa prediksi depan). Arsitektur algoritma model mengkalkulasi bobot sebaran prediksi berpusat pada penarikan probabilitas *error* fungsi semu, dengan unjuk parameter *training* tinggi, tetapi kemudian prediksi klasifikasi gagal merumuskan komputasi valid operasional di lapangan produksi dikarenakan parameter distribusi matriks angka sasaran yang belum terbentuk di dimensi hari itu.
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch06-fig-3}
-\caption{Perbandingan Antara Join Standar dengan As-Of Join}
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch06-fig-3}
+\caption{Fan-out join dan \emph{as-of join} pada fitur relasional}
 \label{fig:ch06-fig-3}
 \end{figure}
 
-Teknik \emph{as-of join} mencegah kebocoran ini. \emph{As-of join} memasangkan baris ke catatan paling akhir di tabel log yang waktu kejadiannya lebih tua dari stempel waktu referensi. Mekanisme ini menarik garis potong waktu yang absolut, sehingga agregasi berhenti dengan aman tepat sebelum indeks prediksi.
+\emph{Relational feature synthesis} dapat mengotomatisasi sebagian pola ini. Alat seperti Featuretools membangun fitur dari relasi antarentitas mengikuti gagasan \emph{deep feature synthesis} (Kanter and Veeramachaneni 2015), misalnya agregasi transaksi per pelanggan atau statistik produk per kategori. Namun, otomatisasi tidak menghapus keputusan konseptual. Analis tetap harus mendefinisikan entitas, relasi, \emph{time index}, \emph{cutoff}, dan unit prediksi. Pada praktik harian dalam SQL atau pandas, \emph{point-in-time correctness} dari Bab 1 berubah menjadi aturan kerja. Setelah bentuk relasi dan waktu ketersediaannya aman, masih ada fitur yang tidak lahir dari struktur tabel, melainkan dari pengetahuan domain.
 
-Pemenuhan kebenaran \emph{point-in-time} mengubah kumpulan log mentah menjadi representasi historis yang aman dari kebocoran. Penguasaan atas teknik ini merupakan prasyarat sebelum merakit kerangka rekayasa fitur otomatis pada data relasional yang akan dibahas pada bab selanjutnya.
+\section{Fitur Berbasis Domain}\label{fitur-berbasis-domain}
 
-\section{Fitur Berbasis Domain: Menyandikan Pengetahuan Pakar}\label{fitur-berbasis-domain-menyandikan-pengetahuan-pakar}
+Ketika data sudah rapi secara bentuk dan waktu, pertanyaan berikutnya adalah makna. Sebagian fitur terbaik tidak lahir dari kombinasi mekanis, tetapi dari pengetahuan domain. Seorang ahli kredit tahu bahwa rasio pemakaian limit dapat lebih bermakna daripada nominal utang. Seorang dokter tahu bahwa kombinasi tanda vital dan hasil lab dapat membentuk skor risiko. Seorang pendidik tahu bahwa kehadiran berturut-turut, tren nilai, dan jumlah percobaan sebelum benar dapat menggambarkan proses belajar.
 
-Sinyal prediktif yang kuat sering kali bersumber dari pemahaman spesifik terhadap masalah yang diselesaikan. Fitur berbasis domain adalah terjemahan langsung dari aturan bisnis, standar klinis, atau formula industri ke dalam variabel matematis.
+Fitur domain mengodekan mekanisme, aturan bisnis, ukuran ilmiah, atau definisi institusional. Manfaatnya ada dua. Pertama, fitur semacam ini sering lebih mudah ditafsirkan oleh pemangku kepentingan. Kedua, fitur domain dapat meningkatkan \emph{sample efficiency}. Ketika data terbatas, pengetahuan yang sudah mapan dapat membantu model belajar lebih cepat daripada menunggu model menemukan pola dari nol.
 
-Representasi arsitektural yang dirancang oleh pakar manusia secara efektif membantu model dalam memetakan logika dasar tanpa sepenuhnya bergantung pada pencarian relasi *dataset* secara eksplisit. Menyuntikkan pengetahuan domain ke dalam matriks observasi setidaknya memberikan tiga keuntungan esensial. Keuntungan operasional pertama adalah akselerasi fase konvergensi pelatihan, lantaran model langsung menerima abstraksi pola prediktif yang matang sehingga menghemat kapasitas ruang komputasi. Keuntungan kedua terpusat pada minimisasi korelasi semu. Rumus turunan pakar jauh lebih presisi untuk membatasi *noise* observasional dibandingkan deteksi korelasi algoritma standar. Pada akhirnya, injeksi ini menjamin validitas keputusan akhir model agar terus beroperasi dalam spektrum aturan medis maupun hukum yang absah di dunia nyata.
+Contohnya muncul di banyak sektor. Di kesehatan, skor komposit seperti APACHE dan SOFA merangkum banyak variabel klinis menjadi ukuran keparahan atau risiko. Di keuangan, \emph{loan-to-value} (LTV), \emph{debt-service coverage ratio} (DSCR), RSI, MACD, dan Altman Z-score merupakan contoh indeks atau indikator yang membawa definisi domain. Dalam \emph{learning analytics}, \emph{time-on-task}, \emph{attempts-before-correct}, \emph{login streaks}, dan \emph{assignment completion ratio} merangkum perilaku belajar menjadi fitur yang lebih dekat ke mekanisme pendidikan.
 
-Penerapan fitur berbasis domain sangat bervariasi bergantung pada sektor industri yang ditangani.
+Pola di balik contoh-contoh tersebut sama. Pakar mengompresi beberapa pengukuran mentah menjadi satu variabel yang menjelaskan mekanisme dan tidak berhenti pada korelasi. Karena itu, fitur domain perlu dirancang dan ditinjau bersama orang yang memahami konteksnya. Formula yang sah di satu institusi belum tentu cocok di institusi lain.
 
-\textbf{Kesehatan dan Medis}
-Dalam prediksi risiko kesehatan, praktisi medis mengevaluasi proporsi tubuh menggunakan Indeks Massa Tubuh (BMI):
+Risikonya juga nyata. Aturan domain dapat usang. Fitur dapat menyimpan bias operasional lama. Sebuah rasio atau skor dapat menjadi proksi untuk kelompok sensitif, wilayah tertentu, atau akses layanan yang tidak merata. Fitur domain tetap fitur model yang memerlukan validasi, audit kewajaran, dan pemeriksaan apakah definisinya sesuai dengan tujuan prediksi saat ini.
 
-\[ \text{BMI} = \frac{w}{h^2} \]
+\section{Fitur Tanggal, Waktu, dan Siklus}\label{fitur-tanggal-waktu-dan-siklus}
 
-Dalam perumusan metrik ini, variabel \(w\) merepresentasikan ukuran berat badan dalam kilogram, dan komponen pembagi \(h\) mewakili tinggi badan dalam unit meter. Menyediakan perhitungan BMI secara eksplisit ke dalam *dataset* memastikan model terbebas dari beban komputasi untuk menangkap interaksi non-linear antara kedua variabel tersebut. Pada skala perawatan intensif, rekayasa fitur dari instrumen domain berwujud skor evaluasi komposit, seperti instrumen APACHE (\emph{Acute Physiology And Chronic Health Evaluation}) atau matriks pemantauan SOFA (\emph{Sequential Organ Failure Assessment}). Protokol ini bekerja secara efisien dalam meringkas belasan variabel pengukuran klinis ke dalam satu nilai numerik proksi tunggal untuk memperkirakan status risiko mortalitas.
+Waktu hampir selalu muncul dalam data aplikasi. Satu \emph{timestamp} dapat diturunkan menjadi jam, hari dalam minggu, bulan, kuartal, tahun, musim, masa libur, semester sekolah, \emph{business hours}, usia akun, \emph{days since last event}, atau \emph{days until deadline}. Tidak semua turunan waktu perlu dipakai. Pilihannya harus mengikuti domain dan waktu prediksi.
 
-\textbf{Finansial dan Perbankan}
-Analis kredit tidak mengevaluasi pinjaman hanya dengan melihat total pendapatan mentah. Mereka menggunakan formula penilaian risiko yang telah mapan.
+Fitur kalender umumnya jatuh ke tiga kelompok. Pertama, unit absolut seperti \emph{hour}, \emph{day-of-week}, \emph{month}, dan \emph{quarter}. Kedua, penanda konteks biner seperti \emph{weekend}, \emph{holiday}, \emph{business hours}, atau masa ujian. Ketiga, jarak temporal seperti lama sejak transaksi terakhir, lama sejak login terakhir, atau sisa hari menuju tenggat.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch06-fig-4}
-\caption{Alur Transformasi Variabel Neraca Menjadi Fitur Risiko Komposit Altman Z-Score}
+Sebagian variabel waktu bersifat siklik. Pukul 23 dekat dengan pukul 0, Desember dekat dengan Januari, dan Minggu dekat dengan Senin dalam banyak pola aktivitas. Jika jam diperlakukan sebagai angka lurus 0 sampai 23, model berbasis jarak atau linear menempatkan pukul 0 dan 23 di dua ujung yang jauh, padahal secara waktu hanya berjarak satu jam. Geometri fiturnya memberi jarak palsu.
+
+Encoding sin/cos menempatkan nilai siklik pada lingkaran.
+
+\[
+x_{\sin} = \sin\!\left(\dfrac{2\pi x}{P}\right), \qquad x_{\cos} = \cos\!\left(\dfrac{2\pi x}{P}\right)
+\]
+
+dengan \(x\) sebagai nilai dalam siklus, dan \(P\) sebagai periode. Nilainya 24 untuk jam, 12 untuk bulan, atau 7 untuk hari dalam minggu. Periode harus mengikuti siklus, bukan nilai maksimum yang kebetulan muncul di data. Untuk jam, pembaginya 24, bukan 23, karena setelah pukul 23 siklus kembali ke 0.
+
+Gambar 6.4 memperlihatkan perbedaannya. Pada garis lurus, 0 dan 23 tampak berjauhan. Pada lingkaran sin/cos, keduanya bersebelahan, sesuai makna waktu.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch06-fig-4}
+\caption{Encoding siklik untuk jam dalam sehari}
 \label{fig:ch06-fig-4}
 \end{figure}
 
-Eksekusi rekayasa representasi data dalam ranah analitik keuangan secara umum dikategorikan ke dalam tiga pemetaan rasio prediktif utama. Kategori pertama mencakup metrik agregat pemetaan risiko kredit semacam indikator perbandingan *Loan-to-value* (LTV) maupun instrumen *debt-service coverage ratio* (DSCR) untuk mengevaluasi batasan toleransi kapasitas bayar bulanan secara proporsional. Kategori pembentukan kedua menyasar domain sekuritas perdagangan bursa untuk menghitung turunan pergerakan instrumen, seperti agregasi probabilitas batas momentum *Relative Strength Index* (RSI) maupun *Moving Average Convergence Divergence* (MACD) yang dikalkulasi dari variabel log nilai OHLCV historis bursa saham. Di luar kedua rasio teknikal tersebut, praktisi menggunakan kategori agregasi struktural seperti formulasi indeks prediktif *Altman Z-score*. Indeks tersebut mengalokasikan turunan regresi komposit dari setidaknya lima elemen proporsi neraca perusahaan untuk memformulasikan indeks risiko kebangkrutan masa depan dari entitas bisnis.
+Transformasi siklik dapat membuang kolom linear asli atau mempertahankannya. Implementasi seperti \passthrough{\lstinline!CyclicalFeatures!} secara bawaan dapat membagi dengan nilai maksimum yang muncul di data, bukan periode siklus. Untuk jam 0-23, pembagi bawaannya dapat menjadi 23, bukan 24. Pengguna perlu memberi periode yang benar secara eksplisit melalui parameter seperti \passthrough{\lstinline!max_values!}. Menyimpan jam asli kadang membantu jika ada tren hampir linear sepanjang hari, tetapi pilihan itu dapat mengembalikan masalah jarak palsu. Membuangnya membuat representasi murni siklik. Pilihan ini perlu divalidasi, terutama jika model yang dipakai sensitif terhadap geometri fitur.
 
-\textbf{Analitik Edukasi (\emph{Learning Analytics})}
-Pada sistem pembelajaran digital, log aktivitas mahasiswa diubah menjadi metrik yang mencerminkan pola belajar. Fitur turunan ini mencakup total waktu pengerjaan modul (\emph{time-on-task}), jumlah percobaan sebelum memberikan jawaban benar, hingga jeda waktu antar-sesi. Kompilasi fitur ini menghasilkan metrik keterlibatan yang jauh lebih representatif dibandingkan sekadar menghitung frekuensi \emph{login}.
+\section{\texorpdfstring{Risiko \emph{Feature Explosion}}{Risiko Feature Explosion}}\label{risiko-feature-explosion}
 
-\section{Fitur Waktu dan Siklik}\label{fitur-waktu-dan-siklik}
+Setiap keluarga fitur pada Tabel 6.1 berguna karena menyatakan struktur tertentu. Kebebasan yang sama dapat berubah menjadi produksi kolom tanpa kendali. Rasio untuk semua pasangan kolom, interaksi polinomial, serta agregat 7, 14, 30, 60, 90, 180, dan 365 hari untuk setiap pelanggan, produk, wilayah, dan kanal dapat menghasilkan puluhan ribu kolom dalam waktu singkat.
 
-Data stempel waktu (\emph{timestamp}) mentah biasanya direkam sebagai deretan angka yang terus membesar, seperti nilai detik UNIX. Jika data ini dimasukkan langsung, model hanya melihat garis lurus yang naik. Format ini gagal menangkap pola perilaku berulang yang terikat dengan ritme aktivitas manusia. Agar dapat dimanfaatkan, stempel waktu tersebut perlu diurai menjadi komponen-komponen diskrit.
+Risiko pertama adalah \emph{noise domination}. Sebagian besar fitur otomatis mungkin tidak membawa sinyal, tetapi tetap memberi model kesempatan menemukan pola kebetulan. Risiko kedua adalah \emph{curse of dimensionality}. Ketika dimensi tinggi dan sampel terbatas, titik data menjadi jarang di ruang fitur. Batas keputusan lebih mudah berubah menjadi hafalan. Risiko ketiga adalah \emph{compute waste}. Pencarian \emph{split}, \emph{tuning}, penyimpanan, dan monitoring menjadi mahal untuk fitur yang tidak membantu.
 
-\textbf{Ekstraksi Komponen Kalender.}\label{ekstraksi-komponen-kalender}
+\emph{Feature explosion} juga menyulitkan manusia. Interpretasi model menjadi kabur, debugging \emph{pipeline} lebih berat, dan perubahan definisi satu kolom mentah dapat berdampak ke banyak fitur turunan. Redundansi antarfitur juga dapat menyebabkan multikolinearitas, terutama pada model linear, sehingga koefisien menjadi tidak stabil walaupun performa prediksi tampak cukup baik.
 
-Langkah pertama yang esensial dalam pengolahan nilai stempel waktu temporal adalah pemecahan nilai ke dalam atribut diskrit kalender. Melalui dekomposisi stempel tunggal, rekayasawan mampu menghasilkan turunan multidimensi dalam tiga kelompok representasi. Kelompok pertama adalah unit waktu absolut yang mengisolasi angka jam operasional kejadian spesifik, index siklus minggu, identitas bulan, hingga penempatan siklus kuartal agregat. Kelompok kedua berbentuk penanda biner untuk memberikan konteks klasifikasi perilaku manusia melalui identifikasi jadwal cuti akhir pekan maupun jam spesifik operasional industri. Pada kelompok ketiga, dekomposisi tersebut sering kali dihitung untuk mengonstruksi jarak temporal, semacam selisih kuantitas jeda hari absolut dari sebuah peristiwa referensi tertentu maupun selisih waktu toleransi menjelang batas akhir pembayaran (\emph{deadline}).
+Gambar 6.5 menunjukkan pertumbuhan jumlah fitur. Kurva polinomial derajat 2, derajat 3, dan rasio pasangan naik cepat ketika jumlah fitur \emph{input} bertambah. Titik ketika jumlah fitur melebihi jumlah observasi perlu diberi perhatian khusus. Kondisi itu tidak selalu salah, tetapi risiko \emph{overfitting} dan biaya evaluasi meningkat tajam.
 
-Pustaka modern seperti \passthrough{\lstinline!Feature-engine!} (melalui modul \passthrough{\lstinline!DatetimeFeatures!}) mampu mengekstrak komponen-komponen ini secara otomatis di dalam \emph{pipeline}. Pembentukan atribut kalender membantu model memetakan rutinitas harian atau mingguan yang memengaruhi data secara langsung, seperti lonjakan kemacetan pada hari kerja atau tren ritel pada akhir pekan.
-
-\textbf{Masalah Jarak pada Waktu Linier.}\label{masalah-jarak-pada-waktu-linier}
-
-Pemisahan absolut terhadap dekomposisi komponen kalender memunculkan tantangan komputasi baru yang bersumber dari struktur matematis evaluasi jarak kedekatan. Realitas dimensi waktu sejatinya selalu beroperasi dalam siklus berputar, di mana bulan Desember (12) saling terikat langsung secara rotasional terhadap awal siklus Januari (1). Demikian pula skala observasi log pukul 23.00 memiliki proksimitas persis satu jam jarak kedekatan absolut terhadap pukul 00.00 dini hari.
-
-Jika waktu direpresentasikan secara naif sebagai vektor linear skalar berurutan dari angka 0 hingga 23, model non-parametrik yang secara khusus berbasis jarak geometris ruang Euclidean (misalnya metrik evaluasi instrumen algoritma K-NN maupun estimasi bobot gradien regresi) akan keliru menyimpulkan bahwa observasi pukul 0 dan 23 berlokasi pada ujung ekstrem yang saling berseberangan tanpa koneksi siklus sama sekali. Distorsi interpretasi ini secara masif akan mendisorientasi seluruh kapabilitas identifikasi pola algoritma saat mendeteksi rutinitas transisi batas harian.
-
-\textbf{Transformasi Siklik dengan Trigonometri.}\label{transformasi-siklik-dengan-trigonometri}
-
-Untuk mempertahankan bentuk asli waktu, representasi linear dikonversi melalui \emph{encoding} siklik. Sumbu waktu dibengkokkan menjadi lingkaran menggunakan fungsi trigonometri, sehingga satu variabel waktu diproyeksikan menjadi dua komponen terpisah:
-
-\[ x_{\text{sin}} = \sin\left(\frac{2\pi \cdot x}{\max(x)}\right) \]
-
-\[ x_{\text{cos}} = \cos\left(\frac{2\pi \cdot x}{\max(x)}\right) \]
-
-Dalam perumusan trigonometri tersebut, variabel \(x\) mewakili nilai skalar waktu linear yang terobservasi secara asli pada *dataset* (sebagai contoh, pengamatan kejadian log pukul 23). Sedangkan notasi fungsi \(\max(x)\) merepresentasikan ekuivalensi representasi batas rentang atas dari rotasi maksimum siklus temporal tersebut (misalnya penetapan batas numerik 24 untuk memetakan proksimitas skala siklus harian, atau penyematan batas konstanta 12 untuk merotasi siklus kalender bulanan).
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch06-fig-5}
-\caption{Transformasi Siklik yang Memetakan Nilai Jam dari 0-23 ke dalam Lingkaran 2D (Sin, Cos)}
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch06-fig-5}
+\caption{Pertumbuhan jumlah fitur turunan}
 \label{fig:ch06-fig-5}
 \end{figure}
 
-Gambar 6.6 mengilustrasikan bagaimana \emph{encoding} siklik memetakan waktu ke ruang dua dimensi. Nilai jam kini direpresentasikan sebagai pasangan koordinat \((x_{\text{sin}}, x_{\text{cos}})\). Transformasi ini menjamin bahwa jarak antara titik akhir siklus dan titik awal berikutnya tetap berdekatan. Dalam praktiknya, konversi matematis ini sering kali difasilitasi oleh transformer seperti \passthrough{\lstinline!CyclicalFeatures!} (yang dapat menghapus kolom linear asalnya), memastikan ruang vektor fitur beroperasi dengan benar baik pada fase pelatihan maupun inferensi.
+Kendali paling baik adalah generasi berbasis hipotesis. Buat fitur karena ada alasan domain atau mekanisme, bukan karena semua kombinasi bisa dibuat. Setelah itu, gunakan regularisasi, seleksi fitur, \emph{ablation}, atau validasi lintas waktu untuk memeriksa manfaatnya. Bab 7 melanjutkan persoalan ini dengan metode seleksi fitur yang lebih sistematis.
 
-\section{Risiko Ledakan Fitur}\label{risiko-ledakan-fitur}
+\begin{pendalaman}{Mendeteksi redundansi dengan VIF}
+\emph{Variance inflation factor} untuk fitur \(i\) dapat ditulis \(\text{VIF}_i = \dfrac{1}{1 - R_i^2}\), dengan \(R_i^2\) diperoleh dari regresi fitur \(i\) terhadap semua fitur lain. VIF tinggi berarti fitur tersebut sebagian besar dapat direkonstruksi dari fitur lain. Secara konvensional, rentang 5 sampai 10 sering dipakai sebagai sinyal pemeriksaan lebih lanjut, bukan hukum mutlak. Diagnostik ini berguna untuk himpunan fitur turunan yang masuk ke model linear atau parametrik. \emph{Tree ensemble} lebih toleran terhadap redundansi, tetapi tetap membayar biaya komputasi dan interpretabilitas.
+\end{pendalaman}
 
-Rekayasa fitur sering dipahami secara keliru sebagai proses memperbanyak kolom data tanpa batas. Perangkat lunak saat ini sangat memudahkan proses penciptaan ribuan turunan melalui operasi matematis otomatis, seperti polinomial, interaksi antarvariabel, dan agregasi grup. Namun, ekspansi variabel yang dibiarkan tanpa kendali justru merusak struktur \emph{dataset}. Fenomena ini dikenal sebagai ledakan fitur (\emph{feature explosion}).
+\section{Memvalidasi Apakah Fitur Baru Membantu}\label{memvalidasi-apakah-fitur-baru-membantu}
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch06-fig-6}
-\caption{Diagram Evaluasi Akurasi Model Baseline Melawan Model Berfitur Turunan pada CV}
-\label{fig:ch06-fig-6}
-\end{figure}
+Fitur turunan adalah hipotesis, dan hipotesis perlu diuji. Fitur baru berguna jika mampu memperbaiki tujuan model di bawah evaluasi yang sah, atau memperbaiki interpretabilitas, biaya, stabilitas, atau ketahanan tanpa merusak performa. \emph{Train error} tidak cukup. Menambah dimensi hampir selalu memudahkan model menurunkan error pelatihan, bahkan ketika fitur tersebut hanya \emph{noise}.
 
-Mengekspansi ruang dimensi arsitektur data prediktif secara kombinatorial tanpa ditopang oleh kerangka teoritis empiris akan mendatangkan tiga kendala komputasi kritikal. Kendala operasional pertama adalah dominasi derau atau \emph{noise}. Sebagai ilustrasi eskalasi kuantitatif, kalkulasi untuk membentuk rasio absolut dari dasar 100 fitur observasi awal akan menghasilkan beban komputasi sebanyak 10.000 kolom *dataset* baru. Mayoritas kolom tambahan ini bersifat redundan sekaligus membiaskan pencarian algoritma tanpa kontribusi sinyal optimisasi. 
+Cara dasarnya adalah membandingkan \emph{baseline feature set} dengan dan tanpa fitur baru, atau dengan dan tanpa satu keluarga fitur. Misalnya, model dilatih dengan fitur dasar saja, lalu agregat 30 hari terakhir ditambahkan. Jika skor validasi meningkat secara konsisten di beberapa \emph{fold} atau periode waktu, fitur tersebut mempunyai bukti awal. Jika skor hanya naik pada satu \emph{split}, hasilnya perlu dicurigai.
 
-Kendala sistematis kedua adalah efek kerusakan akibat *curse of dimensionality* (kutukan dimensi). Penambahan sumbu vektor numerik memicu jarak titik-titik sampel observasi saling menjauh dan distribusi datanya menjadi terlampau renggang. Kondisi ini mengacaukan pemetaan garis demarkasi keputusan. Akibatnya, model menunjukkan indikasi *overfitting* yang ekstrem karena arsitektur jaringannya menghafalkan nilai spesifik dari data *training*.
+Evaluasi juga harus mempertimbangkan ketersediaan dan biaya. Fitur yang tampak membantu tetapi belum tersedia pada waktu prediksi tidak boleh dipakai. Fitur yang mahal dihitung mungkin tidak cocok untuk sistem \emph{real-time}. Fitur yang tidak stabil karena definisi bisnis sering berubah dapat menjadi beban pemeliharaan. Fitur yang memperbaiki skor sedikit tetapi menambah risiko proksi sensitif mungkin tidak layak dipertahankan.
 
-Kendala ketiga bermanifestasi dalam wujud inefisiensi beban iterasi \emph{hyperparameter}. Walaupun metode \emph{ensemble} pohon keputusan memiliki tingkat ketangguhan terhadap derau acak, struktur komputasi internal mereka memakan kapasitas memori secara berlebihan pada saat mengevaluasi pemisahan fitur (*split search*). Komputasi ini menurunkan efisiensi perangkat keras secara tidak proporsional dibandingkan dengan sedikitnya nilai peningkatannya.
+Validasi akhir perlu melampaui kenaikan skor semata. Kenaikan tersebut harus sah, stabil, tersedia pada waktu prediksi, wajar secara domain, dan sepadan dengan biayanya. Bab 9 membahas evaluasi kualitas fitur secara lebih sistematis.
 
-Penumpukan turunan variabel matematis juga berpotensi menciptakan multikolinearitas. Kondisi ini muncul ketika beberapa variabel prediktor saling memuat sinyal yang tumpang tindih. Redundansi observasi merusak cara kerja algoritma parametrik (seperti regresi linear) karena estimasi bobot koefisien kehilangan stabilitas.
+\begin{pendalaman}{Diagnostik kontribusi fitur melalui ablation, probe, dan atribusi}
+\emph{Group ablation} menghapus satu keluarga fitur turunan sekaligus, misalnya rasio, agregat, atau temporal, lalu mengukur penurunan skor validasi. \emph{Probe features} menambahkan kolom acak sebagai pembanding. Fitur rekayasa yang kalah penting dari probe acak sulit dibedakan dari \emph{noise}, mengikuti ide \emph{shadow features} pada Boruta. SHAP menjelaskan bagaimana model terlatih mengalokasikan prediksi kepada fitur; pada fitur yang berkorelasi, pembagian kreditnya dapat bergantung pada asumsi \emph{explainer}. Nilai SHAP bukan bukti bahwa fitur memberi nilai prediktif tambahan. Untuk menguji nilai tambahan tersebut, gunakan \emph{group ablation} atau uji permutasi pada prediksi \emph{out-of-fold}. Semua ini adalah alat diagnosis dan penyaringan, bukan keputusan akhir.
+\end{pendalaman}
 
-Kita dapat mendeteksi tingkat keparahan multikolinearitas menggunakan \emph{Variance Inflation Factor} (VIF).
+\begin{sintesis}
 
-\[ VIF_i = \frac{1}{1 - R_i^2} \]
+Fitur turunan adalah hipotesis tentang struktur data. Rasio, selisih, interaksi, agregat riwayat, fitur waktu, dan fitur domain masing-masing menyatakan jenis struktur yang berbeda. Tabel 6.1 dapat dipakai sebagai peta awal saat fitur baru dipertimbangkan. Namun, setiap fitur baru membawa asumsi. Satuan harus sepadan, penyebut harus aman, \emph{cutoff} harus dihormati, periode siklik harus benar, dan definisi domain harus masih relevan.
 
-Dalam persamaan toleransi VIF di atas, komponen \(R_i^2\) merupakan kalkulasi proporsi koefisien determinasi yang diperoleh saat fitur spesifik \(x_i\) diposisikan sebagai variabel dependen dan diregresikan terhadap kompilasi fitur sisa lainnya di dalam matriks observasi *dataset*. Nilai agregasi komputasi VIF yang melampaui angka konsensus 5 atau 10, membuktikan secara kuantitatif bahwa atribut tersebut mengalami korelasi tumpang tindih terlampau kuat dengan prediktor setara yang mendampinginya, sehingga mewajibkan praktisi untuk mengeksekusi eliminasi *feature selection*.
+Agregasi dan \emph{join} relasional menuntut \emph{point-in-time correctness}. Fitur yang memakai masa depan melanggar batas evaluasi dan menjadi \emph{leakage}. Fitur polinomial dan ekstraksi otomatis dapat memperkaya representasi, tetapi juga memicu \emph{feature explosion}. Pembentukan fitur perlu selalu diikuti alasan yang jelas dan evaluasi yang sah.
 
-Kita harus mengombinasikan pembuatan turunan matematis dengan pemangkasan sistematis untuk memitigasi risiko ledakan fitur. Praktik rekayasa observasi modern tidak sekadar mengakumulasi fitur matematis secara leluasa, melainkan mewajibkan implementasi pemangkasan yang terstruktur. Pengendalian lonjakan ruang dimensi tersebut diakomodasi melalui tiga prosedur operasional. Prosedur kurasi tahap awal dilakukan dengan menjalankan inspeksi korelasi multikolinearitas pra-komputasi melalui instrumen VIF di atas untuk memilah prediktor silang yang saling merusak performa. Alternatif kurasi kedua memanfaatkan regulasi pemodelan parametrik penalti fungsi L1 (Lasso) dengan menginstruksikan modul konvergensi linear pelatih agar menetapkan estimasi koefisien bobot parameter menuju nilai absolut nol (\emph{sparsity}) bilamana algoritma mendeteksi ketiadaan signifikansi observasi. Terakhir, guna mengamankan tahapan pembersihan fitur yang proaktif, praktisi merutinkan operasi evaluasi probabilitas varians (*ANOVA*) untuk memverifikasi apakah relasi observasi variabel secara tunggal telah melampaui rasio keandalan teoretis (*threshold*) mendasar, sehingga secara empiris terbukti layak diikutsertakan sebagai masukan komputasi pembentukan perluasan matriks polinomial berikutnya.
+Prinsip kerjanya sederhana. Buat fitur karena ada alasan, pasang transformasinya secara \emph{reproducible}, dan uji kontribusinya dengan evaluasi yang sah. Bab berikutnya melanjutkan pekerjaan ini dari sisi sebaliknya, yaitu memilih fitur mana yang benar-benar layak dipertahankan.
 
-Penciptaan atribut matematis yang baru mutlak memerlukan pijakan teori yang kuat. Kita mendefinisikan representasi baru semata-mata untuk memandu model mengenali pola faktual. Argumen komputasi dan praktik pembuktian empiris ini menjadi landasan saat mendalami metodologi seleksi fitur di Bab 7 dan mekanisme evaluasi model di Bab 9.
+\end{sintesis}
 
-\section{Memvalidasi Manfaat Fitur Turunan Baru}\label{memvalidasi-manfaat-fitur-turunan-baru}
+\begin{bacaan}
 
-Pembentukan fitur turunan selalu berawal dari hipotesis empiris. Saat kita menggabungkan beberapa atribut, kita berasumsi interaksi tersebut akan memperjelas pola spesifik di dalam data. Fitur turunan yang secara logika masuk akal bagi pemahaman manusia belum tentu memberi utilitas prediktif tambahan bagi model. Beberapa jenis algoritma sudah dapat mengekstrak informasi yang sama langsung dari kumpulan data mentahnya.
+\begin{itemize}
+\tightlist
+\item
+  Feature-engine --- Feature creation --- \url{https://feature-engine.trainindata.com/en/latest/api_doc/creation/index.html}. MathFeatures, RelativeFeatures, dan CyclicalFeatures.
+\item
+  scikit-learn --- PolynomialFeatures --- \url{https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html}. Fitur polinomial dan interaksi.
+\item
+  pandas --- merge\_asof --- \url{https://pandas.pydata.org/docs/reference/api/pandas.merge_asof.html}. As-of join yang menghormati batas waktu.
+\item
+  Featuretools --- \url{https://featuretools.alteryx.com/}. Deep Feature Synthesis otomatis dari data relasional.
+\item
+  tsfresh --- \url{https://tsfresh.readthedocs.io/}. Ekstraksi fitur deret waktu skala besar.
+\item
+  statsmodels --- Variance Inflation Factor --- \url{https://www.statsmodels.org/stable/generated/statsmodels.stats.outliers_influence.variance_inflation_factor.html}. Mendeteksi multikolinearitas antar fitur.
+\item
+  Kursa \& Rudnicki (2010), Boruta (JStatSoft) --- \url{https://doi.org/10.18637/jss.v036.i11}. Seleksi fitur all-relevant.
+\end{itemize}
 
-Mempertahankan atribut yang redundan memperlebar dimensi data secara sia-sia. Matriks fitur yang membengkak berisiko mengumpulkan \emph{noise}, membebani memori komputasi, dan memicu kondisi \emph{overfitting}. Algoritma menggunakan kapasitasnya untuk menghafal kombinasi nilai spesifik pada data latih, lalu gagal menggeneralisasi polanya saat memproses observasi baru.
+\end{bacaan}
 
-\textbf{Perbandingan terhadap Baseline.}\label{perbandingan-terhadap-baseline}
+\rujukanheading
 
-Validasi kelayakan atribut turunan membutuhkan model \emph{baseline}. Model referensi ini dilatih hanya menggunakan fitur mentah awal. Kualitas fitur baru tidak dapat dinilai memakai nilai galat latih. Menambahkan dimensi ke dalam matriks data hampir selalu mengurangi galat latih dan menciptakan ilusi akurasi yang menyesatkan.
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-kanter2015dfs}
+Kanter, James Max, and Kalyan Veeramachaneni. 2015. {``Deep Feature Synthesis: Towards Automating Data Science Endeavors.''} \emph{IEEE International Conference on Data Science and Advanced Analytics (DSAA)}. \url{https://doi.org/10.1109/DSAA.2015.7344858}.
 
-Setiap pengujian atribut wajib didasarkan pada skema \emph{cross-validation} guna mengukur performa di atas set data terisolasi.
+\bibitem[\citeproctext]{ref-zheng2018feature}
+Zheng, Alice, and Amanda Casari. 2018. \emph{Feature Engineering for Machine Learning: Principles and Techniques for Data Scientists}. O'Reilly Media.
 
-\[ CV_{\text{score}} = \frac{1}{K} \sum_{k=1}^{K} \text{Metrik}(y_{\text{val}}^{(k)}, \hat{y}_{\text{val}}^{(k)}) \]
-
-Dalam persamaan skor validasi lintas skema tersebut, komponen \(K\) merepresentasikan variabel alokasi pembagian segmen kelompok observasi (*fold*). Vektor probabilitas atau sasaran asli di tiap observasi ditunjukkan oleh variabel \(y_{\text{val}}^{(k)}\), sementara skor aproksimasi algoritma mesin dikodifikasikan dalam representasi matematis \(\hat{y}_{\text{val}}^{(k)}\). Berdasarkan prosedur komparatif rasional, nilai evaluasi rata-rata performa model berbasis fitur turunan (\(CV_{\text{score}}\)) wajib menunjukkan lonjakan stabilitas *baseline* yang presisi di keseluruhan distribusi perulangan segmentasi k-fold observasi *cross-validation* guna menjamin ketiadaan overfit metrik semu. Jika ekspektasi parameter margin performa tersebut gagal direpresentasikan secara kuantitatif, praktisi wajib mereduksi sekaligus mengeliminasi seluruh kolom fitur perluasan tambahan tersebut tanpa kompromi.
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch06-fig-7}
-\caption{Representasi Rasio Finansial dari Agregasi Log Peristiwa}
-\label{fig:ch06-fig-7}
-\end{figure}
-
-\textbf{Metode Diagnostik Lanjutan.}\label{metode-diagnostik-lanjutan}
-
-Selain mengandalkan akurasi metrik agregat, arsitektur representasi dapat dievaluasi memakai metode diagnostik lanjutan untuk memahami kontribusi fitur secara spesifik:
-
-Dalam pengujian analitik diagnostik lanjutan, analis mengandalkan lebih dari sekadar skor akurasi kumulatif agregat untuk memperdalam pemahaman kontribusi fitur spesifik. Salah satu instrumen analitik tersebut adalah studi ablasio kelompok (*Group Ablation Study*). Pendekatan iteratif ini secara komprehensif mempartisi klaster komputasi berdasarkan karakteristik matematisnya—seperti kelompok algoritma rasio numerik maupun klaster agregasi historis—sebelum secara bergantian mengeksklusi setiap faksi elemen fitur tersebut dari proses simulasi model. Prosedur ini krusial untuk mengekstraksi informasi struktural perihal kontributor fitur mana saja yang menyuntikkan sinyal komputasi relevan.
-
-Praktik diagnostik analitik kedua mempekerjakan skema *Probe Feature Selection*, di mana analis dengan sengaja menyuntikkan tambahan kolom *noise* berdistribusi seragam ke dalam kumpulan fitur latih utama. Skenario jebakan fiktif ini memastikan apabila arsitektur algoritma *feature importance* memberikan peringkat kontribusi prediktif yang jauh lebih marjinal bagi sekumpulan fitur rekayasa ketimbang kontribusi kolom acak jebakan, representasi kolom turunan tersebut secara definitif beroperasi menyamai batas observasi acak (*random walk*) semata sehingga wajib dieliminasi secara sistematis. Evaluasi ketiga menggunakan dekomposisi komprehensif nilai SHAP untuk mengukur signifikansi probabilitas keputusan model. Apabila kehadiran atribut fitur polinomial sekadar mendelegasikan perpindahan utilitas SHAP asli tanpa berkontribusi sama sekali pada akumulasi metrik keseluruhan skor model, turunan iterasi tersebut tergolong redundan.
-
-Bab 9 membahas metode evaluasi fitur secara menyeluruh. Pada tahap awal rekayasa data, prinsip dasarnya harus ditaati: fungsi turunan memperbesar ukuran matriks komputasi, dan eksistensinya hanya valid setelah lulus pengujian empiris.
-
-\section{Studi Kasus: Fitur Turunan pada Data Transaksi, Kesehatan, dan Pendidikan}\label{studi-kasus-fitur-turunan-pada-data-transaksi-kesehatan-dan-pendidikan}
-
-Pengetahuan domain merupakan fondasi intelektual utama dalam rekayasa fitur turunan. Fitur prediktif yang andal berakar dari pemahaman logis tentang mekanisme di dunia nyata. Tiga bidang empiris berikut mengilustrasikan bagaimana wawasan industri mengarahkan transformasi dari atribut mentah menjadi representasi model yang spesifik.
-
-\textbf{1. Data Transaksi Perbankan dan E-commerce}
-Tabel data asal biasanya berwujud log peristiwa (\emph{event log}) berupa angka nominal pengeluaran dan stempel waktu tunggal. Menganalisis setiap transaksi secara terisolasi sering kali tidak efektif. Pengetahuan kebiasaan finansial mendorong rekayasawan untuk merancang fitur agregasi temporal, seperti kalkulasi rata-rata pengeluaran berbobot kebaruan (\emph{recency-weighted mean}) selama tiga puluh hari terakhir. Praktisi juga memformulasikan metrik rasio, misalnya persentase transaksi silang terhadap profil pendapatan. Otomasi tingkat lanjut dapat dicapai menggunakan pustaka seperti \emph{tsfresh} yang mampu mengekstraksi ratusan fitur runtun waktu sekaligus (statistik, spektral, entropi) dari log transaksi.
-
-\textbf{2. Rekam Medis dan Kesehatan}
-Formulir rekam medis sering kali mencatat variabel biologis secara terpisah. Pengetahuan klinis dapat diterjemahkan menjadi interaksi matematis yang bermakna bagi algoritma \emph{machine learning}:
-
-Praktik ekstraksi wawasan domain pertama sering direpresentasikan melalui sintesis komposisi parameter klinis dasar pasien. Mentransformasikan atribut metrik bobot dan kuantitas tinggi tubuh pasien ke dalam satu entitas pemusatan komposit berupa Indeks Massa Tubuh (BMI) merupakan contoh standar dalam pendekatan ini. Representasi sentral komposit ini dihitung secara eksponensial dalam bentuk matematis pembagian metrik:
-
-\[ \text{BMI} = \frac{\text{Berat Badan (kg)}}{(\text{Tinggi Badan (m)})^2} \]
-
-Turunan sentral BMI tersebut memvalidasi korelasi empiris probabilitas risiko morbiditas kardiovaskular secara jauh lebih presisi bila dibandingkan dengan model yang dipaksa menganalisis persebaran komputasi parameter tinggi maupun ukuran dimensi massa biologis tubuh pasien secara parsial. Pendekatan analitis instrumen medis kedua terpusat pada observasi pemetaan delta pergeseran kondisi klinis historis. Fitur komparatif analitis yang merepresentasikan dinamika ekskalasi pergeseran kesehatan parameter biologis melintasi dua batas titik interval waktu pengamatan terbukti menyuntikkan kontribusi prediktif yang jauh melampaui data observasi seketika. Menurunkan diferensial tekanan kardiovaskular di tahap observasi medis aktual dari rekam medis referensi temporal historis akan mengekstraksi dimensi variabel laju eskalasi medis (*progression trajectory*) yang lebih representatif ketimbang angka tekanan pembuluh nadi temporal sesaat.
-
-\textbf{3. Sistem Manajemen Pendidikan Digital}
-Sistem pendidikan menghasilkan ribuan log aktivitas masuk (\emph{login}) dan statistik ujian. Namun, teori pedagogi menetapkan bahwa keteraturan belajar mencerminkan komitmen siswa dengan lebih konsisten dibandingkan sekadar menjumlahkan frekuensi klik. Oleh karena itu, arsitek analitik mengembangkan formulasi turunan melalui sintesis keteraturan belajar dengan memetakan jumlah log harian beruntun (\emph{streak}) demi merumuskan probabilitas persistensi durasi belajar yang lebih substansial. Sementara itu pada dimensi interaksi metrik penugasan, analis menambahkan perhitungan persentase penyelesaian proporsional—berupa rasio agregat penugasan evaluasi spesifik yang rampung terhadap kumulatif target sisa kurikulum. Rekayasa fusi operasional semacam inilah yang menjadikan ekstraksi data aktivitas pendidikan jauh melampaui statistik interaksi navigasi.
-
-Melalui intervensi yang dituntun oleh wawasan teori, rekayasa fitur bertugas menerjemahkan volume catatan log yang masif menjadi sekumpulan sinyal perilaku yang terstruktur, padat, dan langsung relevan bagi algoritma pemodelan sasaran.
+\end{CSLReferences}

@@ -1,227 +1,291 @@
 % ==========================================================================
-% ch09.tex — dihasilkan otomatis dari website/chapters/ch09.qmd
-% Boleh disunting manual. 'sync' hanya menimpa bila .qmd berubah DAN .tex
-% belum disunting; kalau keduanya berubah, dilewati (pakai --force).
-% qmd-sha1: 2912ff5a945f
-% tex-sha1: 3c1dc4d4d5f2
+% ch09.tex — dihasilkan dari v2/drafts oleh tools/md2tex.py
+% Sumber: v2\drafts\ch09\ch09_draft_v2.md
+% Boleh disunting manual; menjalankan md2tex.py lagi akan menimpa.
 % ==========================================================================
-% >>>>> ISI OTOMATIS (jangan hapus baris ini) >>>>>
 \chapter{Evaluasi Kualitas Fitur}\label{evaluasi-kualitas-fitur}
 
-\section{Apa yang Membuat Sebuah Fitur Dikatakan Baik?}\label{apa-yang-membuat-sebuah-fitur-dikatakan-baik}
+Fitur yang menaikkan skor validasi belum tentu baik untuk sistem. Sebuah fitur dapat sangat prediktif tetapi tidak tersedia saat inferensi, atau murah dan stabil tetapi hanya menambah sedikit informasi. Fitur lain dapat menaikkan akurasi karena membawa proksi sensitif atau menyerap masa depan. Kualitas fitur mencakup kegunaan prediktif, ketersediaan, stabilitas, biaya, interpretabilitas, ketahanan, dan legitimasi. Pada produksi, dimensi non-prediktif sering menentukan apakah fitur bertahan.
 
-Utilitas prediktif mendominasi pengujian fitur pada fase eksperimen. Praktisi mengukur peningkatan performa model menggunakan instrumen statistik seperti \emph{ablation study} dan rentang nilai SHAP. Saat sistem beroperasi di lingkungan produksi, kualitas fitur tidak lagi ditentukan secara tunggal oleh skor akurasi pada data validasi. Evaluasi fitur memadukan batas teknis infrastruktur dan operasional yang menentukan kelayakan penerapan eksekusi algoritma.
+Bab ini membahas metode untuk menilai kualitas fitur secara menyeluruh. Baseline ditetapkan agar klaim tentang kualitas fitur memiliki konteks. Studi ablasi mengukur kontribusi fitur dengan menambah atau menghapus kelompok fitur. Importance berbasis permutasi (permutation importance) dan importance berbasis model menilai ketergantungan model pada tiap fitur. SHAP memberikan atribusi lokal untuk tiap prediksi. Bab ini menguraikan pentingnya stabilitas importance lintas pelipatan dan waktu, batas antara importance dan kausalitas, penilaian fitur sensitif dan proksinya, serta pendokumentasian keputusan fitur.
 
-Kualitas fitur dievaluasi melalui lima dimensi yang menyelaraskan utilitas prediktif dengan batasan produksi. Dimensi pertama adalah utilitas prediktif, yakni kemampuan fitur membedakan kelas target dan meminimalkan tingkat galat pada data di luar ranah pelatihan. Dimensi kedua berkaitan dengan ketersediaan saat \emph{inference}. Data mentah sumber fitur harus siap diproses ketika modul meminta komputasi. Sebagai contoh, operasi agregasi riwayat transaksi yang mengeksekusi \emph{join} selama dua detik tidak berlaku bagi sistem deteksi penipuan \emph{real-time} yang dibatasi latensi milidetik. Pemantauan waktu komputasi ini umumnya dikelola secara terpusat pada subsistem \emph{online store}. Dimensi ketiga memantau stabilitas distribusi. Karakteristik input pengguna bergerak dinamis dan sensor perangkat keras fisik senantiasa mengalami degradasi. Transformasi fitur harus meredam pergeseran pola data tersebut (\emph{data drift}) agar penurunan prediksi model dapat ditekan. Selanjutnya, dimensi keempat berfokus pada ketahanan terhadap galat. Basis data lapangan lazimnya membawa tabel dengan nilai kosong (\emph{missing values}), rentang angka ekstrem yang tidak disaring, serta ketidakkonsistenan tipe huruf. Lapisan rekayasa fitur berfungsi menangani gangguan tersebut tanpa menyebabkan galat pada aplikasi. Terakhir, dimensi kelima mengevaluasi biaya komputasi dan pemeliharaan. Modifikasi dimensi variabel membebani kapasitas memori, media simpan, dan tenggat pengerjaan sistem. Praktisi umumnya mengeksklusi fitur turunan yang menuntut komputasi mahal, dan menukarnya dengan representasi yang lebih efisien meskipun akurasi akhirnya sedikit lebih rendah.
+\section{Apa yang Membuat Fitur Baik?}\label{apa-yang-membuat-fitur-baik}
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch09-fig-1}
-\caption{Radar Kualitas Fitur di Produksi}
+Fitur yang baik tidak berhenti pada ranking importance yang tinggi. Fitur tersebut harus membantu tujuan model di bawah evaluasi yang valid, tersedia ketika dibutuhkan, stabil ketika dunia berubah, dan layak dipelihara. Kadang fitur berimportance rendah tetap berguna untuk monitoring, segmentasi, audit fairness, atau analisis kesalahan. Sebaliknya, fitur berimportance tinggi bisa tidak boleh dipakai karena terlalu mahal, tidak tersedia saat inferensi, atau tidak legitimate.
+
+Tabel 9.1 merangkum tujuh dimensi kualitas fitur. Kolom pertanyaan kunci membantu pembaca mengubah dimensi abstrak menjadi pemeriksaan praktis. Kolom kegagalan menunjukkan bahwa setiap dimensi dapat membuat fitur gagal walaupun metrik model terlihat bagus.
+
+\tabeljudul{Tabel 9.1 — Dimensi kualitas fitur}
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.160}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.460}} >{\raggedright\arraybackslash}p{(\linewidth-4\tabcolsep)*\real{0.380}}@{}}
+\toprule
+
+Dimensi
+ & 
+Pertanyaan kunci
+ & 
+Contoh kegagalan
+ \\
+\midrule
+\endhead
+
+
+
+
+Predictive utility & Apakah fitur memperbaiki metrik validasi atau kualitas keputusan? & Skor naik hanya pada train, tidak pada validasi \\
+Availability & Apakah fitur tersedia pada waktu inferensi dan sesuai \emph{cutoff}? & Agregat lambat dua detik untuk model fraud milidetik \\
+Stability & Apakah distribusi dan kontribusinya stabil lintas waktu\slash{}populasi? & Fitur berubah karena sistem pencatatan baru \\
+Cost & Berapa biaya komputasi, penyimpanan, akuisisi, dan pemeliharaan? & Fitur mahal dihitung tetapi menambah skor sangat kecil \\
+Interpretability & Apakah fitur dapat dijelaskan pada level yang dibutuhkan? & Komponen laten penting tetapi tidak dapat dijelaskan ke auditor \\
+Robustness & Apakah fitur tahan terhadap \emph{noise}, missingness, dan shift? & Sensor kecil error membuat skor berubah besar \\
+Legitimacy & Apakah fitur sesuai dengan privasi, fairness, consent, dan kebijakan? & Postcode menjadi proxy kuat untuk status sosial-ekonomi \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+Gambar 9.1 memperlihatkan tesis bab ini dalam bentuk radar. Sebuah fitur dapat sangat tinggi pada \emph{predictive utility}, tetapi rendah pada \emph{availability} dan \emph{legitimacy}. Fitur seperti itu memerlukan keputusan sadar tentang alternatif, cara mengurangi risiko, dan batas penggunaannya.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch09-fig-1}
+\caption{Radar kualitas fitur}
 \label{fig:ch09-fig-1}
 \end{figure}
 
-Pergeseran stabilitas fitur (dimensi ketiga) dapat dipantau lebih awal tanpa menunggu hasil rilis konfirmasi data (\emph{ground truth}). Metrik distribusi kuantitatif yang paling sering digunakan untuk mengukur deviasi pada variabel numerik maupun variabel kategorikal dinamakan \emph{Population Stability Index} (PSI):
+Kerangka tujuh dimensi ini membuat evaluasi fitur lebih jernih. Pada penelitian awal, pemeriksaan dapat berfokus pada tambahan informasi yang dibawa fitur. Pada sistem yang akan dipakai orang lain, fitur juga harus dapat dihitung tepat waktu, dijelaskan, dimonitor, dan dipertanggungjawabkan. Evaluasi perlu dimulai dari pembanding yang jelas agar pertimbangan tersebut tidak berhenti sebagai daftar kekhawatiran.
 
-\[ \text{PSI} = \sum_{i=1}^{k} (A_i - E_i) \ln \left( \frac{A_i}{E_i} \right) \]
+\begin{pendalaman}{Memantau stabilitas dengan Population Stability Index}
+Drift distribusi fitur dapat dipantau sebelum label produksi tersedia memakai PSI, dengan rumus \(\text{PSI} = \sum_{i=1}^{k} (A_i - E_i) \ln\!\dfrac{A_i}{E_i}\). Dalam hal ini, \(A_i\) adalah proporsi bin produksi dan \(E_i\) adalah proporsi bin pada data training. Dalam praktik, bin dengan \(E_i\) atau \(A_i\) nol perlu ditangani dengan penggabungan bin, \emph{smoothing} kecil, atau konvensi khusus yang dipilih secara konsisten. Secara konvensional, nilai di bawah 0,1 sering dibaca stabil, nilai antara 0,1 dan 0,25 sebagai pergeseran moderat yang perlu pemantauan lebih lanjut, sedangkan nilai di atas 0,25 menandai pergeseran besar yang perlu investigasi atau retraining. PSI adalah konvensi monitoring, bukan uji statistik formal. Ambangnya merupakan folklore yang berguna bila dipakai konsisten.
+\end{pendalaman}
 
-Dalam perumusan tersebut, nilai \(A_i\) merepresentasikan proporsi populasi pada interval diskret (\emph{bin}) \(i\) ketika model beroperasi pada data produksi, sedangkan parameter \(E_i\) adalah proporsi data referensi untuk interval yang sama saat masa pelatihan model. Notasi \(k\) menunjukkan total batas pemecahan rentang observasi. Indeks PSI yang bertahan di bawah skor 0,1 mengindikasikan sebaran fitur berstatus stabil. Sebaliknya, indeks yang melewati batas 0,25 menandakan pergeseran distribusi yang signifikan. Metrik pergeseran fitur ini bertindak sebagai mekanisme peringatan agar model dievaluasi ulang (\emph{retraining}) guna mencegah kegagalan sistem prediksi yang tidak disadari (\emph{silent failure}).
+\section{\texorpdfstring{Menetapkan \emph{Baseline}}{Menetapkan Baseline}}\label{menetapkan-baseline}
 
-\section{Menetapkan Baseline}\label{menetapkan-baseline}
+Kualitas fitur selalu membutuhkan pembanding. Tanpa \emph{baseline}, kalimat ``model ini bagus'' tidak memiliki konteks, dan kalimat ``fitur ini penting'' mudah terdengar lebih kuat daripada buktinya. \emph{Baseline} adalah sistem rujukan yang digunakan untuk menilai apakah fitur baru benar-benar memberi manfaat. \emph{Baseline} dapat berupa prediksi kelas mayoritas, model kecil yang mudah dijelaskan, \emph{feature set} produksi sebelumnya, atau kelompok fitur minimal yang sudah disepakati.
 
-Evaluasi kualitas fitur selalu membutuhkan titik acuan. Dalam rekayasa fitur, \emph{baseline} berfungsi sebagai batas bawah kinerja sebelum sebuah \emph{pipeline} menerima berbagai transformasi yang kompleks. Tanpa \emph{baseline}, metrik evaluasi akhir yang tinggi dapat menyesatkan; praktisi mudah menganggap bahwa penambahan fitur rumit adalah kunci tingginya akurasi, padahal model sederhana dengan data mentah bisa memberikan hasil yang serupa.
+Lantai paling sederhana adalah dummy estimator yang mengabaikan fitur sama sekali. Pada regresi, \emph{baseline} dummy dapat memprediksi rata-rata target training untuk semua sampel.
 
-Tujuan utama menetapkan \emph{baseline} adalah mendapatkan metrik objektif untuk menguji apakah tahapan rekayasa fitur meningkatkan daya prediktif model. Proses ini diawali dengan menggunakan algoritma sederhana untuk menghindari pencarian konfigurasi \emph{hyperparameter} atau arsitektur model yang kompleks pada tahap awal. Pengujian juga dibatasi hanya pada representasi dasar, yakni menggunakan variabel numerik asli dan variabel kategorikal yang telah melalui tahapan \emph{encoding} standar seperti \emph{one-hot encoding}. Sebagai batas paling bawah, praktisi dapat menerapkan alat bawaan seperti \passthrough{\lstinline!DummyClassifier!} atau \passthrough{\lstinline!DummyRegressor!} dari pustaka scikit-learn. Alat tersebut merekam kekuatan prediktif murni berdasarkan sebaran kelas target tanpa mempelajari pola dari input fitur sama sekali.
+\[
+\hat{y}_i = \dfrac{1}{n}\sum_{j=1}^{n} y_j
+\]
 
-Sebagai contoh, pada kasus regresi, sebuah \emph{dummy estimator} dapat menggunakan rata-rata target latih sebagai nilai prediksi statis untuk seluruh data. Formulasinya adalah:
+Dalam rumus tersebut, \(\hat{y}_i\) adalah prediksi untuk sampel ke-\(i\), sedangkan \(y_j\) adalah target training. Untuk klasifikasi, strategi kelas mayoritas atau prevalensi kelas memberi pembanding deterministik yang mengabaikan fitur. Strategi \passthrough{\lstinline!stratified!} dan \passthrough{\lstinline!uniform!} pada \emph{DummyClassifier} adalah kontrol acak, bukan prediktor konstan atau satu \emph{floor} deterministik. Regresi dapat memakai \emph{DummyRegressor} yang memprediksi rata-rata atau median target pelatihan. Setiap \emph{feature set} perlu melewati pembanding yang sesuai dengan tugas dan metriknya; kenaikan kecil dari pembanding sederhana tetap perlu ditimbang terhadap biaya sistem.
 
-\[ \hat{y}_i = \frac{1}{n} \sum_{j=1}^{n} y_j \]
+\emph{Baseline} juga bisa lebih realistis. Model churn dapat dimulai dari fitur profil pelanggan saja, lalu dibandingkan dengan versi yang menambahkan agregat riwayat transaksi. Model deret waktu dapat dibandingkan dengan \emph{baseline} last observed value sebelum memakai lag dan rolling statistics yang lebih kaya. Dalam semua kasus, \emph{baseline} dan kandidat harus memakai split, metrik, dan protokol validasi yang sama.
 
-Dalam perumusan tersebut, variabel \(\hat{y}_i\) merupakan prediksi konstan untuk observasi ke-\(i\), \(n\) adalah jumlah total sampel pelatihan, dan \(y_j\) adalah nilai kelas target aktual pada sampel ke-\(j\). Nilai galat evaluasi yang dihasilkan dari rumusan statis ini menjadi batas performa terendah yang wajib dilampaui oleh representasi fitur baru.
+Setelah kandidat mengalahkan \emph{baseline}, margin peningkatan perlu dibandingkan dengan harga operasionalnya. Fitur yang menaikkan AUC sedikit tetapi membutuhkan \emph{join} mahal, \emph{storage} besar, dan \emph{monitoring} kompleks mungkin tidak layak. Sebaliknya, fitur sederhana yang memberi kenaikan kecil tetapi stabil dan murah dapat sangat berharga. \emph{Baseline} memberi konteks numerik, sedangkan dimensi kualitas pada Tabel 9.1 memberi konteks keputusan. Langkah berikutnya adalah mencari bagian dari \emph{feature set} yang benar-benar memikul kenaikan tersebut.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch09-fig-2}
-\caption{Perbandingan Utilitas Prediktif (Korelasi) vs Hubungan Kausal}
+\section{\texorpdfstring{\emph{Ablation Study}}{Ablation Study}}\label{ablation-study}
+
+Setelah \emph{baseline} memberi lantai pembanding, ablation membantu mencari bagian mana dari \emph{feature set} yang benar-benar memikul kenaikan performa. Ablation mengukur apa yang terjadi ketika satu fitur atau satu kelompok fitur dihapus atau ditambahkan. Tujuannya bukan mencari importance abstrak, melainkan melihat kontribusi fitur dalam model dan protokol evaluasi tertentu. Jika satu kelompok fitur dihapus dan skor validasi turun besar, kelompok itu memikul informasi penting yang tidak bisa digantikan oleh kelompok lain.
+
+Secara formal, penurunan metrik akibat menghapus kelompok \(G\) dapat ditulis sebagai berikut.
+
+\[
+\Delta \mathcal{M}_{G} = \mathcal{M}(F_{\text{all}}) - \mathcal{M}(F_{\text{all}} \setminus G)
+\]
+
+Dalam rumus tersebut, \(\mathcal{M}(F_{\text{all}})\) adalah metrik validasi dengan semua fitur, sedangkan \(\mathcal{M}(F_{\text{all}} \setminus G)\) adalah metrik setelah kelompok \(G\) dihapus dan model dilatih ulang. Definisi ini mengasumsikan metrik yang lebih tinggi lebih baik, sehingga delta positif berarti kelompok \(G\) membantu. Untuk \emph{loss} yang lebih rendah lebih baik, gunakan arah sebaliknya, yaitu \(\mathcal{L}(F_{\text{all}} \setminus G)-\mathcal{L}(F_{\text{all}})\).
+
+Ablation kelompok sering lebih bermakna daripada ablation satu kolom. Jika satu fitur berkorelasi kuat dengan fitur lain, menghapus satu kolom saja memungkinkan model memakai penggantinya. Akibatnya, kolom tersebut tampak tidak penting. Jika seluruh kelompok semantik dihapus, misalnya semua agregat riwayat, semua embedding teks, atau semua fitur temporal, model kehilangan semua substitusi dalam kelompok itu. Selain itu, ablation kelompok membutuhkan lebih sedikit pelatihan ulang dibanding menguji ribuan kolom satu per satu.
+
+Protokolnya sederhana. Latih model dengan \emph{feature set} penuh, hapus satu kelompok fitur, latih ulang dengan protokol yang sama, lalu ukur delta pada validasi. Ulangi untuk kelompok lain dan laporkan variasi lintas fold atau periode waktu bila tersedia. Nyatakan apakah hiperparameter dipertahankan atau disetel ulang pada setiap ablasi. Jika penyetelan ulang merupakan bagian dari prosedur, lakukan hanya di dalam data pelatihan atau \emph{inner fold} untuk setiap kandidat; jika hiperparameter dikunci untuk mengisolasi efek penghapusan fitur, laporkan keputusan itu. Jangan hanya memask kolom setelah model dilatih kecuali memang ingin menguji kerusakan pada model yang sudah ada. Untuk menilai kontribusi \emph{feature set}, model perlu dilatih ulang.
+
+Gambar 9.2 memperlihatkan alur ini. Feature set penuh dibagi menjadi kelompok, lalu metrik validasi dibandingkan saat tiap kelompok dihapus. Satu bar yang jatuh tajam menunjukkan kelompok yang load-bearing. Bar yang hampir tidak berubah menunjukkan kandidat penghematan, meskipun bukan bukti bahwa fitur tersebut tidak berguna untuk monitoring atau audit.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch09-fig-2}
+\caption{Alur ablation kelompok fitur}
 \label{fig:ch09-fig-2}
 \end{figure}
 
-Setelah \emph{baseline} tercatat, metrik tersebut menjadi acuan evaluasi komponen fitur turunan. Jika representasi baru mampu memberikan performa yang lebih tinggi, praktisi perlu mempertimbangkan apakah margin peningkatan performa tersebut sepadan dengan tambahan beban teknis operasional. Modifikasi \emph{dataset} membebani alokasi memori, terutama penyisipan matriks berdimensi tinggi atau vektor \emph{embedding} yang menuntut kapasitas penyimpanan ekstra. Penambahan alur pra-pemrosesan juga memperpanjang komputasi \emph{pipeline}, sehingga berpotensi menaikkan waktu latensi saat model merespons data \emph{inference} baru. Lebih dari itu, transformasi \emph{custom} yang spesifik menuntut upaya pemeliharaan kode yang berkelanjutan demi menjaga kompatibilitas aplikasi sistem.
+Ablation tidak membuktikan sebab-akibat dunia nyata. Ukuran ini hanya mengukur kontribusi prediktif di bawah model, fitur, data, dan evaluasi tertentu. Namun, untuk keputusan rekayasa fitur, ablation sering sangat praktis. Jika ablation menguji kontribusi kelompok dengan melatih ulang model, importance methods memberi lensa yang lebih rinci terhadap fitur atau kolom tertentu.
 
-Angka acuan dari \emph{baseline} ini menjadi prasyarat sebelum melangkah ke diagnosis lanjutan. Uji \emph{ablation} maupun metode atribusi seperti SHAP sepenuhnya bergantung pada metrik acuan tersebut untuk mengalkulasi besaran performa yang secara valid disumbangkan oleh fitur turunan.
+\section{\texorpdfstring{\emph{Permutation Importance} dan \emph{Model-Based Importance}}{Permutation Importance dan Model-Based Importance}}\label{permutation-importance-dan-model-based-importance}
 
-\section{\texorpdfstring{Studi \emph{Ablation}}{Studi Ablation}}\label{studi-ablation}
+Jika ablation memeriksa kontribusi dengan melatih ulang model tanpa sebagian fitur, permutation importance (Breiman 2001) memeriksa ketergantungan model yang sudah dilatih. Metode ini menilai seberapa banyak performa model turun ketika satu fitur dibuat tidak informatif. Prosedurnya terdiri atas empat langkah. Pertama, ukur skor model pada data validasi. Kedua, acak satu kolom fitur sehingga hubungan fitur itu dengan target rusak, sementara distribusi marginal kolom tetap sama. Ketiga, hitung ulang skor model. Keempat, selisih skor dibaca sebagai seberapa besar model bergantung pada fitur tersebut.
 
-Studi \emph{ablation} merupakan metode analitik yang dirancang untuk mengukur tingkat kontribusi setiap representasi atribut terhadap akurasi akhir. Evaluasi dijalankan dengan mencabut himpunan fitur spesifik dari tahapan komputasi model, lalu mencatat besaran penurunan skor metrik yang dihasilkan. Praktik pengujian ini lebih lazim diaplikasikan pada tingkat kelompok variabel (\emph{feature group}) alih-alih berfokus pada evaluasi setiap kolom atribut secara tunggal. Pendekatan per kelompok didasari oleh dua pertimbangan struktural. Pertama, hal ini mencegah model menemukan informasi pengganti dari variabel lain yang berkorelasi linier. Jika hanya satu fitur spesifik yang dicabut, algoritma berbasis pohon keputusan (\emph{decision tree}) mampu mengalihkan pembobotan prediksinya secara adaptif menuju fitur pendamping, memicu ilusi seolah kolom yang dihilangkan tidak memberikan kontribusi sama sekali. Dengan memangkas domain semantik informasi secara utuh, seperti seluruh agregasi riwayat tabel atau total dimensi vektor \emph{embedding}, praktisi memastikan model tidak memiliki akses memori sama sekali terhadap kluster representasi tersebut. Kedua, pemangkasan grup mengurangi waktu komputasi pelatihan ulang (\emph{retraining}), mengingat penghapusan fitur satu per satu dalam iterasi terpisah memakan memori komputasi yang sangat mahal.
+Gambar 9.3 memperlihatkan prosedurnya. Satu kolom pada tabel validasi diacak, kolom lain tetap, lalu gauge skor sebelum dan sesudah dibandingkan. Pengacakan dilakukan pada validasi, bukan train, agar importance mencerminkan kontribusi pada data yang tidak dipakai melatih model.
 
-Siklus pengujian ablasi mengikuti protokol eksperimen yang presisi:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  Melatih model menggunakan himpunan \emph{dataset} secara menyeluruh guna membangun batas metrik \emph{baseline}.
-\item
-  Menghapus satu kelompok fitur tertentu dari \emph{pipeline} pelatihan.
-\item
-  Melatih ulang model untuk menguji sisa himpunan matriks fitur.
-\item
-  Menghitung delta pengujian atau selisih jarak penurunan metrik, yang dirumuskan melalui fungsi pengurangan probabilitas evaluasi dasar terhadap model yang sudah dikurangi komponen \emph{subset} grup fiturnya.
-\end{enumerate}
-
-\[ \Delta \mathcal{M}_{G} = \mathcal{M}(F_{\text{all}}) - \mathcal{M}(F_{\text{all}} \setminus G) \]
-
-Dalam perhitungan intervensi eksperimental tersebut, notasi \(\Delta \mathcal{M}_{G}\) merepresentasikan penurunan performa metrik fungsi evaluasi (seperti besaran nilai luasan AUC atau rasio akurasi) akibat penghilangan himpunan representasi grup \(G\). Hasil komparasi terhadap matriks masukan referensi utama (\(F_{\text{all}}\)) memperlihatkan porsi utilitas mandiri kumpulan representasi yang tidak dapat dikompensasi oleh sisa fitur lainnya (\(F_{\text{all}} \setminus G\)).
-
-Sebagai ilustrasi praktis pada klasifikasi deteksi penipuan, mengeliminasi himpunan blok ``riwayat agregasi transaksi'' berpotensi menurunkan pengukuran \emph{Area Under the Curve} (AUC) model dasar hingga 5 persen. Penurunan signifikan tersebut membuktikan tingginya daya prediktif kelompok fitur bersangkutan. Sebaliknya, apabila himpunan matriks data ``demografi geografis pengguna'' dipangkas namun performa AUC tidak mengalami kemunduran, praktisi mendapatkan justifikasi kuantitatif untuk mengabaikan penggunaan fitur tersebut secara permanen. Pemangkasan ini terbukti esensial demi menekan laju komputasi operasi \emph{inference} dan meringankan komplikasi integrasi perangkat lunak pada lingkungan operasional sistem.
-
-Walaupun studi ablasi efektif sebagai saringan domain awal, teknik ini tidak didesain untuk merinci mana variabel yang paling vital \emph{di dalam} sebuah kelompok. Untuk melakukan pemeringkatan fitur tingkat mikro, pengujian ini harus diteruskan dengan \emph{permutation importance} atau atribusi SHAP.
-
-\section{\texorpdfstring{\emph{Permutation} dan \emph{Model-Based Importance}}{Permutation dan Model-Based Importance}}\label{permutation-dan-model-based-importance}
-
-Evaluasi kualitas fitur secara individual bertumpu pada dua pendekatan utama: \emph{model-based importance} dan \emph{permutation importance}. Keduanya mengukur kontribusi sebuah fitur terhadap daya prediksi algoritma, tetapi beroperasi dengan mekanisme dan parameter yang berbeda.
-
-Pendekatan \emph{model-based importance} menghitung utilitas fitur secara bersamaan dengan siklus konvergensi algoritma. Pada kelompok algoritma pohon keputusan (\emph{decision tree}), pembobotan dihitung berdasarkan seberapa dominan efektivitas pemecahan observasi data oleh sebuah atribut pemisah. Pendekatan ini efisien secara operasional karena penilaian terintegrasi langsung ke dalam eksekusi fase pelatihan, sehingga praktisi tidak membutuhkan iterasi komputasi tambahan. Meskipun begitu, pendekatan berbasis model memiliki keterbatasan keakuratan yang disebut bias kardinalitas. Algoritma pohon keputusan sangat rentan memprioritaskan fitur yang membawa ragam nilai unik ekstrem (kardinalitas tinggi). Sebagai contoh, jika matriks masukan berisi nilai indeks identitas pelanggan, algoritma cenderung mengeksploitasi nilai referensi numerik tersebut sekadar untuk menghafalkan klasifikasi parameter kelas pelatihan (\emph{overfitting}). Kolom identitas ini nantinya akan menempati peringkat pemecahan paling superior dalam grafik utilitas internal, walaupun secara riil tidak memiliki signifikansi pola generalisasi pada observasi baru.
-
-Untuk algoritma berbasis pohon, kontribusi fitur dihitung dari akumulasi penurunan \emph{impurity} (ketidakmurnian). Jika algoritma menggunakan \emph{Gini impurity}, penurunannya pada sebuah titik pemecahan (\emph{node}) diformulasikan sebagai:
-
-\[ \Delta I = I_{\text{parent}} - \left( \frac{N_{\text{left}}}{N} I_{\text{left}} + \frac{N_{\text{right}}}{N} I_{\text{right}} \right) \]
-
-Dalam perumusan fungsional di atas, nilai evaluasi \(I_{\text{parent}}\) merepresentasikan ketidakmurnian sebelum dilakukan pemecahan cabang referensi, sementara variabel \(N\) melambangkan total pengamatan observasi utuh pada \emph{node} induk. Konstanta turunan \(N_{\text{left}}\) dan \(N_{\text{right}}\) secara kuantitatif mewakili volume jumlah pembagian pada cabang partisi kiri maupun kanan, beserta nilai evaluasi ketidakmurniannya masing-masing (\(I_{\text{left}}\) dan \(I_{\text{right}}\)). Fitur pemecah yang secara konsisten mampu menekan ketidakmurnian dengan margin delta \(\Delta I\) maksimal akan otomatis terkalibrasi menjadi penerima skor kepentingan terbesar pada hierarki grafik model.
-
-Pendekatan alternatif yang lebih objektif adalah \emph{permutation importance}. Metode ini bersifat \emph{model-agnostic} (berlaku untuk semua algoritma) dan dieksekusi setelah model selesai dilatih. Evaluasi wajib dijalankan menggunakan data validasi independen untuk menghindari bias hafalan dari data latih.
-
-Prosedur komputasi \emph{permutation importance} bekerja melalui urutan tahapan berikut:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  Algoritma mengeksekusi iterasi prediksi awal pada sampel pengujian untuk mencatat nilai \emph{baseline} performa model.
-\item
-  Representasi observasi pada satu atribut diacak lintas baris, sementara struktur dimensi fitur lainnya dibiarkan stabil. Modifikasi ini ditujukan untuk memutus korelasi fungsional antara fitur yang dievaluasi dan target prediksi.
-\item
-  Model kemudian mengevaluasi akurasi ulang menggunakan \emph{dataset} yang sebagian elemen vektornya telah dimodifikasi tersebut.
-\item
-  Sebuah fitur dinyatakan memiliki peran komputasi prediktif yang kuat jika pengacakan matriks ini membuat tingkat metrik galat akhir meningkat drastis melebihi batas referensi \emph{baseline} awal. Jika rasio akurasi konstan atau bergerak sangat sedikit, fitur tersebut dapat dikategorikan sebagai representasi tanpa kekuatan prediksi yang signifikan.
-\end{enumerate}
-
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch09-fig-3}
-\caption{Alur Kebocoran Atribut Sensitif Lewat Fitur Proksi dan Embedding}
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch09-fig-3}
+\caption{Prosedur permutation importance}
 \label{fig:ch09-fig-3}
 \end{figure}
 
-Walaupun kebal terhadap \emph{overfitting} kardinalitas, \emph{permutation importance} konvensional kehilangan akurasi saat mengukur fitur yang saling berkorelasi. Ketika dua fitur mengandung informasi yang tumpang tindih (misalnya luas lahan dan luas bangunan), mengacak salah satu fitur tidak memicu penurunan performa drastis. Model masih bisa mengekstrak sinyal prediktif yang sama dari fitur pasangannya yang utuh. Akibatnya, skor kedua fitur tersebut dilaporkan jauh lebih rendah dari kontribusi aslinya. Untuk mengatasi penalti korelasi ini, varian analitis seperti \emph{Conditional Permutation Importance} (CPI) mengacak nilai fitur mengikuti distribusi kondisionalnya, sehingga struktur korelasi gabungan dalam matriks tetap terjaga.
+Permutation importance dapat dipakai pada banyak model karena metode ini memperlakukan model sebagai kotak prediksi. Kelemahannya muncul ketika fitur berkorelasi. Jika ``luas lahan'' diacak, model mungkin masih memulihkan sinyal dari ``luas bangunan'', sehingga importance keduanya tampak rendah walaupun kelompok ukuran properti penting.
+
+Model-based importance datang dari estimator itu sendiri. Pada model linear, koefisien dapat memberi petunjuk, terutama jika fitur sudah diskalakan dengan benar. Pada model pohon, impurity-based importance mengakumulasi penurunan impurity dari split yang memakai fitur tertentu. Untuk satu split, penurunan impurity dapat ditulis sebagai berikut.
+
+\[
+\Delta I = I_{\text{parent}} - \left( \dfrac{N_{\text{kiri}}}{N} I_{\text{kiri}} + \dfrac{N_{\text{kanan}}}{N} I_{\text{kanan}} \right)
+\]
+
+Dalam rumus tersebut, \(I_{\text{parent}}\) adalah impurity node sebelum split, \(I_{\text{kiri}}\) dan \(I_{\text{kanan}}\) adalah impurity node anak, sedangkan \(N_{\text{kiri}}\), \(N_{\text{kanan}}\), dan \(N\) adalah jumlah sampel. Importance fitur adalah akumulasi penurunan seperti ini pada semua split yang memakai fitur tersebut.
+
+Model-based importance cepat karena tersedia dari proses training. Namun, hasil tersebut membawa bias model. Pada pohon, fitur berkardinalitas tinggi atau fitur mirip ID dapat tampak penting karena memberi banyak peluang split dan memorisasi. Karena itu, importance dari model perlu dibandingkan dengan permutation importance, ablation, atau pemeriksaan domain.
+
+Tabel 9.2 membandingkan beberapa metode penilaian kontribusi fitur. Tabel ini tidak memilih pemenang tunggal, melainkan membantu mencocokkan alat dengan kebutuhan. \emph{Ablation} lebih tepat untuk kontribusi kelompok, \emph{permutation importance} mengukur penurunan skor saat satu kolom dirusak, sedangkan SHAP memberi penjelasan yang lebih rinci tentang perubahan pada prediksi individu.
+
+\tabeljudul{Tabel 9.2 — Perbandingan metode penilaian kontribusi fitur}
+
+{\def\LTcaptype{none} % do not increment counter
+\par\vspace{3pt}\noindent
+\begingroup\renewcommand{\arraystretch}{1.0}%
+\scriptsize\linespread{1}\selectfont
+\renewcommand{\_}{\textunderscore\hspace{0pt}}%
+\begin{xltabular}{\linewidth}{@{}>{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.160}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.302}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.244}} >{\raggedright\arraybackslash}p{(\linewidth-6\tabcolsep)*\real{0.294}}@{}}
+\toprule
+
+Metode
+ & 
+Mengukur apa
+ & 
+Kekuatan
+ & 
+Peringatan
+ \\
+\midrule
+\endhead
+
+
+
+
+Impurity\slash{}model-based importance & Kontribusi split atau sinyal internal model & Cepat, tersedia dari estimator & Bias terhadap kardinalitas dan struktur model \\
+Linear coefficients & Arah dan besar bobot model linear & Mudah dibaca jika fitur scaled & Tidak sebanding tanpa scaling, sensitif kolinearitas \\
+Permutation importance & Penurunan skor saat fitur diacak & Model-agnostic, berbasis validasi & Understate fitur berkorelasi \\
+Conditional permutation importance & Kontribusi dengan struktur korelasi dipertahankan & Lebih adil untuk fitur berkorelasi & Lebih kompleks dan tidak selalu tersedia \\
+SHAP & Kontribusi lokal dan global pada prediksi model & Diagnostik kaya, arah lokal terlihat & Menjelaskan model, bukan kausalitas \\
+Group ablation & Kontribusi kelompok fitur setelah retraining & Cocok untuk fitur berkorelasi\slash{}embedding & Mahal, hasil tergantung model dan protokol \\
+\bottomrule
+\end{xltabular}\endgroup\par\vspace{5pt}
+
+}
+
+\begin{pendalaman}{Fitur berkorelasi dan Conditional Permutation Importance}
+Marginal shuffling dapat merendahkan importance fitur berkorelasi. Jika ``luas lahan'' diacak, model dapat mengambil sinyal dari ``luas bangunan'', sehingga keduanya tampak kurang penting. Conditional permutation importance mengacak fitur dengan mempertahankan struktur yang diberikan oleh fitur-fitur berkorelasi, seolah mengambil nilai dari distribusi kondisionalnya. Metode ini menjawab pertanyaan tentang kontribusi unik suatu fitur setelah mengondisikan fitur lain; metode tersebut bukan koreksi universal untuk permutation importance biasa. Jika CPI tidak tersedia, alternatif praktisnya adalah permutation importance per kelompok atau \emph{group ablation} seperti pada Bagian 9.3.
+\end{pendalaman}
 
 \section{SHAP untuk Diagnosis Fitur}\label{shap-untuk-diagnosis-fitur}
 
-Metode \emph{permutation importance} memetakan utilitas prediktif secara global, tetapi tidak memadai ketika praktisi perlu menjelaskan mengapa model menghasilkan satu keputusan spesifik pada satu observasi data. Untuk menjawab kebutuhan diagnostik mikro ini, kerangka kerja SHAP (\emph{SHapley Additive exPlanations}) telah menjadi standar industri dalam mengevaluasi atribusi fitur.
+Metode importance pada bagian sebelumnya terutama menjawab pertanyaan global tentang fitur mana yang banyak dipakai model di data validasi. SHAP (Lundberg and Lee 2017) menambahkan lensa lokal dengan memberi nilai kontribusi fitur untuk prediksi model menggunakan intuisi Shapley value, melanjutkan garis penjelasan lokal yang sebelumnya dirintis LIME (Ribeiro et al. 2016) melalui pendekatan model pengganti yang sederhana di sekitar satu prediksi. Dalam analogi game theory, prediksi adalah payout, fitur adalah pemain, dan kontribusi sebuah fitur adalah bagian adilnya ketika fitur bergabung dengan berbagai koalisi fitur lain. Rumus kombinatorialnya tidak diperlukan pada bab ini. Sifat yang penting untuk membaca SHAP adalah aditivitas.
 
-Secara matematis, SHAP mengadopsi aksioma dari teori permainan kooperatif (\emph{cooperative game theory}) untuk menghitung bobot nilai (\emph{Shapley values}) melalui persamaan:
-\[ \phi_j(x) = \sum_{S \subseteq F \setminus \{j\}} \frac{|S|! (|F| - |S| - 1)!}{|F|!} \left[ v_x(S \cup \{j\}) - v_x(S) \right] \]
-Dalam pembentukan ekuasi kooperatif di atas, notasi matematis \(\phi_j\) diformulasikan sebagai bobot nilai luaran pengukuran sentral SHAP yang disematkan untuk observasi komponen tunggal atribut ke-\(j\). Representasi parameter skalar \(F\) bertindak mengikat seluruh himpunan variabel matriks input secara utuh, sedangkan indeks \(S\) bertugas merepresentasikan subset kelompok spesifik yang sedang menjadi objek pengamatan evaluasi saat ini. Pada bagian intervensi akhir pembobotan, notasi fungsi luaran \(v_x(S)\) mendefinisikan perolehan sinyal prediksi saat arsitektur model komputasi membatasi perhitungan pertimbangannya pada komponen variabel masukan yang murni termuat di dalam indeks batasan matriks \(S\).
+Sifat itu dapat ditulis sebagai berikut.
 
-Metode ini beroperasi berdasarkan tiga pilar analitik struktural. Pertama, pendekatan ini melihat dinamika prediksi sebagai arena permainan dengan sistem pembayaran akhir (\emph{payout}). Prediksi model diposisikan sebagai hasil permainan yang dibagikan, sementara setiap kolom vektor merupakan pemain tunggal (\emph{player}) yang harus menyusun aliansi informasi fungsional guna mengejar rasio performa tebakan secara optimal. Kedua, nilai SHAP terikat secara inheren pada ekuilibrium penjumlahan yang konsisten (sifat aditif). Kerangka kerja komputasi mendistribusikan selisih simpangan akurasi antara prediksi hasil tunggal dengan ukuran titik rata-rata populasi secara sangat seimbang. Kalkulasi dari seluruh total gabungan beban skor pembagian komponen akan selalu setara dengan bilangan prediksi keluaran secara presisi. Ketiga, tidak hanya merumuskan besaran skor kepentingan absolut yang kaku layaknya metrik agregat makro, model SHAP sanggup merumuskan arah kontribusi polaritas lokal beserta kekuatan dorong interaksi dimensinya. Sebagai simulasi di lapangan medis, masukan fitur bernilai ``usia 50 tahun ke atas'' sanggup menambah persentase perkiraan profil bahaya pasien secara dominan di angka 12 persen, tetapi pada observasi rekam medik individu sebelahnya beban faktor itu justru berpotensi memotong profil probabilitas tersebut. Dinamika polaritas vektor berlainan arah ini tercipta secara valid akibat efek kalibrasi fitur turunan dengan ragam relasi silang latar belakang penyakit yang bersangkutan.
+\[
+f(x) = \bar{f} + \sum_{j} \phi_j(x)
+\]
 
-Transparansi tingkat granular ini mengubah nilai komputasi mentah menjadi diagnosis yang dapat diaudit. Apabila sebuah model klasifikasi menolak pengajuan kredit pelanggan, nilai lokal SHAP memaparkan rincian vektor gaya yang saling berlawanan: probabilitas penolakan didorong naik secara dominan oleh ``rasio utang yang tinggi'', dan ditahan turun oleh ``durasi nasabah yang lama''.
+Dalam rumus tersebut, \(f(x)\) adalah keluaran model untuk sampel \(x\), \(\bar{f}\) adalah keluaran acuan atau \emph{baseline} model, dan \(\phi_j(x)\) adalah kontribusi fitur ke-\(j\) untuk sampel tersebut. Aditivitas berlaku pada skala keluaran yang digunakan \emph{explainer}. Untuk model klasifikasi, skala itu dapat berupa \emph{raw margin} atau log-odds, bukan probabilitas, kecuali \emph{explainer} memang dikonfigurasi pada skala probabilitas. Karena itu, skala keluaran harus disebutkan saat nilai SHAP dilaporkan.
 
-\begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{ch09-fig-4}
-\caption{Integrasi Metadata Data Card dan Silsilah Fitur pada Feature Store}
+SHAP dapat dipakai secara lokal maupun global. Secara lokal, SHAP menjelaskan mengapa satu aplikasi kredit ditolak atau mengapa satu pasien diberi risiko tinggi. Secara global, ringkasan nilai SHAP dapat menunjukkan fitur mana yang sering berkontribusi besar di banyak sampel. Yang menarik, fitur yang sama dapat mendorong prediksi naik pada satu sampel dan turun pada sampel lain. Arah pengaruh bersifat lokal, bukan satu angka global yang selalu berlaku.
+
+Gambar 9.4 menunjukkan contoh lokal. Prediksi dimulai dari rata-rata populasi. Rasio utang tinggi mendorong skor risiko naik, durasi nasabah lama mendorong turun, riwayat keterlambatan mendorong naik lagi. Semua bar dijumlahkan sampai ke prediksi individu.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch09-fig-4}
+\caption{Atribusi lokal untuk satu prediksi kredit}
 \label{fig:ch09-fig-4}
 \end{figure}
 
-Lebih jauh, penjelasan lokal ini dapat diagregasi kembali menjadi wawasan global. Praktik mutakhir dalam rekayasa fitur mulai mengadopsi rata-rata absolut nilai SHAP (\(\text{mean}(|\text{SHAP}|)\)) melintasi seluruh \emph{dataset} sebagai kriteria utama untuk menyaring variabel, sehingga mempopulerkan perangkat \emph{pipeline} analitik seperti \emph{BorutaShap}. Analisis distribusi nilai SHAP memungkinkan praktisi membedah pola area non-linearitas, memvalidasi asumsi mekanis komputasi, serta membuktikan kepada pemangku kepentingan secara visual bahwa representasi parameter \emph{input} yang dirancang memengaruhi keputusan algoritma secara rasional.
+SHAP berguna untuk diagnosis perilaku model, misalnya apakah fitur yang tinggi importance-nya masuk akal, apakah ada interaksi yang mengejutkan, apakah hubungan tampak monoton ketika seharusnya monoton, atau apakah ada indikasi proxy sensitif. Namun, SHAP menjelaskan model yang sudah dilatih, bukan proses kausal dunia nyata. Jika model belajar dari proxy, SHAP juga akan menjelaskan penggunaan proxy itu.
 
-\section{\texorpdfstring{Stabilitas Lintas \emph{Fold} dan Ilusi Kausalitas}{Stabilitas Lintas Fold dan Ilusi Kausalitas}}\label{stabilitas-lintas-fold-dan-ilusi-kausalitas}
+Biaya komputasi dan asumsi SHAP berbeda antar \emph{explainer} dan keluarga model. \emph{Mean absolute SHAP} pada \emph{dataset} kadang dipakai sebagai kriteria penyaringan fitur, termasuk dalam praktik yang menggabungkannya dengan \emph{shadow features} seperti BorutaShap. Keputusan penyaringan ini tetap bergantung pada pilihan model, \emph{explainer}, dan data validasi yang dipakai. SHAP perlu diperlakukan sebagai alat diagnosis, bukan standar universal. Kontribusi fitur juga perlu diuji ulang pada \emph{fold}, waktu, dan populasi lain sebelum dipakai sebagai dasar tindakan.
 
-Mengevaluasi kualitas fitur sering memunculkan dua asumsi keliru. Asumsi pertama adalah mempercayai skor evaluasi secara absolut dari satu partisi data tunggal. Asumsi kedua adalah mencampuradukkan kemampuan prediktif model dengan hubungan sebab-akibat di dunia nyata.
+\section{Stabilitas Importance dan Batas Kausalitas}\label{stabilitas-importance-dan-batas-kausalitas}
 
-\textbf{Stabilitas Skor Kepentingan.}\label{stabilitas-skor-kepentingan}
+Sebuah ranking importance sebaiknya tidak dipercaya hanya dari satu split. Fitur yang benar-benar berguna biasanya menunjukkan kontribusi yang cukup stabil lintas fold, periode waktu, subpopulasi, atau retraining run. Fitur yang melonjak pada satu eksperimen tetapi hilang pada eksperimen lain mungkin menandakan sinyal lemah, substitusi antarfitur, sampel kecil, drift fitur, atau validasi yang tidak cocok.
 
-Mengukur \emph{feature importance} menggunakan satu set pelatihan dan set pengujian tunggal membuat evaluasi rentan terhadap variansi sampel. Sebuah fitur dapat terlihat dominan secara kebetulan karena distribusi data yang tidak berimbang atau keberadaan nilai \emph{outlier} di dalam partisi spesifik tersebut.
+Variasi importance fitur \(j\) lintas \(K\) fold dapat ditulis sebagai berikut.
 
-Pengujian ketahanan fitur mengharuskan kita menguji stabilitas skor kepentingan di seluruh iterasi \emph{cross-validation}. Fluktuasi ini dievaluasi secara matematis melalui perhitungan varians skor:
-
-\[ \text{Var}(I_j) = \frac{1}{K-1} \sum_{k=1}^K (I_{j,k} - \bar{I}_j)^2 \]
-
-Dalam formula ekuasi varians tersebut, notasi \(K\) mengukur total irisan sampel validasi (\emph{fold}) yang dieksekusi selama keseluruhan periode iterasi pelipatan \emph{cross-validation}. Variabel \(I_{j,k}\) merepresentasikan angka kuantitatif besaran \emph{feature importance} tunggal khusus untuk identitas fitur ke-\(j\) spesifik pada putaran lipatan fase pelatihan ke-\(k\). Selanjutnya, parameter agregat nilai \(\bar{I}_j\) memetakan rata-rata perhitungan nilai kepentingan komponen selama total pengujian algoritma berlangsung.
-
-Varians yang tinggi memperlihatkan bahwa model menghafal pola acak pada iterasi pelatihan tertentu. Fitur dengan nilai kepentingan menengah tetapi konsisten jauh lebih menjamin kemampuan generalisasi model dibandingkan fitur yang mencatatkan skor puncak namun fluktuatif.
-
-Evaluasi metrik parameter stabilitas rentan mengalami kesalahan fatal saat mendiagnosis sekelompok komponen input variabel matriks yang memiliki kedekatan pola sebaran data saling berkorelasi. Sebagai titik awal permasalahan, praktik \emph{permutation importance} konvensional lazimnya berjalan dengan sekadar mengacak alur kolom secara independen (permutasi marginal). Jika representasi variabel A secara alami memiliki tautan kuat dengan fitur B dalam \emph{dataset}, mendistorsi representasi fitur A sama sekali tidak mengacaukan pemahaman arsitektur model, mengingat jaringan memori sistem masih leluasa mengekstrak sisa kluster memori sinyal dari elemen B. Kesalahan ini diatasi melalui kehadiran algoritma analitik \emph{Conditional Permutation Importance} (CPI). Mengandalkan skema manipulasi nilai bersyarat yang didasari pada penyesuaian probabilitas acak kondisional, CPI berhasil mempertahankan rantai struktur korelasi awal sehingga tidak mematahkan hierarki rasio koefisien. Algoritma seleksi seperti perangkat Boruta-SHAP kemudian beroperasi lebih lanjut mengeksploitasi fungsi permutasi untuk menekan fluktuasi ketidakstabilan ini secara berkesinambungan.
-
-\textbf{Membedakan Utilitas Prediktif dan Efek Kausal.}\label{membedakan-utilitas-prediktif-dan-efek-kausal}
-
-Skor \emph{feature importance} yang tinggi kerap memancing dugaan bahwa fitur tersebut adalah penyebab fenomena target. Ukuran ini pada dasarnya hanya mengkuantifikasi korelasi matematis untuk meminimalkan galat, bukan mengungkap kausalitas.
-
-Sebagai ilustrasi, sebuah algoritma dilatih memprediksi angka kecelakaan lalu lintas harian menggunakan berbagai data atribut kota. Fitur volume penjualan payung mungkin keluar dengan tingkat \emph{feature importance} paling tinggi. Model menangkap kecocokan statistik: saat grafik penjualan payung menanjak, frekuensi kecelakaan juga tinggi.
-
-Menerbitkan peraturan pelarangan toko menjual payung tidak akan menurunkan jumlah kecelakaan jalan raya. Penjualan payung dan kecelakaan lalu lintas didorong oleh variabel perancu eksternal yang sama, yaitu turunnya hujan. Model mengeksploitasi korelasi ini murni karena datanya tersedia dan berpola stabil.
-
-Interpretasi utilitas prediksi dalam \emph{pipeline} sangat bergantung pada batasan orientasi operasional model itu sendiri. Jika tujuan utama pengembangan arsitektur komputasi sebatas menghasilkan ramalan estimasi (seperti memprediksi estimasi ledakan volume kunjungan gawat darurat harian pasien), keputusan mengeksploitasi atribut pola korelasi statis seperti data riwayat transaksi penjualan payung tetap dinilai sah secara prosedural. Namun demikian, situasi akan sangat berbeda apabila \emph{pipeline} bertujuan mendukung keputusan sistem intervensi. Apabila sasarannya berfokus pada upaya menekan potensi jumlah kecelakaan lalu lintas melalui perumusan kebijakan riil (sebagaimana dibahas pada Bab 17), intervensi terhadap kolom atribut berbasis nilai korelasi murni tidak akan membuahkan perubahan metrik valid di lapangan.
-
-Ketika \emph{pipeline} sengaja ditugaskan memandu arahan intervensi lapangan, indikator \emph{feature importance} konvensional mutlak digantikan oleh kerangka estimasi metrik kausalitas spesifik. Komunitas analitik \emph{machine learning} saat ini menghadirkan kerangka uji Double/Debiased Machine Learning (DML) yang mendesain konfigurasi terpisah bagi arsitektur komputasi evaluasi. Teknik tersebut memformulasikan algoritma dasar sebagai filter prapemrosesan tahap awal dalam meredam deviasi efek variabel perancu eksternal, sehingga nilai representasi dampak sebab akibat dapat dievaluasi secara murni. Selain teknik tersebut, praktisi menggunakan arsitektur varian algoritma Causal Forest. Alih-alih terobsesi memperkecil persentase galat perbandingan prediksi semata, metode berbasis pohon ini mengembangkan rumusan \emph{variable importance} terdedikasi untuk merekam efek perlakuan, mengidentifikasi fitur input mana yang menyebabkan perbedaan perilaku observasi lintas subpopulasi.
-
-\section{Informasi Sensitif dan Fitur Proksi}\label{informasi-sensitif-dan-fitur-proksi}
-
-Evaluasi fitur yang utuh wajib mengukur utilitas prediktif sekaligus memperhitungkan batas privasi dan keadilan (\emph{fairness}). Praktik awal umumnya menerapkan \emph{fairness through unawareness}, yaitu secara langsung menghapus atribut sensitif (seperti ras, gender, atau status medis) dari \emph{dataset}. Namun, menghilangkan kolom identitas tidak dengan sendirinya menuntaskan masalah bias. Model tetap dapat membedakan kelompok demografis dan menghasilkan keputusan yang diskriminatif melalui fitur-fitur perantara.
-
-\emph{Proxy feature} (fitur proksi) adalah variabel yang tampak netral secara harfiah, tetapi memiliki korelasi statistik yang tinggi dengan atribut sensitif. Jika model mempelajari pola dari fitur proksi, model akan merekonstruksi identitas pengguna dan mengulang pola bias historis.
-
-Penetrasi atribut proksi sering memengaruhi arsitektur \emph{pipeline} tanpa disadari, misalnya lewat data geografis kode pos hunian. Walaupun matriks input ini terkesan netral dan murni berbasis letak spasial, persentase nilai distribusinya sangat sering berkorelasi kuat dengan stratifikasi jenjang ekonomi kelompok minoritas. Celah kerentanan privasi juga terbuka dari informasi spesifikasi perangkat gawai pengguna. Tipe perangkat keras yang tercatat berpotensi memetakan indeks probabilitas distribusi jenjang pendapatan individu. Selain fitur observasi tabular, tantangan paling kompleks berakar dari penggunaan vektor representasi laten (\emph{embedding}) pada arsitektur pemrosesan teks dan citra. Kompresi \emph{embedding} yang dilatih di atas populasi luas tanpa batas dapat merekam dan membawa distribusi statistik yang membedakan dialek kalimat, aksen bahasa, maupun variabel usia. Struktur operasi matriks yang bersifat \emph{black-box} ini menyulitkan para analis mengaudit kemungkinan rembesan atribut identitas proksi secara manual, sehingga model mengikutsertakan variabel \emph{data leakage} secara implisit di dalam sistem produksinya.
-
-{[}GAMBAR 9.X: Skema - Alur kebocoran atribut sensitif ke dalam model melalui korelasi fitur proksi dan dimensi embedding{]}
-
-\textbf{Mempertahankan Atribut untuk Audit}
-
-Penghapusan atribut identitas sejak awal persiapan data justru memunculkan hambatan struktural pada saat validasi. Pengembang akan kesulitan membuktikan secara objektif apakah sekumpulan fitur mendiskriminasi usia atau ras tertentu apabila data acuan tersebut sudah dihilangkan.
-
-Skenario audit modern menyarankan pemisahan strategi: atribut sensitif dipertahankan utuh di dalam \emph{dataset} pengujian murni untuk mengakomodasi pengukuran bias. Mengukur disaggregasi keadilan dengan data yang nyata membuahkan hasil pengujian yang transparan, jauh lebih baik dibandingkan menghapus kolom aslinya dan sekadar berasumsi bahwa tidak ada efek proksi yang terjadi.
-
-\textbf{Prinsip Minimisasi Data}
-
-Fakta bahwa penambahan fitur dapat menaikkan metrik performa model tidak memberikan legitimasi etis untuk selalu menggunakannya. Cara utama memitigasi bahaya privasi adalah dengan menerapkan \emph{data minimization}. Sistem \emph{machine learning} dituntut hanya memproses fitur yang esensial untuk tugas prediksi.
-
-Dalam tahapan seleksi representasi, konsep minimisasi ini dapat diformalkan dengan memasukkan penalti kompleksitas (\emph{complexity penalty}) ke dalam fungsi evaluasi. Pencarian tidak lagi hanya berfokus pada reduksi galat, melainkan ikut memaksakan penalti atas bertambahnya ukuran atau kerentanan fitur:
-
-\[ 
-\text{Objektif} = \text{Galat}(\hat{Y}, Y) + \lambda \sum_{j=1}^{p} c_j 
+\[
+\operatorname{Var}(I_j) = \dfrac{1}{K-1}\sum_{k=1}^{K}\big(I_{j,k} - \bar{I}_j\big)^2
 \]
 
-Dalam persamaan penalti objektif tersebut, komponen matematis \(\text{Galat}(\hat{Y}, Y)\) merepresentasikan deviasi jarak rasio kesalahan arsitektur model komputasi saat merespons prediksi referensi perbandingan target nyata. Selanjutnya, angka pengatur \(\lambda\) ditugaskan mengalibrasi level intensitas hukuman pemotongan utilitas matriks berdimensi besar, sedangkan parameter kuantitatif bobot risiko dilambangkan sebagai \(c_j\) untuk merumuskan beban potensi pelanggaran keamanan fitur ke-\(j\).
+Dalam rumus tersebut, \(I_{j,k}\) adalah importance fitur \(j\) pada fold ke-\(k\), dan \(\bar{I}_j\) adalah rata-ratanya. Fitur dengan importance sedang tetapi konsisten sering lebih berharga daripada fitur dengan skor spektakuler tetapi sangat berfluktuasi.
 
-Metrik hukuman kompleksitas objektif ini memaksa arsitektur sistem algoritma mematuhi batas kelayakan operasional sistem etis privasi di lapangan produksi. Lonjakan performa persentase metrik akurasi validasi prediksi tidak dapat diterima apabila \emph{pipeline} rekayasa mengorbankan pertahanan benteng batas privasi representasi data \emph{input} klien pengguna. Terkadang, margin evaluasi \emph{baseline} komputasi performa akurasi marjinal yang sedikit berada di bawah rata-rata justru dinilai jauh lebih tangguh jika dilatih menggunakan himpunan isolasi kelompok atribut yang nihil bias korelasi berisiko. Oleh karena itu, arsitektur validasi analitik mewajibkan seluruh jajaran pengembang memvalidasi sumber rasio keakuratan \emph{precision} murni melalui sinyal data \emph{input} sah, guna mencegah algoritma mesin mereplika diskriminasi demografis warisan distribusi populasi historis.
+Kaveat kedua lebih mendasar. Predictive importance bukan causal effect. Penjualan payung mungkin sangat penting untuk memprediksi kecelakaan lalu lintas. Namun, melarang payung tidak akan mencegah kecelakaan. Hujan menjadi confounder yang memengaruhi keduanya. Model prediksi boleh memanfaatkan korelasi yang stabil, tetapi kebijakan intervensi membutuhkan alasan kausal.
 
-Aturan minimisasi dan verifikasi stabilitas ini merupakan standar perancangan yang akan dirujuk kembali ketika seluruh tahapan dipadukan menjadi sebuah \emph{pipeline} utuh pada fase produksi.
+Hal serupa terjadi pada kode departemen rumah sakit yang memprediksi readmission. Fitur itu bisa penting karena menjadi proxy keparahan pasien dan jalur perawatan, bukan karena departemen itu sendiri menyebabkan pasien kembali dirawat. Postcode dapat memprediksi risiko default karena membawa informasi sosial-ekonomi, akses layanan, atau kondisi lingkungan. Dalam prediksi murni, fitur korelasional dapat sah secara prosedural jika tersedia dan legitimate. Begitu pipeline dipakai untuk menentukan intervensi, ranking importance tidak boleh berubah menjadi panduan tindakan.
+
+Karena itu, interpretasi \emph{importance} perlu melibatkan \emph{domain review}. Pemeriksaan domain membedakan apakah fitur merupakan sebab, proksi, artefak pencatatan, jalur \emph{leakage}, atau konsekuensi dari target. Bab ini tidak menggantikan metode kausal, tetapi memberi tanda kapan grafik \emph{importance} tidak cukup dipakai sebagai dasar keputusan. Pemeriksaan tersebut penting karena fitur proxy dapat tampak biasa sambil membawa informasi sensitif atau kebijakan yang tidak boleh dipakai sembarangan.
+
+\begin{pendalaman}{Dari prediksi ke intervensi melalui metode kausal}
+Jika tujuan analisis adalah intervensi, pertanyaannya perlu dirumuskan sebagai estimand kausal dengan \emph{treatment}, \emph{outcome}, populasi, dan horizon yang jelas. Double atau debiased machine learning serta causal forests dapat membantu mengestimasi efek, tetapi keduanya tetap memerlukan asumsi identifikasi, data dengan overlap yang memadai, dan penanganan confounder yang dapat dipertanggungjawabkan. Metode tersebut tidak mengubah \emph{predictive importance} menjadi efek kausal secara otomatis. Pertanyaan tentang akibat perubahan pada suatu tindakan memerlukan desain dan asumsi kausal, bukan sekadar tambahan \emph{importance chart}.
+\end{pendalaman}
+
+\section{Informasi Sensitif dan Fitur Proxy}\label{informasi-sensitif-dan-fitur-proxy}
+
+Sebagian fitur tidak boleh dinilai hanya dari kontribusi prediktifnya (Barocas and Selbst 2016). Atribut sensitif dapat bersifat langsung, seperti gender, ras atau etnis, agama, status kesehatan, disabilitas, lokasi presisi, atau kesulitan finansial. Ada juga fitur proxy yang tidak tampak sensitif, tetapi membawa informasi yang sangat berkorelasi dengan atribut sensitif. Contohnya adalah postcode, jenis perangkat, sekolah, pola belanja, bahasa, atau embedding teks dan citra.
+
+Strategi naif yang sering disebut fairness through unawareness adalah menghapus kolom sensitif dan berharap model menjadi fair. Strategi ini gagal ketika proxy tetap ada. Model dapat merekonstruksi keanggotaan kelompok dari fitur lain. Menghapus kolom gender, misalnya, tidak banyak membantu jika kombinasi sekolah, wilayah, bahasa, dan riwayat layanan masih memprediksi gender dengan kuat.
+
+Gambar 9.5 memperlihatkan jalur proxy. Panah langsung dari atribut sensitif ke model dicoret, tetapi jalur tidak langsung melalui postcode, device type, dan embedding masih mengalir. Di jalur audit, atribut sensitif tetap disimpan terpisah untuk pengukuran fairness, bukan sebagai input model.
+
+\begin{figure}[tbp]\centering
+\includegraphics[width=111.6mm]{ch09-fig-5}
+\caption{Jalur proxy dari atribut sensitif ke model}
+\label{fig:ch09-fig-5}
+\end{figure}
+
+Menghapus atribut terlindungi terlalu awal dapat membuat bias tidak terukur. Audit memerlukan informasi tentang kelompok yang terkena \emph{error} lebih tinggi, \emph{false positive} lebih besar, atau keputusan lebih buruk. Artinya, atribut sensitif kadang perlu dipertahankan dalam lingkungan evaluasi yang aman, meskipun tidak diberikan ke model sebagai fitur.
+
+Prinsip \emph{data minimization} menuntut penilaian apakah setiap fitur memadai, relevan, dan terbatas pada apa yang diperlukan. ``Meningkatkan akurasi'' bukan jawaban otomatis bahwa fitur boleh dipakai. Jika fitur mengandung lokasi sangat presisi, data kesehatan, atau sinyal ekonomi sensitif, manfaat prediktifnya harus dibandingkan dengan kebutuhan tugas dan risiko institusional.
+
+Embedding membutuhkan perhatian khusus. Representasi yang dilatih pada populasi luas dapat membawa dialek, umur, gender, wilayah, atau atribut kelompok lain tanpa terlihat pada nama kolom. Proxy seperti ini sulit diaudit karena tidak berbentuk fitur eksplisit. Kewaspadaan ini melanjutkan peringatan Bab 8 bahwa representasi laten yang kompak tetap dapat membawa informasi pribadi atau proksi sensitif. Agar keputusan seperti ini tidak hilang setelah eksperimen selesai, evaluasi fitur perlu ditulis sebagai artefak proyek.
 
 \section{Mendokumentasikan Keputusan Fitur}\label{mendokumentasikan-keputusan-fitur}
 
-Fase eksperimen \emph{machine learning} menghasilkan puluhan hingga ratusan fitur baru. Tanpa pencatatan sistematis, tumpukan fitur ini berubah menjadi beban teknis. Praktisi yang menjumpai variabel seperti \passthrough{\lstinline!skor_aktivitas_terbobot!} di dalam basis kode sering tidak mengetahui asal data, metode perhitungan, atau dampaknya jika fitur tersebut dihapus. Ketidakpastian ini menyebabkan fitur usang tetap dipertahankan di dalam \emph{pipeline}, yang pada akhirnya memperlambat komputasi dan menyulitkan pemeliharaan sistem.
+Setelah kontribusi, stabilitas, dan risiko proxy diperiksa, keputusan fitur perlu meninggalkan jejak. Tanpa dokumentasi, sebuah kolom seperti \passthrough{\lstinline!skor_aktivitas_terbobot!} dapat hidup bertahun-tahun tanpa ada yang tahu definisinya, sumbernya, alasan pembuatannya, atau batas penggunaannya. Tim baru mengulang eksperimen yang pernah gagal karena tidak ada catatan. Fitur yang dulu valid menjadi usang tanpa ada pemilik yang memeriksa.
 
-Dokumentasi fitur modern mencakup informasi operasional menyeluruh, tidak sebatas mendata nama variabel dan tipe nilai numerik. Praktik pencatatan arsitektur produksi mutakhir saat ini mengadopsi tiga format kerangka kerja pelaporan formal dari literatur \emph{machine learning} secara berlapis. Kerangka pencatatan pertama merujuk pada standar Datasheets for Datasets, yang mewajibkan seluruh pengembang memetakan parameter rekam jejak historis silsilah pengumpulan (\emph{provenance}), distribusi label bias target, pemrosesan awal, serta lisensi pembatasan penggunaan dari tahapan \emph{dataset} mentah sebelum mengalami proses rekayasa lanjutan menjadi representasi fungsional \emph{machine learning}. Di lapisan kedua komputasi pelaporan komparasi performa prediksi, metrik disagregasi keadilan kelompok etnis maupun gender dipaparkan melintasi publikasi ringkasan laporan platform spesifik Model Cards untuk membongkar eksistensi probabilitas bahaya \emph{data leakage} parameter fitur \emph{proxy}. Terakhir, rincian siklus kehidupan atribut dari proses rancangan ekstraksi algoritma, catatan histori iterasi pergeseran pola transformasi fungsi \emph{pipeline}, beserta \emph{baseline} catatan rasio \emph{latency} dikuantifikasi secara sistematis menyusun direktori hierarkis Data Cards.
+Dokumentasi fitur sebaiknya mencatat nama fitur, definisi, sumber tabel, unit, jendela waktu, \emph{cutoff}, transformasi, pemilik, biaya, dan intended use. Catat juga alasan fitur dimasukkan atau dikeluarkan, bukti validasi, hasil ablation atau importance, pemeriksaan leakage, stabilitas, risiko privacy/fairness, serta rencana monitoring.
 
-{[}GAMBAR 9.8: Diagram - Integrasi Metadata Data Card dan Silsilah Fitur pada Feature Store{]}
+Beberapa tradisi dokumentasi relevan untuk pekerjaan ini. Datasheets for Datasets menekankan provenance dan konteks pengumpulan data. Model Cards menekankan intended use dan evaluasi terpilah. Data Cards memberi kerangka pelaporan transparansi data yang lebih terstruktur. Untuk buku ini, Lampiran C mengadaptasi semangat tersebut ke granularitas per fitur. Satu fitur perlu mempunyai satu definisi, satu catatan bukti, dan satu daftar risiko.
 
-Dalam arsitektur produksi, metadata dokumentasi dipusatkan di dalam \emph{feature store} atau \emph{feature catalog}. Platform ini mengintegrasikan definisi, identitas pemilik (\emph{owner}), silsilah data (\emph{lineage}), dan metrik kebaruan data (\emph{freshness}). Integrasi langsung dengan repositori kode membuat fitur terdokumentasi secara bawaan dan siap digunakan ulang lintas model.
+Di produksi, feature store atau katalog fitur dapat membuat dokumentasi menjadi bagian dari infrastruktur, bukan pekerjaan setelah selesai. Definisi, owner, lineage, freshness, dan metadata ketersediaan disimpan bersama. Bab 17 akan membahas sisi infrastrukturnya. Untuk bab ini, prinsipnya cukup jelas. Fitur yang tidak dapat dijelaskan, dilacak, dan dimonitor belum benar-benar siap menjadi bagian dari sistem.
 
-Sebuah catatan keputusan \emph{feature engineering} yang holistik mengintegrasikan empat spesifikasi pemodelan. Komponen utama merangkum rincian definisi teknis operasional dan alur logika domain bisnis yang melegitimasi tujuan pembentukan fungsi rancangan ekstraksi algoritma. Rekam jejak kedua memetakan jejak parameter \emph{hyperparameter} transformasi representasi matriks serta prasyarat fungsionalitas, seperti taktik resolusi \emph{imputation} nilai absolut kolom rentang kosong (\emph{missing values}), batas toleransi batas \emph{outlier}, maupun perlakuan skema penskalaan standardisasi. Rekaman selanjutnya merinci silsilah komprehensif penarikan (\emph{lineage}) repositori dasar tabel \emph{database} dari hulu hingga struktur data hilir matriks prediksi fitur akhir, guna menjamin kohesi alur logika \emph{pipeline} antara \emph{engine} fase konvergensi komputasi terhadap iterasi operasi prediksi observasi (\emph{inference}). Sebagai laporan akhir yang menentukan tingkat justifikasi peluncuran model prediksi intervensi, setiap publikasi katalog merekam verifikasi bukti margin selisih \emph{baseline} secara kuantitatif. Komparasi pengujian utilitas empiris ini wajib meyakinkan para insinyur komputasi (\emph{engineers}) bahwa penyisipan blok himpunan atribut mampu mencetak peningkatan performa metrik evaluasi prediktif seperti penguatan akurasi rasio jarak AUC dibandingkan performa model \emph{baseline} dasar yang sepadan dengan beban latensi biaya pemrosesan komputasinya.
+\begin{sintesis}
 
-Pencatatan terstruktur mengeliminasi duplikasi eksperimen. Tim pengembangan dapat merujuk pada histori dokumentasi untuk mengetahui pendekatan ekstraksi yang telah diuji namun gagal, tanpa harus menjalankan ulang skrip pelatihan atau membongkar kode sumber baris demi baris. Buku ini menyediakan templat operasional dokumentasi fitur berdasarkan keempat elemen tersebut pada Lampiran C.
+Kualitas fitur lebih luas daripada \emph{feature importance}. Sebuah fitur perlu berguna secara prediktif, tersedia saat inferensi, stabil, terjangkau, dapat dijelaskan pada tingkat yang diperlukan, tahan terhadap gangguan, dan legitimate. Tabel 9.1 memberi kerangka untuk memeriksa semua dimensi itu sebelum fitur dianggap layak, terutama ketika skor eksperimen tampak menggoda tetapi biaya, latency, atau proxy risk belum diperiksa.
 
-\section{Studi Kasus: Ablation Lintas Kelompok Fitur}\label{studi-kasus-ablation-lintas-kelompok-fitur}
+\emph{Baseline} memberi konteks, ablation menguji kontribusi kelompok, permutation dan model-based importance memberi lensa kontribusi, SHAP membantu diagnosis lokal dan global, sedangkan stabilitas menguji apakah temuan itu bertahan. Tabel 9.2 membantu memilih alat sesuai pertanyaan. Namun, semua alat ini menjelaskan kontribusi prediktif, bukan otomatis sebab-akibat.
 
-Sebagai studi kasus analitik struktural, pengujian \emph{ablation} komparasi utilitas model klasifikasi prediksi beban risiko kredit dijalankan untuk mengukur rasio keseimbangan metrik tripartit tiga himpunan representasi data spesifik komputasi. Kelompok input pertama mengandalkan kluster \emph{dataset} demografis seperti indeks interval pembagian usia dan kluster area titik geografis tempat tinggal klien. Matriks \emph{pipeline} kedua menyimpan blok komputasi rekaman operasi transaksi perbankan pengguna yang mencakup jejak durasi riwayat agregasi persentase batas masa keterlambatan kewajiban bayar serta kalkulasi profil frekuensi angka total beban kewajiban pengeluaran transaksi berulang harian finansial. Pada vektor pelacakan iterasi jejak observasi komputasi ketiga, log perilaku sesi merekam total durasi navigasi klik \emph{interface} aplikasi seluler klien.
+Fitur juga perlu diperlakukan sebagai bagian dari sistem sosial dan operasional. Proxy sensitif, biaya \emph{latency}, \emph{lineage}, dan dokumentasi dapat menentukan apakah fitur yang tampak kuat benar-benar boleh dipakai. Karena itu, evaluasi kualitas fitur menjadi jembatan antara eksperimen yang berhasil dan sistem yang dapat dipercaya.
 
-Evaluasi \emph{ablation} rasio kontribusi ini selalu dimulai dengan mengkalibrasi konvergensi batas rasio margin metrik referensi dasar (\emph{baseline}) melalui penyisipan utilitas pelatihan fungsional penuh blok matriks fitur secara komprehensif. Pada fase intervensi selanjutnya komputasi komparasi metrik diformulasikan ke ekuasi reduksi diferensial fungsi pelemahan arsitektur metrik dengan selisih pengurangan parameter pencabutan blok himpunan atribut satu per satu:
+\end{sintesis}
 
-\[ \Delta \mathcal{M}_{g} = \mathcal{M}(F_{all}) - \mathcal{M}(F_{all} \setminus g) \]
+\begin{bacaan}
 
-Dalam fungsi matematika \emph{baseline} reduksi analitik tersebut variabel notasi jarak luaran selisih batas penurunan akurasi direpresentasikan sebagai \(\Delta \mathcal{M}_{g}\) melalui pemangkasan grup blok memori matriks kluster \(g\), sementara \(\mathcal{M}\) merupakan perhitungan agregat metrik evaluasi AUC komparasi terhadap blok masukan utuh parameter \(F_{all}\) di awal prediksi konvergensi komputasi pelaporan, untuk kemudian dikurangi secara asimetris dengan hasil sisa reduksi persentase \emph{dataset} modifikasi sebagian set tanpa blok referensi grup spesifik \(F_{all} \setminus g\).
+\begin{itemize}
+\tightlist
+\item
+  scikit-learn --- Feature selection --- \url{https://scikit-learn.org/stable/modules/feature_selection.html}. Menilai relevansi fitur secara terukur.
+\item
+  scikit-learn --- Permutation importance --- \url{https://scikit-learn.org/stable/modules/permutation_importance.html}. Pentingnya fitur yang model-agnostik.
+\item
+  SHAP --- \url{https://shap.readthedocs.io/}. Atribusi kontribusi fitur berbasis nilai Shapley.
+\end{itemize}
 
-Pengujian \emph{ablation} terhadap algoritma regresi tersebut menghasilkan tiga konfirmasi struktural utilitas sinyal utama. Pencabutan blok variabel matriks data demografis membuktikan ketiadaan distorsi performa margin \emph{baseline} (\(\Delta \mathcal{M} \approx 0\)). Konfigurasi indikator skor komparasi prediksi kestabilan mengindikasikan ketiadaan nilai korelasi kekuatan informasi profil data statis tersebut untuk meramal profil fluktuasi risiko beban finansial kredit nasabah harian sehingga dapat dieliminasi secara utuh. Sebaliknya, eliminasi kluster agregasi observasi jejak historis riwayat aktivitas rekam log transaksi pembayaran secara instan menyebabkan pelemahan presisi komputasi model prediksi turun secara drastis (\(\Delta \mathcal{M} \gg 0\)). Margin pengurangan signifikansi tersebut merekam rasio pembuktian ketergantungan matriks intervensi prediksi model terhadap eksploitasi pola observasi sinyal utama transaksi finansial ini secara berkesinambungan. Sementara itu komparasi reduksi indeks kluster agregasi perilaku parameter log jejak durasi klik rekaman aktivitas sesi navigasi aplikasi menunjukkan pergerakan selisih utilitas penurunan marjinal yang sangat minor (\(\Delta \mathcal{M} > 0\)). Pemrosesan log matriks berdimensi tinggi memakan memori kalkulasi latensi komputasi terlampau mahal untuk dipertahankan, terutama pada arsitektur pengujian masa operasional fungsional prediksi intervensi (\emph{inference}) tahap sistem operasi produksi harian final.
+\end{bacaan}
 
-{[}GAMBAR 9.5: Diagram Batang - Perbandingan skor metrik baseline dengan skor setelah setiap kelompok fitur dicabut (demografis, transaksi, log interaksi){]}
+\rujukanheading
 
-Stabilitas skor dievaluasi lebih lanjut menggunakan \emph{cross-validation} untuk memastikan hasil tidak bias terhadap satu irisan data. Hasil uji konsisten di setiap \emph{fold}: fitur transaksi selalu memicu penurunan skor yang besar saat dihilangkan, sementara fitur log dan demografis berdampak minimal.
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-barocas2016disparate}
+Barocas, Solon, and Andrew D. Selbst. 2016. {``Big Data's Disparate Impact.''} \emph{California Law Review} 104: 671--732.
 
-Desain arsitektur final memutuskan untuk mempertahankan riwayat transaksi finansial dan membuang fitur lainnya. Keputusan ini mempertimbangkan keseimbangan antara daya prediksi model, biaya komputasi, dan kebutuhan \emph{latency} sistem di lingkungan produksi.
+\bibitem[\citeproctext]{ref-breiman2001randomforests}
+Breiman, Leo. 2001. {``Random Forests.''} \emph{Machine Learning} 45 (1): 5--32.
+
+\bibitem[\citeproctext]{ref-lundberg2017shap}
+Lundberg, Scott M., and Su-In Lee. 2017. {``A Unified Approach to Interpreting Model Predictions.''} \emph{Advances in Neural Information Processing Systems (NeurIPS)}.
+
+\bibitem[\citeproctext]{ref-ribeiro2016lime}
+Ribeiro, Marco Tulio, Sameer Singh, and Carlos Guestrin. 2016. {``"Why Should {I} Trust You?": Explaining the Predictions of Any Classifier.''} \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}.
+
+\end{CSLReferences}

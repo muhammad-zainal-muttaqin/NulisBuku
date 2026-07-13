@@ -1,0 +1,4 @@
+representation,accuracy
+centrality,0.6666666666666666
+spectral_embedding,1.0
+centrality_plus_spectral,0.8333333333333334

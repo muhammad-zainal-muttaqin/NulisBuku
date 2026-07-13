@@ -11,7 +11,9 @@
 
 \frontmatter
 \maketitlepage
+\input{prakata}
 \tableofcontents
+\input{panduan}
 
 \mainmatter
 
@@ -33,5 +35,26 @@
 \input{chapters/ch15}
 \input{chapters/ch16}
 \input{chapters/ch17}
+
+% --- Lampiran (bab \appendix: penomoran bab jadi huruf A, B, C) ------------
+\appendix
+\renewcommand{\appendixname}{Lampiran}
+% Kepala bab lampiran: kicker "LAMPIRAN A" (bukan angka 58pt seperti bab isi),
+% lalu judul deskriptif Huge + garis, senada gaya bab tetapi jelas sebagai lampiran.
+\titleformat{\chapter}[display]
+  {\sffamily}
+  {\flushright\large\bfseries\color{panelbar}\MakeUppercase{\appendixname\ \thechapter}}
+  {2pt}
+  {\Huge\bfseries\color{black}\raggedright}
+  [\vspace{7pt}{\color{rulegray}\titlerule[1.4pt]}]
+\titlespacing*{\chapter}{0pt}{6pt}{28pt}
+\input{chapters/lampiran-A}
+\input{chapters/lampiran-B}
+\input{chapters/lampiran-C}
+
+% --- Bagian belakang ------------------------------------------------------
+\backmatter
+\input{daftar-pustaka}
+\input{tentang-penulis}
 
 \end{document}
