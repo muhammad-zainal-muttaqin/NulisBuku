@@ -86,15 +86,26 @@ def preclean(tex: str) -> str:
 
 def clean_table_cell(cell: str) -> str:
     """Convert the limited LaTeX used inside generated table cells to Markdown."""
+    math_fragments: list[str] = []
+
+    def protect_math(match: re.Match[str]) -> str:
+        token = f"XXMATH{len(math_fragments):03d}XX"
+        math_fragments.append(f"${match.group(1).strip()}$")
+        return token
+
+    # Clean surrounding LaTeX without stripping commands such as \text{} from math.
+    cell = re.sub(r"\\\((.*?)\\\)", protect_math, cell)
     cell = re.sub(r"\\(?:toprule|midrule|bottomrule|endhead)\b", "", cell)
     cell = re.sub(r"\\(?:emph|textit)\{([^{}]*)\}", r"*\1*", cell)
     cell = re.sub(r"\\textbf\{([^{}]*)\}", r"**\1**", cell)
     cell = re.sub(r"\\(?:texttt|seqsplit)\{([^{}]*)\}", r"`\1`", cell)
     cell = re.sub(r"\\passthrough\{\\lstinline!([^!]*)!\}", r"`\1`", cell)
     cell = cell.replace(r"\_", "_").replace(r"\&", "&")
-    cell = cell.replace(r"\(", "$ ").replace(r"\)", " $").replace(r"\ ", " ")
+    cell = cell.replace(r"\ ", " ")
     cell = re.sub(r"\\[a-zA-Z]+(?:\[[^\]]*\])?", "", cell)
     cell = cell.replace("{", "").replace("}", "")
+    for index, fragment in enumerate(math_fragments):
+        cell = cell.replace(f"XXMATH{index:03d}XX", fragment)
     return " ".join(cell.split()).replace("|", r"\|")
 
 

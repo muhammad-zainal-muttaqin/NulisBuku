@@ -38,7 +38,7 @@ Bagian bawah menampilkan satu baris pelanggan-bulan dengan $t_p$ = 2011-02-01.
 
 | unit | total_belanja_30h | jumlah_invoice | ragam_produk | hari_sejak_transaksi_terakhir | (target) membeli_lagi_30h |
 | --- | --- | --- | --- | --- | --- |
-| 17850 @ 2011-01 | 83.14 | 3 | 4 | 5 | ditentukan dari $ [t_p,t_p+30 hari) $ |
+| 17850 @ 2011-01 | 83.14 | 3 | 4 | 5 | ditentukan dari $[t_p,t_p+30\ \text{hari})$ |
 
 : Ilustrasi semi-sintetis dari baris *invoice* ke satu baris pelanggan-bulan (lanjutan) {#tbl-ch01-9}
 
