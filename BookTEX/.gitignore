@@ -10,10 +10,6 @@
 *.synctex.gz
 _test.*
 
-# PDF hasil build (regenerasikan dari sumber)
-main.pdf
-main-review.pdf
-
 # Cache Python
 __pycache__/
 *.pyc
